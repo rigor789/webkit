@@ -27,6 +27,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
+ */
+
 //# sourceURL=__InjectedScript_InjectedScriptSource.js
 
 (function (InjectedScriptHost, inspectedGlobalObject, injectedScriptId) {
@@ -301,7 +305,7 @@ InjectedScript.prototype = {
 
     getDisplayableProperties: function(objectId, generatePreview)
     {
-        var nativeGettersAsValues = true;
+        var nativeGettersAsValues = false;
         var collectionMode = InjectedScript.CollectionMode.OwnProperties | InjectedScript.CollectionMode.NativeGetterProperties;
         return this._getProperties(objectId, collectionMode, generatePreview, nativeGettersAsValues);
     },
@@ -1057,7 +1061,7 @@ InjectedScript.RemoteObject.prototype = {
                 return preview;
 
             // Properties.
-            var nativeGettersAsValues = true;
+            var nativeGettersAsValues = false;
             var descriptors = injectedScript._propertyDescriptors(object, InjectedScript.CollectionMode.AllProperties, nativeGettersAsValues);
             this._appendPropertyPreviews(object, preview, descriptors, false, propertiesThreshold, firstLevelKeys, secondLevelKeys);
             if (propertiesThreshold.indexes < 0 || propertiesThreshold.properties < 0)
