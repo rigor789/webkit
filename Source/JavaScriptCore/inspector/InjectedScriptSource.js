@@ -583,6 +583,17 @@ InjectedScript.prototype = {
         return descriptors;
     },
 
+    _objectPrototype: function(object)
+    {
+        if (InjectedScriptHost.subtype(object) === "proxy")
+            return null;
+        try {
+            return Object.getPrototypeOf(object);
+        } catch (e) {
+            return null;
+        }
+    },
+
     _propertyDescriptors: function(object, collectionMode, nativeGettersAsValues)
     {
         if (InjectedScriptHost.subtype(object) === "proxy")
@@ -692,7 +703,7 @@ InjectedScript.prototype = {
             isArrayLike = injectedScript._subtype(object) === "array" && isFinite(object.length) && object.length > 0;
         } catch(e) {}
 
-        for (var o = object; this._isDefined(o); o = o.__proto__) {
+        for (var o = object; this._isDefined(o); o = this._objectPrototype(o)) {
             var isOwnProperty = o === object;
 
             if (isArrayLike && isOwnProperty)
