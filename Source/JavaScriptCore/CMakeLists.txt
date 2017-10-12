@@ -1083,12 +1083,29 @@ else ()
     set(LLIntOutput LLIntAssembly.h)
 endif ()
 
+# LLIntOutput dependencies per architecture
+set(LLIntOutputCurrentStampFileName ${LLIntOutput}-$(CURRENT_ARCH).stamp)
+set(LLIntOutputCurrentStamp ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/${LLIntOutputCurrentStampFileName})
+set(LLIntOutputAllStampsWildcard ${LLIntOutput}-*.stamp)
+
+# The ${LLIntOutput} file is architecture-specific but resides in a common place. When we build for Simulator, 
+# it is created for the x86/x86_64 processor architectures. Afterwards all device builds will start failing 
+# because they need arm7/arm64 architectures but the file will be considered up-to-date and won't be regenerated. 
+# As a workaround we're creating an additional dependency of a stamp file per architecture. Whenever a specific 
+# architecture is generated, all other ones will be invalidated by touching the corresponding dependency files.
+add_custom_command(
+    OUTPUT ${LLIntOutputCurrentStamp}
+    COMMAND [ -f ${LLIntOutputCurrentStamp} ] || touch ${LLIntOutputCurrentStamp}
+    VERBATIM)
+
 add_custom_command(
     OUTPUT ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/${LLIntOutput}
     MAIN_DEPENDENCY ${JAVASCRIPTCORE_DIR}/offlineasm/asm.rb
-    DEPENDS LLIntOffsetsExtractor ${LLINT_ASM} ${OFFLINE_ASM} ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/InitBytecodes.asm
+    DEPENDS LLIntOffsetsExtractor ${LLINT_ASM} ${OFFLINE_ASM} ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/InitBytecodes.asm ${LLIntOutputCurrentStamp}
     COMMAND ${RUBY_EXECUTABLE} ${JAVASCRIPTCORE_DIR}/offlineasm/asm.rb -I${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/ ${JAVASCRIPTCORE_DIR}/llint/LowLevelInterpreter.asm $<TARGET_FILE:LLIntOffsetsExtractor> ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/${LLIntOutput} ${OFFLINE_ASM_ARGS}
     COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/${LLIntOutput}
+    # MacOS file timestamps have 1 second precision. Sleep in order to ensure that the updated stamp files will be considered newer.
+    COMMAND sleep 1 && find ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR} -name ${LLIntOutputAllStampsWildcard} -a -not -name ${LLIntOutputCurrentStampFileName} -exec touch {} +
     WORKING_DIRECTORY ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}
     VERBATIM)
 
