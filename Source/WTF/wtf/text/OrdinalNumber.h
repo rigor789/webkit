@@ -44,7 +44,6 @@ public:
     bool operator!=(OrdinalNumber other) { return !((*this) == other); }
     bool operator>(OrdinalNumber other) { return m_zeroBasedValue > other.m_zeroBasedValue; }
 
-private:
     OrdinalNumber(int zeroBasedInt) : m_zeroBasedValue(zeroBasedInt) { }
     int m_zeroBasedValue;
 };

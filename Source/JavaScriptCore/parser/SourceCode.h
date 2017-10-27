@@ -79,23 +79,23 @@ namespace JSC {
 
         SourceProvider* provider() const { return m_provider.get(); }
 
-        int firstLine() const { return m_firstLine; }
         void setFirstLine(int firstLine) { m_firstLine = firstLine; }
 
-        int startColumn() const { return m_startColumn; }
         void startColumn(int startColumn) { m_startColumn = startColumn; }
 
-        int startOffset() const { return m_startChar; }
+        int startOffset() const { return m_startChar.zeroBasedInt(); }
         void setStartOffset(int startChar) { m_startChar = startChar; }
 
-        int endOffset() const { return m_endChar; }
+        int endOffset() const { return m_endChar.zeroBasedInt(); }
         void setEndOffset(int endChar) { m_endChar = endChar; }
 
-        int length() const { return m_endChar - m_startChar; }
+        int length() const { return m_endChar.zeroBasedInt() - m_startChar.zeroBasedInt(); }
         
         SourceCode subExpression(unsigned openBrace, unsigned closeBrace, int firstLine, int startColumn);
 
     private:
+        OrdinalNumber m_startChar;
+        OrdinalNumber m_endChar;
         OrdinalNumber m_firstLine;
         OrdinalNumber m_startColumn;
     };
