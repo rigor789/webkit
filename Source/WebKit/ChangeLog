@@ -1,3 +1,841 @@
+2017-08-24  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r221138. rdar://problem/34059603
+
+    2017-08-24  Chris Dumez  <cdumez@apple.com>
+
+            [iOS] ViewServices started by StoreKitUIService may get suspended unexpectedly
+            https://bugs.webkit.org/show_bug.cgi?id=175922
+            <rdar://problem/34028921>
+
+            Reviewed by Tim Horton.
+
+            ViewServices started by StoreKitUIService may get suspended unexpectedly. This is
+            because StoreKitUIService is itself a ViewService and is therefore in the background.
+            To address the issue, treat StoreKitUIService as initially foreground in
+            ApplicationStateTracker so that its ViewServices do not get suspended. We don't
+            have good way to deal with ViewServices started by other ViewServices unfortunately.
+
+            * Platform/spi/ios/UIKitSPI.h:
+            * UIProcess/ApplicationStateTracker.mm:
+            (WebKit::ApplicationStateTracker::ApplicationStateTracker):
+
+2017-08-11  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r220571. rdar://problem/33829964
+
+    2017-08-10  John Wilander  <wilander@apple.com>
+
+            Resource Load Statistics: Increase grandfathering time to 7 days
+            https://bugs.webkit.org/show_bug.cgi?id=175414
+            <rdar://problem/33818046>
+
+            Reviewed by Brent Fulgham.
+
+            * UIProcess/WebResourceLoadStatisticsStore.h:
+
+2017-08-10  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r220505. rdar://problem/33829964
+
+    2017-08-09  John Wilander  <wilander@apple.com>
+
+            Resource Load Statistics: Increase grandfathering time to 3 days
+            https://bugs.webkit.org/show_bug.cgi?id=175414
+            <rdar://problem/33818046>
+
+            Reviewed by Brent Fulgham.
+
+            * UIProcess/WebResourceLoadStatisticsStore.h:
+
+2017-08-09  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r220459. rdar://problem/33820787
+
+    2017-08-09  Daniel Bates  <dabates@apple.com>
+
+            REGRESSION (r219013): OAuth flows are broken when redirecting back to application after authentication
+            https://bugs.webkit.org/show_bug.cgi?id=175247
+            <rdar://problem/33679804>
+
+            Reviewed by Brady Eidson.
+
+            Add SPI WKNavigationAction._isRedirect to query whether the navigation was in response to receiving
+            a redirect response. The majority of the WebKit change is plumbing this knowledge through to connect
+            it with the SPI.
+
+            * Shared/NavigationActionData.cpp:
+            (WebKit::NavigationActionData::encode const):
+            (WebKit::NavigationActionData::decode):
+            Encode and decode the boolean NavigationActionData::isRedirect.
+            * Shared/NavigationActionData.h:
+            * UIProcess/API/APINavigationAction.h:
+            * UIProcess/API/Cocoa/WKNavigationAction.mm:
+            (-[WKNavigationAction _isRedirect]): Added.
+            * UIProcess/API/Cocoa/WKNavigationActionPrivate.h:
+            * WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp:
+            (WebKit::WebFrameLoaderClient::dispatchDecidePolicyForNavigationAction): Set NavigationActionData::isRedirect
+            depending on whether the navigation is in response to receiving a redirect response.
+            * WebProcess/WebCoreSupport/WebFrameLoaderClient.h:
+
+2017-08-07  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r220273. rdar://problem/33732757
+
+    2017-08-04  Andreas Kling  <akling@apple.com>
+
+            NetworkLoad should always invoke its redirect completion handler
+            https://bugs.webkit.org/show_bug.cgi?id=175179
+            <rdar://problem/33464999>
+
+            Reviewed by Chris Dumez.
+
+            Make sure the redirect completion handler is always invoked,
+            just like we already did for the response completion handler.
+
+            * NetworkProcess/NetworkLoad.cpp:
+            (WebKit::NetworkLoad::~NetworkLoad):
+
+2017-08-04  Jason Marcell  <jmarcell@apple.com>
+
+        Revert r219896. rdar://problem/33711000
+
+2017-08-03  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r220185. rdar://problem/33713528
+
+    2017-08-02  Chris Dumez  <cdumez@apple.com>
+
+            NetworkResourceLoader::setDefersLoading() may cause start() to be called multiple times
+            https://bugs.webkit.org/show_bug.cgi?id=175109
+            <rdar://problem/33363169>
+
+            Reviewed by Brady Eidson.
+
+            If NetworkResourceLoader::setDefersLoading(false) is called by the client while m_networkLoad is null
+            then we call NetworkResourceLoader::start() to start the load. This is needed in the case where
+            a NetworkResourceLoader is constructed in deferred mode so that the load can later be started via
+            setDefersLoading(). However, it is possible for setDefersLoading(false) to be called when start()
+            has already been called, which causes start() to be called multiple times and leads to an assertion
+            hit in debug.
+
+            Normally, setDefersLoading(false) returns without calling start() if m_networkLoad is not null. It
+            relies on m_networkLoad being non-null to determine if start() should be called. This is bad because
+            start() checks the disk cache asynchronously *before* calling startNetworkLoad() and initializing
+            m_networkLoad. Therefore, if setDefersLoading(false) is called *while* we are checking the cache,
+            then we will call incorrectly call start() again.
+
+            In the case of the radar, this happens when we:
+            1. Call start() and check the disk cache
+            2. Retrieve a cached redirect from the cache, which causes a WillSendRequest IPC to be sent to the
+               WebProcess
+            3. The WebProcess calls setDefersLoading(true), sends the ContinueWillSendRequest IPC back and
+               then calls setDefersLoading(false)
+
+            The call to continueWillSendRequest() causes us to retrieve the redirected entry from the cache,
+            asynchronously, which will return no entry and start a load.
+            The later call to setDefersLoading(false) causes us to call start() again and we end up back to step 1.
+
+            * NetworkProcess/NetworkResourceLoader.cpp:
+            (WebKit::NetworkResourceLoader::start):
+            (WebKit::NetworkResourceLoader::setDefersLoading):
+            * NetworkProcess/NetworkResourceLoader.h:
+
+2017-08-03  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219896. rdar://problem/33711000
+
+    2017-07-25  Andy Estes  <aestes@apple.com>
+
+            [Apple Pay] Add "carteBancaire" as a supported payment network
+            https://bugs.webkit.org/show_bug.cgi?id=174841
+            <rdar://problem/31935596>
+
+            Reviewed by Alex Christensen.
+
+            * UIProcess/ApplePay/cocoa/WebPaymentCoordinatorProxyCocoa.mm:
+            (WebKit::toSupportedNetwork):
+
+2017-07-31  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r220033. rdar://problem/33619596
+
+    2017-07-28  Brady Eidson  <beidson@apple.com>
+
+            API tests that use URLSchemeHandler are failing.
+            https://bugs.webkit.org/show_bug.cgi?id=174950
+
+            Reviewed by Alex Christensen.
+
+            Make sure that in all cases where we remove the last task from the page->task map...
+            ...We also remove the map itself.
+
+            * UIProcess/WebURLSchemeHandler.cpp:
+            (WebKit::WebURLSchemeHandler::stopTask):
+            (WebKit::WebURLSchemeHandler::taskCompleted):
+            (WebKit::WebURLSchemeHandler::removeTaskFromPageMap):
+            * UIProcess/WebURLSchemeHandler.h:
+
+2017-07-31  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r220011. rdar://problem/33619596
+
+    2017-07-28  Brady Eidson  <beidson@apple.com>
+
+            WKURLSchemeTaskImpl instances are being abandoned (except if the task is stopped).
+            <rdar://problem/33568276> and https://bugs.webkit.org/show_bug.cgi?id=174895
+
+            Reviewed by Alex Christensen.
+
+            There was a lot going on here:
+            - There was an unbroken cycle between URLSchemeHandlers and URLSchemeTasks
+            - WKURLSchemeTasks were not destroying their API::URLSchemeTask implementation object
+            - When a WKWebView was dealloc'ed, it was not cleaning up the related UIProcess tasks
+            - If the NetworkingProcess crashed, WebProcesses were not cleaning up their tasks
+              (and therefore the UIProcess tasks were also not getting cleaned up)
+            - If a WebProcess crashed, the UIProcess was not cleaning up the related tasks
+
+            * UIProcess/API/Cocoa/WKURLSchemeTask.mm:
+            (-[WKURLSchemeTaskImpl dealloc]): Call API::~URLSchemeTask
+
+            * UIProcess/Cocoa/WebURLSchemeHandlerCocoa.h:
+            * UIProcess/Cocoa/WebURLSchemeHandlerCocoa.mm:
+            (WebKit::WebURLSchemeHandlerCocoa::platformTaskCompleted): Clear out the API wrapper map
+              so the wrapper and implementation object can both be destroyed.
+
+            * UIProcess/WebPageProxy.cpp:
+            (WebKit::WebPageProxy::close): Call stopAllURLSchemeTasks.
+            (WebKit::WebPageProxy::processDidTerminate): Call stopAllURLSchemeTasks.
+            (WebKit::WebPageProxy::stopAllURLSchemeTasks):
+            * UIProcess/WebPageProxy.h:
+
+            * UIProcess/WebURLSchemeHandler.cpp:
+            (WebKit::WebURLSchemeHandler::startTask):
+            (WebKit::WebURLSchemeHandler::stopAllTasksForPage):
+            (WebKit::WebURLSchemeHandler::stopTask):
+            (WebKit::WebURLSchemeHandler::taskCompleted):
+            * UIProcess/WebURLSchemeHandler.h:
+
+            * UIProcess/WebURLSchemeTask.cpp:
+            (WebKit::WebURLSchemeTask::WebURLSchemeTask):
+            * UIProcess/WebURLSchemeTask.h:
+            (WebKit::WebURLSchemeTask::pageID): Store separate from the WebPage so messaging
+              is possible even after the WebPage* has been cleared.
+
+            * WebProcess/WebPage/WebPage.cpp:
+            (WebKit::WebPage::stopAllURLSchemeTasks):
+            * WebProcess/WebPage/WebPage.h:
+
+            * WebProcess/WebPage/WebURLSchemeHandlerProxy.cpp:
+            (WebKit::WebURLSchemeHandlerProxy::stopAllTasks):
+            (WebKit::WebURLSchemeHandlerProxy::taskDidComplete):
+            (WebKit::WebURLSchemeHandlerProxy::taskDidStopLoading):
+            (WebKit::WebURLSchemeHandlerProxy::removeTask):
+            * WebProcess/WebPage/WebURLSchemeHandlerProxy.h:
+
+            * WebProcess/WebProcess.cpp:
+            (WebKit::WebProcess::networkProcessConnectionClosed): Call stopAllURLSchemeTasks
+              for each WebPage.
+
+2017-07-28  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219904. rdar://problem/33595576
+
+    2017-07-25  Brady Eidson  <beidson@apple.com>
+
+            ResourceLoadStatistics grandfathering happens much too often.
+            <rdar://problem/32655834> and https://bugs.webkit.org/show_bug.cgi?id=174825
+
+            Reviewed by Chris Dumez.
+
+            The ResourceLoadStatistics grandfathering procedure happens too often.
+            - With an empty memory store, even though an empty memory store is a perfectly valid state.
+            - On each launch, even if grandfathering happened on the last launch - because grandfathering
+              data would not automatically be saved to disk.
+            - After clearing all website data, at which point no grandfathering can possibly be relevant
+              because there is no data to grandfather.
+
+            This patch fixes those cases and adds API tests to verify they remain fixed.
+
+            * Shared/WebsiteData/WebsiteDataType.h:
+
+            * UIProcess/API/Cocoa/WKWebsiteDataStore.mm:
+            (+[WKWebsiteDataStore _allWebsiteDataTypesIncludingPrivate]): allWebsiteDataTypes, but even with the private ones.
+            (-[WKWebsiteDataStore _resourceLoadStatisticsClearInMemoryAndPersistentStore]): If the types being cleared cover all of
+              the types that ResourceLoadStatistics care about, don't grandfather afterwards.
+            (-[WKWebsiteDataStore _resourceLoadStatisticsClearInMemoryAndPersistentStoreModifiedSinceHours:]): Ditto.
+            (-[WKWebsiteDataStore _setResourceLoadStatisticsTestingCallback:]):
+            * UIProcess/API/Cocoa/WKWebsiteDataStorePrivate.h:
+
+            * UIProcess/Storage/ResourceLoadStatisticsPersistentStorage.cpp:
+            (WebKit::ResourceLoadStatisticsPersistentStorage::populateMemoryStoreFromDisk): Don't grandfather if the store read from
+              disk is empty (as being empty is perfectly fine), and also log the event of "populated without grandfathering".
+            * UIProcess/Storage/ResourceLoadStatisticsPersistentStorage.h:
+
+            * UIProcess/WebProcessProxy.cpp:
+            (WebKit::WebProcessProxy::topPrivatelyControlledDomainsWithWebsiteData):
+
+            * UIProcess/WebResourceLoadStatisticsStore.cpp:
+            (WebKit::WebResourceLoadStatisticsStore::monitoredDataTypes):
+            (WebKit::WebResourceLoadStatisticsStore::WebResourceLoadStatisticsStore):
+            (WebKit::WebResourceLoadStatisticsStore::~WebResourceLoadStatisticsStore):
+            (WebKit::WebResourceLoadStatisticsStore::removeDataRecords):
+            (WebKit::WebResourceLoadStatisticsStore::grandfatherExistingWebsiteData): Schedule a write right away so we don't re-grandfather
+              on next launch, and also log the grandfathering event.
+            (WebKit::WebResourceLoadStatisticsStore::scheduleClearInMemoryAndPersistent): Takes a ShouldGrandfather flag
+              to tell whether or not data should be re-grandfathered after the store is cleared.
+            (WebKit::WebResourceLoadStatisticsStore::logTestingEvent): Log the event to the testing client.
+            (WebKit::dataTypesToRemove): Deleted.
+            * UIProcess/WebResourceLoadStatisticsStore.h:
+
+            * UIProcess/WebsiteData/WebsiteDataStore.cpp:
+            (WebKit::WebsiteDataStore::removeData):
+            (WebKit::WebsiteDataStore::setResourceLoadStatisticsEnabled):
+            (WebKit::WebsiteDataStore::enableResourceLoadStatisticsAndSetTestingCallback): Handles enabling ResourceLoadStatistics both
+              with and without a testing callback.
+            * UIProcess/WebsiteData/WebsiteDataStore.h:
+
+2017-07-28  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219987. rdar://problem/33595619
+
+    2017-07-27  Nan Wang  <n_wang@apple.com>
+
+            AX: A11Y: Zoom no longer follows keyboard insertion point in safari
+            https://bugs.webkit.org/show_bug.cgi?id=174869
+
+            Reviewed by David Kilzer.
+
+            There was a recent change by denying XPC services access by default.
+            In UAZoomChangeFocus we need to send message to HIServices, so let's
+            allow the connection to XPC services for that.
+
+            * WebProcess/com.apple.WebProcess.sb.in:
+
+2017-07-28  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219973. rdar://problem/33595608
+
+    2017-07-26  Tim Horton  <timothy_horton@apple.com>
+
+            REGRESSION (r211160): Can't pinch to zoom unlocked encrypted PDFs in WKWebView
+            https://bugs.webkit.org/show_bug.cgi?id=174881
+            <rdar://problem/33556312>
+
+            Reviewed by Andy Estes.
+
+            * UIProcess/API/Cocoa/WKWebView.mm:
+            (-[WKWebView _hidePasswordView]):
+            WKPasswordView saves and restores a bunch of scroll view properties, including
+            those relating to zoom limits. The restoration happens in -[WKPasswordView hide],
+            which is never called. Instead, the code added in r211160 just calls
+            removeFromSuperview after unlocking, never restoring the old zoom limits,
+            causing the then fully unlocked PDF to not be zoomable. Fix this by calling
+            -hide instead of -removeFromSuperview (which -hide also calls).
+
+2017-07-28  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219855. rdar://problem/33595427
+
+    2017-07-24  Chris Dumez  <cdumez@apple.com>
+
+            [WK2][Cocoa] Allow overriding the ITP data removal internal using a default
+            https://bugs.webkit.org/show_bug.cgi?id=174802
+            <rdar://problem/33497898>
+
+            Reviewed by Sam Weinig.
+
+            Allow overriding the ITP data removal internal using a default to facilitate testing.
+            Can be used like so:
+            defaults write -g ResourceLoadStatisticsMinimumTimeBetweenDataRecordsRemoval 60
+
+            Will cause us to write every 60 seconds instead of 3600.
+
+            * Shared/WebPreferencesDefinitions.h:
+            * UIProcess/Cocoa/WebResourceLoadStatisticsStoreCocoa.mm:
+            (WebKit::WebResourceLoadStatisticsStore::registerUserDefaultsIfNeeded):
+
+2017-07-26  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219876. rdar://problem/33523847
+
+    2017-07-25  Said Abou-Hallawa  <sabouhallawa@apple.com>
+
+            Async image decoding for large images should be disabled after the first time a tile is painted
+            https://bugs.webkit.org/show_bug.cgi?id=174451
+            <rdar://problem/31246421>
+
+            Reviewed by Simon Fraser.
+
+            * Shared/mac/RemoteLayerBackingStore.mm:
+            (WebKit::RemoteLayerBackingStore::drawInContext):
+            * WebProcess/InjectedBundle/DOM/InjectedBundleNodeHandle.cpp:
+            (WebKit::imageForRect):
+            * WebProcess/InjectedBundle/DOM/InjectedBundleRangeHandle.cpp:
+            (WebKit::InjectedBundleRangeHandle::renderedImage):
+            * WebProcess/WebPage/CoordinatedGraphics/CompositingCoordinator.cpp:
+            (WebKit::CompositingCoordinator::paintContents):
+            * WebProcess/WebPage/CoordinatedGraphics/CompositingCoordinator.h:
+
+2017-07-26  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219620. rdar://problem/33523847
+
+    2017-07-18  Matt Lewis  <jlewis3@apple.com>
+
+            Unreviewed, rolling out r219610.
+
+            This caused an api failure on all platforms for the test
+            SnapshotImageLargeAsyncDecoding
+
+            Reverted changeset:
+
+            "Async image decoding for large images should be disabled
+            after the first time a tile is painted"
+            https://bugs.webkit.org/show_bug.cgi?id=174451
+            http://trac.webkit.org/changeset/219610
+
+2017-07-26  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219764. rdar://problem/33523878
+
+    2017-07-22  Chris Dumez  <cdumez@apple.com>
+
+            REGRESSION(r204565): WKObject is broken
+            https://bugs.webkit.org/show_bug.cgi?id=174736
+            <rdar://problem/33246169>
+
+            Reviewed by Dan Bernstein.
+
+            Revert r204565 as making WKObject a root class caused unexpected crashes.
+            Instead, we now have WKObject inherit from NSProxy (instead of previously
+            NSObject) and we forward calls to the target.
+
+            We also need to provide an implementation for private methods such as
+            isNSString__ to address the issue with NSStrings that r204565 was trying
+            to fix.
+
+            * Shared/Cocoa/APIObject.mm:
+            (API::Object::unwrap):
+            * Shared/Cocoa/WKObject.h:
+            * Shared/Cocoa/WKObject.mm:
+            (-[WKObject dealloc]):
+            (-[WKObject hash]):
+            (-[WKObject isKindOfClass:]):
+            (-[WKObject isMemberOfClass:]):
+            (-[WKObject respondsToSelector:]):
+            (-[WKObject conformsToProtocol:]):
+            (-[WKObject forwardingTargetForSelector:]):
+            (-[WKObject description]):
+            (-[WKObject debugDescription]):
+            (-[WKObject classForCoder]):
+            (-[WKObject classForKeyedArchiver]):
+            (-[WKObject _web_createTarget]):
+            (-[WKObject forwardInvocation:]):
+            (-[WKObject methodSignatureForSelector:]):
+            (-[WKObject isNSObject__]):
+            (-[WKObject isNSArray__]):
+            (-[WKObject isNSCFConstantString__]):
+            (-[WKObject isNSData__]):
+            (-[WKObject isNSDate__]):
+            (-[WKObject isNSDictionary__]):
+            (-[WKObject isNSNumber__]):
+            (-[WKObject isNSOrderedSet__]):
+            (-[WKObject isNSSet__]):
+            (-[WKObject isNSString__]):
+            (-[WKObject isNSTimeZone__]):
+            (-[WKObject isNSValue__]):
+
+2017-07-26  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219739. rdar://problem/33523884
+
+    2017-07-21  Chris Dumez  <cdumez@apple.com>
+
+            WebResourceLoadStatisticsStore::m_operatingDates is unsafely modified from several threads
+            https://bugs.webkit.org/show_bug.cgi?id=174721
+            <rdar://problem/33400343>
+
+            Reviewed by Brent Fulgham.
+
+            WebResourceLoadStatisticsStore::m_operatingDates is supposed to only be modified on
+            the background thread. However, WebResourceLoadStatisticsStore::performDailyTasks()
+            was mistakenly calling includeTodayAsOperatingDateIfNecessary() on the main thread,
+            which would modify m_operatingDates. This could lead to crashes such as the
+            one in <rdar://problem/33400343>, as the main thread may modify m_operatingDates
+            while we are interating over it on the background thread to save it to disk.
+
+            * UIProcess/WebResourceLoadStatisticsStore.cpp:
+            (WebKit::WebResourceLoadStatisticsStore::performDailyTasks):
+            (WebKit::WebResourceLoadStatisticsStore::includeTodayAsOperatingDateIfNecessary):
+
+2017-07-26  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219594. rdar://problem/33523357
+
+    2017-07-17  Timothy Horton  <timothy_horton@apple.com>
+
+            Page using safe area constant properties jumps to correct layout after resize
+            https://bugs.webkit.org/show_bug.cgi?id=174598
+            <rdar://problem/33364275>
+
+            Reviewed by Simon Fraser.
+
+            Test: fast/events/ios/rotation/safe-area-insets-during-safari-type-rotation.html
+
+            * UIProcess/API/Cocoa/WKWebView.mm:
+            (-[WKWebView _beginAnimatedResizeWithUpdates:]):
+            * UIProcess/WebPageProxy.h:
+            * UIProcess/ios/WebPageProxyIOS.mm:
+            (WebKit::WebPageProxy::dynamicViewportSizeUpdate):
+            * WebProcess/WebPage/WebPage.h:
+            * WebProcess/WebPage/WebPage.messages.in:
+            * WebProcess/WebPage/ios/WebPageIOS.mm:
+            (WebKit::WebPage::dynamicViewportSizeUpdate):
+            Plumb unobscured safe area insets through in the dynamicViewportSizeUpdate,
+            like we do in VisibleContentRectUpdate (once again sad that these aren't
+            more similar), so that it will be correct in the during-rotation snapshot,
+            instead of only becoming correct in the first visible content rect update
+            post-rotation.
+
+2017-07-26  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219845. rdar://problem/33523884
+
+    2017-07-24  Chris Dumez  <cdumez@apple.com>
+
+            Fix lifetime management issue in ResourceLoadStatisticsPersistentStorage::scheduleOrWriteMemoryStore()
+            https://bugs.webkit.org/show_bug.cgi?id=174790
+
+            Reviewed by Brady Eidson.
+
+            Fix lifetime management issue in ResourceLoadStatisticsPersistentStorage::scheduleOrWriteMemoryStore().
+            WorkQueue::dispatchAfter() keeps the WorkQueue alive because its implementation keeps a strong ref to
+            |this|. As a result, the lambda passed to dispatchAfter(), which calls writeMemoryStoreToDisk(), can
+            get executed after the store is gone.
+
+            To address the issue, we now use a RunLoop::Timer to schedule the write, instead of a
+            WorkQueue::dispatchAfter() call. This way, we are guaranteed that the callback will not get called
+            after the store has been destroyed.
+
+            * UIProcess/Storage/ResourceLoadStatisticsPersistentStorage.cpp:
+            (WebKit::ResourceLoadStatisticsPersistentStorage::ResourceLoadStatisticsPersistentStorage):
+            (WebKit::ResourceLoadStatisticsPersistentStorage::asyncWriteTimerFired):
+            (WebKit::ResourceLoadStatisticsPersistentStorage::scheduleOrWriteMemoryStore):
+            (WebKit::ResourceLoadStatisticsPersistentStorage::finishAllPendingWorkSynchronously):
+            (WebKit::ResourceLoadStatisticsPersistentStorage::ref):
+            (WebKit::ResourceLoadStatisticsPersistentStorage::deref):
+            * UIProcess/Storage/ResourceLoadStatisticsPersistentStorage.h:
+
+2017-07-26  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219765. rdar://problem/33523818
+
+    2017-07-22  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [Mac WK2] Fix null dereference in asynchronous NSTextInputClient methods when deallocating a WKWebView
+            https://bugs.webkit.org/show_bug.cgi?id=174751
+            <rdar://problem/33132405>
+
+            Reviewed by Darin Adler.
+
+            Tweaks -[WKWebView dealloc] to close the WebPageProxy at an earlier time, prior to destroying the WebViewImpl.
+            This fixes a NSTextInputClient crash in WKWebView when exercising the following scenario:
+
+            (1) Suppose that NSTextInputContext invokes an asynchronous text input query on WKWebView immediately before
+            WKWebView is deallocated, such that WebPageProxy's CallbackMap contains an NSTextInputContext callback at the
+            time that -[WKWebView dealloc] is called. Additionally, suppose that this callback from NSTextInputContext
+            invokes additional NSTextInputClient methods on the WKWebView that involve plumbing through to the WebViewImpl
+            (which is stored as _impl on the WKWebView).
+
+            (2) Observe that when calling [super dealloc] in [WKWebView dealloc], we will destroy the WebViewImpl as a
+            result of setting our unique pointer to _impl to be null. In ~WebViewImpl, we invoke WebPageProxy::close, which
+            in turn invokes WebPageProxy::resetState.
+
+            (3) WebPageProxy::resetState then calls m_callbacks.invalidate(error), which triggers all pending callbacks.
+            This invokes the block described in (1), which causes us to try and call back into WKWebView, invoking
+            NSTextInputClient methods. Without the fix in this patch, these methods currently assume that _impl is nonnull,
+            even though we've already cleared out the pointer in (2), so we segfault with a null dereference.
+
+            After this patch, we close the _page at an earlier time, such that the state is reset before the WebViewImpl
+            (and corresponding _impl unique_ptr in WKWebView) is torn down. This ensures that _impl will not be null for
+            callbacks invoked after beginning to deallocate the WKWebView.
+
+            Forcing this scenario in a custom AppKit root that triggers async NSTextInputClient methods immediately when a
+            WKWebView is being deallocated produces a crash with the same stack trace as what we observe in the radar, but
+            there are no known steps to actually reproduce this crash in shipping software.
+
+            * UIProcess/API/Cocoa/WKWebView.mm:
+            (-[WKWebView dealloc]):
+
+2017-07-26  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219754. rdar://problem/33523873
+
+    2017-07-21  Brady Eidson  <beidson@apple.com>
+
+            Crash in many WebKit apps marking a connection invalid under Messages::NetworkProcessProxy::canAuthenticateAgainstProtectionSpace.
+            <rdar://problem/28822272> and https://bugs.webkit.org/show_bug.cgi?id=174729
+
+            Reviewed by Tim Horton.
+
+            Previously, when a NetworkLoad generated a "CanAuthenticateAgainstProtectionSpace" event, the message went from
+            Network process -> Web process -> UI process.
+
+            In that case, MESSAGE_CHECKing the validity of the frame in WebPageProxy made sense.
+
+            In r202511 we cut the WebProcess out of this and had Networking go straight to UI process.
+
+            As a result, the message check became invalid. The Networking process cannot possible know the validity of
+            particular WebPage or WebFrame identifiers.
+
+            We simply need to validate the input in NetworkProcessProxy.
+
+            * UIProcess/Network/NetworkProcessProxy.cpp:
+            (WebKit::NetworkProcessProxy::canAuthenticateAgainstProtectionSpace): Validate both the page and frame ids before
+              passing the call along to the WebPageProxy. Also, if either of those validations fail, respond to the network process.
+
+2017-07-26  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219750. rdar://problem/33523870
+
+    2017-07-21  Andy Estes  <aestes@apple.com>
+
+            [iOS] Adopt UIImagePickerControllerImageURL for photo uploads
+            https://bugs.webkit.org/show_bug.cgi?id=174723
+            <rdar://problem/33223962>
+
+            Reviewed by Joseph Pecoraro.
+
+            In iOS 11, use the URL provided by UIImagePickerControllerImageURL, if available, as the
+            file URL for photo uploads. Since we use the UIImagePickerController imageExportPreset of
+            UIImagePickerControllerImageURLExportPresetCompatible, UIKit will take care of converting
+            HEIF images to JPEG for us. For other types (GIF, JPEG, and PNG), it will preserve the
+            original format.
+
+            Since UIImagePickerController now provides GIF and PNG representations, we no longer need to
+            use PHImageManager to access the original assets. This patch removes the
+            PHAsset/PHImageManager code added in r185241.
+
+            * Platform/spi/ios/PhotosSPI.h: Removed.
+            * UIProcess/ios/forms/WKFileUploadPanel.mm:
+            (-[WKFileUploadPanel _uploadItemFromMediaInfo:successBlock:failureBlock:]):
+            (-[WKFileUploadPanel _uploadItemForImage:withAssetURL:successBlock:failureBlock:]): Deleted.
+            * WebKit.xcodeproj/project.pbxproj:
+
+2017-07-26  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219610. rdar://problem/33523847
+
+    2017-07-18  Said Abou-Hallawa  <sabouhallawa@apple.com>
+
+            Async image decoding for large images should be disabled after the first time a tile is painted
+            https://bugs.webkit.org/show_bug.cgi?id=174451
+
+            Reviewed by Simon Fraser.
+
+            * Shared/mac/RemoteLayerBackingStore.mm:
+            (WebKit::RemoteLayerBackingStore::drawInContext):
+            * WebProcess/WebPage/CoordinatedGraphics/CompositingCoordinator.cpp:
+            (WebKit::CompositingCoordinator::paintContents):
+            * WebProcess/WebPage/CoordinatedGraphics/CompositingCoordinator.h:
+
+2017-07-24  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219852. rdar://problem/33503476
+
+    2017-07-24  Simon Fraser  <simon.fraser@apple.com>
+
+            [iOS WK2] Crash under PageOverlayController::uninstallPageOverlay when doing multiple finds
+            https://bugs.webkit.org/show_bug.cgi?id=174806
+            rdar://problem/33501664
+
+            Reviewed by Tim Horton.
+
+            Calling TextIndicator::createWithSelectionInFrame can trigger layout via VisibleSelection code,
+            which can re-enter FindController::updateFindIndicator which has by now removed m_findIndicatorOverlay
+            from pageOverlayController's map, but not deleted it. The second call to uninstallPageOverlay()
+            thus crashes at m_overlayGraphicsLayers.take(&overlay)->removeFromParent().
+
+            Fix by nulling out m_findIndicatorOverlay as soon as we uninstall it.
+
+            * WebProcess/WebPage/ios/FindControllerIOS.mm:
+            (WebKit::FindController::updateFindIndicator):
+
+2017-07-22  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219709. rdar://problem/33462692
+
+    2017-07-20  David Quesada  <david_quesada@apple.com>
+
+            Add SPI to notify WKNavigationDelegate about client redirects
+            https://bugs.webkit.org/show_bug.cgi?id=174680
+            rdar://problem/33184886
+
+            Reviewed by Brady Eidson.
+
+            * UIProcess/API/APINavigationClient.h:
+            (API::NavigationClient::didPerformClientRedirectForNavigation):
+            Add a new virtual method for navigation clients to implement if they want to be informed
+            when the page is initiating a navigation that is a client redirect.
+
+            * UIProcess/API/Cocoa/WKNavigationDelegatePrivate.h:
+            Declare the new WKNavigationDelegate method -_webView:didPerformClientRedirectForNavigation:
+
+            * UIProcess/Cocoa/NavigationState.h:
+            * UIProcess/Cocoa/NavigationState.mm:
+            (WebKit::NavigationState::setNavigationDelegate):
+            (WebKit::NavigationState::NavigationClient::didPerformClientRedirectForNavigation):
+            Add a new method to NavigationState method to tell the WKNavigationDelegate when a
+            client redirect happens.
+
+            * UIProcess/WebPageProxy.cpp:
+            (WebKit::WebPageProxy::didPerformClientRedirectForLoadForFrame):
+            * UIProcess/WebPageProxy.h:
+            * UIProcess/WebPageProxy.messages.in:
+            Allow the WebPageProxy to receive a message from the web process when a client redirect happens.
+
+            * WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp:
+            (WebKit::WebFrameLoaderClient::dispatchDidPerformClientRedirect):
+            * WebProcess/WebCoreSupport/WebFrameLoaderClient.h:
+            Send this new message to the UI process on client redirects.
+
+2017-07-22  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219703. rdar://problem/33462696
+
+    2017-07-20  Chris Dumez  <cdumez@apple.com>
+
+            Regression(ITP): May get frequently logged out of wsj.com
+            https://bugs.webkit.org/show_bug.cgi?id=174661
+            <rdar://problem/32343256>
+
+            Reviewed by Geoffrey Garen.
+
+            Bump statistics file version to blow away old statistics on disk since those do not
+            take into account associated domains.
+
+            * UIProcess/WebResourceLoadStatisticsStore.cpp:
+
+2017-07-22  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219701. rdar://problem/33465715
+
+    2017-07-20  Chris Dumez  <cdumez@apple.com>
+
+            Regression(ITP): Can no longer log in on abc.go.com
+            https://bugs.webkit.org/show_bug.cgi?id=174533
+            <rdar://problem/33325881>
+
+            Reviewed by Geoffrey Garen.
+
+            Bump statistics database version to blow away any existing statistics. Without this, SSO providers
+            for which we added a quirk may already be in the database and identified as trackers. The quirk
+            merely prevents the specified SSO providers from being identified as trackers.
+
+            * UIProcess/WebResourceLoadStatisticsStore.cpp:
+
+2017-07-22  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219668. rdar://problem/33462676
+
+    2017-07-19  Simon Fraser  <simon.fraser@apple.com>
+
+            getBoundingClientRects not updated for programmatic scrolls
+            https://bugs.webkit.org/show_bug.cgi?id=174538
+            rdar://problem/33049012
+
+            Reviewed by Tim Horton.
+
+            Feed ViewportRectStability and ScrollingLayerPositionAction into reconcileScrollingState().
+
+            * WebProcess/WebPage/ios/WebPageIOS.mm:
+            (WebKit::WebPage::updateVisibleContentRects):
+
+2017-07-22  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219664. rdar://problem/33464115
+
+    2017-07-19  Brady Eidson  <beidson@apple.com>
+
+            iBooks sometimes crashes when closing a book.
+            <rdar://problem/31180331> and https://bugs.webkit.org/show_bug.cgi?id=174658
+
+            Reviewed by Oliver Hunt.
+
+            - LegacyCustomProtocolManagerProxy should not reference a WebProcessPool directly.
+            - LegacyCustomProtocolManagerProxy should invalidate in its destructor.
+
+            * UIProcess/Network/CustomProtocols/LegacyCustomProtocolManagerProxy.cpp:
+            (WebKit::LegacyCustomProtocolManagerProxy::LegacyCustomProtocolManagerProxy):
+            (WebKit::LegacyCustomProtocolManagerProxy::~LegacyCustomProtocolManagerProxy):
+            (WebKit::LegacyCustomProtocolManagerProxy::startLoading):
+            (WebKit::LegacyCustomProtocolManagerProxy::stopLoading):
+            (WebKit::LegacyCustomProtocolManagerProxy::invalidate):
+            (WebKit::LegacyCustomProtocolManagerProxy::wasRedirectedToRequest):
+            (WebKit::LegacyCustomProtocolManagerProxy::didReceiveResponse):
+            (WebKit::LegacyCustomProtocolManagerProxy::didLoadData):
+            (WebKit::LegacyCustomProtocolManagerProxy::didFailWithError):
+            (WebKit::LegacyCustomProtocolManagerProxy::didFinishLoading):
+            (WebKit::LegacyCustomProtocolManagerProxy::processDidClose): Deleted.
+            * UIProcess/Network/CustomProtocols/LegacyCustomProtocolManagerProxy.h:
+
+            * UIProcess/Network/NetworkProcessProxy.cpp:
+            (WebKit::NetworkProcessProxy::NetworkProcessProxy):
+            (WebKit::NetworkProcessProxy::didClose):
+            * UIProcess/Network/NetworkProcessProxy.h:
+            (WebKit::NetworkProcessProxy::processPool):
+
+2017-07-22  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219588. rdar://problem/33464447
+
+    2017-07-17  Chris Dumez  <cdumez@apple.com>
+
+            UserMediaPermissionRequestManagerProxy should not use WebCore::Timer
+            https://bugs.webkit.org/show_bug.cgi?id=174599
+            <rdar://problem/33362600>
+
+            Reviewed by Tim Horton.
+
+            UserMediaPermissionRequestManagerProxy should not use WebCore::Timer since it runs in the
+            UIProcess. Switch to using RunLoop::Timer instead.
+
+            * UIProcess/UserMediaPermissionRequestManagerProxy.cpp:
+            (WebKit::UserMediaPermissionRequestManagerProxy::UserMediaPermissionRequestManagerProxy):
+            * UIProcess/UserMediaPermissionRequestManagerProxy.h:
+
+2017-07-22  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219585. rdar://problem/33465177
+
+    2017-07-17  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [iOS DnD] Web process uses too much memory when beginning a drag on a very large image
+            https://bugs.webkit.org/show_bug.cgi?id=174585
+            <rdar://problem/33302541>
+
+            Reviewed by Tim Horton.
+
+            Add IPC support for serializing/deserializing the size of an image written to the pasteboard. See WebCore
+            ChangeLogs for more details.
+
+            * Shared/WebCoreArgumentCoders.cpp:
+            (IPC::ArgumentCoder<PasteboardImage>::encode):
+            (IPC::ArgumentCoder<PasteboardImage>::decode):
+
+2017-07-17  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r219413. rdar://problem/33337335
+
+    2017-06-29  Dean Jackson  <dino@apple.com>
+
+            Disable some features on this release branch.
+            <rdar://problem/32913370>
+
+            * Configurations/FeatureDefines.xcconfig:
+            * Shared/WebPreferencesDefinitions.h:
+
 2017-07-17  Konstantin Tokarev  <annulen@yandex.ru>
 
         [CMake] Create targets before WEBKIT_INCLUDE_CONFIG_FILES_IF_EXISTS is called

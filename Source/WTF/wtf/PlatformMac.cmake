@@ -1,5 +1,6 @@
 set(WTF_LIBRARY_TYPE STATIC)
 
+find_library(COCOA_LIBRARY Cocoa)
 find_library(COREFOUNDATION_LIBRARY CoreFoundation)
 find_library(FOUNDATION_LIBRARY Foundation)
 find_library(SECURITY_LIBRARY Security)
