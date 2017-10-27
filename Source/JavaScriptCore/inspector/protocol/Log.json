@@ -1,0 +1,77 @@
+{
+    "domain": "Log",
+    "description": "Provides access to log entries.",
+    "types": [
+              {
+              "id": "LogEntry",
+              "type": "object",
+              "description": "Log entry.",
+              "properties": [
+                             { "name": "source", "type": "string", "enum": ["xml", "javascript", "network", "storage", "appcache", "rendering", "security", "deprecation", "worker", "violation", "other"], "description": "Log entry source." },
+                             { "name": "level", "type": "string", "enum": ["log", "warning", "error", "debug", "info"], "description": "Log entry severity." },
+                             { "name": "text", "type": "string", "description": "Logged text." },
+                             { "name": "timestamp", "$ref": "number", "description": "Timestamp when this entry was added." },
+                             { "name": "url", "type": "string", "optional": true, "description": "URL of the resource if known." },
+                             { "name": "lineNumber", "type": "integer", "optional": true, "description": "Line number in the resource." },
+                             { "name": "stackTrace", "$ref": "StackTrace", "optional": true, "description": "JavaScript stack trace." },
+                             
+                             { "name": "networkRequestId", "$ref": "Network.RequestId", "optional": true, "description": "Identifier of the network request associated with this entry." },
+                             { "name": "workerId", "type": "string", "optional": true, "description": "Identifier of the worker associated with this entry." }
+                            ]
+              },
+              {
+              "id": "ViolationSetting",
+              "type": "object",
+              "description": "Violation configuration setting.",
+              "properties": [
+                             { "name": "name", "type": "string", "enum": ["longTask", "longLayout", "blockedEvent", "blockedParser", "handler", "recurringHandler"], "description": "Violation type." },
+                             { "name": "threshold", "type": "number", "description": "Time threshold to trigger upon." }
+                             ]
+              },
+              {
+              "id": "StackTrace",
+              "type": "object",
+              "description": "Call frames for assertions or error messages.",
+              "exported": true,
+              "properties": [
+                             { "name": "description", "type": "string", "optional": true, "description": "String label of this stack trace. For async traces this may be a name of the function that initiated the async call." },
+                             { "name": "callFrames", "type": "array", "items": { "$ref": "Console.CallFrame" }, "description": "JavaScript function name." },
+                             { "name": "parent", "$ref": "StackTrace", "optional": true, "description": "Asynchronous JavaScript stack trace that preceded this stack, if available." }
+                             ]
+              }
+  ],
+    "commands": [
+                 {
+                 "name": "enable",
+                 "description": "Enables log domain, sends the entries collected so far to the client by means of the <code>entryAdded</code> notification."
+                 },
+                 {
+                 "name": "disable",
+                 "description": "Disables log domain, prevents further log entries from being reported to the client."
+                 },
+                 {
+                 "name": "clear",
+                 "description": "Clears the log."
+                 },
+                 {
+                 "name": "startViolationsReport",
+                 "parameters": [
+                                { "name": "config", "type": "array", "items": { "$ref": "ViolationSetting" }, "description": "Configuration for violations." }
+                                ],
+                 "description": "start violation reporting."
+                 },
+                 {
+                 "name": "stopViolationsReport",
+                 "description": "Stop violation reporting."
+                 }
+     ],
+    "events": [
+               {
+               "name": "entryAdded",
+               "parameters": [
+                              { "name": "entry", "$ref": "LogEntry", "description": "The entry." }
+                              ],
+               "description": "Issued when new message was logged."
+               }
+    ]
+}

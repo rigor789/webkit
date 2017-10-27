@@ -48,7 +48,7 @@ void JSGlobalObjectRuntimeAgent::didCreateFrontendAndBackend(FrontendRouter*, Ba
 
 InjectedScript JSGlobalObjectRuntimeAgent::injectedScriptForEval(ErrorString& errorString, const int* executionContextId)
 {
-    ASSERT_UNUSED(executionContextId, !executionContextId);
+    ASSERT_UNUSED(executionContextId, (!executionContextId || *executionContextId == 1));
 
     JSC::ExecState* scriptState = m_globalObject.globalExec();
     InjectedScript injectedScript = injectedScriptManager().injectedScriptFor(scriptState);

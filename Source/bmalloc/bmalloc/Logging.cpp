@@ -23,6 +23,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
+ */
+
 #include "Logging.h"
 #include "BPlatform.h"
 
@@ -31,24 +35,24 @@
 #include <stdio.h>
 #endif
 
-#if BPLATFORM(IOS)
-#include <mach/exception_types.h>
-#include <objc/objc.h>
-#include <unistd.h>
-
-#include "BSoftLinking.h"
-BSOFT_LINK_PRIVATE_FRAMEWORK(CrashReporterSupport);
-BSOFT_LINK_FUNCTION(CrashReporterSupport, SimulateCrash, BOOL, (pid_t pid, mach_exception_data_type_t exceptionCode, id description), (pid, exceptionCode, description));
-#endif
+//#if BPLATFORM(IOS)
+//#include <mach/exception_types.h>
+//#include <objc/objc.h>
+//#include <unistd.h>
+//
+//#include "darwin/BSoftLinking.h"
+//BSOFT_LINK_PRIVATE_FRAMEWORK(CrashReporterSupport);
+//BSOFT_LINK_FUNCTION(CrashReporterSupport, SimulateCrash, BOOL, (pid_t pid, mach_exception_data_type_t exceptionCode, id description), (pid, exceptionCode, description));
+//#endif
 
 namespace bmalloc {
 
 void logVMFailure()
 {
-#if BPLATFORM(IOS)
-    const mach_exception_data_type_t kExceptionCode = 0xc105ca11;
-    SimulateCrash(getpid(), kExceptionCode, nullptr);
-#endif
+//#if BPLATFORM(IOS)
+//    const mach_exception_data_type_t kExceptionCode = 0xc105ca11;
+//    SimulateCrash(getpid(), kExceptionCode, nullptr);
+//#endif
 }
 
 #if !BUSE(OS_LOG)

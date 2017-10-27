@@ -23,6 +23,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
+ */
+
 // https://whatwg.github.io/loader/#loader-object
 // Module Loader has several hooks that can be customized by the platform.
 // For example, the [[Fetch]] hook can be provided by the JavaScriptCore shell
@@ -199,7 +203,7 @@ function instantiation(result, source, entry)
 
     "use strict";
 
-    return this.parseModule(entry.key, source);
+    return result || this.parseModule(entry.key, source);
 }
 
 // Loader.

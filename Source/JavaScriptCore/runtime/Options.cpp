@@ -23,6 +23,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
+/*
+ * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
+ */
+
 #include "config.h"
 #include "Options.h"
 
@@ -46,7 +50,7 @@
 #include <wtf/text/StringBuilder.h>
 #include <wtf/threads/Signals.h>
 
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) && !TARGET_OS_IPHONE
 #include <crt_externs.h>
 #endif
 
@@ -523,7 +527,7 @@ void Options::initialize()
             // Allow environment vars to override options if applicable.
             // The evn var should be the name of the option prefixed with
             // "JSC_".
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) && !TARGET_OS_IPHONE
             bool hasBadOptions = false;
             for (char** envp = *_NSGetEnviron(); *envp; envp++) {
                 const char* env = *envp;
@@ -536,7 +540,7 @@ void Options::initialize()
             }
             if (hasBadOptions && Options::validateOptions())
                 CRASH();
-#else // PLATFORM(COCOA)
+#else // PLATFORM(COCOA) && !TARGET_OS_IPHONE
 #define FOR_EACH_OPTION(type_, name_, defaultValue_, availability_, description_) \
             overrideOptionWithHeuristic(name_(), name_##ID, "JSC_" #name_, Availability::availability_);
             JSC_OPTIONS(FOR_EACH_OPTION)

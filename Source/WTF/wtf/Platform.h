@@ -24,6 +24,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+ 
+/*
+ * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
+ */
 
 #ifndef WTF_Platform_h
 #define WTF_Platform_h
@@ -1188,6 +1192,15 @@
 
 #if PLATFORM(COCOA)
 #define USE_MEDIATOOLBOX 1
+#endif
+
+/* While 10.10 has support for fences, it is missing some API important for our integration of them. */
+#if PLATFORM(IOS) || (PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 101100)
+#define HAVE_COREANIMATION_FENCES 1
+#endif
+
+#if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
+#define unorm_normalize(source, sourceLength, mode, options, result, resultLength, status) ios_specific_unorm_normalize(source, sourceLength, mode, options, result, resultLength, status)
 #endif
 
 /* FIXME: Enable USE_OS_LOG when building with the public iOS 10 SDK once we fix <rdar://problem/27758343>. */

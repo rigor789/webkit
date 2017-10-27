@@ -63,6 +63,7 @@ public:
     MessageSource source() const { return m_source; }
     MessageType type() const { return m_type; }
     MessageLevel level() const { return m_level; }
+    ScriptCallStack* callStack() const { return m_callStack.get(); }
     const String& message() const { return m_message; }
     const String& url() const { return m_url; }
     unsigned line() const { return m_line; }

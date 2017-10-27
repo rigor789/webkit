@@ -20,6 +20,10 @@
  *
  */
 
+/*
+ * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
+ */
+
 #include "config.h"
 #include "StringPrototype.h"
 
@@ -1755,7 +1759,6 @@ static JSValue normalize(ExecState* exec, const UChar* source, size_t sourceLeng
 {
     VM& vm = exec->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
-
     UErrorCode status = U_ZERO_ERROR;
     // unorm2_get*Instance() documentation says: "Returns an unmodifiable singleton instance. Do not delete it."
     const UNormalizer2* normalizer = nullptr;
@@ -1795,8 +1798,7 @@ static JSValue normalize(ExecState* exec, const UChar* source, size_t sourceLeng
     if (U_FAILURE(status))
         return throwTypeError(exec, scope);
 
-    scope.release();
-    return jsString(exec, WTFMove(impl));
+    return jsString(exec, impl.get());
 }
 
 EncodedJSValue JSC_HOST_CALL stringProtoFuncNormalize(ExecState* exec)

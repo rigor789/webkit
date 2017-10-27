@@ -103,6 +103,7 @@ public:
     RefPtr<InspectorObject> getObject(InspectorObject*, const String& name, bool* valueFound);
     RefPtr<InspectorArray> getArray(InspectorObject*, const String& name, bool* valueFound);
 
+    const HashMap<String, SupplementalBackendDispatcher*>& dispatchers() { return m_dispatchers; }
 private:
     BackendDispatcher(Ref<FrontendRouter>&&);
 

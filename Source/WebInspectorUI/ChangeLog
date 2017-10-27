@@ -11547,617 +11547,97 @@
 
 2016-10-25  Joseph Pecoraro  <pecoraro@apple.com>
 
-        Web Inspector: Cmd-+ doesn't "zoom in" to increase text size in the Web Inspector
-        https://bugs.webkit.org/show_bug.cgi?id=163961
-        <rdar://problem/28895308>
+        Remove Objective-C GC support
+        https://bugs.webkit.org/show_bug.cgi?id=151819
+        rdar://problem/23746991
 
-        Reviewed by Brian Burg.
+        Reviewed by Dan Bernstein.
+
+        * Configurations/Base.xcconfig:
+
+2015-11-23  Brian Burg  <bburg@apple.com>
+
+        Web Inspector: Add a keyboard shortcut to restore the default zoom level
+        https://bugs.webkit.org/show_bug.cgi?id=151237
+
+        Reviewed by Timothy Hatcher.
+
+        The Cmd-0 shortcut matches the keybindings of Safari and other browsers.
 
         * UserInterface/Base/Main.js:
         (WebInspector.contentLoaded):
-        Add a duplicate set of keyboard shortcuts for the Shift variants.
 
-2016-10-25  Joseph Pecoraro  <pecoraro@apple.com>
+2015-11-23  Brian Burg  <bburg@apple.com>
 
-        Web Inspector: Remove dead code in FrameTreeElement
-        https://bugs.webkit.org/show_bug.cgi?id=163914
+        Web Inspector: inspector settings should not be shared between different inspection levels
+        https://bugs.webkit.org/show_bug.cgi?id=151151
 
-        Reviewed by Brian Burg.
+        Reviewed by Timothy Hatcher.
 
-        * UserInterface/Views/FrameTreeElement.js:
+        It's really annoying to have shared settings between Inspector^1 and Inspector^2, because
+        they are not designed to respond to external changes to local storage keys. As a result,
+        the two inspectors seemingly have different settings while both are open, but the settings
+        clobber each other depending on which inspector is closed first. On the next inspector
+        being opened, it has settings that reflect whichever inspector closed last.
 
-2016-10-24  Devin Rousso  <dcrousso+webkit@gmail.com>
+        To fix this, alter the local storage key prefix to incude the inspection level when it is
+        greater than 1 (i.e., inspecting the inspector). The storage prefix becomes
+        "com.apple.WebInspector-${inspectionLevel}." in this case.
+        This is backwards-compatible for normal Inspector, who keeps the same storage prefix. 
 
-        Web Inspector: Scope chain shouldn't show empty Closure sections
-        https://bugs.webkit.org/show_bug.cgi?id=152348
+        Alternate approaches that were considered and abandoned:
 
-        Reviewed by Joseph Pecoraro.
+         - Use separate WKWebSiteDataStores for each inspection level. This API (as it currently is)
+        does not support multiple on-disk storage locations. We don't want to add an entirely new
+        Library directory for each inspector level, and sharing a single location doesn't fix the
+        shared-settings bug. Changing storage location would lose all existing Inspector settings.
 
-        * UserInterface/Controllers/DebuggerManager.js:
-        (WebInspector.DebuggerManager.prototype._scopeChainNodeFromPayload):
-        * UserInterface/Models/ScopeChainNode.js:
-        (WebInspector.ScopeChainNode):
-        (WebInspector.ScopeChainNode.prototype.get empty):
-        Added support for new empty property.
+         - Sync settings between multiple open Inspectors. This would be catastrophic, as changing
+        the active tab on one inspector would immediately propagate to the other open inspectors.
 
-        * UserInterface/Views/ScopeChainDetailsSidebarPanel.js:
-        (WebInspector.ScopeChainDetailsSidebarPanel.prototype._generateCallFramesSection):
-        Only create and display a DetailsSection if the scope is not empty (via empty).
+        * UserInterface/Models/Setting.js:
+        (WebInspector.Setting):
+        * UserInterface/Protocol/InspectorFrontendHostStub.js:
+        (window.InspectorFrontendHost.WebInspector.InspectorFrontendHostStub.prototype.inspectionLevel):
 
-2016-10-24  Devin Rousso  <dcrousso+webkit@gmail.com>
+2015-11-23  Brian Burg  <bburg@apple.com>
 
-        Web Inspector: Improve Quick Open sorting algorithm
-        https://bugs.webkit.org/show_bug.cgi?id=163705
+        Web Inspector: use Cmd-Option-L and Cmd-Option-R for toggling navigation and details sidebars
+        https://bugs.webkit.org/show_bug.cgi?id=151572
 
-        Reviewed by Joseph Pecoraro.
+        Reviewed by Timothy Hatcher.
 
-        * UserInterface/Models/ResourceQueryResult.js:
-        (WebInspector.ResourceQueryResult.prototype._calculateRank.getMultiplier):
-        (WebInspector.ResourceQueryResult.prototype._calculateRank):
-        Added logic to multiply the ranking increment/decrement based on whether the current match
-        is part of a sequence, whether that sequence began with a special character, and the length
-        of the current sequence.
+        The previous shortcuts were Cmd-0 and Cmd-Option-0, but these didn't match Safari's
+        sidebar shortcuts and conflict with Cmd-0 as the cross-browser way to reset page zoom.
 
-2016-10-19  Dean Jackson  <dino@apple.com>
+        * UserInterface/Base/Main.js:
+        (WebInspector.contentLoaded):
 
-        Support CSS Shapes Level 1 without a prefix
-        https://bugs.webkit.org/show_bug.cgi?id=163709
-        <rdar://problem/28859369>
+2015-11-23  Brian Burg  <bburg@apple.com>
 
-        Reviewed by Myles Maxfield.
+        Web Inspector: when inspecting the inspector, add the inspection level to the title bar
+        https://bugs.webkit.org/show_bug.cgi?id=151555
 
-        Replace -webkit-shape-outside with shape-outside.
+        Reviewed by Timothy Hatcher.
 
-        * UserInterface/Models/CSSKeywordCompletions.js:
-
-2016-10-19  Aaron Chu  <aaron_chu@apple.com>
-
-        Web Inspector: AXI: expose computed tree node and heading level
-        https://bugs.webkit.org/show_bug.cgi?id=130825
-        <rdar://problem/16442349>
-
-        Reviewed by Joseph Pecoraro.
-
-        Updating the Web Accessibility Inspector to display Heading Level and Hierarchical Level.
+        Drive-by update to remove some localization strings that are no longer used.
 
         * Localizations/en.lproj/localizedStrings.js:
-        * UserInterface/Models/DOMNode.js:
-        (WebInspector.DOMNode.prototype.accessibilityProperties.accessibilityPropertiesCallback):
-        (WebInspector.DOMNode.prototype.accessibilityProperties):
-        * UserInterface/Views/DOMNodeDetailsSidebarPanel.js:
-        (WebInspector.DOMNodeDetailsSidebarPanel):
-        (WebInspector.DOMNodeDetailsSidebarPanel.prototype._refreshAccessibility.accessibilityPropertiesCallback):
-        (WebInspector.DOMNodeDetailsSidebarPanel.prototype._refreshAccessibility):
 
-2016-10-18  Joseph Pecoraro  <pecoraro@apple.com>
+2015-11-22  Matt Baker  <mattbaker@apple.com>
 
-        Web Inspector: Styles Sidebar highlights "translate" but not "translateX"
-        https://bugs.webkit.org/show_bug.cgi?id=163613
-        <rdar://problem/28829610>
-
-        Reviewed by Timothy Hatcher.
-
-        * UserInterface/Models/CSSCompletions.js:
-        (WebInspector.CSSCompletions.requestCSSCompletions):
-        The hash table objects we pass to CodeMirror expects keys to be lowercased.
-
-2016-10-18  Joseph Pecoraro  <pecoraro@apple.com>
-
-        Web Inspector: CSS Autocompletion sometimes adds extra unexpected characters
-        https://bugs.webkit.org/show_bug.cgi?id=163612
-        <rdar://problem/28829557>
-
-        Reviewed by Timothy Hatcher.
-
-        * UserInterface/Controllers/CodeMirrorCompletionController.js:
-        (WebInspector.CodeMirrorCompletionController.prototype._generateCSSCompletions):
-        Better handle completions in cases where we are in the middle of a property
-        to avoid orphaned characters, or at the end of a function name to avoid creating
-        duplicate parenthesis.
-
-2016-10-18  Joseph Pecoraro  <pecoraro@apple.com>
-
-        REGRESSION(r201171): Web Inspector: Timeline Recording playhead should always start immediately, not wait until first event
-        https://bugs.webkit.org/show_bug.cgi?id=163583
-        <rdar://problem/28815882>
-
-        Reviewed by Timothy Hatcher.
-
-        * UserInterface/Views/TimelineRecordingContentView.js:
-        (WebInspector.TimelineRecordingContentView.prototype._startUpdatingCurrentTime):
-        Revert logic change introduced by r201171 with no explanation.
-        Whenever we get a start time we should use it, regardless of
-        of what the current time is, precisely because the backend is
-        informing us of the start time to use.
-
-2016-10-17  Joseph Pecoraro  <pecoraro@apple.com>
-
-        Web Inspector: Add toggles for debugger pauses at console.assert failures
-        https://bugs.webkit.org/show_bug.cgi?id=139542
-        <rdar://problem/19281600>
-
-        Reviewed by Timothy Hatcher.
-
-        * UserInterface/Controllers/DebuggerManager.js:
-        (WebInspector.DebuggerManager.prototype.get assertionsBreakpoint):
-        (WebInspector.DebuggerManager.prototype.isBreakpointRemovable):
-        (WebInspector.DebuggerManager.prototype._breakpointDisabledStateDidChange):
-        New breakpoint and toggling behavior.
-
-        * Localizations/en.lproj/localizedStrings.js:
-        * UserInterface/Views/DebuggerSidebarPanel.js:
-        (WebInspector.DebuggerSidebarPanel):
-        (WebInspector.DebuggerSidebarPanel.prototype._breakpointTreeOutlineDeleteTreeElement):
-        (WebInspector.DebuggerSidebarPanel.prototype._compareTopLevelTreeElements.isSpecialBreakpoint):
-        (WebInspector.DebuggerSidebarPanel.prototype._compareTopLevelTreeElements):
-        New breakpoint tree element behavior.
-
-        (WebInspector.DebuggerSidebarPanel.prototype.saveStateToCookie):
-        (WebInspector.DebuggerSidebarPanel.prototype.restoreStateFromCookie):
-        Sidebar restoration if it was selected.
-
-        * UserInterface/Images/Assertion.svg: Added.
-        * UserInterface/Images/gtk/Assertion.svg: Added.
-        * UserInterface/Views/BreakpointTreeElement.css:
-        (.breakpoint-assertion-icon .icon):
-        New sidebar icon for the global breakpoint.
-
-2016-10-15  Joseph Pecoraro  <pecoraro@apple.com>
-
-        Web Inspector: Cleanup parts of DebuggerManager
-        https://bugs.webkit.org/show_bug.cgi?id=163400
-
-        Reviewed by Timothy Hatcher.
-
-        * UserInterface/Controllers/DebuggerManager.js:
-        (WebInspector.DebuggerManager.restoreBreakpointsSoon):
-
-        (WebInspector.DebuggerManager.prototype.get paused):
-        (WebInspector.DebuggerManager.prototype.get pauseReason):
-        (WebInspector.DebuggerManager.prototype.get pauseData):
-        (WebInspector.DebuggerManager.prototype.get callFrames):
-        (WebInspector.DebuggerManager.prototype.get activeCallFrame):
-        (WebInspector.DebuggerManager.prototype.set activeCallFrame):
-        Put simple accessors at the top.
-
-        (WebInspector.DebuggerManager.prototype.get allExceptionsBreakpoint):
-        (WebInspector.DebuggerManager.prototype.get allUncaughtExceptionsBreakpoint):
-        (WebInspector.DebuggerManager.prototype.get breakpoints):
-        (WebInspector.DebuggerManager.prototype.breakpointForIdentifier):
-        (WebInspector.DebuggerManager.prototype.breakpointsForSourceCode):
-        (WebInspector.DebuggerManager.prototype.isBreakpointRemovable):
-        (WebInspector.DebuggerManager.prototype.isBreakpointEditable):
-        (WebInspector.DebuggerManager.prototype.get breakpointsDisabledTemporarily):
-        Group public breakpoint state and access methods.
-
-        (WebInspector.DebuggerManager.prototype.scriptForIdentifier):
-        (WebInspector.DebuggerManager.prototype.scriptsForURL):
-        (WebInspector.DebuggerManager.prototype.get searchableScripts):
-        (WebInspector.DebuggerManager.prototype.get knownNonResourceScripts):
-        Group public script access methods.
-
-        (WebInspector.DebuggerManager.prototype.pause):
-        (WebInspector.DebuggerManager.prototype.resume):
-        (WebInspector.DebuggerManager.prototype.stepOver):
-        (WebInspector.DebuggerManager.prototype.stepInto):
-        (WebInspector.DebuggerManager.prototype.stepOut):
-        (WebInspector.DebuggerManager.prototype.continueToLocation):
-        (WebInspector.DebuggerManager.prototype.addBreakpoint):
-        (WebInspector.DebuggerManager.prototype.removeBreakpoint):
-        Group and modernize public methods that perform actions.
-
-        (WebInspector.DebuggerManager.prototype.nextBreakpointActionIdentifier):
-        Misc. methods.
-
-        (WebInspector.DebuggerManager.prototype.breakpointResolved):
-        (WebInspector.DebuggerManager.prototype.reset):
-        (WebInspector.DebuggerManager.prototype.playBreakpointActionSound):
-        (WebInspector.DebuggerManager.prototype.scriptDidParse):
-        (WebInspector.DebuggerManager.prototype._setBreakpoint.didSetBreakpoint):
-        (WebInspector.DebuggerManager.prototype._setBreakpoint):
-        (WebInspector.DebuggerManager.prototype._breakpointEditablePropertyDidChange):
-        (WebInspector.DebuggerManager.prototype._updateBreakOnExceptionsState):
-        (WebInspector.DebuggerManager.prototype._associateBreakpointsWithSourceCode):
-        Minor cleanup in protected and private methods.
-
-        * UserInterface/Models/BreakpointAction.js:
-        (WebInspector.BreakpointAction):
-        Getting the next identifier is an action so it should be a function call.
-
-        * UserInterface/Views/SourceCodeTextEditor.js:
-        (WebInspector.SourceCodeTextEditor.prototype.textEditorBreakpointAdded):
-        Remove unused parameter.
-
-2016-10-14  Joseph Pecoraro  <pecoraro@apple.com>
-
-        Web Inspector: Dragging to delete a Breakpoint should never trigger a ContentView change
-        https://bugs.webkit.org/show_bug.cgi?id=163403
-        <rdar://problem/28762930>
-
-        Reviewed by Timothy Hatcher.
-
-        * UserInterface/Views/BreakpointTreeElement.js:
-        (WebInspector.BreakpointTreeElement.prototype.ondelete):
-        Signal when a breakpoint tree element will be going away because it was
-        deleted via the keyboard operation within the TreeOutline. This is a dirty
-        way to do the signal but we remove BreakpointTreeElements asynchronously
-        when the Breakpoint actually gets removed from the backend.
-
-        * UserInterface/Views/DebuggerSidebarPanel.js:
-        (WebInspector.DebuggerSidebarPanel.prototype._removeDebuggerTreeElement):
-        Deselect a BreakpointTreeElement if it was deleted in a way other then
-        the delete keyboard shortcut. This ensures another TreeElement selection
-        doesn't force ContentView changes.
-
-2016-10-14  Joseph Pecoraro  <pecoraro@apple.com>
-
-        Web Inspector: Improve debugger highlight when inside of getter/setter calls
-        https://bugs.webkit.org/show_bug.cgi?id=163428
-        <rdar://problem/28769061>
-
-        Reviewed by Timothy Hatcher.
-
-        * UserInterface/Views/SourceCodeTextEditor.js:
-        (WebInspector.SourceCodeTextEditor.prototype.textEditorExecutionHighlightRange):
-        When in the middle of a member expression at a '.' or '[' get the best member
-        expression range.
-
-        * UserInterface/Views/TextEditor.js:
-        (WebInspector.TextEditor.prototype._updateExecutionRangeHighlight):
-        Include the character at the current position. This is useful since AST Nodes
-        don't give us token info but we would like to know if we are at particular tokens.
-
-2016-10-14  Joseph Pecoraro  <pecoraro@apple.com>
-
-        Web Inspector: Unused Breakpoint getter/setter for "id" - should be "identifier"
-        https://bugs.webkit.org/show_bug.cgi?id=163395
-
-        Reviewed by Timothy Hatcher.
-
-        * UserInterface/Models/Breakpoint.js:
-        (WebInspector.Breakpoint.prototype.get identifier): Renamed.
-        (WebInspector.Breakpoint.prototype.set identifier): Renamed.
-        The only user is DebuggerManager which sets and gets. Previously
-        it was unexpectedly setting a direct property on the Breakpoint
-        instead of using these methods to set the member variable.
-
-2016-10-14  Joseph Pecoraro  <pecoraro@apple.com>
-
-        Web Inspector: Remove uses of delete in SourceCodeTextEditor
-        https://bugs.webkit.org/show_bug.cgi?id=163379
-
-        Reviewed by Timothy Hatcher.
-
-        Remove uses of delete and better group member variables.
-        One of the deletes was deleting an incorrect property.
-
-        * UserInterface/Views/SourceCodeTextEditor.js:
-        (WebInspector.SourceCodeTextEditor):
-        (WebInspector.SourceCodeTextEditor.prototype.textEditorBreakpointAdded):
-        (WebInspector.SourceCodeTextEditor.prototype.textEditorBreakpointRemoved):
-        (WebInspector.SourceCodeTextEditor.prototype.textEditorBreakpointMoved):
-        (WebInspector.SourceCodeTextEditor.prototype._tokenTrackingControllerHighlightedMarkedExpression):
-        (WebInspector.SourceCodeTextEditor.prototype._dismissEditingController):
-        (WebInspector.SourceCodeTextEditor.prototype.editingControllerDidFinishEditing):
-
-2016-10-14  Joseph Pecoraro  <pecoraro@apple.com>
-
-        Uncaught Exception: TypeError: this.positionToOffset is not a function - seen hovering expressions with Type Profiler enabled
-        https://bugs.webkit.org/show_bug.cgi?id=163405
-        <rdar://problem/28763953>
-
-        Reviewed by Matt Baker.
-
-        * UserInterface/Views/SourceCodeTextEditor.js:
-        Use correct method name, the old one must have gone away.
-
-2016-10-12  Joseph Pecoraro  <pecoraro@apple.com>
-
-        Web Inspector: Improve support for logging Proxy objects in console
-        https://bugs.webkit.org/show_bug.cgi?id=163323
-        <rdar://problem/28432553>
-
-        Reviewed by Timothy Hatcher.
-
-        * UserInterface/Views/ConsoleMessageView.js:
-        (WebInspector.ConsoleMessageView.prototype._formatParameter):
-        Treat a Proxy like any other object.
-
-2016-10-12  Joseph Pecoraro  <pecoraro@apple.com>
-
-        Emit DebugHooks uniformly with pause locations instead of having separate pause locations and op_debug emits
-        https://bugs.webkit.org/show_bug.cgi?id=162809
-
-        Reviewed by Geoffrey Garen.
-
-        * UserInterface/Views/SourceCodeTextEditor.js:
-        (WebInspector.SourceCodeTextEditor.prototype.textEditorExecutionHighlightRange):
-        When pausing on the variable assignment inside for..of and for..in don't just
-        highlight "var foo" but include the right hand side "var foo in ..." or
-        "var foo of ...".
-
-2016-10-12  Joseph Pecoraro  <pecoraro@apple.com>
-
-        Web Inspector: Whole program sometimes highlighted instead of just first statement
-        https://bugs.webkit.org/show_bug.cgi?id=163300
-        <rdar://problem/28723162>
-
-        Reviewed by Timothy Hatcher.
-
-        * UserInterface/Views/SourceCodeTextEditor.js:
-        (WebInspector.SourceCodeTextEditor.prototype.textEditorExecutionHighlightRange):
-        Avoid highlighting the entire program by skipping a Program type Node.
-
-        * UserInterface/Views/TextEditor.js:
-        (WebInspector.TextEditor.prototype.setExecutionLineAndColumn):
-        Avoid unnecessary work before content has loaded.
-
-        (WebInspector.TextEditor.prototype.currentPositionToOriginalOffset):
-        Avoid unnecessary indirection to get the CodeMirror editor.
-
-2016-10-11  Joseph Pecoraro  <pecoraro@apple.com>
-
-        Web Inspector: Remove line highlight on primary execution line while stepping because it is distracting
-        https://bugs.webkit.org/show_bug.cgi?id=163294
-        <rdar://problem/28721176>
-
-        Reviewed by Timothy Hatcher.
-
-        * UserInterface/Views/TextEditor.js:
-        (WebInspector.TextEditor.prototype._updateExecutionLine):
-        When setting the primary execution line, remove default line highlights.
-
-2016-10-10  Matt Baker  <mattbaker@apple.com>
-
-        Web Inspector: Revealed line not highlighted in TextEditor while debugger paused
-        https://bugs.webkit.org/show_bug.cgi?id=163197
-
-        Reviewed by Timothy Hatcher.
-
-        * UserInterface/Views/TextEditor.js:
-        (WebInspector.TextEditor.prototype.revealPosition.revealAndHighlightLine):
-        Avoid highlighting the execution line while debugging, but allow
-        other lines to be highlighted.
-
-2016-10-06  Devin Rousso  <dcrousso+webkit@gmail.com>
-
-        Inspector exception in `parseTextForRule()` when pasting into CSS rule selector
-        https://bugs.webkit.org/show_bug.cgi?id=162792
-
-        Reviewed by Matt Baker.
-
-        * UserInterface/Views/CSSStyleDeclarationSection.js:
-        (WebInspector.CSSStyleDeclarationSection.prototype._handleSelectorPaste.parseTextForRule):
-        Changed regular expression for matching CSS rules to allow newlines in pasted text.
-
-2016-10-02  Devin Rousso  <dcrousso+webkit@gmail.com>
-
-        Web Inspector: Clicking twice on the color swatch square should hide the color picker
-        https://bugs.webkit.org/show_bug.cgi?id=162759
-
-        Reviewed by Matt Baker.
-
-        * UserInterface/Views/InlineSwatch.js:
-        (WebInspector.InlineSwatch):
-        (WebInspector.InlineSwatch.prototype.didDismissPopover):
-        (WebInspector.InlineSwatch.prototype._swatchElementClicked):
-        Remove the "click" event listener when a popover is presented to prevent improper
-        interaction.  Add the event listener back when the popover is dismissed.
-
-2016-10-02  Matt Baker  <mattbaker@apple.com>
-
-        Web Inspector: Exception thrown when hovering network waterfall graphs during reload
-        https://bugs.webkit.org/show_bug.cgi?id=162850
-        <rdar://problem/28579653>
+        Web Inspector: Clean up FolderizedTreeElement folder settings
+        https://bugs.webkit.org/show_bug.cgi?id=151539
 
         Reviewed by Brian Burg.
 
-        * UserInterface/Views/ResourceTimelineDataGridNode.js:
-        (WebInspector.ResourceTimelineDataGridNode.prototype._mouseoverRecordBar):
-        Check that the node's data grid reference is valid before use.
-        (WebInspector.ResourceTimelineDataGridNode):
+        The expanded state for each folder was stored as an external property on the folder
+        tree element. Now FolderizedTreeElement keeps a map of folders to settings.
 
-2016-10-01  Joseph Pecoraro  <pecoraro@apple.com>
+        * UserInterface/Views/FolderizedTreeElement.js:
+        (WebInspector.FolderizedTreeElement):
+        (WebInspector.FolderizedTreeElement.prototype.removeChildren):
+        (WebInspector.FolderizedTreeElement.prototype._parentTreeElementForRepresentedObject):
+        (WebInspector.FolderizedTreeElement.prototype._folderTreeElementExpandedStateChange):
 
-        Web Inspector: Selection does not show up over execution highlight ranges
-        https://bugs.webkit.org/show_bug.cgi?id=162844
-        <rdar://problem/28579121>
-
-        Reviewed by Matt Baker.
-
-        * Scripts/update-codemirror-resources.rb:
-        * UserInterface/External/CodeMirror/mark-selection.js: Added.
-        * UserInterface/Main.html:
-        New add-on that makes selection a text marker so it can be styled
-        at the same level as other text markers.
-
-        * UserInterface/Views/TextEditor.css:
-        (.text-editor > .CodeMirror .execution-range-highlight:not(.CodeMirror-selectedtext)):
-        Don't use execution-range-highlight styles if the text is selected.
-
-        * UserInterface/Views/TextEditor.js:
-        (WebInspector.TextEditor):
-        Enable the text selection as text markers addon.
-
-2016-09-30  Joseph Pecoraro  <pecoraro@apple.com>
-
-        Web Inspector: Make debugger stepping highlights work in inline <script>s
-        https://bugs.webkit.org/show_bug.cgi?id=162753
-        <rdar://problem/28551332>
-
-        Reviewed by Brian Burg.
-
-        * UserInterface/Models/TextRange.js:
-        (WebInspector.TextRange.prototype.contains):
-        Check if a given line/column falls within this range.
-
-        * UserInterface/Views/SourceCodeTextEditor.js:
-        (WebInspector.SourceCodeTextEditor.prototype._getAssociatedScript):
-        If we are in a Document resource find the associated script at a given position.
-
-        (WebInspector.SourceCodeTextEditor.prototype.textEditorExecutionHighlightRange):
-        When comparing offsets to SyntaxTree offsets, the SyntaxTree's offset of 0 is the
-        first character of the Script, which differs from the current SourceCode's offset.
-        Adjust the offset by the Script's startOffset.
-
-        * UserInterface/Views/TextEditor.js:
-        (WebInspector.TextEditor.prototype.currentPositionToOriginalPosition):
-        (WebInspector.TextEditor.prototype._updateExecutionRangeHighlight):
-        Pass both the original offset and original position to the delegate.
-
-2016-09-30  Joseph Pecoraro  <pecoraro@apple.com>
-
-        Web Inspector: Stepping through `a(); b(); c();` it is unclear where we are and what is about to execute
-        https://bugs.webkit.org/show_bug.cgi?id=161658
-        <rdar://problem/28181254>
-
-        Reviewed by Geoffrey Garen.
-
-        * UserInterface/Models/Script.js:
-        (WebInspector.Script.prototype.requestScriptSyntaxTree):
-        Fix first calls to requestScriptSyntaxTree. They were getting an uncaught
-        exception because the content argument was missing.
-
-        * UserInterface/Models/ScriptSyntaxTree.js:
-        (WebInspector.ScriptSyntaxTree.prototype.containersOfOffset):
-        Find all AST nodes that contain a particular offset.
-
-        * UserInterface/Views/SourceCodeTextEditor.js:
-        (WebInspector.SourceCodeTextEditor):
-        (WebInspector.SourceCodeTextEditor.prototype.close):
-        (WebInspector.SourceCodeTextEditor.prototype._activeCallFrameDidChange):
-        (WebInspector.SourceCodeTextEditor.prototype._activeCallFrameSourceCodeLocationChanged):
-        (WebInspector.SourceCodeTextEditor.prototype.textEditorExecutionHighlightRange):
-        Provide a good highlight range for a given offset. This is normally the start
-        of a statement/expression, inside a statement/expression, or the closing brace
-        of a function (leaving a function). Provide good ranges for each of these.
-
-        * UserInterface/Views/TextEditor.js:
-        (WebInspector.TextEditor):
-        (WebInspector.TextEditor.set string.update):
-        (WebInspector.TextEditor.prototype.set string):
-        (WebInspector.TextEditor.prototype.setExecutionLineAndColumn):
-        (WebInspector.TextEditor.prototype.revealPosition.revealAndHighlightLine):
-        (WebInspector.TextEditor.prototype.revealPosition):
-        (WebInspector.TextEditor.prototype.currentPositionToOriginalOffset):
-        (WebInspector.TextEditor.prototype._updateAfterFormatting):
-        (WebInspector.TextEditor.prototype.set executionLineNumber): Deleted.
-        (WebInspector.TextEditor.prototype.set executionColumnNumber): Deleted.
-        (WebInspector.TextEditor.prototype._updateExecutionLine.update): Deleted.
-        Always set the execution line and column together, to simplify how we update highlights.
-
-        (WebInspector.TextEditor.prototype._clearMultilineExecutionLineHighlights):
-        (WebInspector.TextEditor.prototype._updateExecutionLine):
-        When updating the main highlight clear any multi-line highlights.
-
-        (WebInspector.TextEditor.prototype._updateExecutionRangeHighlight):
-        Ask the delegate for a specific highlight range. If provided use that range,
-        otherwise just highlight the end of the line. Once we know the range, if it
-        is multiple lines, give the extra lines the full line highlight as well.
-        Also make adjustments, such as not highlighting trailing whitespace.
-
-        * UserInterface/Views/TextEditor.css:
-        (.text-editor > .CodeMirror .execution-line.primary .CodeMirror-linenumber::after):
-        (.text-editor > .CodeMirror .execution-line):
-        (.text-editor > .CodeMirror .execution-line .CodeMirror-matchingbracket):
-        (.text-editor > .CodeMirror .execution-range-highlight):
-        Styles for execution lines and execution range highlights.
-
-2016-09-29  Aaron Chu  <aaron_chu@apple.com>
-
-        Web Inspector: AXI: linkified refs to #document and #text are not usually navigable nodes; consider delinkifying them
-        https://bugs.webkit.org/show_bug.cgi?id=130600
-        <rdar://problem/16391333>
-
-        Reviewed by Brian Burg.
-
-        Removing link style for non-navigable nodes by first
-        checking nodeType of the node.
-
-        * UserInterface/Base/DOMUtilities.js:
-        (WebInspector.linkifyNodeReference):
-
-2016-09-27  Matt Baker  <mattbaker@apple.com>
-
-        Web Inspector: Refreshing while in Timelines-tab causes negative timestamps in Network-tab
-        https://bugs.webkit.org/show_bug.cgi?id=160051
-        <rdar://problem/27480122>
-
-        Reviewed by Brian Burg.
-
-        * UserInterface/Views/NetworkGridContentView.js:
-        (WebInspector.NetworkGridContentView.prototype.get startTime):
-        (WebInspector.NetworkGridContentView.prototype.get zeroTime):
-        Use the cached start time for graph data source properties instead of
-        relying on the ruler, which requires a layout in order to be updated
-        for the first time.
-
-2016-09-27  Matt Baker  <mattbaker@apple.com>
-
-        Web Inspector: Unfocusing / Focusing inspector window should not change ContentView
-        https://bugs.webkit.org/show_bug.cgi?id=162572
-        <rdar://problem/28479562>
-
-        Reviewed by Brian Burg.
-
-        Improve NavigationSidebarPanel logic for coordinating selection between trees.
-        When tree selection changes, the most recent selection should be restored
-        the next time the tree is focused.
-
-        The sidebar should also handle focusing a tree for the first time, in
-        which no previous selection exists, and focusing a tree that has had its
-        previous selection filtered out (hidden).
-
-        * UserInterface/Views/NavigationSidebarPanel.js:
-        (WebInspector.NavigationSidebarPanel.prototype._contentTreeOutlineDidFocus):
-        (WebInspector.NavigationSidebarPanel.prototype._contentTreeOutlineTreeSelectionDidChange):
-        Restoring the last deselected element, instead of the last selected element
-        only works when the selection is moving from one tree to another. When
-        the elements belong to the same tree the newly selected element won't
-        be saved until the next selection change. If the window loses and regains
-        the focus before then, the tree will restore the previous selection,
-        effectively reverting the last selection change.
-
-2016-09-27  Tomas Popela  <tpopela@redhat.com>
-
-        [GTK] Mac defaults are used for key shortcuts on Linux
-        https://bugs.webkit.org/show_bug.cgi?id=162564
-
-        Don't set Mac's default keymap as a fallthrough for CodeMirror when we
-        are not on Mac.
-
-        Reviewed by Carlos Garcia Campos.
-
-        * UserInterface/Test.html: Include Platform.js for the
-        WebInspector.Platform definition.
-        * UserInterface/Views/CodeMirrorAdditions.js:
-
-2016-09-26  Matt Baker  <mattbaker@apple.com>
-
-        Web Inspector: Box Model values not updated when DOM node styles change
-        https://bugs.webkit.org/show_bug.cgi?id=162525
-
-        Reviewed by Brian Burg.
-
-        The Box Model section should refresh itself when the selected node's
-        computed style changes. This is necessary since the Styles sidebar
-        doesn't always refresh its sections on node changes.
-
-        * UserInterface/Views/BoxModelDetailsSectionRow.js:
-        (WebInspector.BoxModelDetailsSectionRow.prototype.set nodeStyles):
-        Refresh metrics whenever the computed style changes.
-
-        (WebInspector.BoxModelDetailsSectionRow.prototype._getBox):
-        (WebInspector.BoxModelDetailsSectionRow.prototype._getComponentSuffix):
-        (WebInspector.BoxModelDetailsSectionRow.prototype._updateMetrics.createValueElement):
-        (WebInspector.BoxModelDetailsSectionRow.prototype._updateMetrics.createBoxPartElement):
-        (WebInspector.BoxModelDetailsSectionRow.prototype._updateMetrics.createContentAreaElement):
-        (WebInspector.BoxModelDetailsSectionRow.prototype._updateMetrics):
-        Drive-by cleanup to make this large function easier to read.
-        (WebInspector.BoxModelDetailsSectionRow.prototype._updateMetrics.createElement): Deleted.
-        Renamed createValueElement.
-        (WebInspector.BoxModelDetailsSectionRow.prototype._updateMetrics.createContentAreaWidthElement): Deleted.
-        (WebInspector.BoxModelDetailsSectionRow.prototype._updateMetrics.createContentAreaHeightElement): Deleted.
-        Combined these into a single function taking a property name (width or height).
-
-== Rolled over to ChangeLog-2016-09-26 ==
+== Rolled over to ChangeLog-2015-11-21 ==

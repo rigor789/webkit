@@ -27,6 +27,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
+ */
+
 //# sourceURL=__InjectedScript_InjectedScriptSource.js
 
 (function (InjectedScriptHost, inspectedGlobalObject, injectedScriptId) {
@@ -285,7 +289,7 @@ InjectedScript.prototype = {
 
     getDisplayableProperties: function(objectId, generatePreview)
     {
-        var nativeGettersAsValues = true;
+        var nativeGettersAsValues = false;
         var collectionMode = InjectedScript.CollectionMode.OwnProperties | InjectedScript.CollectionMode.NativeGetterProperties;
         return this._getProperties(objectId, collectionMode, generatePreview, nativeGettersAsValues);
     },
@@ -563,6 +567,17 @@ InjectedScript.prototype = {
         return descriptors;
     },
 
+    _objectPrototype: function(object)
+    {
+        if (InjectedScriptHost.subtype(object) === "proxy")
+            return null;
+        try {
+            return Object.getPrototypeOf(object);
+        } catch (e) {
+            return null;
+        }
+    },
+
     _propertyDescriptors: function(object, collectionMode, nativeGettersAsValues)
     {
         if (InjectedScriptHost.subtype(object) === "proxy")
@@ -675,7 +690,7 @@ InjectedScript.prototype = {
             isArrayLike = injectedScript._subtype(object) === "array" && isFinite(object.length) && object.length > 0;
         } catch(e) {}
 
-        for (var o = object; this._isDefined(o); o = Object.getPrototypeOf(o)) {
+        for (var o = object; this._isDefined(o); o = this._objectPrototype(o)) {
             var isOwnProperty = o === object;
 
             if (isArrayLike && isOwnProperty)
@@ -1044,7 +1059,7 @@ InjectedScript.RemoteObject.prototype = {
                 return preview;
 
             // Properties.
-            var nativeGettersAsValues = true;
+            var nativeGettersAsValues = false;
             var descriptors = injectedScript._propertyDescriptors(object, InjectedScript.CollectionMode.AllProperties, nativeGettersAsValues);
             this._appendPropertyPreviews(object, preview, descriptors, false, propertiesThreshold, firstLevelKeys, secondLevelKeys);
             if (propertiesThreshold.indexes < 0 || propertiesThreshold.properties < 0)

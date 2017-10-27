@@ -73,6 +73,7 @@ public:
     void continueToLocation(ErrorString&, const InspectorObject& location) final;
     void searchInContent(ErrorString&, const String& scriptID, const String& query, const bool* const optionalCaseSensitive, const bool* const optionalIsRegex, RefPtr<Inspector::Protocol::Array<Inspector::Protocol::GenericTypes::SearchMatch>>&) final;
     void getScriptSource(ErrorString&, const String& scriptID, String* scriptSource) final;
+    virtual void setScriptSource(ErrorString&, const String& scriptID, const String& scriptSource) override;
     void getFunctionDetails(ErrorString&, const String& functionId, RefPtr<Inspector::Protocol::Debugger::FunctionDetails>&) final;
     void pause(ErrorString&) final;
     void resume(ErrorString&) final;

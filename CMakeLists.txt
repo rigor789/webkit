@@ -3,7 +3,9 @@ project(WebKit)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/Source/cmake")
 
-set(ENABLE_WEBCORE ON)
+if (NOT DEFINED ENABLE_WEBCORE)
+    set(ENABLE_WEBCORE ON)
+endif ()
 
 if (NOT DEFINED ENABLE_WEBKIT)
     set(ENABLE_WEBKIT ON)
@@ -116,6 +118,11 @@ option(SHARED_CORE "build WebCore as a shared library")
 if (SHARED_CORE)
     set(WebCore_LIBRARY_TYPE SHARED)
 else ()
+    if (ENABLE_FTL_NATIVE_CALL_INLINING)
+        set(JavaScriptCore_LIBRARY_TYPE SHARED)
+    else ()
+        set(JavaScriptCore_LIBRARY_TYPE STATIC)
+    endif ()
     set(WebCore_LIBRARY_TYPE STATIC)
 endif ()
 
@@ -133,8 +140,9 @@ option(SHOULD_INSTALL_JS_SHELL "generate an installation rule to install the bui
 # -----------------------------------------------------------------------------
 # Default output directories, which can be overwritten by ports
 #------------------------------------------------------------------------------
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+# set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # -----------------------------------------------------------------------------

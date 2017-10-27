@@ -195,6 +195,7 @@ set(WTF_HEADERS
     unicode/CharacterNames.h
     unicode/Collator.h
     unicode/UTF8.h
+    unicode/UnormNormalize.h
 )
 
 set(WTF_SOURCES
@@ -290,6 +291,8 @@ set(WTF_SOURCES
     threads/Signals.cpp
 
     unicode/UTF8.cpp
+    unicode/CollatorDefault.cpp
+    unicode/UnormNormalize.cpp
 )
 
 set(WTF_INCLUDE_DIRECTORIES

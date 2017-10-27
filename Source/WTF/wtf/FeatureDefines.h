@@ -25,6 +25,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+ 
+/*
+ * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
+ */
 
 #ifndef WTF_FeatureDefines_h
 #define WTF_FeatureDefines_h
@@ -744,10 +748,6 @@ the public iOS SDK. We will also need to update the FeatureDefines.xcconfig file
 
 #if ENABLE(MEDIA_CONTROLS_SCRIPT) && !ENABLE(VIDEO)
 #error "ENABLE(MEDIA_CONTROLS_SCRIPT) requires ENABLE(VIDEO)"
-#endif
-
-#if ENABLE(INSPECTOR_ALTERNATE_DISPATCHERS) && !ENABLE(REMOTE_INSPECTOR)
-#error "ENABLE(INSPECTOR_ALTERNATE_DISPATCHERS) requires ENABLE(REMOTE_INSPECTOR)"
 #endif
 
 #if ENABLE(IOS_TOUCH_EVENTS) && !ENABLE(TOUCH_EVENTS)

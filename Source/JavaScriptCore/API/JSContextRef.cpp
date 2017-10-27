@@ -22,6 +22,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+ 
+/*
+ * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
+ */
 
 #include "config.h"
 #include "JSContextRef.h"
@@ -417,7 +421,7 @@ void JSGlobalContextSetDebuggerRunLoop(JSGlobalContextRef ctx, CFRunLoopRef runL
 }
 #endif // USE(CF)
 
-#if ENABLE(INSPECTOR_ALTERNATE_DISPATCHERS)
+#if ENABLE(REMOTE_INSPECTOR) && ENABLE(INSPECTOR_ALTERNATE_DISPATCHERS)
 Inspector::AugmentableInspectorController* JSGlobalContextGetAugmentableInspectorController(JSGlobalContextRef ctx)
 {
     if (!ctx) {
