@@ -4383,9 +4383,12 @@ void RenderLayer::paintLayerContents(GraphicsContext& context, const LayerPainti
 
         if (paintingInfo.paintBehavior & PaintBehaviorFlattenCompositingLayers)
             paintBehavior |= PaintBehaviorFlattenCompositingLayers;
-            
-        if (paintingInfo.paintBehavior & PaintBehaviorAllowAsyncImageDecoding)
-            paintBehavior |= PaintBehaviorAllowAsyncImageDecoding;
+        
+        if (paintingInfo.paintBehavior & PaintBehaviorSnapshotting)
+            paintBehavior |= PaintBehaviorSnapshotting;
+        
+        if (paintingInfo.paintBehavior & PaintBehaviorTileFirstPaint)
+            paintBehavior |= PaintBehaviorTileFirstPaint;
 
         if (paintingInfo.paintBehavior & PaintBehaviorExcludeSelection)
             paintBehavior |= PaintBehaviorExcludeSelection;
@@ -4465,9 +4468,12 @@ void RenderLayer::paintLayerContents(GraphicsContext& context, const LayerPainti
         PaintBehavior paintBehavior = PaintBehaviorNormal;
         if (paintingInfo.paintBehavior & PaintBehaviorFlattenCompositingLayers)
             paintBehavior |= PaintBehaviorFlattenCompositingLayers;
-
-        if (paintingInfo.paintBehavior & PaintBehaviorAllowAsyncImageDecoding)
-            paintBehavior |= PaintBehaviorAllowAsyncImageDecoding;
+        
+        if (paintingInfo.paintBehavior & PaintBehaviorSnapshotting)
+            paintBehavior |= PaintBehaviorSnapshotting;
+        
+        if (paintingInfo.paintBehavior & PaintBehaviorTileFirstPaint)
+            paintBehavior |= PaintBehaviorTileFirstPaint;
 
         if (shouldPaintMask(paintingInfo.paintBehavior, localPaintFlags)) {
             // Paint the mask for the fragments.
@@ -4797,9 +4803,12 @@ void RenderLayer::paintForegroundForFragments(const LayerFragments& layerFragmen
 
     if (localPaintingInfo.paintBehavior & PaintBehaviorExcludeSelection)
         localPaintBehavior |= PaintBehaviorExcludeSelection;
-
-    if (localPaintingInfo.paintBehavior & PaintBehaviorAllowAsyncImageDecoding)
-        localPaintBehavior |= PaintBehaviorAllowAsyncImageDecoding;
+    
+    if (localPaintingInfo.paintBehavior & PaintBehaviorSnapshotting)
+        localPaintBehavior |= PaintBehaviorSnapshotting;
+    
+    if (localPaintingInfo.paintBehavior & PaintBehaviorTileFirstPaint)
+        localPaintBehavior |= PaintBehaviorTileFirstPaint;
 
     // Optimize clipping for the single fragment case.
     bool shouldClip = localPaintingInfo.clipToDirtyRect && layerFragments.size() == 1 && layerFragments[0].shouldPaintContent && !layerFragments[0].foregroundRect.isEmpty();
@@ -4924,17 +4933,9 @@ bool RenderLayer::hitTest(const HitTestRequest& request, const HitTestLocation& 
     
     updateLayerListsIfNeeded();
 
-    ASSERT(!isRenderFlowThread());
-    LayoutRect hitTestArea = renderer().view().documentRect();
-    if (!request.ignoreClipping()) {
-        if (renderer().settings().visualViewportEnabled()) {
-            auto& frameView = renderer().view().frameView();
-            LayoutRect layoutViewportBounds({ }, frameView.layoutViewportRect().size());
-            LayoutRect absoluteLayoutViewportRect = LayoutRect(frameView.layoutViewportToAbsoluteRect(layoutViewportBounds));
-            hitTestArea.intersect(absoluteLayoutViewportRect);
-        } else
-            hitTestArea.intersect(renderer().view().frameView().visibleContentRect(LegacyIOSDocumentVisibleRect));
-    }
+    LayoutRect hitTestArea = isOutOfFlowRenderFlowThread() ? downcast<RenderFlowThread>(renderer()).visualOverflowRect() : renderer().view().documentRect();
+    if (!request.ignoreClipping())
+        hitTestArea.intersect(renderer().view().frameView().visibleContentRect(LegacyIOSDocumentVisibleRect));
 
     RenderLayer* insideLayer = hitTestLayer(this, nullptr, request, result, hitTestArea, hitTestLocation, false);
     if (!insideLayer) {
