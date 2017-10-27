@@ -23,29 +23,34 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include "DOMRectList.h"
+#pragma once
 
-#include "DOMRect.h"
+#include "CFNetworkSPI.h"
+#include <wtf/Function.h>
+#include <wtf/RetainPtr.h>
+#include <wtf/ThreadSafeRefCounted.h>
+
+OBJC_CLASS NSHTTPCookieStorage;
+OBJC_CLASS WebCookieObserverAdapter;
 
 namespace WebCore {
 
-DOMRectList::DOMRectList(const Vector<FloatQuad>& quads)
-{
-    m_items.reserveInitialCapacity(quads.size());
-    for (auto& quad : quads)
-        m_items.uncheckedAppend(DOMRect::create(quad.boundingBox()));
-}
+class CookieStorageObserver : public ThreadSafeRefCounted<CookieStorageObserver> {
+public:
+    static RefPtr<CookieStorageObserver> create(NSHTTPCookieStorage *);
+    CookieStorageObserver(NSHTTPCookieStorage *);
+    ~CookieStorageObserver();
 
-DOMRectList::DOMRectList(const Vector<FloatRect>& rects)
-{
-    m_items.reserveInitialCapacity(rects.size());
-    for (auto& rect : rects)
-        m_items.uncheckedAppend(DOMRect::create(rect));
-}
+    void startObserving(WTF::Function<void()>&& callback);
+    void stopObserving();
 
-DOMRectList::~DOMRectList()
-{
-}
+    void cookiesDidChange();
+
+private:
+    RetainPtr<NSHTTPCookieStorage> m_cookieStorage;
+    bool m_hasRegisteredInternalsForNotifications { false };
+    RetainPtr<WebCookieObserverAdapter> m_observerAdapter;
+    WTF::Function<void()> m_cookieChangeCallback;
+};
 
 } // namespace WebCore

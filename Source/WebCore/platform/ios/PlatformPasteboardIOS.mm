@@ -290,16 +290,14 @@ void PlatformPasteboard::writeObjectRepresentations(const PasteboardImage& paste
     for (size_t i = 0, size = types.size(); i < size; ++i)
         [itemsToRegister addData:data[i]->createNSData().get() forType:types[i]];
 
-    if (auto image = pasteboardImage.image) {
-        NSString *mimeType = pasteboardImage.resourceMIMEType;
-        if (UTTypeIsDeclared((CFStringRef)mimeType)) {
-            auto imageData = pasteboardImage.resourceData->createNSData();
-            [itemsToRegister addData:imageData.get() forType:mimeType];
-        } else if (auto nativeImage = image->nativeImage()) {
-            if (auto uiImage = adoptNS([allocUIImageInstance() initWithCGImage:nativeImage.get()]))
-                [itemsToRegister addRepresentingObject:uiImage.get()];
-        }
-        [itemsToRegister setEstimatedDisplayedSize:image->size()];
+    if (pasteboardImage.resourceData && !pasteboardImage.resourceMIMEType.isEmpty()) {
+        auto utiOrMIMEType = pasteboardImage.resourceMIMEType.createCFString();
+        if (!UTTypeIsDeclared(utiOrMIMEType.get()))
+            utiOrMIMEType = UTTypeCreatePreferredIdentifierForTag(kUTTagClassMIMEType, utiOrMIMEType.get(), nil);
+
+        auto imageData = pasteboardImage.resourceData->createNSData();
+        [itemsToRegister addData:imageData.get() forType:(NSString *)utiOrMIMEType.get()];
+        [itemsToRegister setEstimatedDisplayedSize:pasteboardImage.imageSize];
         [itemsToRegister setSuggestedName:pasteboardImage.suggestedName];
     }
 
@@ -325,7 +323,8 @@ void PlatformPasteboard::write(const PasteboardImage& pasteboardImage)
     RetainPtr<NSMutableDictionary> representations = adoptNS([[NSMutableDictionary alloc] init]);
     if (!pasteboardImage.resourceMIMEType.isNull()) {
         [representations setObject:pasteboardImage.resourceData->createNSData().get() forKey:pasteboardImage.resourceMIMEType];
-        [representations setObject:(NSURL *)pasteboardImage.url.url forKey:(NSString *)kUTTypeURL];
+        if (!pasteboardImage.url.url.isNull())
+            [representations setObject:(NSURL *)pasteboardImage.url.url forKey:(NSString *)kUTTypeURL];
     }
     [m_pasteboard setItems:@[representations.get()]];
 }

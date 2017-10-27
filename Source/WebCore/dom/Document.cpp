@@ -3625,6 +3625,9 @@ void Document::updateIsPlayingMedia(uint64_t sourceElementID)
     }
 #endif
 
+    if (m_userHasInteractedWithMediaElement)
+        state |= MediaProducer::HasUserInteractedWithMediaElement;
+
     if (state == m_mediaState)
         return;
 
@@ -5778,8 +5781,15 @@ void Document::requestFullScreenForElement(Element* element, FullScreenCheckType
         //   An algorithm is allowed to show a pop-up if, in the task in which the algorithm is running, either:
         //   - an activation behavior is currently being processed whose click event was trusted, or
         //   - the event listener for a trusted click event is being handled.
-        if (!ScriptController::processingUserGesture())
+        if (!UserGestureIndicator::processingUserGesture())
             break;
+
+        // We do not allow pressing the Escape key as a user gesture to enter fullscreen since this is the key
+        // to exit fullscreen.
+        if (UserGestureIndicator::currentUserGesture()->gestureType() == UserGestureType::EscapeKey) {
+            addConsoleMessage(MessageSource::Security, MessageLevel::Error, ASCIILiteral("The Escape key may not be used as a user gesture to enter fullscreen"));
+            break;
+        }
 
         // There is a previously-established user preference, security risk, or platform limitation.
         if (!page() || !page()->settings().fullScreenEnabled())
@@ -6559,6 +6569,23 @@ void Document::convertAbsoluteToClientQuads(Vector<FloatQuad>& quads, const Rend
         quad.move(documentToClientOffset);
     }
 }
+    
+void Document::convertAbsoluteToClientRects(Vector<FloatRect>& rects, const RenderStyle& style)
+{
+    if (!view())
+        return;
+    
+    auto& frameView = *view();
+    float inverseFrameScale = frameView.absoluteToDocumentScaleFactor(style.effectiveZoom());
+    auto documentToClientOffset = frameView.documentToClientOffset();
+    
+    for (auto& rect : rects) {
+        if (inverseFrameScale != 1)
+            rect.scale(inverseFrameScale);
+        
+        rect.move(documentToClientOffset);
+    }
+}
 
 void Document::convertAbsoluteToClientRect(FloatRect& rect, const RenderStyle& style)
 {
@@ -7005,6 +7032,8 @@ void Document::applyQuickLookSandbox()
     ASSERT_WITH_SECURITY_IMPLICATION(contentSecurityPolicy());
     // The sandbox directive is only allowed if the policy is from an HTTP header.
     contentSecurityPolicy()->didReceiveHeader(quickLookCSP, ContentSecurityPolicyHeaderType::Enforce, ContentSecurityPolicy::PolicyFrom::HTTPHeader);
+
+    disableSandboxFlags(SandboxNavigation);
 
     setReferrerPolicy(ReferrerPolicy::Never);
 }
