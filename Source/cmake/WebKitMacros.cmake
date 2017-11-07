@@ -78,6 +78,8 @@ endmacro()
 macro(WEBKIT_FRAMEWORK_DECLARE _target)
     # add_library() without any source files triggers CMake warning
     # Addition of dummy "source" file does not result in any changes in generated build.ninja file
+    MESSAGE(${WEBKIT2_DIR})
+    MESSAGE( ">>>>>>>>>>>>>>>>>>>>> " ${_target} ${${_target}_LIBRARY_TYPE} "${CMAKE_BINARY_DIR}/cmakeconfig.h")
     add_library(${_target} ${${_target}_LIBRARY_TYPE} "${CMAKE_BINARY_DIR}/cmakeconfig.h")
 endmacro()
 
@@ -187,6 +189,7 @@ macro(WEBKIT_SET_EXTRA_COMPILER_FLAGS _target)
     CMAKE_PARSE_ARGUMENTS("OPTION" "${options}" "" "" ${ARGN})
     if (COMPILER_IS_GCC_OR_CLANG)
         get_target_property(OLD_COMPILE_FLAGS ${_target} COMPILE_FLAGS)
+        MESSAGE(">>>>>>>" ${OLD_COMPILE_FLAGS} "<<<<<<<" ${_target})
         if (${OLD_COMPILE_FLAGS} STREQUAL "OLD_COMPILE_FLAGS-NOTFOUND")
             set(OLD_COMPILE_FLAGS "")
         endif ()

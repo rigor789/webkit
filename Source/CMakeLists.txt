@@ -31,7 +31,7 @@ if (ENABLE_WEBCORE)
 endif ()
 
 if (ENABLE_WEBKIT_LEGACY)
-    add_subdirectory(WebKitLegacy)
+    #add_subdirectory(WebKitLegacy)
 endif ()
 
 if (ENABLE_WEBKIT)
@@ -56,10 +56,10 @@ if (ENABLE_WEBCORE)
     WEBKIT_SET_EXTRA_COMPILER_FLAGS(WebCoreDerivedSources ${ADDITIONAL_COMPILER_FLAGS})
 endif ()
 
-if (ENABLE_WEBKIT_LEGACY)
+#if (ENABLE_WEBKIT_LEGACY)
     # FIXME: Rename this target to WebKitLegacy.
-    WEBKIT_SET_EXTRA_COMPILER_FLAGS(WebKit ${ADDITIONAL_COMPILER_FLAGS})
-endif ()
+   # WEBKIT_SET_EXTRA_COMPILER_FLAGS(WebKit ${ADDITIONAL_COMPILER_FLAGS})
+#endif ()
 
 if (ENABLE_WEBKIT)
     # FIXME: Rename this target to WebKit.

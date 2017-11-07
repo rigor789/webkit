@@ -905,6 +905,10 @@ typedef NS_OPTIONS(NSUInteger, UIDragOperation)
 + (UITextEffectsWindow *)sharedTextEffectsWindow;
 @end
 
+@interface UIURLDragPreviewView : UIView
++ (instancetype)viewWithTitle:(NSString *)title URL:(NSURL *)url;
+@end
+
 #endif
 
 #endif // USE(APPLE_INTERNAL_SDK)

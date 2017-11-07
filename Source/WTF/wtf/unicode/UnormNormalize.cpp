@@ -1,4 +1,5 @@
 #include "UnormNormalize.h"
+#include <unicode/char16ptr.h>
 
 #if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
 
@@ -7,9 +8,10 @@
 
 U_STABLE int32_t U_EXPORT2
 ios_specific_unorm_normalize(const UChar *source, int32_t sourceLength,
-                             UNormalizationMode mode, int32_t options,
+                             UNormalizationMode mode, int32_t /*options*/,
                              UChar *resultBuffer, int32_t resultLength,
                              UErrorCode *status) {
+    
     if (U_FAILURE(*status)) {
         return 0;
     }
@@ -23,7 +25,7 @@ ios_specific_unorm_normalize(const UChar *source, int32_t sourceLength,
     }
     
     WTF::RetainPtr<CFMutableStringRef> normalizedString = WTF::adoptCF(CFStringCreateMutable(kCFAllocatorDefault, 0));
-    CFStringAppendCharacters(normalizedString.get(), source, sourceLength);
+    CFStringAppendCharacters(normalizedString.get(), toOldUCharPtr(source), sourceLength);
     CFStringNormalizationForm normalizationForm;
     switch (mode) {
         case UNORM_NFC:
@@ -51,7 +53,7 @@ ios_specific_unorm_normalize(const UChar *source, int32_t sourceLength,
     }
     
     if (resultLength > 0 && resultBuffer != nullptr) {
-        CFStringGetCharacters(normalizedString.get(), CFRangeMake(0, resultLength), resultBuffer);
+        CFStringGetCharacters(normalizedString.get(), CFRangeMake(0, resultLength), toOldUCharPtr(resultBuffer));
     }
     return normalizedLength;
 }

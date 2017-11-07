@@ -835,7 +835,7 @@ list(APPEND WebKit2_HEADERS
 list(APPEND WebKit2_SOURCES ${WebKit2_DERIVED_SOURCES})
 
 WEBKIT_FRAMEWORK(WebKit2)
-add_dependencies(WebKit2 WebCore ${WEBKIT2_EXTRA_DEPENDENCIES})
+#add_dependencies(WebKit2 WebCore ${WEBKIT2_EXTRA_DEPENDENCIES})
 add_webkit2_prefix_header(WebKit2)
 
 if (COMPILER_IS_GCC_OR_CLANG AND NOT APPLE)
@@ -903,6 +903,7 @@ if ("${PORT}" STREQUAL "Mac")
     add_dependencies(WebKit2 WebContentProcessNib)
 
     # FIXME: This shouldn't be two operations.
+    MESSAGE("Target directory --------- " ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
     file(COPY ${WEBKIT2_DIR}/WebProcess/EntryPoint/mac/XPCService/WebContentService/Info-OSX.plist DESTINATION ${_web_xpc_dir})
     file(RENAME ${_web_xpc_dir}/Info-OSX.plist ${_web_xpc_dir}/Info.plist)
 

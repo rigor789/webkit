@@ -74,9 +74,7 @@ if (COMPILER_IS_GCC_OR_CLANG)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-expansion-to-defined")
     endif ()
 
-    if (CMAKE_COMPILER_IS_GNUCXX AND ${CMAKE_CXX_COMPILER_VERSION} VERSION_GREATER "7.0")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-noexcept-type")
-    endif ()
+   
 endif ()
 
 # Ensure that the default include system directories are added to the list of CMake implicit includes.

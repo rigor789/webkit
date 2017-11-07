@@ -663,8 +663,8 @@
 #define HAVE_READLINE 1
 #define HAVE_SYS_TIMEB_H 1
 
-#if __has_include(<mach/mach_exc.defs>) && !(PLATFORM(WATCHOS) || PLATFORM(APPLETV))
-#define HAVE_MACH_EXCEPTIONS 1
+#if __has_include(<mach/mach_exc.defs>) && !(PLATFORM(WATCHOS) || PLATFORM(APPLETV) || PLATFORM(IOS))
+#define HAVE_MACH_EXCEPTIONS 0
 #endif
 
 #if !PLATFORM(GTK)
@@ -1200,7 +1200,8 @@
 #endif
 
 #if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
-#define unorm_normalize(source, sourceLength, mode, options, result, resultLength, status) ios_specific_unorm_normalize(source, sourceLength, mode, options, result, resultLength, status)
+//#undef unorm_normalize
+//#define unorm_normalize(source, sourceLength, mode, options, result, resultLength, status) ios_specific_unorm_normalize(source, sourceLength, mode, options, result, resultLength, status)
 #endif
 
 /* FIXME: Enable USE_OS_LOG when building with the public iOS 10 SDK once we fix <rdar://problem/27758343>. */

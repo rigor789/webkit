@@ -193,6 +193,10 @@ public:
         return OBJECT_OFFSETOF(ExecutableBase, m_numParametersForConstruct);
     }
 
+    void clearNumParametersForCall() {
+        m_numParametersForCall = -1;
+    }
+
     bool hasJITCodeForCall() const
     {
         return m_numParametersForCall >= 0;
