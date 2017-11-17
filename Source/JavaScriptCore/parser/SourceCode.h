@@ -83,19 +83,17 @@ namespace JSC {
 
         void startColumn(int startColumn) { m_startColumn = startColumn; }
 
-        int startOffset() const { return m_startChar.zeroBasedInt(); }
-        void setStartOffset(int startChar) { m_startChar = startChar; }
+        int startOffset() const { return m_startOffset; }
+        void setStartOffset(int startOffset) { m_startOffset = startOffset; }
 
-        int endOffset() const { return m_endChar.zeroBasedInt(); }
-        void setEndOffset(int endChar) { m_endChar = endChar; }
+        int endOffset() const { return m_endOffset; }
+        void setEndOffset(int endOffset) { m_endOffset = endOffset; }
 
-        int length() const { return m_endChar.zeroBasedInt() - m_startChar.zeroBasedInt(); }
+        int length() const { return endOffset() - startOffset(); }
         
         SourceCode subExpression(unsigned openBrace, unsigned closeBrace, int firstLine, int startColumn);
 
     private:
-        OrdinalNumber m_startChar;
-        OrdinalNumber m_endChar;
         OrdinalNumber m_firstLine;
         OrdinalNumber m_startColumn;
     };
