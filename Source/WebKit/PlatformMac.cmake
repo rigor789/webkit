@@ -4,7 +4,6 @@ find_library(APPLICATIONSERVICES_LIBRARY ApplicationServices)
 find_library(CARBON_LIBRARY Carbon)
 find_library(QUARTZ_LIBRARY Quartz)
 find_library(AVFOUNDATION_LIBRARY AVFoundation)
-MESSAGE("AvfAudio ----------- " ${AVFOUNDATION_LIBRARY}/Versions/*/Frameworks)
 find_library(AVFAUDIO_LIBRARY AVFAudio HINTS ${AVFOUNDATION_LIBRARY}/Frameworks)
 add_definitions(-iframework ${QUARTZ_LIBRARY}/Frameworks)
 add_definitions(-iframework ${CARBON_LIBRARY}/Frameworks)
@@ -265,7 +264,7 @@ list(APPEND WebKit2_SOURCES
     UIProcess/Cocoa/WebPasteboardProxyCocoa.mm
     UIProcess/Cocoa/WebProcessPoolCocoa.mm
     UIProcess/Cocoa/WebProcessProxyCocoa.mm
-  #  UIProcess/Cocoa/WebResourceLoadStatisticsManagerCocoa.mm
+    # UIProcess/Cocoa/WebResourceLoadStatisticsManagerCocoa.mm
     UIProcess/Cocoa/WebResourceLoadStatisticsStoreCocoa.mm
     UIProcess/Cocoa/WebURLSchemeHandlerCocoa.mm
     UIProcess/Cocoa/WebViewImpl.mm
