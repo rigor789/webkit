@@ -667,7 +667,7 @@
 #define HAVE_SYS_TIMEB_H 1
 
 #if __has_include(<mach/mach_exc.defs>) && !(PLATFORM(WATCHOS) || PLATFORM(APPLETV) || PLATFORM(IOS))
-#define HAVE_MACH_EXCEPTIONS 0
+#define HAVE_MACH_EXCEPTIONS 1
 #endif
 
 #if !PLATFORM(GTK)

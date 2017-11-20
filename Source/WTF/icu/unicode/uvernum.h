@@ -131,7 +131,7 @@
  *  This value will change in the subsequent releases of ICU
  *  @stable ICU 2.6
  */
-#if U_PLATFORM_HAS_WINUWP_API == 0
+#if !defined(U_PLATFORM_HAS_WINUWP_API) || U_PLATFORM_HAS_WINUWP_API == 0
 #define U_ICU_VERSION_SHORT "59"
 #else
 // U_DISABLE_RENAMING does not impact dat file name
