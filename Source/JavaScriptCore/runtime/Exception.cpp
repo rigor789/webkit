@@ -28,16 +28,25 @@
 
 #include "Interpreter.h"
 #include "JSCInlines.h"
+#include "stdio.h"
 
 namespace JSC {
 
 const ClassInfo Exception::s_info = { "Exception", &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(Exception) };
-
+// static
+const char* Exception::NS_EXCEPTION_IDENTIFIER_STRING = "__nsException";
+    
 Exception* Exception::create(VM& vm, JSValue thrownValue, StackCaptureAction action)
 {
     Exception* result = new (NotNull, allocateCell<Exception>(vm.heap)) Exception(vm);
     result->finishCreation(vm, thrownValue, action);
+
     return result;
+}
+    
+JSValue Exception::defaultValue(const JSObject*, ExecState*, PreferredPrimitiveType)
+{
+    return jsUndefined();
 }
 
 void Exception::destroy(JSCell* cell)
@@ -72,7 +81,10 @@ Exception::~Exception()
 void Exception::finishCreation(VM& vm, JSValue thrownValue, StackCaptureAction action)
 {
     Base::finishCreation(vm);
-
+    JSObject* asObject = thrownValue.getObject();
+    if (asObject != nullptr) {
+        asObject->putDirect(vm, Identifier::fromString(&vm, NS_EXCEPTION_IDENTIFIER_STRING), this, DontEnum | ReadOnly | DontDelete);
+    }
     m_value.set(vm, this, thrownValue);
 
     Vector<StackFrame> stackTrace;

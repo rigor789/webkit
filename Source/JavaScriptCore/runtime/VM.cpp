@@ -609,8 +609,22 @@ JSValue VM::throwException(ExecState* exec, JSValue thrownValue)
 {
     VM& vm = *this;
     Exception* exception = jsDynamicCast<Exception*>(vm, thrownValue);
-    if (!exception)
-        exception = Exception::create(*this, thrownValue);
+    if (!exception) {
+        // protect against throw null; in JavaScript
+        if (thrownValue.getObject() != nullptr) {
+            // Exception::create stores the Exception instance in the passed thrownValue. If we have an Exception instance here we reuse it instead of
+            // recreating it. In this way we keep the stack trace at the point where the original exception occured.
+            JSValue nsException = thrownValue.getObject()->getDirect(*this, Identifier::fromString(this, Exception::NS_EXCEPTION_IDENTIFIER_STRING));
+        
+            if (!nsException.isUndefinedOrNull() && nsException.isCell() && nsException.asCell() != nullptr ) {
+                exception = jsDynamicCast<Exception*>(vm, nsException);
+            }
+        }
+        
+        if (!exception) {
+            exception = Exception::create(*this, thrownValue);
+        }
+    }
 
     throwException(exec, exception);
     return JSValue(exception);
