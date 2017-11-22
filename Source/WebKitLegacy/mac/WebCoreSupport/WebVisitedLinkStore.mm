@@ -30,6 +30,7 @@
 #import "WebHistoryInternal.h"
 #import "WebViewInternal.h"
 #import <WebCore/PageCache.h>
+#import <unicode/char16ptr.h>
 #import <wtf/BlockObjCExceptions.h>
 #import <wtf/NeverDestroyed.h>
 
@@ -83,13 +84,13 @@ void WebVisitedLinkStore::addVisitedLink(NSString *urlString)
 
     size_t length = urlString.length;
 
-    if (const UChar* characters = CFStringGetCharactersPtr((__bridge CFStringRef)urlString)) {
+    if (const UChar* characters = ConstChar16Ptr(CFStringGetCharactersPtr((__bridge CFStringRef)urlString))) {
         addVisitedLinkHash(visitedLinkHash(characters, length));
         return;
     }
 
     Vector<UChar, 512> buffer(length);
-    [urlString getCharacters:buffer.data()];
+    [urlString getCharacters:toOldUCharPtr(buffer.data())];
 
     addVisitedLinkHash(visitedLinkHash(buffer.data(), length));
 }

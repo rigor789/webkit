@@ -32,6 +32,7 @@
 #include "WebCoreSystemInterface.h"
 #include <wtf/SoftLinking.h>
 #include <wtf/WeakPtr.h>
+#include <unicode/char16ptr.h>
 
 #if PLATFORM(IOS)
 #include <CoreText/CoreText.h>
@@ -170,7 +171,7 @@ static const UniChar* provideStringAndAttributes(CFIndex stringIndex, CFIndex* c
 
     *charCount = info->length - stringIndex;
     *attributes = info->attributes;
-    return info->cp + stringIndex;
+    return toOldUCharPtr(info->cp) + stringIndex;
 }
 
 static inline bool safeCFEqual(CFTypeRef a, CFTypeRef b)

@@ -38,6 +38,8 @@
 #include <ApplicationServices/ApplicationServices.h>
 #endif
 
+#include <unicode/char16ptr.h>
+
 namespace WebCore {
 
 static bool shouldFillWithVerticalGlyphs(const UChar* buffer, unsigned bufferLength, const Font& font)
@@ -60,9 +62,9 @@ bool GlyphPage::fill(UChar* buffer, unsigned bufferLength)
     unsigned glyphStep = bufferLength / GlyphPage::size;
 
     if (shouldFillWithVerticalGlyphs(buffer, bufferLength, font))
-        CTFontGetVerticalGlyphsForCharacters(font.platformData().ctFont(), buffer, glyphs.data(), bufferLength);
+        CTFontGetVerticalGlyphsForCharacters(font.platformData().ctFont(), toOldUCharPtr(buffer), glyphs.data(), bufferLength);
     else
-        CTFontGetGlyphsForCharacters(font.platformData().ctFont(), buffer, glyphs.data(), bufferLength);
+        CTFontGetGlyphsForCharacters(font.platformData().ctFont(), toOldUCharPtr(buffer), glyphs.data(), bufferLength);
 
     bool haveGlyphs = false;
     for (unsigned i = 0; i < GlyphPage::size; ++i) {

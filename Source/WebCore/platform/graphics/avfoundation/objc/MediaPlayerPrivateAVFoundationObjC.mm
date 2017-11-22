@@ -77,6 +77,7 @@
 #import <runtime/Uint16Array.h>
 #import <runtime/Uint32Array.h>
 #import <runtime/Uint8Array.h>
+#import <unicode/char16ptr.h>
 #import <wtf/BlockObjCExceptions.h>
 #import <wtf/CurrentTime.h>
 #import <wtf/ListHashSet.h>
@@ -1828,7 +1829,7 @@ bool MediaPlayerPrivateAVFoundationObjC::shouldWaitForLoadingOfResource(AVAssetR
         initDataView->set<uint32_t>(0, keyURISize, true);
 
         RefPtr<Uint16Array> keyURIArray = Uint16Array::create(initDataBuffer.copyRef(), 4, keyURI.length());
-        keyURIArray->setRange(StringView(keyURI).upconvertedCharacters(), keyURI.length() / sizeof(unsigned char), 0);
+        keyURIArray->setRange(toOldUCharPtr(StringView(keyURI).upconvertedCharacters()), keyURI.length() / sizeof(unsigned char), 0);
 
         RefPtr<Uint8Array> initData = Uint8Array::create(WTFMove(initDataBuffer), 0, byteLength);
         if (!player()->keyNeeded(initData.get()))

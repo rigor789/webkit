@@ -30,6 +30,7 @@
 
 #import "WKDOMInternals.h"
 #import "WKDOMRange.h"
+#import <unicode/char16ptr.h>
 #import <WebCore/TextIterator.h>
 
 @interface WKDOMTextIterator () {
@@ -75,7 +76,7 @@
     if (!length)
         return nullptr;
     if (!text.is8Bit())
-        return text.characters16();
+        return toOldUCharPtr(text.characters16());
     if (_upconvertedText.isEmpty())
         _upconvertedText.appendRange(text.characters8(), text.characters8() + length);
     ASSERT(_upconvertedText.size() == text.length());

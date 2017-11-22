@@ -38,6 +38,7 @@
 #import "SharedBuffer.h"
 #import "WebCoreSystemInterface.h"
 #import <float.h>
+#import <unicode/char16ptr.h>
 #import <unicode/uchar.h>
 #import <wtf/Assertions.h>
 #import <wtf/RetainPtr.h>
@@ -656,7 +657,7 @@ static const UniChar* provideStringAndAttributes(CFIndex stringIndex, CFIndex* c
 
     *count = info->length - stringIndex;
     *attributes = info->attributes;
-    return info->characters + stringIndex;
+    return toOldUCharPtr(info->characters) + stringIndex;
 }
 
 bool Font::canRenderCombiningCharacterSequence(const UChar* characters, size_t length) const

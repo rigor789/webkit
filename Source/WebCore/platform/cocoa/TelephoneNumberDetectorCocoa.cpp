@@ -28,6 +28,7 @@
 
 #if ENABLE(TELEPHONE_NUMBER_DETECTION)
 
+#include <unicode/char16ptr.h>
 #include <wtf/SoftLinking.h>
 
 #if USE(APPLE_INTERNAL_SDK)
@@ -66,7 +67,7 @@ bool isSupported()
 bool find(const UChar* buffer, unsigned length, int* startPos, int* endPos)
 {
     ASSERT(isSupported());
-    return DDDFAScannerFirstResultInUnicharArray(phoneNumbersScanner(), buffer, length, startPos, endPos);
+    return DDDFAScannerFirstResultInUnicharArray(phoneNumbersScanner(), toOldUCharPtr(buffer), length, startPos, endPos);
 }
 
 } // namespace TelephoneNumberDetector

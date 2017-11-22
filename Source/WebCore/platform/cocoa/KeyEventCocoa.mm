@@ -28,6 +28,7 @@
 
 #import "Logging.h"
 #import "WindowsKeyboardCodes.h"
+#import <unicode/char16ptr.h>
 #import <wtf/ASCIICType.h>
 #import <wtf/text/WTFString.h>
 
@@ -190,7 +191,7 @@ String keyForCharCode(unichar charCode)
     case NSNextFunctionKey:
         return ASCIILiteral("Unidentified");
     default:
-        return String(&charCode, 1);
+        return String(Char16Ptr(&charCode), 1);
     }
 }
 

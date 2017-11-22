@@ -36,6 +36,7 @@
 #import <WebKitLegacy/WebNSFileManagerExtras.h>
 #import <WebKitLegacy/WebNSObjectExtras.h>
 #import <unicode/uchar.h>
+#import <unicode/char16ptr.h>
 #import <sys/param.h>
 
 #if PLATFORM(IOS)
@@ -96,7 +97,7 @@ static BOOL canUseFastRenderer(const UniChar *buffer, unsigned length)
             CGContextScaleCTM(cgContext, 1, -1);
 
         FontCascade webCoreFont(FontPlatformData(reinterpret_cast<CTFontRef>(font), [font pointSize]), fontSmoothingIsAllowed ? AutoSmoothing : Antialiased);
-        TextRun run(StringView(buffer.data(), length));
+        TextRun run(StringView(Char16Ptr(buffer.data()), length));
 
         CGFloat red;
         CGFloat green;
@@ -141,7 +142,7 @@ static BOOL canUseFastRenderer(const UniChar *buffer, unsigned length)
 
     if (canUseFastRenderer(buffer.data(), length)) {
         FontCascade webCoreFont(FontPlatformData(reinterpret_cast<CTFontRef>(font), [font pointSize]));
-        TextRun run(StringView(buffer.data(), length));
+        TextRun run(StringView(Char16Ptr(buffer.data()), length));
         return webCoreFont.width(run);
     }
 

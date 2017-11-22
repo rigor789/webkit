@@ -31,6 +31,7 @@
 #import <WebCore/TextIterator.h>
 #import <WebCore/WebCoreObjCExtras.h>
 #import <runtime/InitializeThreading.h>
+#import <unicode/char16ptr.h>
 #import <wtf/MainThread.h>
 #import <wtf/RunLoop.h>
 #import <wtf/Vector.h>
@@ -101,7 +102,7 @@
     if (!length)
         return nullptr;
     if (!text.is8Bit())
-        return text.characters16();
+        return toOldUCharPtr(text.characters16());
     if (_private->_upconvertedText.isEmpty())
         _private->_upconvertedText.appendRange(text.characters8(), text.characters8() + length);
     ASSERT(_private->_upconvertedText.size() == text.length());

@@ -37,6 +37,7 @@
 #import <wtf/ObjcRuntimeExtras.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/Vector.h>
+#import <unicode/char16ptr.h>
 #import <unicode/uchar.h>
 #import <unicode/uidna.h>
 #import <unicode/uscript.h>
@@ -489,7 +490,7 @@ static NSString *mapHostNameWithRange(NSString *string, NSRange range, BOOL enco
     }
     
     int length = range.length;
-    [string getCharacters:sourceBuffer range:range];
+    [string getCharacters:toOldUCharPtr(sourceBuffer) range:range];
     
     UErrorCode uerror = U_ZERO_ERROR;
     UIDNAInfo processingDetails = UIDNA_INFO_INITIALIZER;
@@ -505,7 +506,7 @@ static NSString *mapHostNameWithRange(NSString *string, NSRange range, BOOL enco
     if (!encode && !allCharactersInIDNScriptWhiteList(destinationBuffer, numCharactersConverted) && !allCharactersAllowedByTLDRules(destinationBuffer, numCharactersConverted))
         return nil;
     
-    return makeString ? [NSString stringWithCharacters:destinationBuffer length:numCharactersConverted] : string;
+    return makeString ? [NSString stringWithCharacters:toOldUCharPtr(destinationBuffer) length:numCharactersConverted] : string;
 }
 
 BOOL hostNameNeedsDecodingWithRange(NSString *string, NSRange range, BOOL *error)
@@ -1011,7 +1012,7 @@ static CFStringRef createStringWithEscapedUnsafeCharacters(CFStringRef string)
 {
     CFIndex length = CFStringGetLength(string);
     Vector<UChar, 2048> sourceBuffer(length);
-    CFStringGetCharacters(string, CFRangeMake(0, length), sourceBuffer.data());
+    CFStringGetCharacters(string, CFRangeMake(0, length), toOldUCharPtr(sourceBuffer.data()));
     
     Vector<UChar, 2048> outBuffer;
     
@@ -1045,7 +1046,7 @@ static CFStringRef createStringWithEscapedUnsafeCharacters(CFStringRef string)
         previousCodePoint = c;
     }
     
-    return CFStringCreateWithCharacters(NULL, outBuffer.data(), outBuffer.size());
+    return CFStringCreateWithCharacters(NULL, toOldUCharPtr(outBuffer.data()), outBuffer.size());
 }
 
 NSString *userVisibleString(NSURL *URL)
