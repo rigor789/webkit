@@ -564,6 +564,7 @@ void VM::deleteAllLinkedCode(DeleteAllCodeEffort effort)
 void VM::deleteAllCode(DeleteAllCodeEffort effort)
 {
     whenIdle([=] () {
+        JSLockHolder lock(this);
         m_codeCache->clear();
         m_regExpCache->deleteAllCode();
         heap.deleteAllCodeBlocks(effort);
