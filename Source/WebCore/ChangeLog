@@ -1,6 +1,5 @@
-<<<<<<< HEAD
+
 2017-08-15  Jason Marcell  <jmarcell@apple.com>
-=======
 2017-08-11  Tim Horton  <timothy_horton@apple.com>
 
         Fix the build with modern Clang's -Wexpansion-to-defined
@@ -12,7 +11,6 @@
         * crypto/mac/SerializedCryptoKeyWrapMac.mm:
 
 2017-08-11  Brady Eidson  <beidson@apple.com>
->>>>>>> 25056aafea5... Fix the build with modern Clang's -Wexpansion-to-defined
 
         Cherry-pick r217197. rdar://problem/33890636
 

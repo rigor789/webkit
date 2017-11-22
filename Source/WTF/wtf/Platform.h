@@ -646,7 +646,10 @@
 
 #if CPU(X86_64) || CPU(ARM64)
 #define HAVE_INT128_T 1
+#else
+#define HAVE_INT128_T 0
 #endif
+
 #endif /* OS(DARWIN) */
 
 #if OS(UNIX)
@@ -736,6 +739,10 @@
 #if USE(JSVALUE32_64)
 #undef ENABLE_FTL_JIT
 #define ENABLE_FTL_JIT 0
+#undef ENABLE_B3_JIT
+#define ENABLE_B3_JIT 0
+#undef ENABLE_WEBASSEMBLY
+#define ENABLE_WEBASSEMBLY 0
 #endif
 
 /* The FTL is disabled on the iOS simulator, mostly for simplicity. */
@@ -828,12 +835,10 @@
 #define ENABLE_B3_JIT 1
 #endif
 
-#if !defined(ENABLE_WEBASSEMBLY)
 #if ENABLE(B3_JIT) && PLATFORM(COCOA)
 #define ENABLE_WEBASSEMBLY 1
 #else
 #define ENABLE_WEBASSEMBLY 0
-#endif
 #endif
 
 /* The SamplingProfiler is the probabilistic and low-overhead profiler used by
