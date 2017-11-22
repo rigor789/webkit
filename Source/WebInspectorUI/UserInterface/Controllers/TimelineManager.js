@@ -23,6 +23,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+ /*
+ * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
+ */
+
 WebInspector.TimelineManager = class TimelineManager extends WebInspector.Object
 {
     constructor()
@@ -527,8 +531,11 @@ WebInspector.TimelineManager = class TimelineManager extends WebInspector.Object
             var profileData = recordPayload.data.profile;
             // COMPATIBILITY (iOS 9): With the Sampling Profiler, profiles no longer include legacy profile data.
             console.assert(profileData || TimelineAgent.setInstruments);
-            return new WebInspector.ScriptTimelineRecord(WebInspector.ScriptTimelineRecord.EventType.ConsoleProfileRecorded, startTime, endTime, callFrames, sourceCodeLocation, recordPayload.data.title, profileData);
+            var record = new WebInspector.ScriptTimelineRecord(WebInspector.ScriptTimelineRecord.EventType.ConsoleProfileRecorded, startTime, endTime, callFrames, sourceCodeLocation, recordPayload.data.title, profileData);
 
+            this._scriptProfilerRecords.push(record);
+            return record;
+            
         case TimelineAgent.EventType.TimerFire:
         case TimelineAgent.EventType.EventDispatch:
         case TimelineAgent.EventType.FireAnimationFrame:
@@ -764,8 +771,10 @@ WebInspector.TimelineManager = class TimelineManager extends WebInspector.Object
     _stopAutoRecordingSoon()
     {
         // Only auto stop when auto capturing.
-        if (!this._isCapturing || !this._mainResourceForAutoCapturing)
-            return;
+        if (!this._isCapturing || !this._mainResourceForAutoCapturing) {
+            if (recordPlayload.type != TimelineAgent.EventType.ConsoleProfile)
+                return;
+        }
 
         if (this._stopCapturingTimeout)
             clearTimeout(this._stopCapturingTimeout);
