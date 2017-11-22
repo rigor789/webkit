@@ -47,6 +47,10 @@
 #include <WebCore/NotImplemented.h>
 #include <wtf/NeverDestroyed.h>
 
+#if ENABLE(INSPECTOR_SERVER)
+#include "WebInspectorServer.h"
+#endif
+
 #if PLATFORM(GTK)
 #include "WebInspectorProxyClient.h"
 #endif
@@ -87,6 +91,11 @@ WebPreferences& WebInspectorProxy::inspectorPagePreferences() const
 
 void WebInspectorProxy::invalidate()
 {
+#if ENABLE(INSPECTOR_SERVER)
+    if (m_remoteInspectionPageId)
+        WebInspectorServer::singleton().unregisterPage(m_remoteInspectionPageId);
+#endif
+
     m_inspectedPage->process().removeMessageReceiver(Messages::WebInspectorProxy::messageReceiverName(), m_inspectedPage->pageID());
 
     didClose();
@@ -386,6 +395,29 @@ static void getContextMenuFromProposedMenu(WKPageRef pageRef, WKArrayRef propose
     *newMenuRef = menuItems;
 }
 
+#if ENABLE(INSPECTOR_SERVER)
+void WebInspectorProxy::enableRemoteInspection()
+{
+    if (!m_remoteInspectionPageId)
+        m_remoteInspectionPageId = WebInspectorServer::singleton().registerPage(this);
+}
+
+void WebInspectorProxy::remoteFrontendConnected()
+{
+    m_inspectedPage->process().send(Messages::WebInspector::RemoteFrontendConnected(), m_inspectedPage->pageID());
+}
+
+void WebInspectorProxy::remoteFrontendDisconnected()
+{
+    m_inspectedPage->process().send(Messages::WebInspector::RemoteFrontendDisconnected(), m_inspectedPage->pageID());
+}
+
+void WebInspectorProxy::dispatchMessageFromRemoteFrontend(const String& message)
+{
+    m_inspectedPage->process().send(Messages::WebInspector::SendMessageToBackend(message), m_inspectedPage->pageID());
+}
+#endif
+
 void WebInspectorProxy::eagerlyCreateInspectorPage()
 {
     if (m_inspectorPage)
@@ -605,6 +637,14 @@ bool WebInspectorProxy::shouldOpenAttached()
 {
     return inspectorPagePreferences().inspectorStartsAttached() && canAttach();
 }
+
+#if ENABLE(INSPECTOR_SERVER)
+void WebInspectorProxy::sendMessageToRemoteFrontend(const String& message)
+{
+    ASSERT(m_remoteInspectionPageId);
+    WebInspectorServer::singleton().sendMessageOverConnection(m_remoteInspectionPageId, message);
+}
+#endif
 
 // Unsupported configurations can use the stubs provided here.
 

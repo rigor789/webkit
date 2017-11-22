@@ -55,6 +55,9 @@ WebInspector.LayoutDirection = {
 
 WebInspector.loaded = function()
 {
+    // Initialize WebSocket to communication.
+    this._initializeWebSocketIfNeeded();
+
     this.debuggableType = InspectorFrontendHost.debuggableType() === "web" ? WebInspector.DebuggableType.Web : WebInspector.DebuggableType.JavaScript;
     this.hasExtraDomains = false;
 
@@ -1626,9 +1629,30 @@ WebInspector._tabBrowserSelectedTabContentViewDidChange = function(event)
         }
         return;
     }
-
+    
     this._shouldRevealSpitConsoleIfSupported = this.isShowingSplitConsole();
     this.hideSplitConsole();
+};
+
+WebInspector._initializeWebSocketIfNeeded = function()
+{
+    if (!InspectorFrontendHost.initializeWebSocket)
+        return;
+
+    var queryParams = parseLocationQueryParameters();
+
+    if ("ws" in queryParams)
+        var url = "ws://" + queryParams.ws;
+    else if ("page" in queryParams) {
+        var page = queryParams.page;
+        var host = "host" in queryParams ? queryParams.host : window.location.host;
+        var url = "ws://" + host + "/devtools/page/" + page;
+    }
+
+    if (!url)
+        return;
+
+    InspectorFrontendHost.initializeWebSocket(url);
 };
 
 WebInspector._toolbarMouseDown = function(event)
