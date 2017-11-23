@@ -80,6 +80,15 @@ WebInspector.ResourceSidebarPanel = class ResourceSidebarPanel extends WebInspec
         this.contentTreeOutline.addEventListener(WebInspector.TreeOutline.Event.SelectionDidChange, this._treeSelectionDidChange, this);
         this.contentTreeOutline.includeSourceMapResourceChildren = true;
 
+        WebInspector.SourceCode.addEventListener(WebInspector.SourceCode.Event.SourceMapAdded, (e) => {
+            for (let sourceMap of e.target.sourceMaps) {
+                for (let sourceURL of sourceMap.sources()) {
+                    this._mainFrameTreeElement.removeFile(sourceURL);
+                }
+            }
+        }, this);
+
+
         if (WebInspector.debuggableType === WebInspector.DebuggableType.JavaScript) {
             this.contentTreeOutline.disclosureButtons = false;
             WebInspector.SourceCode.addEventListener(WebInspector.SourceCode.Event.SourceMapAdded, () => { this.contentTreeOutline.disclosureButtons = true; }, this);
@@ -277,7 +286,7 @@ WebInspector.ResourceSidebarPanel = class ResourceSidebarPanel extends WebInspec
         }
 
         if (!mainFrame)
-            return;
+            return; 
 
         this._mainFrameTreeElement = new WebInspector.FileSystemRepresentationTreeElement(mainFrame);
         this.contentTreeOutline.insertChild(this._mainFrameTreeElement, 0);
