@@ -4,7 +4,7 @@ WebInspector.FileSystemRepresentationTreeElement = class FileSystemRepresentatio
     {
         super("app", "", [], mainFrame);
 
-        this.resources = mainFrame.resources;
+        this.resources = mainFrame.resourceCollection.items;
         this.foldersByPath = new Map;
         this.foldersByPath.set("/app", this);
 
