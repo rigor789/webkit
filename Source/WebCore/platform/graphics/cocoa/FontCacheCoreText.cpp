@@ -1303,10 +1303,11 @@ static RetainPtr<CTFontRef> lookupFallbackFont(CTFontRef font, FontSelectionValu
 
     CFIndex coveredLength = 0;
     RetainPtr<CTFontRef> result;
+
 #if !USE_PLATFORM_SYSTEM_FALLBACK_LIST && ((PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 101200) || (PLATFORM(IOS) && TARGET_OS_IOS))
     result = adoptCF(CTFontCreatePhysicalFontForCharactersWithLanguage(font, toOldUCharPtr(characters), length, localeString.get(), &coveredLength));
 #else
-    result = adoptCF(CTFontCreateForCharactersWithLanguage(font, characters, length, localeString.get(), &coveredLength));
+    result = adoptCF(CTFontCreateForCharactersWithLanguage(font, toOldUCharPtr(characters), length, localeString.get(), &coveredLength));
 #endif
 
 #if PLATFORM(IOS)
