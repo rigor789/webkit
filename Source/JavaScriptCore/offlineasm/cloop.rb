@@ -330,8 +330,10 @@ end
 
 class Sequence
     def getModifiedListC_LOOP
-        myList = @list
+        # when generating multiple architectures at once we need to reset internal static state and counters
+        Instruction.reset
         
+        myList = @list
         # Verify that we will only see instructions and labels.
         myList.each {
             | node |
@@ -554,6 +556,10 @@ end
 
 class Instruction
     @@didReturnFromJSLabelCounter = 0
+
+    def self.reset
+        @@didReturnFromJSLabelCounter = 0
+    end
 
     def lowerC_LOOP
         $asm.codeOrigin codeOriginString if $enableCodeOriginComments
