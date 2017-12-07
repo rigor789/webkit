@@ -72,14 +72,14 @@ WebInspector.SourceMapManager = class SourceMapManager extends WebInspector.Obje
 
         function loadAndParseSourceMap()
         {
-            this._loadAndParseSourceMap(sourceMapURL, baseURL, originalSourceCode);
-        }
+            if (!WebInspector.frameResourceManager.mainFrame) {
+                // If we don't have a main frame, then we are likely in the middle of building the resource tree.
+                // Delaying until the next runloop is (not) enough in this case to then start loading the source map.
+                setTimeout(loadAndParseSourceMap.bind(this), 10);
+                return;
+            }
 
-        if (!WebInspector.frameResourceManager.mainFrame) {
-            // If we don't have a main frame, then we are likely in the middle of building the resource tree.
-            // Delaying until the next runloop is enough in this case to then start loading the source map.
-            setTimeout(loadAndParseSourceMap.bind(this), 0);
-            return;
+            this._loadAndParseSourceMap(sourceMapURL, baseURL, originalSourceCode);
         }
 
         loadAndParseSourceMap.call(this);
