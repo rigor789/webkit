@@ -460,7 +460,7 @@ WebInspector.FrameResourceManager = class FrameResourceManager extends WebInspec
     {
         // Called from WebInspector.RuntimeObserver.
 
-        var frame = this.frameForIdentifier(contextPayload.frameId);
+        var frame = this.frameForIdentifier(contextPayload.frameId || contextPayload.auxData.frameId);
         console.assert(frame);
         if (!frame)
             return;
