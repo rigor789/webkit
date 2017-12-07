@@ -172,7 +172,7 @@ WebInspector.NavigationSidebarPanel = class NavigationSidebarPanel extends WebIn
     {
         console.assert(treeElement);
         console.assert(treeElement.representedObject);
-        if (!treeElement || !treeElement.representedObject)
+        if (!treeElement || !treeElement.representedObject || treeElement.representedObject.constructor === Object)
             return false;
 
         // FIXME: <https://webkit.org/b/153634> Web Inspector: some background tabs think they are the foreground tab and do unnecessary work
