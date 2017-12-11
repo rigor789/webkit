@@ -283,7 +283,7 @@ public:
     void* executableAddress() const { return m_value; }
 #if CPU(ARM_THUMB2)
     // To use this pointer as a data address remove the decoration.
-    void* dataLocation() const { ASSERT_VALID_CODE_POINTER(m_value); return reinterpret_cast<char*>(m_value) - 1; }
+    void* dataLocation() const { ASSERT_VALID_CODE_POINTER(m_value); return reinterpret_cast<char*>(m_value) - 1 - 1; }
 #else
     void* dataLocation() const { ASSERT_VALID_CODE_POINTER(m_value); return m_value; }
 #endif
