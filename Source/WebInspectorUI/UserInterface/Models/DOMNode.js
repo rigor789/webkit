@@ -115,9 +115,9 @@ WebInspector.DOMNode = class DOMNode extends WebInspector.Object
             this._children = [this._contentDocument];
             this._renumber();
         }
-
-        if (payload.frameId)
-            this._frameIdentifier = payload.frameId;
+        var frameId = payload.frameId || payload.auxData.frameId;
+        if (frameId)
+            this._frameIdentifier = frameId;
 
         if (this._nodeType === Node.ELEMENT_NODE) {
             // HTML and BODY from internal iframes should not overwrite top-level ones.
