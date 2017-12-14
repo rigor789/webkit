@@ -32,6 +32,7 @@
 #include "ArgList.h"
 #include "ArrayBufferNeuteringWatchpoint.h"
 #include "BuiltinExecutables.h"
+#include "BuiltinNames.h"
 #include "BytecodeIntrinsicRegistry.h"
 #include "CodeBlock.h"
 #include "CodeCache.h"
@@ -607,7 +608,7 @@ JSValue VM::throwException(ExecState* exec, JSValue thrownValue)
         if (thrownValue.getObject() != nullptr) {
             // Exception::create stores the Exception instance in the passed thrownValue. If we have an Exception instance here we reuse it instead of
             // recreating it. In this way we keep the stack trace at the point where the original exception occured.
-            JSValue nsException = thrownValue.getObject()->getDirect(*this, Identifier::fromString(this, Exception::NS_EXCEPTION_IDENTIFIER_STRING));
+            JSValue nsException = thrownValue.getObject()->getDirect(*this, this->propertyNames->builtinNames().nsExceptionIdentifierPrivateName());
         
             if (!nsException.isUndefinedOrNull() && nsException.isCell() && nsException.asCell() != nullptr ) {
                 exception = jsDynamicCast<Exception*>(nsException);
