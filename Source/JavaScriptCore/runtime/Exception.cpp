@@ -24,6 +24,7 @@
  */
 
 #include "config.h"
+#include "BuiltinNames.h"
 #include "Exception.h"
 
 #include "Interpreter.h"
@@ -33,8 +34,6 @@
 namespace JSC {
 
 const ClassInfo Exception::s_info = { "Exception", &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(Exception) };
-// static
-const char* Exception::NS_EXCEPTION_IDENTIFIER_STRING = "__nsException";
     
 Exception* Exception::create(VM& vm, JSValue thrownValue, StackCaptureAction action)
 {
@@ -83,7 +82,7 @@ void Exception::finishCreation(VM& vm, JSValue thrownValue, StackCaptureAction a
     Base::finishCreation(vm);
     JSObject* asObject = thrownValue.getObject();
     if (asObject != nullptr) {
-        asObject->putDirect(vm, Identifier::fromString(&vm, NS_EXCEPTION_IDENTIFIER_STRING), this, DontEnum | ReadOnly | DontDelete);
+        asObject->putDirect(vm, vm.propertyNames->builtinNames().nsExceptionIdentifierPrivateName(), this, DontEnum | ReadOnly | DontDelete);
     }
     m_value.set(vm, this, thrownValue);
 

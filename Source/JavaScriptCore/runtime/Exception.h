@@ -34,7 +34,6 @@ namespace JSC {
 class Exception : public JSNonFinalObject {
 public:
     typedef JSNonFinalObject Base;
-    static const char* NS_EXCEPTION_IDENTIFIER_STRING;
     static const unsigned StructureFlags = StructureIsImmortal | Base::StructureFlags;
 
     enum StackCaptureAction {

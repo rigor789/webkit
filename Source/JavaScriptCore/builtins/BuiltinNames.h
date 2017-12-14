@@ -195,6 +195,8 @@ public:
         JSC_COMMON_PRIVATE_IDENTIFIERS_EACH_WELL_KNOWN_SYMBOL(INITIALIZE_BUILTIN_SYMBOLS)
         , m_dollarVMName(Identifier::fromString(vm, "$vm"))
         , m_dollarVMPrivateName(Identifier::fromUid(PrivateName(PrivateName::Description, ASCIILiteral("PrivateSymbol.$vm"))))
+        , m_nsExceptionIdentifier(Identifier::fromString(vm, "$nsException"))
+        , m_nsExceptionIdentifierPrivateName(Identifier::fromUid(PrivateName(PrivateName::Description, ASCIILiteral("PrivateSymbol.$nsException"))))
     {
         JSC_FOREACH_BUILTIN_FUNCTION_NAME(INITIALIZE_PRIVATE_TO_PUBLIC_ENTRY)
         JSC_COMMON_PRIVATE_IDENTIFIERS_EACH_PROPERTY_NAME(INITIALIZE_PRIVATE_TO_PUBLIC_ENTRY)
@@ -203,6 +205,8 @@ public:
         JSC_COMMON_PRIVATE_IDENTIFIERS_EACH_WELL_KNOWN_SYMBOL(INITIALIZE_SYMBOL_PUBLIC_TO_PRIVATE_ENTRY)
         m_privateToPublicMap.add(m_dollarVMPrivateName.impl(), &m_dollarVMName);
         m_publicToPrivateMap.add(m_dollarVMName.impl(), &m_dollarVMPrivateName);
+        m_privateToPublicMap.add(m_nsExceptionIdentifierPrivateName.impl(), &m_nsExceptionIdentifier);
+        m_publicToPrivateMap.add(m_nsExceptionIdentifier.impl(), &m_nsExceptionIdentifierPrivateName);
     }
 
     bool isPrivateName(SymbolImpl& uid) const;
@@ -218,6 +222,8 @@ public:
     JSC_COMMON_PRIVATE_IDENTIFIERS_EACH_WELL_KNOWN_SYMBOL(DECLARE_BUILTIN_SYMBOL_ACCESSOR)
     const JSC::Identifier& dollarVMPublicName() const { return m_dollarVMName; }
     const JSC::Identifier& dollarVMPrivateName() const { return m_dollarVMPrivateName; }
+    const JSC::Identifier& nsExceptionIdentifier() const { return m_nsExceptionIdentifier; }
+    const JSC::Identifier& nsExceptionIdentifierPrivateName() const { return m_nsExceptionIdentifierPrivateName; }
 
 private:
     Identifier m_emptyIdentifier;
@@ -226,6 +232,8 @@ private:
     JSC_COMMON_PRIVATE_IDENTIFIERS_EACH_WELL_KNOWN_SYMBOL(DECLARE_BUILTIN_SYMBOLS)
     const JSC::Identifier m_dollarVMName;
     const JSC::Identifier m_dollarVMPrivateName;
+    const JSC::Identifier m_nsExceptionIdentifier;
+    const JSC::Identifier m_nsExceptionIdentifierPrivateName;
     typedef HashMap<RefPtr<UniquedStringImpl>, const Identifier*, IdentifierRepHash> BuiltinNamesMap;
     BuiltinNamesMap m_publicToPrivateMap;
     BuiltinNamesMap m_privateToPublicMap;
