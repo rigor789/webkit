@@ -89,6 +89,7 @@ WebInspector.SourceMapManager = class SourceMapManager extends WebInspector.Obje
 
     _loadAndParseSourceMap(sourceMapURL, baseURL, originalSourceCode)
     {
+        
         this._downloadingSourceMaps[sourceMapURL] = true;
 
         function sourceMapLoaded(error, content, mimeType, statusCode)
@@ -136,8 +137,11 @@ WebInspector.SourceMapManager = class SourceMapManager extends WebInspector.Obje
         if (originalSourceCode instanceof WebInspector.Resource && originalSourceCode.parentFrame)
             frameIdentifier = originalSourceCode.parentFrame.id;
 
-        if (!frameIdentifier)
-            frameIdentifier = WebInspector.frameResourceManager.mainFrame.id;
+        if (!frameIdentifier) {
+            const mainFrame = WebInspector.frameResourceManager.mainFrame;
+            if (mainFrame)
+                frameIdentifier = mainFrame.id || (mainFrame.auxData && mainFrame.auxData.id);
+        }
 
         NetworkAgent.loadResource(frameIdentifier, sourceMapURL, sourceMapLoaded.bind(this));
     }
