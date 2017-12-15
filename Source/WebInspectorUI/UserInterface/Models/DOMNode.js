@@ -115,7 +115,7 @@ WebInspector.DOMNode = class DOMNode extends WebInspector.Object
             this._children = [this._contentDocument];
             this._renumber();
         }
-        var frameId = payload.frameId || payload.auxData.frameId;
+        var frameId = payload.frameId || (payload.auxData && payload.auxData.frameId);
         if (frameId)
             this._frameIdentifier = frameId;
 
