@@ -125,33 +125,38 @@ void InspectorConsoleAgent::addMessageToConsole(std::unique_ptr<ConsoleMessage> 
     addConsoleMessage(WTFMove(message));
 }
 
-void InspectorConsoleAgent::startTiming(const String& title)
+std::unique_ptr<String> InspectorConsoleAgent::startTiming(const String& title)
 {
     ASSERT(!title.isNull());
     if (title.isNull())
-        return;
+        return nullptr;
 
     auto result = m_times.add(title, monotonicallyIncreasingTime());
 
     if (!result.isNewEntry) {
         // FIXME: Send an enum to the frontend for localization?
         String warning = makeString("Timer \"", title, "\" already exists");
-        addMessageToConsole(std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Warning, warning));
+        std::unique_ptr<ConsoleMessage> message = std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Warning, warning);
+        addMessageToConsole(WTFMove(message));
+        return std::make_unique<String>(warning);
     }
+    
+    return nullptr;
 }
 
-void InspectorConsoleAgent::stopTiming(const String& title, PassRefPtr<ScriptCallStack> callStack)
+std::unique_ptr<String> InspectorConsoleAgent::stopTiming(const String& title, PassRefPtr<ScriptCallStack>&& callStack)
 {
     ASSERT(!title.isNull());
     if (title.isNull())
-        return;
+        return nullptr;
 
     auto it = m_times.find(title);
     if (it == m_times.end()) {
         // FIXME: Send an enum to the frontend for localization?
         String warning = makeString("Timer \"", title, "\" does not exist");
-        addMessageToConsole(std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Warning, warning));
-        return;
+        std::unique_ptr<ConsoleMessage> message = std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Warning, warning);
+        addMessageToConsole(WTFMove(message));
+        return nullptr;
     }
 
     double startTime = it->value;
@@ -159,7 +164,9 @@ void InspectorConsoleAgent::stopTiming(const String& title, PassRefPtr<ScriptCal
 
     double elapsed = monotonicallyIncreasingTime() - startTime;
     String message = title + String::format(": %.3fms", elapsed * 1000);
-    addMessageToConsole(std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, callStack));
+    std::unique_ptr<ConsoleMessage> consoleMessage = std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, WTFMove(callStack));
+    addMessageToConsole(WTFMove(consoleMessage));
+    return std::make_unique<String>(message);
 }
 
 void InspectorConsoleAgent::takeHeapSnapshot(const String& title)
