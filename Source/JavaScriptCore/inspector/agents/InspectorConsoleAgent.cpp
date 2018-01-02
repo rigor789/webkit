@@ -125,7 +125,7 @@ void InspectorConsoleAgent::addMessageToConsole(std::unique_ptr<ConsoleMessage> 
     addConsoleMessage(WTFMove(message));
 }
 
-std::unique_ptr<String> InspectorConsoleAgent::startTiming(const String& title)
+std::unique_ptr<ConsoleMessage> InspectorConsoleAgent::startTiming(const String& title)
 {
     ASSERT(!title.isNull());
     if (title.isNull())
@@ -138,13 +138,13 @@ std::unique_ptr<String> InspectorConsoleAgent::startTiming(const String& title)
         String warning = makeString("Timer \"", title, "\" already exists");
         std::unique_ptr<ConsoleMessage> message = std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Warning, warning);
         addMessageToConsole(WTFMove(message));
-        return std::make_unique<String>(warning);
+        return std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Warning, warning);
     }
     
     return nullptr;
 }
 
-std::unique_ptr<String> InspectorConsoleAgent::stopTiming(const String& title, PassRefPtr<ScriptCallStack>&& callStack)
+std::unique_ptr<ConsoleMessage> InspectorConsoleAgent::stopTiming(const String& title, PassRefPtr<ScriptCallStack> callStack)
 {
     ASSERT(!title.isNull());
     if (title.isNull())
@@ -156,7 +156,8 @@ std::unique_ptr<String> InspectorConsoleAgent::stopTiming(const String& title, P
         String warning = makeString("Timer \"", title, "\" does not exist");
         std::unique_ptr<ConsoleMessage> message = std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Warning, warning);
         addMessageToConsole(WTFMove(message));
-        return nullptr;
+        // Return another instance of ConsoleMessage for the caller
+        return std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Warning, warning);
     }
 
     double startTime = it->value;
@@ -164,9 +165,9 @@ std::unique_ptr<String> InspectorConsoleAgent::stopTiming(const String& title, P
 
     double elapsed = monotonicallyIncreasingTime() - startTime;
     String message = title + String::format(": %.3fms", elapsed * 1000);
-    std::unique_ptr<ConsoleMessage> consoleMessage = std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, WTFMove(callStack));
+    std::unique_ptr<ConsoleMessage> consoleMessage = std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, callStack);
     addMessageToConsole(WTFMove(consoleMessage));
-    return std::make_unique<String>(message);
+    return std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, callStack);
 }
 
 void InspectorConsoleAgent::takeHeapSnapshot(const String& title)
