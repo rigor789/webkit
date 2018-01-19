@@ -149,7 +149,7 @@ std::unique_ptr<ConsoleMessage> InspectorConsoleAgent::startTiming(const String&
     return nullptr;
 }
 
-std::unique_ptr<ConsoleMessage> InspectorConsoleAgent::stopTiming(const String& title, PassRefPtr<ScriptCallStack> callStack)
+std::unique_ptr<ConsoleMessage> InspectorConsoleAgent::stopTiming(const String& title, Ref<ScriptCallStack>&& callStack)
 
 {
     ASSERT(!title.isNull());
@@ -171,9 +171,9 @@ std::unique_ptr<ConsoleMessage> InspectorConsoleAgent::stopTiming(const String& 
 
     double elapsed = monotonicallyIncreasingTime() - startTime;
     String message = title + String::format(": %.3fms", elapsed * 1000);
-    std::unique_ptr<ConsoleMessage> consoleMessage = std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, callStack);
+    std::unique_ptr<ConsoleMessage> consoleMessage = std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, WTFMove(callStack));
     addMessageToConsole(WTFMove(consoleMessage));
-    return std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, callStack);
+    return std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, WTFMove(callStack));
 }
 
 void InspectorConsoleAgent::takeHeapSnapshot(const String& title)
