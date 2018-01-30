@@ -73,8 +73,6 @@ public:
             m_baseVal = nullptr;
         else if (&property == m_animVal)
             m_animVal = nullptr;
-        if (!m_baseVal && !m_animVal)
-            detachListWrappers(m_values.size());
     }
 
     int findItem(SVGProperty* property)
@@ -140,7 +138,11 @@ public:
 
     void synchronizeWrappersIfNeeded()
     {
-        ASSERT(isAnimating());
+        if (!isAnimating()) {
+            // This should never happen, but we've seen it in the field. Please comment in bug #181316 if you hit this.
+            ASSERT_NOT_REACHED();
+            return;
+        }
 
         // Eventually the wrapper list needs synchronization because any SVGAnimateLengthList::calculateAnimatedValue() call may
         // mutate the length of our values() list, and thus the wrapper() cache needs synchronization, to have the same size.

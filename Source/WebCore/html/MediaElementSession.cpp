@@ -30,6 +30,7 @@
 #include "MediaElementSession.h"
 
 #include "Document.h"
+#include "DocumentLoader.h"
 #include "Frame.h"
 #include "FrameView.h"
 #include "HTMLAudioElement.h"
@@ -149,22 +150,13 @@ void MediaElementSession::removeBehaviorRestriction(BehaviorRestrictions restric
 }
 
 #if PLATFORM(MAC)
-static bool needsDocumentLevelMediaUserGestureQuirk(Document& document)
+static bool needsArbitraryUserGestureAutoplayQuirk(const Document& document)
 {
     if (!document.settings().needsSiteSpecificQuirks())
         return false;
 
-    String host = document.topDocument().url().host();
-    if (equalLettersIgnoringASCIICase(host, "slate.com") || host.endsWithIgnoringASCIICase(".slate.com"))
-        return true;
-
-    if (equalLettersIgnoringASCIICase(host, "ign.com") || host.endsWithIgnoringASCIICase(".ign.com"))
-        return true;
-
-    if (equalLettersIgnoringASCIICase(host, "washingtonpost.com") || host.endsWithIgnoringASCIICase(".washingtonpost.com"))
-        return true;
-
-    return false;
+    auto* loader = document.loader();
+    return loader && loader->allowedAutoplayQuirks().contains(AutoplayQuirk::ArbitraryUserGestures);
 }
 #endif // PLATFORM(MAC)
 
@@ -194,7 +186,12 @@ SuccessOr<MediaPlaybackDenialReason> MediaElementSession::playbackPermitted(cons
 #endif
 
 #if PLATFORM(MAC)
-    if (element.document().topDocument().mediaState() & MediaProducer::HasUserInteractedWithMediaElement && needsDocumentLevelMediaUserGestureQuirk(element.document()))
+    // FIXME <https://webkit.org/b/175856>: Make this dependent on a runtime flag for desktop autoplay restrictions.
+    const auto& topDocument = element.document().topDocument();
+    if (topDocument.mediaState() & MediaProducer::HasUserInteractedWithMediaElement && topDocument.settings().needsSiteSpecificQuirks())
+        return { };
+
+    if (element.document().hasHadUserInteraction() && needsArbitraryUserGestureAutoplayQuirk(element.document()))
         return { };
 #endif
 

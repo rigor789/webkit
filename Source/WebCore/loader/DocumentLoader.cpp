@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2016 Apple Inc. All rights reserved.
+ * Copyright (C) 2006-2017 Apple Inc. All rights reserved.
  * Copyright (C) 2011 Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -134,7 +134,8 @@ static bool areAllLoadersPageCacheAcceptable(const ResourceLoaderMap& loaders)
 }
 
 DocumentLoader::DocumentLoader(const ResourceRequest& request, const SubstituteData& substituteData)
-    : m_cachedResourceLoader(CachedResourceLoader::create(this))
+    : FrameDestructionObserver(nullptr)
+    , m_cachedResourceLoader(CachedResourceLoader::create(this))
     , m_writer(m_frame)
     , m_originalRequest(request)
     , m_substituteData(substituteData)
@@ -520,7 +521,7 @@ void DocumentLoader::willSendRequest(ResourceRequest& newRequest, const Resource
     ASSERT(m_frame->document());
     ASSERT(topFrame.document());
 
-    ResourceLoadObserver::shared().logFrameNavigation(*m_frame, topFrame, newRequest);
+    ResourceLoadObserver::shared().logFrameNavigation(*m_frame, topFrame, newRequest, redirectResponse.url());
     
     // Update cookie policy base URL as URL changes, except for subframes, which use the
     // URL of the main frame which doesn't change when we redirect.
@@ -709,7 +710,7 @@ void DocumentLoader::responseReceived(const ResourceResponse& response)
     }
 #endif
 
-    frameLoader()->policyChecker().checkContentPolicy(m_response, [this](PolicyAction policy) {
+    frameLoader()->policyChecker().checkContentPolicy(m_response, [this, protectedThis = makeRef(*this)](PolicyAction policy) {
         continueAfterContentPolicy(policy);
     });
 }
@@ -987,7 +988,7 @@ void DocumentLoader::attachToFrame(Frame& frame)
         return;
 
     ASSERT(!m_frame);
-    m_frame = &frame;
+    observeFrame(&frame);
     m_writer.setFrame(&frame);
     attachToFrame();
 
@@ -1028,7 +1029,7 @@ void DocumentLoader::detachFromFrame()
 
     InspectorInstrumentation::loaderDetachedFromFrame(*m_frame, *this);
 
-    m_frame = nullptr;
+    observeFrame(nullptr);
 }
 
 void DocumentLoader::clearMainResourceLoader()

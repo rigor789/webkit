@@ -777,6 +777,7 @@ set(JavaScriptCore_SOURCES
     runtime/JSCallee.cpp
     runtime/JSCell.cpp
     runtime/JSCustomGetterSetterFunction.cpp
+    runtime/JSCPoisonedPtr.cpp
     runtime/JSDataView.cpp
     runtime/JSDataViewPrototype.cpp
     runtime/JSDateMath.cpp
