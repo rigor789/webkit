@@ -106,7 +106,7 @@ JS_EXPORTDATA bool useFastPermisionsJITCopy { false };
 
 JS_EXPORTDATA JITWriteSeparateHeapsFunction jitWriteSeparateHeapsFunction;
 
-#if !USE(EXECUTE_ONLY_JIT_WRITE_FUNCTION) && HAVE(REMAP_JIT)
+#if !USE(EXECUTE_ONLY_JIT_WRITE_FUNCTION) && HAVE(REMAP_JIT) && USE(APPLE_INTERNAL_SDK)
 static uintptr_t startOfFixedWritableMemoryPool;
 #endif
 
@@ -185,7 +185,7 @@ protected:
     }
 
 private:
-#if OS(DARWIN) && HAVE(REMAP_JIT)
+#if OS(DARWIN) && HAVE(REMAP_JIT) && USE(APPLE_INTERNAL_SDK)
     void initializeSeparatedWXHeaps(void* stubBase, size_t stubSize, void* jitBase, size_t jitSize)
     {
         mach_vm_address_t writableAddr = 0;
