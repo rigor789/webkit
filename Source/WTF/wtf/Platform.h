@@ -1227,8 +1227,21 @@
 #endif
 
 #if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
-//#undef unorm_normalize
-//#define unorm_normalize(source, sourceLength, mode, options, result, resultLength, status) ios_specific_unorm_normalize(source, sourceLength, mode, options, result, resultLength, status)
+
+#undef unorm2_normalize
+#define unorm2_normalize(norm2, src, length, dest, capacity, pErrorCode) ios_specific_unorm2_normalize(norm2, src, length, dest, capacity, pErrorCode)
+
+#undef unorm2_getNFCInstance
+#define unorm2_getNFCInstance(pErrorCode) ios_specific_unorm2_getNFCInstance(pErrorCode)
+
+#undef unorm2_getNFDInstance
+#define unorm2_getNFDInstance(pErrorCode) ios_specific_unorm2_getNFDInstance(pErrorCode)
+
+#undef unorm2_getNFKCInstance
+#define unorm2_getNFKCInstance(pErrorCode) ios_specific_unorm2_getNFKCInstance(pErrorCode)
+
+#undef unorm2_getNFKDInstance
+#define unorm2_getNFKDInstance(pErrorCode) ios_specific_unorm2_getNFKDInstance(pErrorCode)
 #endif
 
 /* FIXME: Enable USE_OS_LOG when building with the public iOS 10 SDK once we fix <rdar://problem/27758343>. */
