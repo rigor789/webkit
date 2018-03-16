@@ -68,7 +68,7 @@ ExceptionOr<void> Crypto::getRandomValues(ArrayBufferView& array)
 #if OS(DARWIN)
     
 #if !USE(APPLE_INTERNAL_SDK)
-    int rc = SecRandomCopyBytes(kSecRandomDefault, array.byteLength(), array.baseAddress());
+    int rc = SecRandomCopyBytes(kSecRandomDefault, array.byteLength(), reinterpret_cast<uint8_t*>(array.baseAddress()));
     RELEASE_ASSERT(rc == errSecSuccess);
 #else
     int rc = CCRandomCopyBytes(kCCRandomDefault, array.baseAddress(), array.byteLength());
