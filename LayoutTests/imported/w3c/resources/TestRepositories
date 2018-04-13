@@ -2,7 +2,7 @@
     {
         "name": "web-platform-tests",
         "url": "https://github.com/w3c/web-platform-tests.git",
-        "revision": "cb7017e654fb4daddb9dee8d654c78b26e61fa9f",
+        "revision": "a1c0107",
         "paths_to_skip": [
             "conformance-checkers",
             "docs",
@@ -16,7 +16,6 @@
             "fonts",
             "images",
             "resources",
-            "tools",
             "serve.py"
         ],
         "import_options": ["generate_init_py"]

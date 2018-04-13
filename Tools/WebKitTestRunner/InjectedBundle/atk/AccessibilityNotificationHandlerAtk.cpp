@@ -77,6 +77,23 @@ gboolean axObjectEventListener(GSignalInvocationHint* signalHint, unsigned numPa
             notificationName = "ActiveStateChanged";
         else if (!g_strcmp0(g_value_get_string(&paramValues[1]), "busy"))
             notificationName = "AXElementBusyChanged";
+        else if (!g_strcmp0(g_value_get_string(&paramValues[1]), "enabled"))
+            notificationName = "AXDisabledStateChanged";
+        else if (!g_strcmp0(g_value_get_string(&paramValues[1]), "expanded"))
+            notificationName = "AXExpandedChanged";
+        else if (!g_strcmp0(g_value_get_string(&paramValues[1]), "pressed"))
+            notificationName = "AXPressedStateChanged";
+        else if (!g_strcmp0(g_value_get_string(&paramValues[1]), "read-only"))
+            notificationName = "AXReadOnlyStatusChanged";
+        else if (!g_strcmp0(g_value_get_string(&paramValues[1]), "required"))
+            notificationName = "AXRequiredStatusChanged";
+        else if (!g_strcmp0(g_value_get_string(&paramValues[1]), "sensitive"))
+            notificationName = "AXSensitiveStateChanged";
+        else
+            return true;
+        GUniquePtr<char> signalValue(g_strdup_printf("%d", g_value_get_boolean(&paramValues[2])));
+        JSRetainPtr<JSStringRef> jsSignalValue(Adopt, JSStringCreateWithUTF8CString(signalValue.get()));
+        extraArgs.append(JSValueMakeString(jsContext, jsSignalValue.get()));
     } else if (!g_strcmp0(signalQuery.signal_name, "focus-event")) {
         if (g_value_get_boolean(&paramValues[1]))
             notificationName = "AXFocusedUIElementChanged";
@@ -112,7 +129,7 @@ gboolean axObjectEventListener(GSignalInvocationHint* signalHint, unsigned numPa
         arguments[0] = toJS(jsContext, WTF::getPtr(WTR::AccessibilityUIElement::create(accessible)));
         arguments[1] = notificationNameArgument;
         size_t numOfExtraArgs = extraArgs.size();
-        for (int i = 0; i < numOfExtraArgs; i++)
+        for (size_t i = 0; i < numOfExtraArgs; i++)
             arguments[i + 2] = extraArgs[i];
         if (elementNotificationHandler != notificationHandlers.end()) {
             // Listener for one element. As arguments, it gets the notification name
@@ -256,7 +273,7 @@ bool AccessibilityNotificationHandler::disconnectAccessibilityCallbacks()
         return false;
 
     // AtkObject signals.
-    for (int i = 0; i < listenerIds.size(); i++) {
+    for (size_t i = 0; i < listenerIds.size(); i++) {
         ASSERT(listenerIds[i]);
         atk_remove_global_event_listener(listenerIds[i]);
     }

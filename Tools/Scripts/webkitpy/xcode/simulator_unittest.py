@@ -1,4 +1,4 @@
-# Copyright (C) 2015 Apple Inc. All rights reserved.
+# Copyright (C) 2015-2017 Apple Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -23,6 +23,7 @@
 import unittest
 
 from webkitpy.common.host_mock import MockHost
+from webkitpy.common.version import Version
 from webkitpy.xcode.simulator import Simulator
 
 
@@ -57,6 +58,7 @@ iOS 8.4 (8.4.1 - 12H321) (com.apple.CoreSimulator.SimRuntime.iOS-8-4)
 tvOS 9.0 (9.0 - 13T5347l) (com.apple.CoreSimulator.SimRuntime.tvOS-9-0)
 watchOS 2.0 (2.0 - 13S343) (com.apple.CoreSimulator.SimRuntime.watchOS-2-0)
 iOS 10.0 (10.0 - 14280) - com.apple.CoreSimulator.SimRuntime.iOS-10-0
+iOS 11.0.1 (11.0.1 - 15280) - com.apple.CoreSimulator.SimRuntime.iOS-11-0
 == Devices ==
 -- iOS 8.0 --
     iPhone 4s (68D9A792-E3A9-462B-B211-762C6A5D3779) (Shutdown)
@@ -76,6 +78,8 @@ Apple TV 1080p (55281ABE-9C27-438B-AD50-C540D7BC4BAC) (Shutdown)
 -- watchOS 2.0 --
     Apple Watch - 38mm (00138CD2-D30C-4380-A30E-A70B88E1A3C5) (Shutdown)
     Apple Watch - 42mm (186AD85E-9BE5-4734-BC33-DF50484AAFF0) (Shutdown)
+-- iOS 11.0 --
+    iPhone 7 (48E6CA73-4BF7-4153-BEE2-736CD881FEBD) (Shutdown) (unavailable, runtime profile not found)
 ''')
         simulator = Simulator(host=self._host)
         self.assertEqual(12, len(simulator.device_types))
@@ -128,13 +132,13 @@ Apple TV 1080p (55281ABE-9C27-438B-AD50-C540D7BC4BAC) (Shutdown)
         self.assertEqual('Apple Watch - 42mm', device_type_apple_watch_42mm.name)
         self.assertEqual('com.apple.CoreSimulator.SimDeviceType.Apple-Watch-42mm', device_type_apple_watch_42mm.identifier)
 
-        self.assertEqual(6, len(simulator.runtimes))
+        self.assertEqual(7, len(simulator.runtimes))
 
         runtime_ios_8 = simulator.runtimes[0]
         self.assertEqual('com.apple.CoreSimulator.SimRuntime.iOS-8-0', runtime_ios_8.identifier)
         self.assertEqual(True, runtime_ios_8.available)
         self.assertEqual(False, runtime_ios_8.is_internal_runtime)
-        self.assertEqual(tuple([8, 0]), runtime_ios_8.version)
+        self.assertEqual(Version(8, 0), runtime_ios_8.version)
         self.assertEqual(11, len(runtime_ios_8.devices))
 
         device_iphone_4s = runtime_ios_8.devices[0]
@@ -207,21 +211,21 @@ Apple TV 1080p (55281ABE-9C27-438B-AD50-C540D7BC4BAC) (Shutdown)
         self.assertEqual('com.apple.CoreSimulator.SimRuntime.iOS-8-0-Internal', runtime_ios_8_internal.identifier)
         self.assertEqual(False, runtime_ios_8_internal.available)
         self.assertEqual(True, runtime_ios_8_internal.is_internal_runtime)
-        self.assertEqual(tuple([8, 0]), runtime_ios_8_internal.version)
+        self.assertEqual(Version(8, 0), runtime_ios_8_internal.version)
         self.assertEqual(0, len(runtime_ios_8_internal.devices))
 
         runtime_ios_8_4 = simulator.runtimes[2]
         self.assertEqual('com.apple.CoreSimulator.SimRuntime.iOS-8-4', runtime_ios_8_4.identifier)
         self.assertEqual(True, runtime_ios_8_4.available)
         self.assertEqual(False, runtime_ios_8_4.is_internal_runtime)
-        self.assertEqual(tuple([8, 4]), runtime_ios_8_4.version)
+        self.assertEqual(Version(8, 4, 1), runtime_ios_8_4.version)
         self.assertEqual(0, len(runtime_ios_8_4.devices))
 
         runtime_tvos_9 = simulator.runtimes[3]
         self.assertEqual('com.apple.CoreSimulator.SimRuntime.tvOS-9-0', runtime_tvos_9.identifier)
         self.assertEqual(True, runtime_tvos_9.available)
         self.assertEqual(False, runtime_tvos_9.is_internal_runtime)
-        self.assertEqual(tuple([9, 0]), runtime_tvos_9.version)
+        self.assertEqual(Version(9, 0), runtime_tvos_9.version)
         self.assertEqual(1, len(runtime_tvos_9.devices))
 
         device_apple_tv_1080p = runtime_tvos_9.devices[0]
@@ -234,14 +238,14 @@ Apple TV 1080p (55281ABE-9C27-438B-AD50-C540D7BC4BAC) (Shutdown)
         self.assertEqual('com.apple.CoreSimulator.SimRuntime.watchOS-2-0', runtime_watchos_2.identifier)
         self.assertEqual(True, runtime_watchos_2.available)
         self.assertEqual(False, runtime_watchos_2.is_internal_runtime)
-        self.assertEqual(tuple([2, 0]), runtime_watchos_2.version)
+        self.assertEqual(Version(2, 0), runtime_watchos_2.version)
         self.assertEqual(2, len(runtime_watchos_2.devices))
 
         runtime_ios_10 = simulator.runtimes[5]
         self.assertEqual('com.apple.CoreSimulator.SimRuntime.iOS-10-0', runtime_ios_10.identifier)
         self.assertEqual(True, runtime_ios_10.available)
         self.assertEqual(False, runtime_ios_10.is_internal_runtime)
-        self.assertEqual(tuple([10, 0]), runtime_ios_10.version)
+        self.assertEqual(Version(10, 0), runtime_ios_10.version)
         self.assertEqual(0, len(runtime_ios_10.devices))
 
         device_apple_watch_38mm = runtime_watchos_2.devices[0]
@@ -315,7 +319,7 @@ iOS 8.0 Internal (8.0 - Unknown) (com.apple.CoreSimulator.SimRuntime.iOS-8-0-Int
         self.assertEqual('com.apple.CoreSimulator.SimRuntime.iOS-8-0', runtime_ios_8.identifier)
         self.assertEqual(True, runtime_ios_8.available)
         self.assertEqual(False, runtime_ios_8.is_internal_runtime)
-        self.assertEqual(tuple([8, 0]), runtime_ios_8.version)
+        self.assertEqual(Version(8, 0), runtime_ios_8.version)
         self.assertEqual(1, len(runtime_ios_8.devices))
 
         device_iphone_4s = runtime_ios_8.devices[0]
@@ -328,8 +332,19 @@ iOS 8.0 Internal (8.0 - Unknown) (com.apple.CoreSimulator.SimRuntime.iOS-8-0-Int
         self.assertEqual('com.apple.CoreSimulator.SimRuntime.iOS-8-0-Internal', runtime_ios_8_internal.identifier)
         self.assertEqual(False, runtime_ios_8_internal.available)
         self.assertEqual(True, runtime_ios_8_internal.is_internal_runtime)
-        self.assertEqual(tuple([8, 0]), runtime_ios_8_internal.version)
+        self.assertEqual(Version(8, 0), runtime_ios_8_internal.version)
         self.assertEqual(0, len(runtime_ios_8_internal.devices))
+
+    def test_failed_partial_version_match(self):
+        self._set_expected_xcrun_simctl_list('''== Device Types ==
+iPhone 6 (com.apple.CoreSimulator.SimDeviceType.iPhone-6)
+== Runtimes ==
+iOS 11.0.1 (11.0.1 - 15280) - com.apple.CoreSimulator.SimRuntime.iOS-11-0
+== Devices ==
+-- iOS 11.1 --
+iPhone 6 (48E6CA73-4BF7-4153-BEE2-736CD881FEBD) (Shutdown)
+        ''')
+        self.assertRaises(AssertionError, lambda: Simulator(host=self._host))
 
     def test_device_pairs(self):
         """ Tests that Device Pairs header does not cause parsing exception """
@@ -356,7 +371,7 @@ iOS 8.0 Internal (8.0 - Unknown) (com.apple.CoreSimulator.SimRuntime.iOS-8-0-Int
         self.assertEqual('com.apple.CoreSimulator.SimRuntime.iOS-8-0', runtime_ios_8.identifier)
         self.assertEqual(True, runtime_ios_8.available)
         self.assertEqual(False, runtime_ios_8.is_internal_runtime)
-        self.assertEqual(tuple([8, 0]), runtime_ios_8.version)
+        self.assertEqual(Version(8, 0), runtime_ios_8.version)
         self.assertEqual(1, len(runtime_ios_8.devices))
 
         device_iphone_4s = runtime_ios_8.devices[0]

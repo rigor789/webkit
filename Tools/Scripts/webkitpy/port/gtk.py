@@ -116,6 +116,7 @@ class GtkPort(Port):
 
     def setup_environ_for_server(self, server_name=None):
         environment = super(GtkPort, self).setup_environ_for_server(server_name)
+        environment['G_DEBUG'] = 'fatal-criticals'
         environment['GSETTINGS_BACKEND'] = 'memory'
         environment['LIBOVERLAY_SCROLLBAR'] = '0'
         environment['TEST_RUNNER_INJECTED_BUNDLE_FILENAME'] = self._build_path('lib', 'libTestRunnerInjectedBundle.so')
@@ -138,9 +139,11 @@ class GtkPort(Port):
             else:
                     _log.warning("Can't find Gallium llvmpipe driver. Try to run update-webkitgtk-libs")
         if self.get_option("leaks"):
-            #  Turn off GLib memory optimisations https://wiki.gnome.org/Valgrind.
+            # Turn off GLib memory optimisations https://wiki.gnome.org/Valgrind.
             environment['G_SLICE'] = 'always-malloc'
-            environment['G_DEBUG'] = 'gc-friendly'
+            environment['G_DEBUG'] += ',gc-friendly'
+            # Turn off bmalloc when running under Valgrind, see https://bugs.webkit.org/show_bug.cgi?id=177745
+            environment['Malloc'] = '1'
             xmlfilename = "".join(("drt-%p-", uuid.uuid1().hex, "-leaks.xml"))
             xmlfile = os.path.join(self.results_directory(), xmlfilename)
             suppressionsfile = self.path_from_webkit_base('Tools', 'Scripts', 'valgrind', 'suppressions.txt')
@@ -165,7 +168,7 @@ class GtkPort(Port):
     def _generate_all_test_configurations(self):
         configurations = []
         for build_type in self.ALL_BUILD_TYPES:
-            configurations.append(TestConfiguration(version=self._version, architecture='x86', build_type=build_type))
+            configurations.append(TestConfiguration(version=self.version_name(), architecture='x86', build_type=build_type))
         return configurations
 
     def _path_to_driver(self):

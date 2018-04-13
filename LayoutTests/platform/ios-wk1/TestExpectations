@@ -7,6 +7,12 @@ fast/viewport/ios/ipad/width-is-device-width.html [ Pass ]
 
 editing/input/focus-change-with-marked-text.html [ Pass ]
 
+# No service worker implementation for WK1
+imported/w3c/web-platform-tests/service-workers [ Skip ]
+http/wpt/service-workers [ Skip ]
+http/wpt/cache-storage [ Skip ]
+http/tests/cache-storage [ Skip ]
+
 # Skip WebRTC for now in WK1
 imported/w3c/web-platform-tests/webrtc [ Skip ]
 webrtc [ Skip ]
@@ -118,7 +124,6 @@ editing/style/apple-style-editable-mix.html [ Failure ]
 # Editing tests that time out:
 editing/deleting/delete-button-background-image-none.html
 editing/input/page-up-down-scrolls.html
-editing/input/reveal-contenteditable-on-input-vertically.html
 editing/selection/caret-at-bidi-boundary.html
 editing/spelling/context-menu-suggestions-multiword-selection.html
 editing/spelling/delete-into-misspelled-word.html
@@ -595,9 +600,6 @@ compositing/visible-rect/scrolled.html [ Failure ]
 compositing/contents-scale/incremental-change.html [ ImageOnlyFailure ]
 compositing/overlap-blending/nested-overlap-overflow.html [ ImageOnlyFailure ]
 compositing/overlap-blending/reflection-opacity-huge.html [ ImageOnlyFailure ]
-compositing/regions/propagate-region-box-shadow-border-padding.html [ ImageOnlyFailure ]
-compositing/regions/z-index-update.html [ ImageOnlyFailure ]
-compositing/regions/z-index.html [ ImageOnlyFailure ]
 compositing/text-on-scaled-layer.html [ ImageOnlyFailure ]
 compositing/text-on-scaled-surface.html [ ImageOnlyFailure ]
 
@@ -874,9 +876,6 @@ fast/transforms/transformed-focused-text-input.html [ Failure ]
 fast/writing-mode/Kusa-Makura-background-canvas.html [ Failure ]
 http/tests/navigation/page-cache-iframe-no-current-historyItem.html [ Failure ]
 
-# XMLHttpRequest tests that fail
-webkit.org/b/82672 http/tests/xmlhttprequest/range-test.html [ Failure ]
-
 # JavaScripts tests that fail:
 js/dom/deep-recursion-test.html [ Failure ]
 
@@ -974,7 +973,6 @@ fast/css3-text/css3-text-decoration/text-decoration-unprefix.html
 fast/dom/offset-parent-positioned-and-inline.html
 fast/forms/input-live-pseudo-selectors.html
 fast/inline/inline-box-adjust-position-crash2.html
-fast/regions/animated-image-in-region.html
 fast/ruby/text-emphasis.html
 fast/text/emphasis-height-crash.html
 fast/text/emphasis-vertical.html
@@ -1002,10 +1000,6 @@ animations/trigger-container-scroll-empty.html [ Failure ]
 storage/indexeddb
 imported/w3c/IndexedDB-private-browsing
 imported/w3c/web-platform-tests/IndexedDB
-crypto/webkitSubtle/rsa-indexeddb-non-exportable-private.html
-crypto/webkitSubtle/rsa-indexeddb-non-exportable.html
-crypto/webkitSubtle/rsa-indexeddb-private.html
-crypto/webkitSubtle/rsa-indexeddb.html
 fast/history/page-cache-indexed-closed-db.html
 fast/history/page-cache-indexed-opened-db.html
 crypto/subtle/rsa-indexeddb-non-exportable-private.html
@@ -1106,6 +1100,11 @@ http/tests/navigation/metaredirect-goback.html
 
 # Disk cache is WK2 only
 http/tests/cache/disk-cache
+
+# Async image decoding is WK2 only
+fast/images/async-image-background-change.html
+fast/images/async-image-src-change.html
+http/tests/multipart/multipart-async-image.html
 
 # Flaky as of 06/08/2015
 animations/animation-direction-reverse-hardware-opacity.html [ Failure Pass ]
@@ -1211,8 +1210,6 @@ fast/borders/dotted-border-on-subpixel-position.html [ ImageOnlyFailure ]
 fast/forms/select/select-painting.html [ ImageOnlyFailure ]
 fast/images/background-image-size-changes-fractional-position.html [ ImageOnlyFailure ]
 fast/masking/clip-path-on-subpixel-position.html [ ImageOnlyFailure ]
-fast/regions/overflow/overflow-scrollable-fit-complex.html [ ImageOnlyFailure ]
-fast/regions/webkit-background-clip-text.html [ ImageOnlyFailure ]
 fast/text/hidpi-text-selection-gap-between-words.html [ ImageOnlyFailure ]
 svg/animations/animate-keytimes-crash.html [ ImageOnlyFailure ]
 svg/filters/feMorphology-radius-cases.svg [ ImageOnlyFailure ]
@@ -1263,9 +1260,6 @@ compositing/reflections/deeply-nested-reflections.html [ Skip ]
 compositing/reflections/direct-image-object-fit-reflected.html [ Skip ]
 compositing/reflections/empty-reflection-with-mask.html [ Skip ]
 compositing/reflections/masked-reflection-on-composited.html [ Skip ]
-compositing/regions/abs-in-named-flow-from-fixed-in-named-flow.html [ Skip ]
-compositing/regions/abs-transformed-dynamic-update.html [ Skip ]
-compositing/regions/crash-transform-inside-region.html [ Skip ]
 compositing/repaint/absolute-painted-into-composited-ancestor.html [ Skip ]
 compositing/repaint/composited-document-element.html [ Skip ]
 compositing/repaint/content-into-overflow.html [ Skip ]
@@ -1412,18 +1406,15 @@ compositing/scrolling/touch-scrolling-repaint.html [ ImageOnlyFailure Pass ]
 compositing/tiling/offscreen-tiled-layer.html [ Pass Failure ]
 compositing/visible-rect/backing-change-height-from-zero.html [ Pass Failure ]
 css3/calc/transforms-translate.html [ ImageOnlyFailure Pass ]
-fast/block/inside-inlines/new-model/margin-collapse/003.html [ ImageOnlyFailure Pass ]
 fast/css-generated-content/after-with-inline-continuation.html [ ImageOnlyFailure Pass ]
 fast/css/cascade/background-clip-and-webkit-background-clip-cascade-order.html [ ImageOnlyFailure Pass ]
 fast/css3-text/font-synthesis.html [ ImageOnlyFailure Pass ]
 fast/dom/HTMLImageElement/sizes/image-sizes-2x.html [ Pass Failure ]
 fast/layers/no-clipping-overflow-hidden-added-after-transform.html [ ImageOnlyFailure Pass ]
-fast/regions/hit-test-region.html [ Pass Failure ]
 fast/replaced/table-percent-height.html [ Pass Failure ]
 fast/ruby/ruby-justification-hittest.html [ Pass Failure ]
 fast/shadow-dom/trusted-event-scoped-flags.html [ Pass Failure ]
 fast/sub-pixel/compositing-layers-on-subpixel-position.html [ ImageOnlyFailure Pass ]
-fast/text/web-font-load-fallback-during-loading.html [ ImageOnlyFailure Pass ]
 fast/viewport/ios/width-is-device-width-overflowing-body-overflow-hidden-tall.html [ Pass Failure ]
 fast/viewport/ios/width-is-device-width-overflowing-body-overflow-hidden.html [ Pass Failure ]
 fast/viewport/ios/width-is-device-width-overflowing-no-shrink-to-fit.html [ Pass Failure ]
@@ -1555,7 +1546,6 @@ fast/multicol/newmulticol/hide-box-horizontal-bt.html [ Pass ImageOnlyFailure ]
 fast/multicol/newmulticol/hide-box-vertical-lr.html [ Pass ImageOnlyFailure ]
 fast/multicol/newmulticol/hide-box-vertical-rl.html [ Pass ImageOnlyFailure ]
 fast/overflow/scrollbar-restored.html [ Failure Pass ]
-fast/regions/region-styling/region-style-inline-background-color.html [ Pass ImageOnlyFailure ]
 fast/replaced/iframe-with-percentage-height-within-table-with-anonymous-table-cell.html [ Failure Pass ]
 fast/replaced/iframe-with-percentage-height-within-table-with-table-cell-ignore-height.html [ Failure Pass ]
 fast/shapes/shape-outside-floats/shape-outside-rounded-inset.html [ Pass ImageOnlyFailure ]
@@ -1686,7 +1676,6 @@ transitions/svg-text-shadow-transition.html [ Failure Pass ]
 [ Release ] editing/undo/undo-delete.html [ Failure ]
 
 # Flaky as of 08/30/2016
-compositing/regions/move-layer-from-one-region-to-another.html [ Pass ImageOnlyFailure ]
 css3/device-adapt/viewport-width-not-affecting-next-page.html [ Pass Failure ]
 editing/execCommand/4641880-1.html [ Pass Failure ]
 editing/execCommand/insertHTML.html [ Pass Failure ]
@@ -1700,10 +1689,6 @@ fast/forms/validation-message-on-listbox.html [ Failure Crash ]
 fast/inline/layout-after-inserting-nested-br.html [ Pass ImageOnlyFailure ]
 fast/masking/parsing-clip-path-shape.html [ Pass Failure ]
 fast/overflow/horizontal-scroll-after-back.html [ Pass Failure ]
-fast/regions/overflow/overflow-size-change-with-stacking-context-rtl.html [ Pass ImageOnlyFailure ]
-fast/regions/region-styling/region-style-block-background-color2.html [ Pass ImageOnlyFailure ]
-fast/regions/shape-outside-floats/regions-shape-outside-floats-inset.html [ Pass ImageOnlyFailure ]
-fast/regions/shape-outside-floats/regions-shape-outside-region-polygon-floats.html [ Pass ImageOnlyFailure ]
 fast/replaced/percent-height-in-anonymous-block.html [ Crash Failure ]
 fast/replaced/table-percent-width.html [ Crash Pass ]
 fast/table/fixed-size-table-with-fixed-size-content.html [ Pass ImageOnlyFailure ]
@@ -1734,7 +1719,7 @@ imported/mozilla/svg/tspan-rotate-05.svg [ Pass ImageOnlyFailure ]
 imported/mozilla/svg/tspan-xy-01.svg [ Pass ImageOnlyFailure ]
 platform/ios/ios/plugin/youtube-flash-plugin-iframe.html [ Pass Failure ]
 svg/text/add-tspan-position-bug.html [ Pass ImageOnlyFailure ]
-security/contentSecurityPolicy/video-with-file-url-allowed-by-media-src-star.html [ Pass ImageOnlyFailure ]
+security/contentSecurityPolicy/video-with-file-url-allowed-by-media-src-star.html [ Skip ]
 svg/text/hidpi-text-selection-rect-position.html [ Pass ImageOnlyFailure ]
 transforms/2d/perspective-not-fixed-container.html [ Pass ImageOnlyFailure ]
 transforms/3d/hit-testing/hover-rotated-negative-z.html [ Pass Failure ]
@@ -1758,7 +1743,6 @@ editing/deleting/pruning-after-merge-1.html [ Pass Failure ]
 editing/inserting/editable-html-element.html [ Pass Failure ]
 fast/css/text-overflow-input-focus-placeholder.html [ Pass ImageOnlyFailure ]
 fast/parser/external-entities-in-xslt.xml [ Pass Failure ]
-fast/regions/multicol/regions-in-multicol-bt.html [ Pass ImageOnlyFailure ]
 fast/scrolling/rtl-scrollbars.html [ Pass ImageOnlyFailure ]
 fast/text/orthogonal-writing-mode-containing-block-frameView-resize-relayout.html [ Pass ImageOnlyFailure ]
 http/tests/loading/post-in-iframe-with-back-navigation.html [ Failure Pass ]
@@ -1913,3 +1897,12 @@ http/tests/websocket/tests/hybi/network-process-crash-error.html [ Skip ]
 http/tests/css/filters-on-iframes.html [ Skip ]
 
 webkit.org/b/172092 [ Release ] fast/parser/adoption-agency-unload-iframe-4.html [ Timeout ]
+
+# FIXME: For some reason EventSender.keyDown() does not work.
+webkit.org/b/178490 fast/text/scroll-text-overflow-ellipsis.html [ Skip ]
+
+# User-installed fonts test infrastructure is not present in WK1
+webkit.org/b/180062 fast/text/user-installed-fonts [ ImageOnlyFailure ]
+
+# rdar://problem/34716163 Breaks subsequent tests using response.xml
+http/tests/xmlhttprequest/range-test.html [ Skip ]

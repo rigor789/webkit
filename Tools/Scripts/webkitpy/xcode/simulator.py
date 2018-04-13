@@ -28,8 +28,9 @@ import re
 import subprocess
 import time
 
-from webkitpy.benchmark_runner.utils import timeout
+from webkitpy.common.timeout_context import Timeout
 from webkitpy.common.host import Host
+from webkitpy.common.version import Version
 
 _log = logging.getLogger(__name__)
 
@@ -129,8 +130,8 @@ class Runtime(object):
         self.is_internal_runtime = is_internal_runtime
 
     @classmethod
-    def from_version_string(cls, version):
-        return cls.from_identifier('com.apple.CoreSimulator.SimRuntime.iOS-' + version.replace('.', '-'))
+    def from_version(cls, version):
+        return cls.from_identifier('com.apple.CoreSimulator.SimRuntime.iOS-' + '{}-{}'.format(version[0], version[1]))
 
     @classmethod
     def from_identifier(cls, identifier):
@@ -156,7 +157,7 @@ class Runtime(object):
         if self.is_internal_runtime:
             version_suffix = " Internal"
         return '<Runtime {version}: {identifier}. Available: {available}, {num_devices} devices>'.format(
-            version='.'.join(map(str, self.version)) + version_suffix,
+            version=str(self.version) + version_suffix,
             identifier=self.identifier,
             available=self.available,
             num_devices=len(self.devices))
@@ -172,11 +173,9 @@ class Simulator(object):
     Represents the iOS Simulator infrastructure under the currently select Xcode.app bundle.
     """
     device_type_re = re.compile('(?P<name>.+)\((?P<identifier>[^)]+)\)')
-    # FIXME: runtime_re parses the version from the runtime name, but that does not contain the full version number
-    # (it can omit the revision). We should instead parse the version from the number contained in parentheses.
-    runtime_re = re.compile('(i|watch|tv)OS (?P<version>\d+\.\d)(?P<internal> Internal)? \(\d+\.\d+(\.\d+)? - (?P<build_version>[^)]+)\) \((?P<identifier>[^)]+)\)( \((?P<availability>[^)]+)\))?')
-    new_runtime_re = re.compile('(i|watch|tv)OS (?P<version>\d+\.\d)(?P<internal> Internal)? \(\d+\.\d+(\.\d+)? - (?P<build_version>[^)]+)\) - (?P<identifier>[^)]+)( \((?P<availability>[^)]+)\))?')
-    unavailable_version_re = re.compile('-- Unavailable: (?P<identifier>[^ ]+) --')
+    runtime_re = re.compile('(?P<os>.+) \((?P<version>\d+\.\d+(\.\d+)?) - (?P<build_version>[^)]+)\) \((?P<identifier>[^)]+)\)( \((?P<availability>[^)]+)\))?')
+    new_runtime_re = re.compile('(?P<os>.+) \((?P<version>\d+\.\d+(\.\d+)?) - (?P<build_version>[^)]+)\) - (?P<identifier>[^)]+)( \((?P<availability>[^)]+)\))?')
+    unavailable_version_re = re.compile('-- (Unavailable: )?(?P<identifier>[^ ]+) --')
     version_re = re.compile('-- (i|watch|tv)OS (?P<version>\d+\.\d+)(?P<internal> Internal)? --')
     devices_re = re.compile(
         '\s*(?P<name>.+) \((?P<udid>[A-Z0-9\-]+)\) \((?P<state>[^)]+)\)( \((?P<availability>[^)]+)\))?')
@@ -242,7 +241,7 @@ class Simulator(object):
     @staticmethod
     def wait_until_device_is_booted(udid, timeout_seconds=60 * 15):
         Simulator.wait_until_device_is_in_state(udid, Simulator.DeviceState.BOOTED, timeout_seconds)
-        with timeout(seconds=timeout_seconds):
+        with Timeout(seconds=timeout_seconds):
             while True:
                 try:
                     state = subprocess.check_output(['xcrun', 'simctl', 'spawn', udid, 'launchctl', 'print', 'system']).strip()
@@ -260,7 +259,7 @@ class Simulator(object):
     @staticmethod
     def wait_until_device_is_in_state(udid, wait_until_state, timeout_seconds=60 * 15):
         _log.debug('waiting for device %s to enter state %s with timeout %s', udid, Simulator.device_state_description(wait_until_state), timeout_seconds)
-        with timeout(seconds=timeout_seconds):
+        with Timeout(seconds=timeout_seconds):
             device_state = Simulator.device_state(udid)
             while (device_state != wait_until_state):
                 device_state = Simulator.device_state(udid)
@@ -334,11 +333,10 @@ class Simulator(object):
                 if line != '== Devices ==':
                     raise RuntimeError('Expected == Devices == header but got: "{}"'.format(line))
                 break
-            version = tuple(map(int, runtime_match.group('version').split('.')))
-            runtime = Runtime(version=version,
+            runtime = Runtime(version=Version.from_string(runtime_match.group('version')),
                               identifier=runtime_match.group('identifier'),
                               available=runtime_match.group('availability') is None,
-                              is_internal_runtime=bool(runtime_match.group('internal')))
+                              is_internal_runtime=('Internal' in runtime_match.group('os')))
             self.runtimes.append(runtime)
         self._parse_devices(lines)
 
@@ -353,8 +351,7 @@ class Simulator(object):
         for line in lines:
             version_match = self.version_re.match(line)
             if version_match:
-                version = tuple(map(int, version_match.group('version').split('.')))
-                current_runtime = self.runtime(version=version, is_internal_runtime=bool(version_match.group('internal')))
+                current_runtime = self.runtime(version=Version.from_string(version_match.group('version')), is_internal_runtime=bool(version_match.group('internal')))
                 assert current_runtime
                 continue
 
@@ -407,6 +404,16 @@ class Simulator(object):
 
         for runtime in self.runtimes:
             if version and runtime.version != version:
+                continue
+            if is_internal_runtime and runtime.is_internal_runtime != is_internal_runtime:
+                continue
+            if identifier and runtime.identifier != identifier:
+                continue
+            return runtime
+
+        # Allow for a partial version match
+        for runtime in self.runtimes:
+            if version and runtime.version not in version:
                 continue
             if is_internal_runtime and runtime.is_internal_runtime != is_internal_runtime:
                 continue

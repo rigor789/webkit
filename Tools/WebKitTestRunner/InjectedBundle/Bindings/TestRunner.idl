@@ -31,10 +31,13 @@ interface TestRunner {
     void dumpChildFramesAsText();
     void waitForPolicyDelegate();
     void waitUntilDone();
-    void waitUntilDownloadFinished();
     void notifyDone();
     double preciseTime();
     readonly attribute double timeout;
+
+    // Downloads.
+    void waitUntilDownloadFinished();
+    void setShouldLogDownloadCallbacks(boolean value);
 
     // Other dumping.
     void dumpBackForwardList();
@@ -53,6 +56,11 @@ interface TestRunner {
     void dumpDatabaseCallbacks();
     void dumpDOMAsWebArchive();
     void dumpPolicyDelegateCallbacks();
+
+    void clearDOMCaches();
+    void clearDOMCache(DOMString origin);
+    boolean hasDOMCache(DOMString origin);
+    unsigned long domCacheSize(DOMString origin);
 
     // Special options.
     void keepWebHistory();
@@ -100,6 +108,9 @@ interface TestRunner {
     void repaintSweepHorizontally();
     void display();
     void displayAndTrackRepaints();
+
+    // Failed load condition testing
+    void forceImmediateCompletion();
 
     // Printing
     boolean isPageBoxVisible(long pageIndex);
@@ -165,6 +176,7 @@ interface TestRunner {
     // Cookies testing
     void setAlwaysAcceptCookies(boolean accept);
     void setCookieStoragePartitioningEnabled(boolean enabled);
+    void setStorageAccessAPIEnabled(boolean enabled);
 
     void overridePreference(DOMString preference, DOMString value);
 
@@ -183,7 +195,7 @@ interface TestRunner {
 
     // Geolocation
     void setGeolocationPermission(boolean value);
-    void setMockGeolocationPosition(double latitude, double longitude, double accuracy, optional object altitude, optional object altitudeAccuracy, optional object heading, optional object speed);
+    void setMockGeolocationPosition(double latitude, double longitude, double accuracy, optional object altitude, optional object altitudeAccuracy, optional object heading, optional object speed, optional object floorLevel);
     void setMockGeolocationPositionUnavailableError(DOMString errorMessage);
     boolean isGeolocationProviderActive();
 
@@ -257,7 +269,10 @@ interface TestRunner {
     void setStatisticsLastSeen(DOMString hostName, double seconds);
     void setStatisticsPrevalentResource(DOMString hostName, boolean value);
     boolean isStatisticsPrevalentResource(DOMString hostName);
+    boolean isStatisticsRegisteredAsSubFrameUnder(DOMString subFrameHost, DOMString topFrameHost);
+    boolean isStatisticsRegisteredAsRedirectingTo(DOMString hostRedirectedFrom, DOMString hostRedirectedTo);
     void setStatisticsHasHadUserInteraction(DOMString hostName, boolean value);
+    void setStatisticsHasHadNonRecentUserInteraction(DOMString hostName);
     boolean isStatisticsHasHadUserInteraction(DOMString hostName);
     void setStatisticsGrandfathered(DOMString hostName, boolean value);
     boolean isStatisticsGrandfathered(DOMString hostName);
@@ -266,6 +281,7 @@ interface TestRunner {
     void setStatisticsSubresourceUniqueRedirectTo(DOMString hostName, DOMString hostNameRedirectedTo);
     void setStatisticsTimeToLiveUserInteraction(double seconds);
     void setStatisticsTimeToLiveCookiePartitionFree(double seconds);
+    void statisticsNotifyObserver();
     void statisticsProcessStatisticsAndDataRecords();
     void statisticsUpdateCookiePartitioning();
     void statisticsSetShouldPartitionCookiesForHost(DOMString hostName, boolean value);
@@ -279,6 +295,7 @@ interface TestRunner {
     void setStatisticsPruneEntriesDownTo(unsigned long entries);
     void statisticsClearInMemoryAndPersistentStore();
     void statisticsClearInMemoryAndPersistentStoreModifiedSinceHours(unsigned long hours);
+    void statisticsClearThroughWebsiteDataRemoval(object callback);
     void statisticsResetToConsistentState();
 
     // Open panel
@@ -287,6 +304,11 @@ interface TestRunner {
     void setWebRTCLegacyAPIEnabled(boolean value);
 
     void terminateNetworkProcess();
+    void terminateServiceWorkerProcess();
 
     void removeAllSessionCredentials(object callback);
+
+    void getApplicationManifestThen(object callback);
+
+    void installFakeHelvetica(DOMString configuration);
 };
