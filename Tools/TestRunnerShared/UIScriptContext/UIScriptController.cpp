@@ -445,23 +445,15 @@ void UIScriptController::simulateRotationLikeSafari(DeviceOrientation*, JSValueR
 {
 }
 
+void UIScriptController::findString(JSStringRef, unsigned long options, unsigned long maxCount)
+{
+}
+
 void UIScriptController::removeViewFromWindow(JSValueRef)
 {
 }
 
 void UIScriptController::addViewToWindow(JSValueRef)
-{
-}
-
-#endif // !PLATFORM(COCOA)
-
-#if !PLATFORM(MAC)
-
-void UIScriptController::overridePreference(JSStringRef, JSStringRef)
-{
-}
-
-void UIScriptController::insertText(JSStringRef, int, int)
 {
 }
 
@@ -473,8 +465,33 @@ void UIScriptController::completeBackSwipe(JSValueRef callback)
 {
 }
 
+#endif // !PLATFORM(COCOA)
+
+#if !PLATFORM(MAC)
+
+void UIScriptController::overridePreference(JSStringRef, JSStringRef)
+{
+}
+
+void UIScriptController::replaceTextAtRange(JSStringRef, int, int)
+{
+}
+
 void UIScriptController::platformPlayBackEventStream(JSStringRef, JSValueRef)
 {
+}
+
+void UIScriptController::firstResponderSuppressionForWebView(bool)
+{
+}
+
+void UIScriptController::makeWindowContentViewFirstResponder()
+{
+}
+
+bool UIScriptController::isWindowContentViewFirstResponder() const
+{
+    return false;
 }
 
 #endif

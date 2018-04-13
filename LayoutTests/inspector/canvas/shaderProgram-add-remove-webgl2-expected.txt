@@ -1,0 +1,5 @@
+CONSOLE MESSAGE: line 6: TypeError: null is not an object (evaluating 'context.createProgram')
+Test that CanvasManager tracks creation and destruction of WebGL2 shader programs.
+
+Uncaught exception in test page: TypeError: null is not an object (evaluating 'context.createProgram') [file:///Volumes/Data/mjs/Work/src/Safari/OpenSource/LayoutTests/inspector/canvas/resources/shaderProgram-utilities.js:6]
+

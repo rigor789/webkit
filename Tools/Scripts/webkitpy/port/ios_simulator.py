@@ -29,6 +29,8 @@ import subprocess
 import time
 
 from webkitpy.common.memoized import memoized
+from webkitpy.common.system.executive import ScriptError
+from webkitpy.common.version import Version
 from webkitpy.port.device import Device
 from webkitpy.port.ios import IOSPort
 from webkitpy.xcode.simulator import Simulator, Runtime, DeviceType
@@ -78,7 +80,11 @@ class IOSSimulatorPort(IOSPort):
         _log.debug('IOSSimulatorPort _device_class is %s', self._device_class)
 
         if not IOSSimulatorPort._CURRENT_DEVICE:
-            IOSSimulatorPort._CURRENT_DEVICE = Device(Simulator(host).current_device())
+            try:
+                IOSSimulatorPort._CURRENT_DEVICE = Device(Simulator(host).current_device())
+            except ScriptError:
+                # Failure to find a current device should not result in an exception being thrown
+                IOSSimulatorPort._CURRENT_DEVICE = Device(None)
         self._current_device = IOSSimulatorPort._CURRENT_DEVICE
         if not self._current_device:
             self.set_option('dedicated_simulators', True)
@@ -96,18 +102,26 @@ class IOSSimulatorPort(IOSPort):
         runtime_identifier = self.get_option('runtime')
         if runtime_identifier:
             runtime = Runtime.from_identifier(runtime_identifier)
+        elif self.get_option('version'):
+            runtime = Runtime.from_version(Version.from_string(self.get_option('version')))
         else:
-            runtime = Runtime.from_version_string(self.host.platform.xcode_sdk_version('iphonesimulator'))
+            runtime = Runtime.from_version(self.host.platform.xcode_sdk_version('iphonesimulator'))
         return runtime
+
+    @staticmethod
+    def _version_from_name(name):
+        if len(name.split('-')) > 2 and name.split('-')[2].isdigit():
+            return Version.from_string(name.split('-')[2])
+        return None
 
     @memoized
     def ios_version(self):
-        # FIXME: We should replace --runtime with something which makes sense for both Simulator and Device
-        # https://bugs.webkit.org/show_bug.cgi?id=173775
         runtime_identifier = self.get_option('runtime')
+        if self.get_option('version'):
+            return Version.from_string(self.get_option('version'))
         if runtime_identifier:
-            return '.'.join(str(i) for i in Runtime.from_identifier(runtime_identifier).version)
-        return self.host.platform.xcode_sdk_version('iphonesimulator')
+            return Runtime.from_identifier(runtime_identifier).version
+        return IOSSimulatorPort._version_from_name(self._name) if IOSSimulatorPort._version_from_name(self._name) else self.host.platform.xcode_sdk_version('iphonesimulator')
 
     def simulator_device_type(self):
         device_type_identifier = self.get_option('device_type')
@@ -180,7 +194,7 @@ class IOSSimulatorPort(IOSPort):
                 _log.warning('Unable to remove Simulator' + str(i))
 
     def use_multiple_simulator_apps(self):
-        return int(self.host.platform.xcode_version().split('.')[0]) < 9
+        return int(self.host.platform.xcode_version().major) < 9
 
     def _create_simulators(self):
         if (self.default_child_processes() < self.child_processes()):
@@ -232,7 +246,7 @@ class IOSSimulatorPort(IOSPort):
             else:
                 self._executive.run_command(['xcrun', 'simctl', 'boot', device_udid])
 
-            if mac_os_version in ['elcapitan', 'yosemite', 'mavericks']:
+            if mac_os_version < Version.from_name('Sierra'):
                 time.sleep(2.5)
 
         if not self.use_multiple_simulator_apps():

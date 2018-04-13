@@ -26,6 +26,7 @@
 #include "config.h"
 #include "InjectedBundlePage.h"
 
+#include "ActivateFonts.h"
 #include "InjectedBundle.h"
 #include "StringFunctions.h"
 #include "WebCoreTestSupport.h"
@@ -435,6 +436,8 @@ void InjectedBundlePage::resetAfterTest()
 
     // User scripts need to be removed after the test and before loading about:blank, as otherwise they would run in about:blank, and potentially leak results into a subsequest test.
     WKBundlePageRemoveAllUserContent(m_page);
+
+    uninstallFakeHelvetica();
 }
 
 // Loader Client Callbacks
@@ -752,9 +755,9 @@ static void dumpFrameScrollPosition(WKBundleFrameRef frame, StringBuilder& strin
         stringBuilder.appendLiteral("' ");
     }
     stringBuilder.appendLiteral("scrolled to ");
-    stringBuilder.append(WTF::String::number(x));
+    stringBuilder.appendECMAScriptNumber(x);
     stringBuilder.append(',');
-    stringBuilder.append(WTF::String::number(y));
+    stringBuilder.appendECMAScriptNumber(y);
     stringBuilder.append('\n');
 }
 
@@ -934,7 +937,7 @@ void InjectedBundlePage::didFinishLoadForFrame(WKBundleFrameRef frame)
     if (injectedBundle.testRunner()->shouldDumpFrameLoadCallbacks())
         dumpLoadEvent(frame, "didFinishLoadForFrame");
 
-    frameDidChangeLocation(frame, /*shouldDump*/ true);
+    frameDidChangeLocation(frame);
 }
 
 void InjectedBundlePage::didFailLoadWithErrorForFrame(WKBundleFrameRef frame, WKErrorRef)
@@ -1358,7 +1361,7 @@ WKBundlePagePolicyAction InjectedBundlePage::decidePolicyForNavigationAction(WKB
 
 WKBundlePagePolicyAction InjectedBundlePage::decidePolicyForNewWindowAction(WKBundlePageRef, WKBundleFrameRef, WKBundleNavigationActionRef, WKURLRequestRef, WKStringRef, WKTypeRef*)
 {
-    return WKBundlePagePolicyActionUse;
+    return WKBundlePagePolicyActionPassThrough;
 }
 
 WKBundlePagePolicyAction InjectedBundlePage::decidePolicyForResponse(WKBundlePageRef page, WKBundleFrameRef, WKURLResponseRef response, WKURLRequestRef, WKTypeRef*)
@@ -2009,7 +2012,7 @@ String InjectedBundlePage::platformResponseMimeType(WKURLResponseRef)
 }
 #endif
 
-void InjectedBundlePage::frameDidChangeLocation(WKBundleFrameRef frame, bool shouldDump)
+void InjectedBundlePage::frameDidChangeLocation(WKBundleFrameRef frame)
 {
     auto& injectedBundle = InjectedBundle::singleton();
     if (frame != injectedBundle.topLoadingFrame())
@@ -2025,7 +2028,7 @@ void InjectedBundlePage::frameDidChangeLocation(WKBundleFrameRef frame, bool sho
         return;
     }
 
-    if (shouldDump)
+    if (injectedBundle.pageCount())
         injectedBundle.page()->dump();
     else
         injectedBundle.done();

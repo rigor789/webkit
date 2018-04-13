@@ -3,14 +3,11 @@
 # See http://trac.webkit.org/wiki/TestExpectations for more information on this file.
 #
 
-canvas/philip/tests/toDataURL.png.complexcolours.html
-
 compositing/canvas/accelerated-canvas-compositing-size-limit.html [ Failure ]
 compositing/canvas/accelerated-canvas-compositing.html [ Failure ]
 compositing/backgrounds/fixed-backgrounds.html [ ImageOnlyFailure ]
 compositing/contents-scale/non-decomposable-matrix.html [ ImageOnlyFailure ]
 compositing/hidpi-compositing-vs-non-compositing-check-on-testing-framework.html [ ImageOnlyFailure ]
-compositing/regions/move-layer-from-one-region-to-another.html [ ImageOnlyFailure ]
 
 css3/filters/backdrop/backdrop-filter-with-reflection-add-backdrop.html [ ImageOnlyFailure ]
 css3/filters/backdrop/backdrop-filter-with-reflection-value-change.html [ ImageOnlyFailure ]
@@ -137,10 +134,23 @@ security/contentSecurityPolicy/video-with-data-url-allowed-by-media-src-star.htm
 
 security/contentSecurityPolicy/video-with-data-url-allowed-by-media-src-star.html [ ImageOnlyFailure ]
 
-# <rdar://problem/30353797> need to differentiated between device types
+# <https://bugs.webkit.org/show_bug.cgi?id=175987> Manage tests which require different device types better
 tiled-drawing/ios/iphone7
+fast/forms/ios/ipad
+fast/events/touch/ios/iphone7
 
 # <rdar://problem/32575766>, need to handle media sandbox correctly
 webrtc
 
 workers/bomb.html [ Skip ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=175437
+webgl/webgl-box-shadow.html
+webgl/webgl-border.html
+
+# https://bugs.webkit.org/show_bug.cgi?id=175736
+canvas/philip/tests/2d.path.stroke.scale2.html [ Failure ]
+fast/canvas/canvas-currentColor.html [ Failure ]
+fast/canvas/webgl/gl-teximage.html [ Failure ]
+fast/canvas/webgl/match-page-color-space.html [ ImageOnlyFailure ]
+fast/canvas/webgl/premultiplyalpha-test.html [ Failure ]

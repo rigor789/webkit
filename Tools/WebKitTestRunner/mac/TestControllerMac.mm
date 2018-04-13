@@ -66,6 +66,8 @@ void TestController::platformInitialize()
 {
     poseAsClass("WebKitTestRunnerPasteboard", "NSPasteboard");
     poseAsClass("WebKitTestRunnerEvent", "NSEvent");
+    
+    cocoaPlatformInitialize();
 
     [NSSound _setAlertType:0];
 
@@ -233,6 +235,7 @@ static NSSet *allowedFontFamilySet()
         @"New Peninim MT",
         @"Optima",
         @"Osaka",
+        @"Palatino",
         @"Papyrus",
         @"PCMyungjo",
         @"PilGi",

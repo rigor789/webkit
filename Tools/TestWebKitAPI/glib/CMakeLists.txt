@@ -22,7 +22,7 @@ set(WebKitGLibAPITests_SYSTEM_INCLUDE_DIRECTORIES
 
 set(WebKitGLibAPITest_LIBRARIES
     JavaScriptCore
-    WebKit2
+    WebKit
     WebKitGLibAPITestsCore
     ${GLIB_LIBRARIES}
     ${LIBSOUP_LIBRARIES}
@@ -30,7 +30,7 @@ set(WebKitGLibAPITest_LIBRARIES
 
 set(WebKitGLibAPITestExtension_LIBRARIES
     JavaScriptCore
-    WebKit2
+    WebKit
     ${GLIB_LIBRARIES}
 )
 
@@ -41,7 +41,7 @@ set(WebKitGLibAPIWebProcessTests
 
 macro(ADD_WK2_TEST_WEB_EXTENSION extension_name)
     add_library(${extension_name} MODULE ${ARGN})
-    add_dependencies(${extension_name} WebKit2)
+    add_dependencies(${extension_name} WebKit)
     set_property(
         TARGET ${extension_name}
         APPEND
@@ -51,6 +51,10 @@ macro(ADD_WK2_TEST_WEB_EXTENSION extension_name)
         LIBRARY_OUTPUT_DIRECTORY ${TEST_LIBRARY_DIR}
     )
     target_link_libraries(${extension_name} ${WebKitGLibAPITestExtension_LIBRARIES})
+
+    if (COMPILER_IS_GCC_OR_CLANG)
+        WEBKIT_ADD_TARGET_CXX_FLAGS(${extension_name} -Wno-unused-parameter)
+    endif ()
 endmacro()
 
 macro(ADD_WK2_TEST test_name)
@@ -63,6 +67,10 @@ macro(ADD_WK2_TEST test_name)
         RUNTIME_OUTPUT_DIRECTORY ${TEST_BINARY_DIR}
     )
     target_link_libraries(${test_name} ${WebKitGLibAPITest_LIBRARIES})
+
+    if (COMPILER_IS_GCC_OR_CLANG)
+        WEBKIT_ADD_TARGET_CXX_FLAGS(${test_name} -Wno-unused-parameter)
+    endif ()
 endmacro()
 
 WEBKIT_INCLUDE_CONFIG_FILES_IF_EXISTS()
@@ -83,7 +91,11 @@ include_directories(${WebKitGLibAPITests_INCLUDE_DIRECTORIES})
 include_directories(SYSTEM ${WebKitGLibAPITests_SYSTEM_INCLUDE_DIRECTORIES})
 
 add_library(WebKitGLibAPITestsCore STATIC ${WebKitGLibAPITests_SOURCES})
-target_link_libraries(WebKitGLibAPITestsCore WebKit2)
+target_link_libraries(WebKitGLibAPITestsCore WebKit)
+
+if (COMPILER_IS_GCC_OR_CLANG)
+    WEBKIT_ADD_TARGET_CXX_FLAGS(WebKitGLibAPITestsCore -Wno-unused-parameter)
+endif ()
 
 add_custom_command(
     OUTPUT ${TEST_RESOURCES_DIR}/webkitglib-tests-resources.gresource

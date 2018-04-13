@@ -76,7 +76,13 @@ PASS new ApplePaySession(2, request) threw exception TypeError: "invalidNetwork"
 SETUP: request = validRequest(); request.supportedNetworks = ['invalidNetwork', 'visa'];
 PASS new ApplePaySession(2, request) threw exception TypeError: "invalidNetwork" is not a valid payment network..
 
+SETUP: request = validRequest(); request.supportedNetworks = ['carteBancaire'];
+PASS new ApplePaySession(2, request) threw exception TypeError: "carteBancaire" is not a valid payment network..
+
 SETUP: request = validRequest(); request.supportedNetworks = ['visa', 'visa'];
+PASS new ApplePaySession(2, request) did not throw exception.
+
+SETUP: request = validRequest(); request.supportedNetworks = ['vIsa', 'MasterCard', 'JCB'];
 PASS new ApplePaySession(2, request) did not throw exception.
 
 Testing PaymentRequest.merchantCapabilities
@@ -228,6 +234,9 @@ PASS new ApplePaySession(2, request) threw exception TypeError: Type error.
 SETUP: request = validRequest(); request.requiredBillingContactFields = ['invalid'];
 PASS new ApplePaySession(2, request) threw exception TypeError: Type error.
 
+SETUP: request = validRequest(); request.requiredBillingContactFields = ['phoneticName'];
+PASS new ApplePaySession(2, request) threw exception TypeError: "phoneticName" is not a valid contact field..
+
 SETUP: request = validRequest(); request.requiredBillingContactFields = ['email', 'name', 'phone', 'postalAddress'];
 PASS new ApplePaySession(2, request) did not throw exception.
 
@@ -252,6 +261,9 @@ SETUP: request = validRequest(); request.billingContact = undefined;
 PASS new ApplePaySession(2, request) did not throw exception.
 
 SETUP: request = validRequest(); request.billingContact = { };
+PASS new ApplePaySession(2, request) did not throw exception.
+
+SETUP: request = validRequest(); request.billingContact = { subLocality: '', subAdministrativeArea: '' };
 PASS new ApplePaySession(2, request) did not throw exception.
 
 Testing PaymentRequest.requiredShippingContactFields
@@ -286,6 +298,9 @@ PASS new ApplePaySession(2, request) threw exception TypeError: Type error.
 SETUP: request = validRequest(); request.requiredShippingContactFields = ['invalid'];
 PASS new ApplePaySession(2, request) threw exception TypeError: Type error.
 
+SETUP: request = validRequest(); request.requiredShippingContactFields = ['phoneticName'];
+PASS new ApplePaySession(2, request) threw exception TypeError: "phoneticName" is not a valid contact field..
+
 SETUP: request = validRequest(); request.requiredShippingContactFields = ['email', 'name', 'phone', 'postalAddress'];
 PASS new ApplePaySession(2, request) did not throw exception.
 
@@ -310,6 +325,9 @@ SETUP: request = validRequest(); request.shippingContact = undefined;
 PASS new ApplePaySession(2, request) did not throw exception.
 
 SETUP: request = validRequest(); request.shippingContact = { };
+PASS new ApplePaySession(2, request) did not throw exception.
+
+SETUP: request = validRequest(); request.shippingContact = { subLocality: '', subAdministrativeArea: '' };
 PASS new ApplePaySession(2, request) did not throw exception.
 
 Testing PaymentRequest.shippingType

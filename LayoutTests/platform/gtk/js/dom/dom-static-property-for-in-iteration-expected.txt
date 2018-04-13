@@ -45,7 +45,7 @@ PASS a["innerText"] is nerget
 PASS a["contentEditable"] is inherit
 PASS a["isContentEditable"] is false
 PASS a["offsetParent"] is [object HTMLBodyElement]
-PASS a["offsetTop"] is 712
+PASS a["offsetTop"] is 714
 PASS a["offsetLeft"] is 8
 PASS a["offsetWidth"] is 39
 PASS a["offsetHeight"] is 17
@@ -134,7 +134,7 @@ PASS a["clientWidth"] is 0
 PASS a["clientHeight"] is 0
 PASS a["innerHTML"] is nerget
 PASS a["outerHTML"] is <a id="foo" href="bar">nerget</a>
-PASS a["webkitRegionOverset"] is undefined
+PASS a["accessibleNode"] is [object AccessibleNode]
 PASS a["oncopy"] is null
 PASS a["oncut"] is null
 PASS a["onpaste"] is null
