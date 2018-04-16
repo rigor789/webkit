@@ -37,7 +37,7 @@
 #include <objc/objc.h>
 #include <unistd.h>
 
-#include "BSoftLinking.h"
+#include "darwin/BSoftLinking.h"
 BSOFT_LINK_PRIVATE_FRAMEWORK(CrashReporterSupport);
 BSOFT_LINK_FUNCTION(CrashReporterSupport, SimulateCrash, BOOL, (pid_t pid, mach_exception_data_type_t exceptionCode, CFStringRef description), (pid, exceptionCode, description));
 #endif

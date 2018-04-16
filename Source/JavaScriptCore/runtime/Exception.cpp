@@ -84,7 +84,7 @@ void Exception::finishCreation(VM& vm, JSValue thrownValue, StackCaptureAction a
     Base::finishCreation(vm);
     JSObject* asObject = thrownValue.getObject();
     if (asObject != nullptr) {
-        asObject->putDirect(vm, vm.propertyNames->builtinNames().nsExceptionIdentifierPrivateName(), this, DontEnum | ReadOnly | DontDelete);
+        asObject->putDirect(vm, vm.propertyNames->builtinNames().nsExceptionIdentifierPrivateName(), this, PropertyAttribute::DontEnum | PropertyAttribute::ReadOnly | PropertyAttribute::DontDelete);
     }
     m_value.set(vm, this, thrownValue);
 

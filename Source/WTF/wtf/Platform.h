@@ -872,13 +872,14 @@
 #define ENABLE_B3_JIT 1
 #endif
 
-#if !defined(ENABLE_WEBASSEMBLY)
+//#if !defined(ENABLE_WEBASSEMBLY)
+#undef ENABLE_WEBASSEMBLY
 #if ENABLE(B3_JIT) && PLATFORM(COCOA)
 #define ENABLE_WEBASSEMBLY 1
 #else
 #define ENABLE_WEBASSEMBLY 0
 #endif
-#endif
+//#endif
 
 /* The SamplingProfiler is the probabilistic and low-overhead profiler used by
  * JSC to measure where time is spent inside a JavaScript program.
