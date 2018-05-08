@@ -31,12 +31,14 @@
 #include "JSModuleRecord.h"
 #include "ModuleScopeData.h"
 #include "StrongInlines.h"
+#include <LiteralParser.h>
 
 namespace JSC {
 
 
 ModuleAnalyzer::ModuleAnalyzer(ExecState* exec, const Identifier& moduleKey, const SourceCode& sourceCode, const VariableEnvironment& declaredVariables, const VariableEnvironment& lexicalVariables)
     : m_vm(&exec->vm())
+    , m_exec(exec)
     , m_moduleRecord(*m_vm, JSModuleRecord::create(exec, *m_vm, exec->lexicalGlobalObject()->moduleRecordStructure(), moduleKey, sourceCode, declaredVariables, lexicalVariables))
 {
 }
@@ -140,10 +142,85 @@ JSModuleRecord* ModuleAnalyzer::analyze(ModuleProgramNode& moduleProgramNode)
     for (const auto& pair : m_moduleRecord->lexicalVariables())
         exportVariable(moduleProgramNode, pair.key, pair.value);
 
+    ensureDefaultExportIfNothingExported(m_moduleRecord.get());
     if (Options::dumpModuleRecord())
         m_moduleRecord->dump();
 
     return m_moduleRecord.get();
+}
+    
+void ModuleAnalyzer::ensureDefaultExportIfNothingExported(JSModuleRecord* moduleRecord) {
+    
+    WTF::String source = moduleRecord->sourceCode().view().toString();
+    SourceCode sourceC;
+    ParserError error;
+    JSValue json;
+    if (moduleRecord->moduleKey().impl()->endsWith(".json")) {
+        if (source.is8Bit()) {
+            LiteralParser<LChar> jsonParser(m_exec, source.characters8(), source.length(), StrictJSON);
+            json = jsonParser.tryLiteralParse();
+            if (!json) {
+                return nullptr;
+            }
+        } else {
+            LiteralParser<UChar> jsonParser(m_exec, source.characters16(), source.length(), StrictJSON);
+            json = jsonParser.tryLiteralParse();
+            if (!json) {
+                return nullptr;
+            }
+        }
+        
+        source = WTF::ASCIILiteral("export default undefined;");
+        sourceC = makeSource(source, SourceOrigin(), WTF::emptyString(), WTF::TextPosition(), SourceProviderSourceType::Module);
+    }
+    
+    if (moduleRecord->requestedModules().isEmpty() && moduleRecord->exportEntries().isEmpty() && moduleRecord->starExportEntries().isEmpty()) {
+        
+        auto moduleUrl = moduleRecord->sourceCode().provider()->url();
+        error = ParserError();
+        sourceC = makeSource(WTF::ASCIILiteral("export default undefined;"), SourceOrigin(), WTF::emptyString(), WTF::TextPosition(), SourceProviderSourceType::Module);
+        
+        std::unique_ptr<ModuleProgramNode> moduleProgramNode = parse<ModuleProgramNode>(
+                                                                                        m_vm, sourceC, Identifier(), JSParserBuiltinMode::NotBuiltin,
+                                                                                        JSParserStrictMode::Strict, JSParserScriptMode::Module, SourceParseMode::ModuleAnalyzeMode, SuperBinding::NotNeeded, error);
+        
+        moduleRecord = JSModuleRecord::create(m_exec, *m_vm, m_exec->lexicalGlobalObject()->moduleRecordStructure(),  moduleRecord->moduleKey(), sourceC, moduleProgramNode->varDeclarations(), moduleProgramNode->lexicalVariables());
+        
+        m_moduleRecord = Strong<JSModuleRecord>(*m_vm, moduleRecord);
+        moduleRecord = parseModule(moduleProgramNode.get());
+        ASSERT(!error.isValid());
+
+        WTF::StringBuilder moduleFunctionSource;
+        moduleFunctionSource.append("{function anonymous(require, module, exports, __dirname, __filename) {");
+        moduleFunctionSource.append(source);
+        moduleFunctionSource.append("\n}}");
+
+        JSObject* exception = nullptr;
+
+        SourceCode functionSource = makeSource(moduleFunctionSource.toString(), SourceOrigin(), moduleUrl, WTF::TextPosition(), SourceProviderSourceType::Module);
+        FunctionExecutable* moduleFunctionExecutable = FunctionExecutable::fromGlobalCode(Identifier::fromString(m_exec, "anonymous"), *m_exec, functionSource, exception, -1);
+        if (!moduleFunctionExecutable) {
+            ASSERT(exception);
+            return nullptr;
+        }
+
+        JSFunction* moduleFunction = JSFunction::create(*m_vm, moduleFunctionExecutable, m_exec->lexicalGlobalObject());
+        moduleRecord->putDirect(*m_vm, Identifier::fromString(m_vm, "CommonJSModuleFunction"), moduleFunction);
+        
+    } else if (json) {
+        moduleRecord->putDirect(*m_vm, m_vm->propertyNames->JSON, json);
+    } else if (error.isValid()) {
+        return nullptr;
+    }
+}
+
+JSModuleRecord* ModuleAnalyzer::parseModule(ModuleProgramNode* moduleProgramNode) {
+    
+    if (!moduleProgramNode) {
+        return nullptr;
+    }
+
+    return analyze(*moduleProgramNode);
 }
 
 } // namespace JSC

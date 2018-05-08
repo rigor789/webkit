@@ -47,7 +47,11 @@ private:
     void exportVariable(ModuleProgramNode&, const RefPtr<UniquedStringImpl>&, const VariableEnvironmentEntry&);
 
     VM* m_vm;
+    ExecState* m_exec;
     Strong<JSModuleRecord> m_moduleRecord;
+    
+    void ensureDefaultExportIfNothingExported(JSModuleRecord* moduleRecord);
+    JSModuleRecord* parseModule(ModuleProgramNode* moduleProgramNode);
 };
 
 } // namespace JSC

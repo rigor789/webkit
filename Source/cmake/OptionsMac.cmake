@@ -64,7 +64,11 @@ set(ENABLE_WEBKIT ON)
 
 set(JavaScriptCore_LIBRARY_TYPE SHARED)
 set(WebCore_LIBRARY_TYPE SHARED)
-set(WebCoreTestSupport_LIBRARY_TYPE SHARED)
+if (ENABLE_STATIC_JSC)
+    set(JavaScriptCore_LIBRARY_TYPE STATIC)
+else ()
+    set(JavaScriptCore_LIBRARY_TYPE SHARED)
+endif ()
 
 add_definitions(-DU_DISABLE_RENAMING=1 -DU_SHOW_CPLUSPLUS_API=0)
 set(ICU_LIBRARIES libicucore.dylib)
