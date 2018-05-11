@@ -513,7 +513,7 @@ let InjectedScript = class InjectedScript
         return callFrame;
     }
 
-    ƒ(objectId, collectionMode, generatePreview, nativeGettersAsValues)
+    _getProperties(objectId, collectionMode, generatePreview, nativeGettersAsValues)
     {
         let parsedObjectId = this._parseObjectId(objectId);
         let object = this._objectForId(parsedObjectId);
