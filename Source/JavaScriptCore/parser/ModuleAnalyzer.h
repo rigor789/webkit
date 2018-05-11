@@ -50,7 +50,7 @@ private:
     ExecState* m_exec;
     Strong<JSModuleRecord> m_moduleRecord;
     
-    void ensureDefaultExportIfNothingExported(JSModuleRecord* moduleRecord);
+    void ensureDefaultExportIfNothingExported();
     JSModuleRecord* parseModule(ModuleProgramNode* moduleProgramNode);
 };
 

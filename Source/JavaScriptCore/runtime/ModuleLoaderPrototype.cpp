@@ -45,6 +45,7 @@
 #include "Nodes.h"
 #include "Parser.h"
 #include "ParserError.h"
+#include <LiteralParser.h>
 
 namespace JSC {
 
@@ -114,11 +115,34 @@ EncodedJSValue JSC_HOST_CALL moduleLoaderPrototypeParseModule(ExecState* exec)
     SourceCode sourceCode = jsSourceCode->sourceCode();
 
     CodeProfiling profile(sourceCode);
-
+    
+    WTF::String source = sourceCode.view().toString();
     ParserError error;
+    JSValue json;
+    if (moduleKey.impl()->endsWith(".json")) {
+        if (source.is8Bit()) {
+            LiteralParser<LChar> jsonParser(exec, source.characters8(), source.length(), StrictJSON);
+            json = jsonParser.tryLiteralParse();
+            if (!json) {
+                throwException(exec, scope, createSyntaxError(exec, jsonParser.getErrorMessage()));
+                return JSValue::encode(jsUndefined());
+            }
+        } else {
+            LiteralParser<UChar> jsonParser(exec, source.characters16(), source.length(), StrictJSON);
+            json = jsonParser.tryLiteralParse();
+            if (!json) {
+                throwException(exec, scope, createSyntaxError(exec, jsonParser.getErrorMessage()));
+                return JSValue::encode(jsUndefined());
+            }
+        }
+        
+        source = WTF::ASCIILiteral("export default undefined;");
+        sourceCode = makeSource(source, SourceOrigin(), WTF::emptyString(), WTF::TextPosition(), SourceProviderSourceType::Module);
+    }
+    
     std::unique_ptr<ModuleProgramNode> moduleProgramNode = parse<ModuleProgramNode>(
-        &vm, sourceCode, Identifier(), JSParserBuiltinMode::NotBuiltin,
-        JSParserStrictMode::Strict, JSParserScriptMode::Module, SourceParseMode::ModuleAnalyzeMode, SuperBinding::NotNeeded, error);
+            &vm, sourceCode,
+            Identifier(), JSParserBuiltinMode::NotBuiltin, JSParserStrictMode::Strict, JSParserScriptMode::Module, SourceParseMode::ModuleAnalyzeMode, SuperBinding::NotNeeded, error);
 
     if (error.isValid()) {
         throwVMError(exec, scope, error.toErrorObject(exec->lexicalGlobalObject(), sourceCode));
@@ -127,6 +151,11 @@ EncodedJSValue JSC_HOST_CALL moduleLoaderPrototypeParseModule(ExecState* exec)
     ASSERT(moduleProgramNode);
 
     ModuleAnalyzer moduleAnalyzer(exec, moduleKey, sourceCode, moduleProgramNode->varDeclarations(), moduleProgramNode->lexicalVariables());
+    
+    if (json) {
+        moduleAnalyzer.moduleRecord()->putDirect(exec->vm(), exec->vm().propertyNames->JSON, json);
+    }
+    
     RETURN_IF_EXCEPTION(scope, encodedJSValue());
     JSModuleRecord* moduleRecord = moduleAnalyzer.analyze(*moduleProgramNode);
 
