@@ -337,7 +337,7 @@ function loadModule(moduleName, parameters, fetcher)
     // resolve: moduleName => Promise(moduleKey)
     // Take the name and resolve it to the unique identifier for the resource location.
     // For example, take the "jquery" and return the URL for the resource.
-    return this.resolve(moduleName, @undefined, fetcher).then((key) => {
+    return this.resolve(moduleName, parameters, fetcher).then((key) => {
         return this.requestSatisfy(this.ensureRegistered(key), parameters, fetcher, new @Set);
     }).then((entry) => {
         return entry.key;
