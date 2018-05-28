@@ -3743,4 +3743,36 @@ NonPropertyTransition JSObject::suggestedArrayStorageTransition() const
     return NonPropertyTransition::AllocateArrayStorage;
 }
 
+JSGlobalObject* JSObject::globalObject() const
+{
+    return this->globalObjectWithFallback(*vm(), structure());
+}
+
+JSGlobalObject* JSObject::globalObject(VM& vm) const
+{
+    return this->globalObjectWithFallback(vm, structure(vm));
+}
+
+JSGlobalObject* JSObject::globalObjectWithFallback(VM& vm, Structure *structure) const
+{
+    auto *global = structure->globalObject();
+    
+    if (!global) {
+        // Because of the $__nsException property, the debugger will
+        // attempt to retrieve an Exception object's className when
+        // inspecting any JS Error object. Exception's structure however
+        // has a nullptr GlobalObject. In order to avoid returning null
+        // we fallback to getting the global object of the wrapper
+        // JS Error object. This should be the only valid case when we reach here.
+        auto *exception = jsDynamicCast<const Exception*>(vm, this);
+        ASSERT(exception);
+        if (exception && exception->value().structureOrNull()) {
+            global = exception->value().structureOrNull()->globalObject();
+        }
+    }
+    ASSERT(global);
+    ASSERT(!isGlobalObject() || ((JSObject*)global) == this);
+    return global;
+}
+    
 } // namespace JSC

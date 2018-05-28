@@ -784,20 +784,9 @@ public:
     }
     void shiftButterflyAfterFlattening(const GCSafeConcurrentJSLocker&, VM&, Structure* structure, size_t outOfLineCapacityAfter);
 
-    JSGlobalObject* globalObject() const
-    {
-        ASSERT(structure()->globalObject());
-        ASSERT(!isGlobalObject() || ((JSObject*)structure()->globalObject()) == this);
-        return structure()->globalObject();
-    }
-        
-    JSGlobalObject* globalObject(VM& vm) const
-    {
-        ASSERT(structure(vm)->globalObject());
-        ASSERT(!isGlobalObject() || ((JSObject*)structure()->globalObject()) == this);
-        return structure(vm)->globalObject();
-    }
-        
+    JSGlobalObject* globalObject() const;
+    JSGlobalObject* globalObject(VM& vm) const;
+
     void switchToSlowPutArrayStorage(VM&);
         
     // The receiver is the prototype in this case. The following:
@@ -1055,6 +1044,8 @@ private:
     JS_EXPORT_PRIVATE ArrayStorage* ensureArrayStorageSlow(VM&);
 
     PropertyOffset prepareToPutDirectWithoutTransition(VM&, PropertyName, unsigned attributes, StructureID, Structure*);
+    
+    JSGlobalObject* globalObjectWithFallback(VM& vm, Structure *structure) const;
 
     AuxiliaryBarrier<Butterfly*> m_butterfly;
     uint32_t m_butterflyIndexingMask { 0 };
