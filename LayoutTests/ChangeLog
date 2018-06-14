@@ -1,6 +1,499 @@
-2018-02-28  Jason Marcell  <jmarcell@apple.com>
+2018-04-30  Jason Marcell  <jmarcell@apple.com>
 
-        Cherry-pick r229086. rdar://problem/37991818
+        Apply patch. rdar://problem/39741039
+
+    2018-04-30  Brent Fulgham  <bfulgham@apple.com>
+
+            Don't Block First Party Cookies on Redirects
+            https://bugs.webkit.org/show_bug.cgi?id=184948
+            <rdar://problem/39534099>
+
+            Reviewed by Youenn Fablet.
+
+            * http/tests/resourceLoadStatistics/do-not-block-top-level-navigation-redirect-expected.txt: Added.
+            * http/tests/resourceLoadStatistics/do-not-block-top-level-navigation-redirect.html: Added.
+
+2018-04-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r230530. rdar://problem/39462749
+
+    Show punycode if URL contains Latin dum character
+    https://bugs.webkit.org/show_bug.cgi?id=184477
+    <rdar://problem/39121999>
+    
+    Reviewed by David Kilzer.
+    
+    Source/WebCore:
+    
+    Revise our "lookalike character" logic to include the small
+    Latin dum character.
+    
+    Test: fast/url/host.html
+    
+    * platform/mac/WebCoreNSURLExtras.mm:
+    (WebCore::isLookalikeCharacter):
+    
+    LayoutTests:
+    
+    * fast/url/host-expected.txt:
+    * fast/url/host.html:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@230530 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-04-11  Brent Fulgham  <bfulgham@apple.com>
+
+            Show punycode if URL contains Latin dum character
+            https://bugs.webkit.org/show_bug.cgi?id=184477
+            <rdar://problem/39121999>
+
+            Reviewed by David Kilzer.
+
+            * fast/url/host-expected.txt:
+            * fast/url/host.html:
+
+2018-04-11  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r230513. rdar://problem/39337459
+
+    FrameSelection::appearanceUpdateTimerFired should be robust against layout passes underneath it
+    https://bugs.webkit.org/show_bug.cgi?id=183395
+    <rdar://problem/38055732>
+    
+    Reviewed by Zalan Bujtas.
+    
+    Source/WebCore:
+    
+    In the case where a FrameSelection updates its appearance when m_appearanceUpdateTimer is fired, the
+    FrameSelection's Frame is unprotected, and can be removed by arbitrary script. This patch applies a simple
+    mitigation by wrapping the Frame in a Ref when firing the appearance update timer.
+    
+    Test: editing/selection/iframe-update-selection-appearance.html
+    
+    * editing/FrameSelection.cpp:
+    (WebCore::FrameSelection::appearanceUpdateTimerFired):
+    
+    LayoutTests:
+    
+    Add a new layout test that passes if we didn't crash.
+    
+    * editing/selection/iframe-update-selection-appearance-expected.txt: Added.
+    * editing/selection/iframe-update-selection-appearance.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@230513 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-04-10  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            FrameSelection::appearanceUpdateTimerFired should be robust against layout passes underneath it
+            https://bugs.webkit.org/show_bug.cgi?id=183395
+            <rdar://problem/38055732>
+
+            Reviewed by Zalan Bujtas.
+
+            Add a new layout test that passes if we didn't crash.
+
+            * editing/selection/iframe-update-selection-appearance-expected.txt: Added.
+            * editing/selection/iframe-update-selection-appearance.html: Added.
+
+2018-04-05  Jason Marcell  <jmarcell@apple.com>
+
+        Apply patch. rdar://problem/39191858
+
+    fix-httponly-cookie
+
+    2018-04-04  Youenn Fablet  <youenn@apple.com>
+
+            iOS 11.4 Beta WKWebView does not send cookies with HttpOnly flag set, for cache manifest request and its resources
+            <rdar://problem/39144159>
+
+            Reviewed by Brady Eidson.
+
+            * http/tests/appcache/document-cookie-http-only-expected.txt: Added.
+            * http/tests/appcache/document-cookie-http-only.php: Added.
+
+2018-04-03  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r230172. rdar://problem/39155049
+
+    Followup(r230063): Add test a layout test for https://bugs.webkit.org/show_bug.cgi?id=183972
+    https://bugs.webkit.org/show_bug.cgi?id=184162
+    
+    Reviewed by Daniel Bates.
+    
+    Without r230063, running run-webkit-tests -g for this test will crash.
+    
+    * svg/dom/animated-tearoff-list-remove-target-expected.txt: Added.
+    * svg/dom/animated-tearoff-list-remove-target.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@230172 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-04-02  Said Abou-Hallawa  <sabouhallawa@apple.com>
+
+            Followup(r230063): Add test a layout test for https://bugs.webkit.org/show_bug.cgi?id=183972
+            https://bugs.webkit.org/show_bug.cgi?id=184162
+
+            Reviewed by Daniel Bates.
+
+            Without r230063, running run-webkit-tests -g for this test will crash.
+
+            * svg/dom/animated-tearoff-list-remove-target-expected.txt: Added.
+            * svg/dom/animated-tearoff-list-remove-target.html: Added.
+
+2018-04-03  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r230006. rdar://problem/38154623
+
+    CSS mask images should be retrieved using potentially CORS-enabled fetch
+    https://bugs.webkit.org/show_bug.cgi?id=179983
+    <rdar://problem/35678149>
+    
+    Reviewed by Brent Fulgham.
+    
+    Source/WebCore:
+    
+    As per <https://drafts.fxtf.org/css-masking-1/#priv-sec> (Editor’s Draft, 23 December 2017)
+    we should fetch CSS mask images using a potentially CORS-enabled fetch.
+    
+    Both cross-origin CSS shape-outside images and CSS mask images may be sensitive to timing
+    attacks that can be used to reveal their pixel data when retrieved without regard to CORS.
+    For the same reason that we fetch CSS shape-outside images using a potentially CORS-enabled
+    fetch we should fetch CSS mask the same way. This also makes the behavior of WebKit more
+    closely align with the behavior in the spec.
+    
+    Test: http/tests/security/css-mask-image.html
+    
+    * page/Settings.yaml: Add a setting for toggle "Anonymous" mode fetching of mask images (defaults: true).
+    We need this setting to avoid breaking the developer convenience feature that some modern media controls
+    layout tests employ to load assets from the filesystem as opposed to using the hardcoded data URLs baked
+    into the WebKit binary.
+    * style/StylePendingResources.cpp: Substitute LoadPolicy::NoCORS and LoadPolicy::Anonymous for
+    LoadPolicy::Normal and LoadPolicy::ShapeOutside, respectively, to match the terminology used
+    in the HTML, CSS Shapes Module Level 1, and CSS Masking Module Level 1 specs.
+    (WebCore::Style::loadPendingImage): Ditto.
+    (WebCore::Style::loadPendingResources): Use load policy LoadPolicy::Anonymous when fetching
+    a mask image or shape-outside image.
+    
+    LayoutTests:
+    
+    Add a test to ensure we do not fetch a cross-origin CSS mask image that does
+    not allow CORS access.
+    
+    * http/tests/security/css-mask-image-expected.html: Added.
+    * http/tests/security/css-mask-image.html: Added.
+    * http/tests/security/resources/black-square.png: Added.
+    * http/tests/security/resources/fail-mask.png: Added.
+    * media/modern-media-controls/resources/media-controls-loader.js: Disable "Anonymous" mode
+    fetching of mask images to allow modern media controls to load mask assets from the filesystem.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@230006 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-03-27  Daniel Bates  <dabates@apple.com>
+
+            CSS mask images should be retrieved using potentially CORS-enabled fetch
+            https://bugs.webkit.org/show_bug.cgi?id=179983
+            <rdar://problem/35678149>
+
+            Reviewed by Brent Fulgham.
+
+            Add a test to ensure we do not fetch a cross-origin CSS mask image that does
+            not allow CORS access.
+
+            * http/tests/security/css-mask-image-expected.html: Added.
+            * http/tests/security/css-mask-image.html: Added.
+            * http/tests/security/resources/black-square.png: Added.
+            * http/tests/security/resources/fail-mask.png: Added.
+            * media/modern-media-controls/resources/media-controls-loader.js: Disable "Anonymous" mode
+            fetching of mask images to allow modern media controls to load mask assets from the filesystem.
+
+2018-04-03  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r230146. rdar://problem/39155245
+
+    Show punycode if URL contains hyphen character
+    https://bugs.webkit.org/show_bug.cgi?id=184221
+    <rdar://problem/38044633>
+    
+    Reviewed by Darin Adler.
+    
+    Source/WebCore:
+    
+    Revise our "lookalike character" logic to include the hyphen,
+    non-breaking hyphen, and minus sign.
+    
+    Test: fast/url/host.html
+    
+    * platform/mac/WebCoreNSURLExtras.mm:
+    (WebCore::isLookalikeCharacter):
+    
+    LayoutTests:
+    
+    * fast/url/host-expected.txt:
+    * fast/url/host.html:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@230146 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-03-31  Brent Fulgham  <bfulgham@apple.com>
+
+            Show punycode if URL contains hyphen character
+            https://bugs.webkit.org/show_bug.cgi?id=184221
+            <rdar://problem/38044633>
+
+            Reviewed by Darin Adler.
+
+            * fast/url/host-expected.txt:
+            * fast/url/host.html:
+
+2018-04-03  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r230052. rdar://problem/39155251
+
+    WebSocket cookie incorrectly stored
+    https://bugs.webkit.org/show_bug.cgi?id=184100
+    <rdar://problem/37928715>
+    
+    Reviewed by Brent Fulgham.
+    
+    Source/WebCore:
+    
+    A cookie received in a WebSocket response should be stored with respect to the
+    origin of the WebSocket server in order for it to be sent in a subsequent request.
+    
+    Also removed a FIXME about implementing support for the long since
+    deprecated Set-Cookie2 header.
+    
+    Test: http/tests/websocket/tests/hybi/websocket-cookie-overwrite-behavior.html
+    
+    * Modules/websockets/WebSocketChannel.cpp:
+    (WebCore::WebSocketChannel::processBuffer):
+    * Modules/websockets/WebSocketHandshake.h:
+    
+    LayoutTests:
+    
+    * http/tests/websocket/tests/hybi/cookie_wsh.py: Added. Downloaded from
+    <https://github.com/w3c/pywebsocket/blob/b2e1d11086fdf00b33a0d30c504f227e7d4fa86b/src/example/cookie_wsh.py>.
+    (_add_set_cookie):
+    (web_socket_do_extra_handshake):
+    (web_socket_transfer_data):
+    * http/tests/websocket/tests/hybi/websocket-cookie-overwrite-behavior-expected.txt: Added.
+    * http/tests/websocket/tests/hybi/websocket-cookie-overwrite-behavior.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@230052 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-03-28  Daniel Bates  <dabates@apple.com>
+
+            WebSocket cookie incorrectly stored
+            https://bugs.webkit.org/show_bug.cgi?id=184100
+            <rdar://problem/37928715>
+
+            Reviewed by Brent Fulgham.
+
+            * http/tests/websocket/tests/hybi/cookie_wsh.py: Added. Downloaded from
+            <https://github.com/w3c/pywebsocket/blob/b2e1d11086fdf00b33a0d30c504f227e7d4fa86b/src/example/cookie_wsh.py>.
+            (_add_set_cookie):
+            (web_socket_do_extra_handshake):
+            (web_socket_transfer_data):
+            * http/tests/websocket/tests/hybi/websocket-cookie-overwrite-behavior-expected.txt: Added.
+            * http/tests/websocket/tests/hybi/websocket-cookie-overwrite-behavior.html: Added.
+
+2018-04-03  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r229830. rdar://problem/39155360
+
+    Disconnect the SVGPathSegList items from their SVGPathElement before rebuilding a new list
+    https://bugs.webkit.org/show_bug.cgi?id=183723
+    <rdar://problem/38517871>
+    
+    Patch by Said Abou-Hallawa <sabouhallawa@apple.com> on 2018-03-21
+    Reviewed by Daniel Bates.
+    
+    Source/WebCore:
+    
+    When setting the "d" attribute directly on a path, we rebuild the list
+    of path segments held for creating the property tear off. The old path
+    segments need to get disconnected from the path element. We already do
+    that when a path segment is replaced or removed.
+    
+    Test: svg/dom/reuse-pathseg-after-changing-d.html
+    
+    * svg/SVGPathElement.cpp:
+    (WebCore::SVGPathElement::svgAttributeChanged):
+    * svg/SVGPathSegList.cpp:
+    (WebCore::SVGPathSegList::clear): SVGPathSegListValues::clearContextAndRoles()
+    will now be called from SVGPathSegListValues::clear() via SVGListProperty::clearValues().
+    (WebCore::SVGPathSegList::replaceItem):
+    (WebCore::SVGPathSegList::removeItem):
+    (WebCore::SVGPathSegList::clearContextAndRoles): Deleted.
+    * svg/SVGPathSegList.h: SVGPathSegListValues::clearContextAndRoles() will
+    now be called from SVGPathSegListValues::clear() via SVGListProperty::initializeValues().
+    * svg/SVGPathSegListValues.cpp:
+    (WebCore::SVGPathSegListValues::clearItemContextAndRole):
+    (WebCore::SVGPathSegListValues::clearContextAndRoles):
+    * svg/SVGPathSegListValues.h:
+    (WebCore::SVGPathSegListValues::operator=):
+    (WebCore::SVGPathSegListValues::clear):
+    
+    LayoutTests:
+    
+    * svg/dom/reuse-pathseg-after-changing-d-expected.txt: Added.
+    * svg/dom/reuse-pathseg-after-changing-d.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@229830 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-03-21  Said Abou-Hallawa  <sabouhallawa@apple.com>
+
+            Disconnect the SVGPathSegList items from their SVGPathElement before rebuilding a new list
+            https://bugs.webkit.org/show_bug.cgi?id=183723
+            <rdar://problem/38517871>
+
+            Reviewed by Daniel Bates.
+
+            * svg/dom/reuse-pathseg-after-changing-d-expected.txt: Added.
+            * svg/dom/reuse-pathseg-after-changing-d.html: Added.
+
+2018-03-21  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r229297. rdar://problem/38682578
+
+    2018-03-05  Andy Estes  <aestes@apple.com>
+
+            [Mac] Teach WebCore::Pasteboard about file promise drags
+            https://bugs.webkit.org/show_bug.cgi?id=183314
+            <rdar://problem/38105493>
+
+            Reviewed by Darin Adler.
+
+            Added versions of file dragging tests in editing/pasteboard/ that use
+            beginDragWithFilePromises() instead of beginDragWithFiles().
+
+            * TestExpectations: Skipped the new tests.
+            * editing/pasteboard/data-transfer-items-drag-drop-file-promise-expected.txt: Added.
+            * editing/pasteboard/data-transfer-items-drag-drop-file-promise.html: Added.
+            * editing/pasteboard/data-transfer-items-drop-file-promise-expected.txt: Added.
+            * editing/pasteboard/data-transfer-items-drop-file-promise.html: Added.
+            * editing/pasteboard/datatransfer-items-drop-plaintext-file-promise-expected.txt: Added.
+            * editing/pasteboard/datatransfer-items-drop-plaintext-file-promise.html: Added.
+            * editing/pasteboard/datatransfer-types-dropping-text-file-promise-expected.txt: Added.
+            * editing/pasteboard/datatransfer-types-dropping-text-file-promise.html: Added.
+            * editing/pasteboard/drag-file-promises-to-editable-element-as-URLs-expected.txt: Added.
+            * editing/pasteboard/drag-file-promises-to-editable-element-as-URLs.html: Added.
+            * editing/pasteboard/drag-file-promises-to-editable-element-as-attachment-expected.txt: Added.
+            * editing/pasteboard/drag-file-promises-to-editable-element-as-attachment.html: Added.
+            * editing/pasteboard/file-input-files-access-promise-expected.txt: Added.
+            * editing/pasteboard/file-input-files-access-promise.html: Added.
+            * platform/mac-wk1/TestExpectations: Un-skipped the new tests.
+            * platform/win/TestExpectations: Skipped the new tests.
+
+2018-03-21  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r229585. rdar://problem/38681880
+
+    2018-03-13  Youenn Fablet  <youenn@apple.com>
+
+            Changing link element rel attribute from preload to stylesheet should succeed loading the stylesheet
+            https://bugs.webkit.org/show_bug.cgi?id=183601
+            <rdar://problem/38309441>
+
+            Reviewed by Antti Koivisto.
+
+            * http/wpt/preload/change-link-rel-attribute-expected.txt: Added.
+            * http/wpt/preload/change-link-rel-attribute.html: Added.
+            * http/wpt/preload/resources/style.css: Added.
+            (body):
+
+2018-03-21  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Work towards rdar://problem/38714892.
+
+        Unreviewed test gardening.
+
+        * platform/mac-sierra/fast/forms/input-table-expected.txt: Copied from LayoutTests/platform/mac/fast/forms/input-table-expected.txt.
+        * platform/mac-sierra/tables/mozilla/bugs/bug30692-expected.txt: Copied from LayoutTests/platform/mac/tables/mozilla/bugs/bug30692-expected.txt.
+        * platform/mac/fast/forms/input-table-expected.txt:
+        * platform/mac/tables/mozilla/bugs/bug30692-expected.txt:
+
+2018-03-20  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r229733. rdar://problem/38651613
+
+    2018-03-19  Brady Eidson  <beidson@apple.com>
+
+            Add a layout test verifying AppCache resource fetches have the document's cookie in place.
+            https://bugs.webkit.org/show_bug.cgi?id=183757
+
+            Reviewed by Alex Christensen.
+
+            * http/tests/appcache/document-cookie-expected.txt: Added.
+            * http/tests/appcache/document-cookie.php: Added.
+            * http/tests/appcache/resources/cookie-protected-script.php: Added.
+            * http/tests/appcache/resources/document-cookie.manifest: Added.
+
+2018-03-20  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r229691. rdar://problem/38651615
+
+    2018-03-16  Youenn Fablet  <youenn@apple.com>
+
+            Add a test verifying that an AppCache manifest request includes credentials
+            https://bugs.webkit.org/show_bug.cgi?id=183716
+
+            Reviewed by Chris Dumez.
+
+            * http/tests/appcache/appcache-cookies-expected.txt: Added.
+            * http/tests/appcache/appcache-cookies.html: Added.
+            * http/tests/appcache/resources/appcache-cookies-test.html: Added.
+            * http/tests/appcache/resources/manifest-if-cookie.php: Added.
+
+2018-03-20  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r229614. rdar://problem/38651603
+
+    2018-03-14  Youenn Fablet  <youenn@apple.com>
+
+            MessagePort should remove its listeners when being closed
+            https://bugs.webkit.org/show_bug.cgi?id=183644
+
+            Reviewed by Chris Dumez.
+
+            * http/tests/workers/resources/messageport-echo-worker.js: Added.
+            * http/tests/workers/worker-messageport-expected.txt: Added.
+            * http/tests/workers/worker-messageport.html: Added.
+
+2018-03-20  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r229505. rdar://problem/38651624
+
+    2018-03-09  Zalan Bujtas  <zalan@apple.com>
+
+            Turn off offset*/scroll* optimization for input elements with shadow content
+            https://bugs.webkit.org/show_bug.cgi?id=182383
+            <rdar://problem/37114190>
+
+            Reviewed by Antti Koivisto.
+
+            * fast/forms/scrollheight-with-mutation-crash-expected.txt: Added.
+            * fast/forms/scrollheight-with-mutation-crash.html: Added.
+
+2018-03-20  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r229483. rdar://problem/38651620
+
+    2018-03-09  Youenn Fablet  <youenn@apple.com>
+
+            ServiceWorker should respect IDB and DOMCache partitioning
+            https://bugs.webkit.org/show_bug.cgi?id=183496
+
+            Reviewed by Brady Eidson.
+
+            * http/wpt/service-workers/resources/third-party-registration-frame.html: Added.
+            * http/wpt/service-workers/resources/third-party-worker.js: Added.
+            * http/wpt/service-workers/third-party-registration-expected.txt: Added.
+            * http/wpt/service-workers/third-party-registration.html: Added.
+
+2018-03-11  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r229086. rdar://problem/37992301
 
     2018-02-27  Youenn Fablet  <youenn@apple.com>
 
@@ -19,6 +512,37 @@
             * platform/mac-wk1/TestExpectations:
             * platform/win/TestExpectations:
             * platform/wpe/TestExpectations:
+
+2018-03-11  Jason Marcell  <jmarcell@apple.com>
+
+        Cherry-pick r228279. rdar://problem/38154561
+
+    2018-02-08  Chris Fleizach  <cfleizach@apple.com>
+
+            AX: Defer attribute computation until needed.
+            https://bugs.webkit.org/show_bug.cgi?id=182386
+            <rdar://problem/37115277>
+
+            Reviewed by Zalan Bujtas.
+
+            Update tests to reflect new world of delayed attribute handling for accessibility.
+
+            * accessibility/canvas-fallback-content.html:
+                 Make test async so attributes can be checked after deferred handling.
+            * accessibility/mac/aria-expanded-notifications.html:
+                 Access elements through AX tree so attribute changes generate notifications.
+            * accessibility/mac/aria-listbox-selectedchildren-change.html:
+                 Make test async so attributes can be checked after deferred handling.
+            * accessibility/mac/aria-menu-item-selected-notification.html:
+                 Access menu item through AX tree so attribute changes generate notifications.
+            * accessibility/mac/aria-modal-auto-focus.html:
+                 Access buttons after delay so attributes have time to be deferred.
+            * accessibility/mac/element-busy-changed.html:
+                 Process second attribute change after delay so we generate two notifications.
+            * accessibility/mac/expanded-notification.html:
+                 Set attributes after a delay so they generate individual notifications.
+            * accessibility/notification-listeners.html:
+                  Access elements through AX tree so attribute changes generate notifications.
 
 2018-02-26  Ryan Haddad  <ryanhaddad@apple.com>
 

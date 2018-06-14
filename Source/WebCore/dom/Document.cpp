@@ -2079,6 +2079,10 @@ bool Document::updateLayoutIfDimensionsOutOfDate(Element& element, DimensionsChe
         requireFullLayout = true;
     }
 
+    // Turn off this optimization for input elements with shadow content.
+    if (is<HTMLInputElement>(element))
+        requireFullLayout = true;
+
     bool isVertical = renderer && !renderer->isHorizontalWritingMode();
     bool checkingLogicalWidth = ((dimensionsCheck & WidthDimensionsCheck) && !isVertical) || ((dimensionsCheck & HeightDimensionsCheck) && isVertical);
     bool checkingLogicalHeight = ((dimensionsCheck & HeightDimensionsCheck) && !isVertical) || ((dimensionsCheck & WidthDimensionsCheck) && isVertical);
@@ -7156,7 +7160,7 @@ void Document::removePlaybackTargetPickerClient(MediaPlaybackTargetClient& clien
     page->removePlaybackTargetPickerClient(clientId);
 }
 
-void Document::showPlaybackTargetPicker(MediaPlaybackTargetClient& client, bool isVideo)
+void Document::showPlaybackTargetPicker(MediaPlaybackTargetClient& client, bool isVideo, RouteSharingPolicy routeSharingPolicy, const String& routingContextUID)
 {
     Page* page = this->page();
     if (!page)
@@ -7166,7 +7170,7 @@ void Document::showPlaybackTargetPicker(MediaPlaybackTargetClient& client, bool 
     if (it == m_clientToIDMap.end())
         return;
 
-    page->showPlaybackTargetPicker(it->value, view()->lastKnownMousePosition(), isVideo);
+    page->showPlaybackTargetPicker(it->value, view()->lastKnownMousePosition(), isVideo, routeSharingPolicy, routingContextUID);
 }
 
 void Document::playbackTargetPickerClientStateDidChange(MediaPlaybackTargetClient& client, MediaProducer::MediaStateFlags state)
