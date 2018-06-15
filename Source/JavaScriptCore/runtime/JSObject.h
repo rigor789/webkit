@@ -785,8 +785,8 @@ public:
     }
     void shiftButterflyAfterFlattening(const GCSafeConcurrentJSLocker&, VM&, Structure* structure, size_t outOfLineCapacityAfter);
 
-    JSGlobalObject* globalObject() const;
-    JSGlobalObject* globalObject(VM& vm) const;
+    JS_EXPORT_PRIVATE JSGlobalObject* globalObject() const;
+    JS_EXPORT_PRIVATE JSGlobalObject* globalObject(VM& vm) const;
 
     void switchToSlowPutArrayStorage(VM&);
         
