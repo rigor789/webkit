@@ -35,6 +35,7 @@
 #import <pal/spi/cg/CoreGraphicsSPI.h>
 #import <sys/param.h>
 #import <unicode/uchar.h>
+#import <unicode/char16ptr.h>
 
 NSString *WebKitLocalCacheDefaultsKey = @"WebKitLocalCache";
 NSString *WebKitResourceLoadStatisticsDirectoryDefaultsKey = @"WebKitResourceLoadStatisticsDirectory";
@@ -68,7 +69,7 @@ static bool canUseFastRenderer(const UniChar* buffer, unsigned length)
 
     if (canUseFastRenderer(buffer.data(), length)) {
         FontCascade webCoreFont(FontPlatformData(reinterpret_cast<CTFontRef>(font), [font pointSize]));
-        TextRun run(StringView(buffer.data(), length));
+        TextRun run(StringView(Char16Ptr(buffer.data()), length));
 
         // The following is a half-assed attempt to match AppKit's rounding rules for drawAtPoint.
         // If you change it, be sure to test all the text drawn this way in Safari, including
