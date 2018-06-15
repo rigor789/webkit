@@ -49,6 +49,9 @@
 #define ASSERT_VALID_CODE_OFFSET(offset) // Anything goes!
 #endif
 
+#define ASSERT_VALID_POISONED_CODE_POINTER(ptr) \
+    ASSERT_VALID_CODE_POINTER(ptr.unpoisoned())
+
 namespace JSC {
 
 class MacroAssemblerCodePtr;
@@ -290,7 +293,7 @@ public:
     {
         m_value.assertIsPoisoned();
         ASSERT(value);
-        ASSERT_VALID_CODE_POINTER(m_value);
+        ASSERT_VALID_POISONED_CODE_POINTER(m_value);
     }
     
     static MacroAssemblerCodePtr createFromExecutableAddress(void* value)
@@ -310,7 +313,7 @@ public:
     {
         ASSERT(ra.value());
         m_value.assertIsPoisoned();
-        ASSERT_VALID_CODE_POINTER(m_value);
+        ASSERT_VALID_POISONED_CODE_POINTER(m_value);
     }
 
     PoisonedMasmPtr poisonedPtr() const { return m_value; }
@@ -327,7 +330,7 @@ public:
     T dataLocation() const
     {
         m_value.assertIsPoisoned();
-        ASSERT_VALID_CODE_POINTER(m_value);
+        ASSERT_VALID_POISONED_CODE_POINTER(m_value);
         return bitwise_cast<T>(m_value ? m_value.unpoisoned<char*>() - 1 - 1 : nullptr);
     }
 #else
