@@ -186,6 +186,12 @@ function absoluteURL(partialURL, baseURL)
     return baseURLPrefix + resolveDotsInPath(basePath + partialURL);
 }
 
+function parseLocationQueryParameters(arrayResult)
+{
+    // The first character is always the "?".
+    return parseQueryString(window.location.search.substring(1), arrayResult);
+}
+
 function parseQueryString(queryString, arrayResult)
 {
     if (!queryString)
@@ -274,6 +280,8 @@ WI.h2Authority = function(components)
 
     return result;
 };
+
+
 
 // https://tools.ietf.org/html/rfc7540#section-8.1.2.3
 WI.h2Path = function(components)
