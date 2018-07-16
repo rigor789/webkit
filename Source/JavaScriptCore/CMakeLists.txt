@@ -265,7 +265,7 @@ endif ()
 # LLIntOutput dependencies per architecture
 set(LLIntOutputCurrentStampFileName ${LLIntOutput}-$(CURRENT_ARCH).stamp)
 set(LLIntOutputCurrentStamp ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/${LLIntOutputCurrentStampFileName})
-set(LLIntOutputAllStampsWildcard ${LLIntOutput}-*.stamp)
+set(LLIntOutputAllStampsWildcard '${LLIntOutput}-*.stamp')
 
 # The ${LLIntOutput} file is architecture-specific but resides in a common place. When we build for Simulator,
 # it is created for the x86/x86_64 processor architectures. Afterwards all device builds will start failing
@@ -283,8 +283,13 @@ add_custom_command(
     DEPENDS LLIntOffsetsExtractor ${LLINT_ASM} ${OFFLINE_ASM} ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/InitBytecodes.asm ${LLIntOutputCurrentStamp}
     COMMAND ${RUBY_EXECUTABLE} ${JAVASCRIPTCORE_DIR}/offlineasm/asm.rb -I${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/ ${JAVASCRIPTCORE_DIR}/llint/LowLevelInterpreter.asm $<TARGET_FILE:LLIntOffsetsExtractor> ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/${LLIntOutput} ${OFFLINE_ASM_ARGS}
     COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/${LLIntOutput}
-    # MacOS file timestamps have 1 second precision. Sleep in order to ensure that the updated stamp files will be considered newer.
-    COMMAND sleep 1 && find ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR} -name ${LLIntOutputAllStampsWildcard} -a -not -name ${LLIntOutputCurrentStampFileName} -exec touch {} +
+    # Set timestamps of other architectures to 2 seconds in the future to invalidate the generated header for them
+    # simply touching doesn't work because file system precision is 1 second and may still treat the result as up-to-date
+    # when it's touched in the same second as the dependency
+    # Disclaimer: Command is quite cumbersome because I couldn't make $() and `` be used in the CMake/Xcode/CMake sandwich.
+    # As a workaround a pipeline to xargs is used to generate the timestamp and pass it to `touch`;
+    # `echo dummy` and `touch -c` are used to not fail the command when there are no stamps files returned by `find`.
+    COMMAND bash -c "set -o pipefail; (date -v +2S +%y%m%d%H%M.%S; echo dummy; find ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR} -name ${LLIntOutputAllStampsWildcard} -a -not -name ${LLIntOutputCurrentStampFileName}) | xargs touch -c -t"
     WORKING_DIRECTORY ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}
     VERBATIM)
 
