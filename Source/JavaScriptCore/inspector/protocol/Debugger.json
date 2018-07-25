@@ -241,7 +241,7 @@
         {
             "name": "setScriptSource",
              "parameters": [
-                { "name": "scriptUrl", "type": "string", "description": "Absolute location of the script to set source for." },
+                { "name": "scriptId", "type": "string", "description": "ID of the script to set source for." },
                 { "name": "scriptSource", "type": "string", "description": "Script source." }
              ],
             "description": "Set source for the script with given id."
