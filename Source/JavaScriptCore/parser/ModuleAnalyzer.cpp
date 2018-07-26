@@ -147,32 +147,32 @@ JSModuleRecord* ModuleAnalyzer::analyze(ModuleProgramNode& moduleProgramNode)
 
     return m_moduleRecord.get();
 }
-    
+
 void ModuleAnalyzer::ensureDefaultExportIfNothingExported() {
-    
+
     WTF::String source = m_moduleRecord->sourceCode().view().toString();
     SourceCode sourceC;
     ParserError error;
 
     if (m_moduleRecord->requestedModules().isEmpty() && m_moduleRecord->exportEntries().isEmpty() && m_moduleRecord->starExportEntries().isEmpty()) {
-        
+
         auto moduleUrl = m_moduleRecord->sourceCode().provider()->url();
         error = ParserError();
         sourceC = makeSource(WTF::ASCIILiteral("export default undefined;"), SourceOrigin(), WTF::emptyString(), WTF::TextPosition(), SourceProviderSourceType::Module);
-        
+
         std::unique_ptr<ModuleProgramNode> moduleProgramNode = parse<ModuleProgramNode>(
                                                                                         m_vm, sourceC, Identifier(), JSParserBuiltinMode::NotBuiltin,
                                                                                         JSParserStrictMode::Strict, JSParserScriptMode::Module, SourceParseMode::ModuleAnalyzeMode, SuperBinding::NotNeeded, error);
-        
+
         m_moduleRecord = Strong<JSModuleRecord>(*m_vm, JSModuleRecord::create(m_exec, *m_vm, m_exec->lexicalGlobalObject()->moduleRecordStructure(),  m_moduleRecord->moduleKey(), sourceC, moduleProgramNode->varDeclarations(), moduleProgramNode->lexicalVariables()));
-        
+
         parseModule(moduleProgramNode.get());
         ASSERT(!error.isValid());
 
         WTF::StringBuilder moduleFunctionSource;
-        moduleFunctionSource.append("{function anonymous(require, module, exports, __dirname, __filename) {");
+        moduleFunctionSource.append(COMMONJS_FUNCTION_PROLOGUE);
         moduleFunctionSource.append(source);
-        moduleFunctionSource.append("\n}}");
+        moduleFunctionSource.append(COMMONJS_FUNCTION_EPILOGUE);
 
         JSObject* exception = nullptr;
 
@@ -185,14 +185,14 @@ void ModuleAnalyzer::ensureDefaultExportIfNothingExported() {
 
         JSFunction* moduleFunction = JSFunction::create(*m_vm, moduleFunctionExecutable, m_exec->lexicalGlobalObject());
         m_moduleRecord->putDirect(*m_vm, Identifier::fromString(m_vm, "CommonJSModuleFunction"), moduleFunction);
-        
+
     }  else if (error.isValid()) {
         //TODO: throw error
     }
 }
 
 JSModuleRecord* ModuleAnalyzer::parseModule(ModuleProgramNode* moduleProgramNode) {
-    
+
     if (!moduleProgramNode) {
         return nullptr;
     }

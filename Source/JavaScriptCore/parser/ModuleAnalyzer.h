@@ -27,6 +27,9 @@
 
 #include "Nodes.h"
 
+#define COMMONJS_FUNCTION_PROLOGUE "{function anonymous(require, module, exports, __dirname, __filename) {"
+#define COMMONJS_FUNCTION_EPILOGUE "\n}}"
+
 namespace JSC {
 
 class JSModuleRecord;
@@ -49,7 +52,7 @@ private:
     VM* m_vm;
     ExecState* m_exec;
     Strong<JSModuleRecord> m_moduleRecord;
-    
+
     void ensureDefaultExportIfNothingExported();
     JSModuleRecord* parseModule(ModuleProgramNode* moduleProgramNode);
 };
