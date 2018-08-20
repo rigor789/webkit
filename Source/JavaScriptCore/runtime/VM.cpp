@@ -1124,6 +1124,7 @@ bool VM::isSafeToRecurseSoftCLoop() const
 #if ENABLE(EXCEPTION_SCOPE_VERIFICATION)
 void VM::verifyExceptionCheckNeedIsSatisfied(unsigned recursionDepth, ExceptionEventLocation& location)
 {
+#ifndef NDEBUG
     if (!Options::validateExceptionChecks())
         return;
 
@@ -1154,6 +1155,7 @@ void VM::verifyExceptionCheckNeedIsSatisfied(unsigned recursionDepth, ExceptionE
         dataLog(out.toCString());
         RELEASE_ASSERT(!m_needExceptionCheck);
     }
+#endif // NDEBUG
 }
 #endif
 
