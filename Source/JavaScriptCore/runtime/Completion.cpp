@@ -77,7 +77,7 @@ bool checkModuleSyntax(ExecState* exec, const SourceCode& source, ParserError& e
     RELEASE_ASSERT(vm.atomicStringTable() == Thread::current().atomicStringTable());
     std::unique_ptr<ModuleProgramNode> moduleProgramNode = parse<ModuleProgramNode>(
         &vm, source, Identifier(), JSParserBuiltinMode::NotBuiltin,
-        JSParserStrictMode::Strict, JSParserScriptMode::Module, SourceParseMode::ModuleAnalyzeMode, SuperBinding::NotNeeded, error);
+        JSParserStrictMode::NotStrict, JSParserScriptMode::Module, SourceParseMode::ModuleAnalyzeMode, SuperBinding::NotNeeded, error);
     if (!moduleProgramNode)
         return false;
 

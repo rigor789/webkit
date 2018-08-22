@@ -92,7 +92,7 @@ UnlinkedEvalCodeBlock* CodeCache::getUnlinkedEvalCodeBlock(VM& vm, IndirectEvalE
 
 UnlinkedModuleProgramCodeBlock* CodeCache::getUnlinkedModuleProgramCodeBlock(VM& vm, ModuleProgramExecutable* executable, const SourceCode& source, DebuggerMode debuggerMode, ParserError& error)
 {
-    return getUnlinkedGlobalCodeBlock<UnlinkedModuleProgramCodeBlock>(vm, executable, source, JSParserStrictMode::Strict, JSParserScriptMode::Module, debuggerMode, error, EvalContextType::None);
+    return getUnlinkedGlobalCodeBlock<UnlinkedModuleProgramCodeBlock>(vm, executable, source, JSParserStrictMode::NotStrict, JSParserScriptMode::Module, debuggerMode, error, EvalContextType::None);
 }
 
 UnlinkedFunctionExecutable* CodeCache::getUnlinkedGlobalFunctionExecutable(VM& vm, const Identifier& name, const SourceCode& source, DebuggerMode debuggerMode, ParserError& error)

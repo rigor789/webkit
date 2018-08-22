@@ -407,7 +407,53 @@ template <class TreeBuilder> TreeSourceElements Parser<LexerType>::parseModuleSo
     TreeSourceElements sourceElements = context.createSourceElements();
     SyntaxChecker syntaxChecker(const_cast<VM*>(m_vm), m_lexer.get());
 
-    while (true) {
+    const Identifier* directive = 0;
+    unsigned directiveLiteralLength = 0;
+    bool parsedSomething = false;
+    bool shouldCheckForUseStrict = true;
+    auto savePoint = createSavePoint();
+
+    for (;; parsedSomething = true) {
+        
+        if (shouldCheckForUseStrict && parsedSomething) {
+            if (directive) {
+                const unsigned lengthOfUseStrictLiteral = 12; // "use strict".length
+
+                // "use strict" must be the exact literal without escape sequences or line continuation.
+                if (directiveLiteralLength == lengthOfUseStrictLiteral && m_vm->propertyNames->useStrictIdentifier == *directive) {
+                    setStrictMode();
+                    shouldCheckForUseStrict = false; // We saw "use strict", there is no need to keep checking for it.
+                    if (!isValidStrictMode()) {
+                        if (m_parserState.lastFunctionName) {
+                            if (m_vm->propertyNames->arguments == *m_parserState.lastFunctionName)
+                                semanticFail("Cannot name a function 'arguments' in strict mode");
+                            if (m_vm->propertyNames->eval == *m_parserState.lastFunctionName)
+                                semanticFail("Cannot name a function 'eval' in strict mode");
+                        }
+                        if (hasDeclaredVariable(m_vm->propertyNames->arguments))
+                            semanticFail("Cannot declare a variable named 'arguments' in strict mode");
+                        if (hasDeclaredVariable(m_vm->propertyNames->eval))
+                            semanticFail("Cannot declare a variable named 'eval' in strict mode");
+                        semanticFailIfTrue(currentScope()->hasNonSimpleParameterList(), "'use strict' directive not allowed inside a function with a non-simple parameter list");
+                        semanticFailIfFalse(isValidStrictMode(), "Invalid parameters or function name in strict mode");
+                    }
+                    // Since strict mode is changed, restoring lexer state by calling next() may cause errors.
+                    restoreSavePoint(savePoint);
+                    propagateError();
+                    continue;
+                }
+                
+                // We saw a directive, but it wasn't "use strict". We reset our state to
+                // see if the next statement we parse is also a directive.
+                directive = nullptr;
+            } else {
+                // We saw a statement that wasn't in the form of a directive. The spec says that "use strict"
+                // is only allowed as the first statement, or after a sequence of directives before it, but
+                // not after non-directive statements.
+                shouldCheckForUseStrict = false;
+            }
+        }
+
         TreeStatement statement = 0;
         switch (m_token.m_type) {
         case EXPORT:
@@ -433,8 +479,6 @@ template <class TreeBuilder> TreeSourceElements Parser<LexerType>::parseModuleSo
         }
 
         default: {
-            const Identifier* directive = 0;
-            unsigned directiveLiteralLength = 0;
             if (parseMode == SourceParseMode::ModuleAnalyzeMode) {
                 if (!parseStatementListItem(syntaxChecker, directive, &directiveLiteralLength))
                     goto end;

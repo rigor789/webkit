@@ -86,7 +86,9 @@ void JSModuleRecord::link(ExecState* exec, JSValue key, JSValue scriptFetcher)
     ModuleProgramExecutable* executable = ModuleProgramExecutable::create(exec, sourceCode());
     EXCEPTION_ASSERT(!!scope.exception() == !executable);
     if (!executable) {
-        throwSyntaxError(exec, scope);
+        if (!scope.exception()) {
+            throwSyntaxError(exec, scope);
+        }
         return;
     }
     instantiateDeclarations(exec, executable, key, scriptFetcher);

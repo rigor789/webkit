@@ -162,7 +162,7 @@ void ModuleAnalyzer::ensureDefaultExportIfNothingExported() {
 
         std::unique_ptr<ModuleProgramNode> moduleProgramNode = parse<ModuleProgramNode>(
                                                                                         m_vm, sourceC, Identifier(), JSParserBuiltinMode::NotBuiltin,
-                                                                                        JSParserStrictMode::Strict, JSParserScriptMode::Module, SourceParseMode::ModuleAnalyzeMode, SuperBinding::NotNeeded, error);
+                                                                                        JSParserStrictMode::NotStrict, JSParserScriptMode::Module, SourceParseMode::ModuleAnalyzeMode, SuperBinding::NotNeeded, error);
 
         m_moduleRecord = Strong<JSModuleRecord>(*m_vm, JSModuleRecord::create(m_exec, *m_vm, m_exec->lexicalGlobalObject()->moduleRecordStructure(),  m_moduleRecord->moduleKey(), sourceC, moduleProgramNode->varDeclarations(), moduleProgramNode->lexicalVariables()));
 
