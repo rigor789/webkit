@@ -50,6 +50,7 @@
 #include "Logging.h"
 #include "NavigationDisabler.h"
 #include "Page.h"
+#include "PolicyChecker.h"
 #include "ScriptController.h"
 #include "UserGestureIndicator.h"
 #include <wtf/CurrentTime.h>
@@ -85,7 +86,7 @@ public:
                 m_initiatedByMainFrame = InitiatedByMainFrame::Yes;
         }
     }
-    virtual ~ScheduledNavigation() { }
+    virtual ~ScheduledNavigation() = default;
 
     virtual void fire(Frame&) = 0;
 
@@ -183,6 +184,8 @@ public:
 
         bool refresh = equalIgnoringFragmentIdentifier(frame.document()->url(), url());
         ResourceRequest resourceRequest { url(), referrer(), refresh ? ReloadIgnoringCacheData : UseProtocolCachePolicy };
+        if (initiatedByMainFrame() == InitiatedByMainFrame::Yes)
+            resourceRequest.setRequester(ResourceRequest::Requester::Main);
         FrameLoadRequest frameLoadRequest { initiatingDocument(), *securityOrigin(), resourceRequest, "_self", lockHistory(), lockBackForwardList(), MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, shouldOpenExternalURLs(), initiatedByMainFrame() };
 
         frame.loader().changeLocation(WTFMove(frameLoadRequest));
@@ -335,9 +338,7 @@ NavigationScheduler::NavigationScheduler(Frame& frame)
 {
 }
 
-NavigationScheduler::~NavigationScheduler()
-{
-}
+NavigationScheduler::~NavigationScheduler() = default;
 
 bool NavigationScheduler::redirectScheduledDuringLoad()
 {
@@ -522,6 +523,7 @@ void NavigationScheduler::schedule(std::unique_ptr<ScheduledNavigation> redirect
     if (redirect->wasDuringLoad()) {
         if (DocumentLoader* provisionalDocumentLoader = m_frame.loader().provisionalDocumentLoader())
             provisionalDocumentLoader->stopLoading();
+        m_frame.loader().policyChecker().stopCheck();
         m_frame.loader().stopLoading(UnloadEventPolicyUnloadAndPageHide);
     }
 

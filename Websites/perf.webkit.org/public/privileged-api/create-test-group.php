@@ -1,6 +1,7 @@
 <?php
 
 require_once('../include/json-header.php');
+require_once('../include/commit-log-fetcher.php');
 require_once('../include/repository-group-finder.php');
 
 function main()
@@ -51,7 +52,6 @@ function main()
         if ($duplicate_test_group)
             exit_with_error('DuplicateTestGroupName', array('task' => $task_id, 'testGroup' => $duplicate_test_group['testgroup_id']));
 
-        // FIXME: Add a check for duplicate test group name.
         $triggerable = find_triggerable_for_task($db, $task_id);
         if ($triggerable) {
             $triggerable_id = $triggerable['id'];
@@ -93,7 +93,9 @@ function main()
         $need_to_build = FALSE;
         foreach ($commit_list['set'] as $commit_row) {
             $commit_row['set'] = $commit_set_id;
-            $need_to_build = $need_to_build || $commit_row['patch_file'];
+            $requires_build =  $commit_row['requires_build'];
+            assert(is_bool($requires_build));
+            $need_to_build = $need_to_build || $requires_build;
             $db->insert_row('commit_set_items', 'commitset', $commit_row, 'commit');
         }
         $repository_group = $commit_list['repository_group'];
@@ -128,7 +130,7 @@ function main()
                 'order' => $order,
                 'commit_set' => $config['commit_set']));
             $order++;
-        }        
+        }
     }
 
     $order = 0;
@@ -158,6 +160,9 @@ function commit_sets_from_revision_sets($db, $triggerable_id, $revision_set_list
 
     $finder = new RepositoryGroupFinder($db, $triggerable_id);
     $commit_set_list = array();
+    $repository_owner_list = array();
+    $repositories_require_build = array();
+    $commit_set_items_by_repository = array();
     foreach ($revision_set_list as $revision_set) {
         if (!count($revision_set))
             exit_with_error('InvalidRevisionSets', array('revisionSets' => $revision_set_list));
@@ -171,7 +176,7 @@ function commit_sets_from_revision_sets($db, $triggerable_id, $revision_set_list
                 foreach ($file_id_list as $file_id) {
                     if (!is_numeric($file_id) || !$db->select_first_row('uploaded_files', 'file', array('id' => $file_id)))
                         exit_with_error('InvalidUploadedFile', array('file' => $file_id));
-                    array_push($commit_set, array('root_file' => $file_id, 'patch_file' => NULL));
+                    array_push($commit_set, array('root_file' => $file_id, 'patch_file' => NULL, 'requires_build' => FALSE, 'commit_owner' => NULL));
                 }
                 continue;
             }
@@ -184,25 +189,48 @@ function commit_sets_from_revision_sets($db, $triggerable_id, $revision_set_list
             $revision = array_get($data, 'revision');
             if (!$revision)
                 exit_with_error('InvalidRevision', array('repository' => $repository_id, 'data' => $data));
-            $commit = $db->select_first_row('commits', 'commit',
-                array('repository' => intval($repository_id), 'revision' => $revision));
-            if (!$commit)
+            $commit_id = CommitLogFetcher::find_commit_id_by_revision($db, $repository_id, $revision);
+            if ($commit_id < 0)
+                exit_with_error('AmbiguousRevision', array('repository' => $repository_id, 'revision' => $revision));
+            if (!$commit_id)
                 exit_with_error('RevisionNotFound', array('repository' => $repository_id, 'revision' => $revision));
 
+            $owner_revision = array_get($data, 'ownerRevision');
             $patch_file_id = array_get($data, 'patch');
             if ($patch_file_id) {
                 if (!is_numeric($patch_file_id) || !$db->select_first_row('uploaded_files', 'file', array('id' => $patch_file_id)))
                     exit_with_error('InvalidPatchFile', array('patch' => $patch_file_id));
                 array_push($repository_with_patch, $repository_id);
+                $repositories_require_build[$repository_id] =  TRUE;
             }
 
-            array_push($commit_set, array('commit' => $commit['commit_id'], 'patch_file' => $patch_file_id));
+            $repository = NULL;
+            $owner_commit_id = NULL;
+            if ($owner_revision) {
+                $repository = $db->select_first_row('repositories', 'repository', array('id' => intval($repository_id)));
+                if (!$repository)
+                    exit_with_error('RepositoryNotFound', array('repository' => $repository_id));
+                $owner_commit = $db->select_first_row('commits', 'commit', array('repository' => $repository['repository_owner'], 'revision' => $owner_revision));
+                if (!$owner_commit)
+                    exit_with_error('InvalidOwnerRevision', array('repository' => $repository['repository_owner'], 'revision' => $owner_revision));
+                if (!$db->select_first_row('commit_ownerships', 'commit', array('owned' => $commit_id, 'owner' => $owner_commit['commit_id'])))
+                    exit_with_error('InvalidCommitOwnership', array('commitOwner' => $owner_commit['commit_id'], 'commitOwned' => $commit_id));
+                $repositories_require_build[$repository_id] =  TRUE;
+                $owner_commit_id = $owner_commit['commit_id'];
+            }
+
+            array_push($commit_set, array('commit' => $commit_id, 'patch_file' => $patch_file_id, 'requires_build' => FALSE, 'commit_owner' => $owner_commit_id));
+
+            array_ensure_item_has_array($commit_set_items_by_repository, $repository_id);
+            $commit_set_items_by_repository[$repository_id][] = &$commit_set[count($commit_set) - 1];
+
+            if ($owner_commit_id)
+                continue;
             array_push($repository_list, $repository_id);
         }
-
         $repository_group_id = $finder->find_by_repositories($repository_list);
         if (!$repository_group_id)
-            exit_with_error('NoMatchingRepositoryGroup', array('repositoris' => $repository_list));
+            exit_with_error('NoMatchingRepositoryGroup', array('repositories' => $repository_list));
 
         foreach ($repository_with_patch as $repository_id) {
             if (!$finder->accepts_patch($repository_group_id, $repository_id))
@@ -212,6 +240,10 @@ function commit_sets_from_revision_sets($db, $triggerable_id, $revision_set_list
         array_push($commit_set_list, array('repository_group' => $repository_group_id, 'set' => $commit_set));
     }
 
+    foreach (array_keys($repositories_require_build) as $repository_id) {
+        foreach($commit_set_items_by_repository[$repository_id] as &$commit_set_item)
+            $commit_set_item['requires_build'] = TRUE;
+    }
     return $commit_set_list;
 }
 
@@ -233,14 +265,14 @@ function ensure_commit_sets($db, $triggerable_id, $commit_sets_info) {
             if (!$commit)
                 exit_with_error('RevisionNotFound', array('repository' => $repository_name, 'revision' => $revision));
             array_set_default($commit_sets, $i, array('set' => array()));
-            array_push($commit_sets[$i]['set'], array('commit' => $commit['commit_id'], 'patch_file' => NULL));
+            array_push($commit_sets[$i]['set'], array('commit' => $commit['commit_id'], 'patch_file' => NULL, 'requires_build' => FALSE, 'commit_owner' => NULL));
         }
     }
 
     $finder = new RepositoryGroupFinder($db, $triggerable_id);
     $repository_group_id = $finder->find_by_repositories($repository_list);
     if (!$repository_group_id)
-        exit_with_error('NoMatchingRepositoryGroup', array('repositoris' => $repository_list));
+        exit_with_error('NoMatchingRepositoryGroup', array('repositories' => $repository_list));
 
     if (count($commit_sets) < 2)
         exit_with_error('InvalidCommitSets', array('commitSets' => $commit_sets_info));

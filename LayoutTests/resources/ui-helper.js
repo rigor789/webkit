@@ -2,7 +2,7 @@
 window.UIHelper = class UIHelper {
     static isIOS()
     {
-        return navigator.userAgent.includes('iPhone');
+        return navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad');
     }
 
     static isWebKit2()
@@ -47,6 +47,100 @@ window.UIHelper = class UIHelper {
         });
     }
 
+    static activateElement(element)
+    {
+        const x = element.offsetLeft + element.offsetWidth / 2;
+        const y = element.offsetTop + element.offsetHeight / 2;
+        return UIHelper.activateAt(x, y);
+    }
+
+    static keyDown(key)
+    {
+        if (!this.isWebKit2() || !this.isIOS()) {
+            eventSender.keyDown(key);
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
+            testRunner.runUIScript(`
+                uiController.keyDownUsingHardwareKeyboard("downArrow", function() {
+                    uiController.uiScriptComplete("Done");
+                });`, resolve);
+        });
+    }
+
+    static ensurePresentationUpdate()
+    {
+        if (!this.isWebKit2()) {
+            testRunner.display();
+            return Promise.resolve();
+        }
+
+        return new Promise(resolve => {
+            testRunner.runUIScript(`
+                uiController.doAfterPresentationUpdate(function() {
+                    uiController.uiScriptComplete('Done');
+                });`, resolve);
+        });
+    }
+
+    static activateAndWaitForInputSessionAt(x, y)
+    {
+        if (!this.isWebKit2() || !this.isIOS())
+            return this.activateAt(x, y);
+
+        return new Promise(resolve => {
+            testRunner.runUIScript(`
+                (function() {
+                    uiController.didShowKeyboardCallback = function() {
+                        uiController.uiScriptComplete("Done");
+                    };
+                    uiController.singleTapAtPoint(${x}, ${y}, function() { });
+                })()`, resolve);
+        });
+    }
+
+    static getUICaretRect()
+    {
+        if (!this.isWebKit2() || !this.isIOS())
+            return Promise.resolve();
+
+        return new Promise(resolve => {
+            testRunner.runUIScript(`(function() {
+                uiController.doAfterNextStablePresentationUpdate(function() {
+                    uiController.uiScriptComplete(JSON.stringify(uiController.textSelectionCaretRect));
+                });
+            })()`, jsonString => {
+                resolve(JSON.parse(jsonString));
+            });
+        });
+    }
+
+    static getUISelectionRects()
+    {
+        if (!this.isWebKit2() || !this.isIOS())
+            return Promise.resolve();
+
+        return new Promise(resolve => {
+            testRunner.runUIScript(`(function() {
+                uiController.doAfterNextStablePresentationUpdate(function() {
+                    uiController.uiScriptComplete(JSON.stringify(uiController.selectionRangeViewRects));
+                });
+            })()`, jsonString => {
+                resolve(JSON.parse(jsonString));
+            });
+        });
+    }
+
+    static replaceTextAtRange(text, location, length) {
+        return new Promise(resolve => {
+            testRunner.runUIScript(`(() => {
+                uiController.replaceTextAtRange("${text}", ${location}, ${length});
+                uiController.uiScriptComplete('Done');
+            })()`, resolve);
+        });
+    }
+
     static wait(promise)
     {
         testRunner.waitUntilDone();
@@ -61,5 +155,10 @@ window.UIHelper = class UIHelper {
         }
 
         return promise.then(finish, finish);
+    }
+
+    static withUserGesture(callback)
+    {
+        internals.withUserGesture(callback);
     }
 }

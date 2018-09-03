@@ -1,0 +1,4 @@
+RUN(promise = navigator.requestMediaKeySystemAccess("com.apple.fps", capabilities))
+TypeError: navigator.requestMediaKeySystemAccess is not a function. (In 'navigator.requestMediaKeySystemAccess("com.apple.fps", capabilities)', 'navigator.requestMediaKeySystemAccess' is undefined)
+END OF TEST
+

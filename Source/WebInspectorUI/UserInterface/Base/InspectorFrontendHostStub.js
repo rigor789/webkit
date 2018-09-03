@@ -34,14 +34,14 @@
  * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
  */
 
-WebInspector.dontLocalizeUserInterface = true;
+WI.dontLocalizeUserInterface = true;
 
 if (!window.InspectorFrontendHost) {
-    WebInspector.InspectorFrontendHostStub = function()
+    WI.InspectorFrontendHostStub = function()
     {
     };
 
-    WebInspector.InspectorFrontendHostStub.prototype = {
+    WI.InspectorFrontendHostStub.prototype = {
         // Public
 
         initializeWebSocket: function(url)
@@ -176,7 +176,7 @@ if (!window.InspectorFrontendHost) {
 
         showContextMenu: function(event, menuObject)
         {
-            new WebInspector.SoftContextMenu(menuObject).show(event);
+            new WI.SoftContextMenu(menuObject).show(event);
         },
 
         unbufferedLog: function()
@@ -207,7 +207,7 @@ if (!window.InspectorFrontendHost) {
         }
     };
 
-    InspectorFrontendHost = new WebInspector.InspectorFrontendHostStub;
+    InspectorFrontendHost = new WI.InspectorFrontendHostStub;
 
     var host;
     if (window.location.hash) {

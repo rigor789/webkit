@@ -42,14 +42,11 @@ SVGAnimateElementBase::SVGAnimateElementBase(const QualifiedName& tagName, Docum
     ASSERT(hasTagName(SVGNames::animateTag) || hasTagName(SVGNames::setTag) || hasTagName(SVGNames::animateColorTag) || hasTagName(SVGNames::animateTransformTag));
 }
 
-SVGAnimateElementBase::~SVGAnimateElementBase()
-{
-}
+SVGAnimateElementBase::~SVGAnimateElementBase() = default;
 
 bool SVGAnimateElementBase::hasValidAttributeType()
 {
-    SVGElement* targetElement = this->targetElement();
-    if (!targetElement)
+    if (!this->targetElement())
         return false;
 
     return m_animatedPropertyType != AnimatedUnknown && !hasInvalidCSSAttributeType();
@@ -87,7 +84,7 @@ AnimatedPropertyType SVGAnimateElementBase::determineAnimatedPropertyType(SVGEle
 void SVGAnimateElementBase::calculateAnimatedValue(float percentage, unsigned repeatCount, SVGSMILElement* resultElement)
 {
     ASSERT(resultElement);
-    SVGElement* targetElement = this->targetElement();
+    auto targetElement = makeRefPtr(this->targetElement());
     if (!targetElement)
         return;
 
@@ -113,7 +110,7 @@ void SVGAnimateElementBase::calculateAnimatedValue(float percentage, unsigned re
         percentage = percentage < 0.5 ? 0 : 1;
 
     // Target element might have changed.
-    m_animator->setContextElement(targetElement);
+    m_animator->setContextElement(targetElement.get());
 
     // Be sure to detach list wrappers before we modfiy their underlying value. If we'd do
     // if after calculateAnimatedValue() ran the cached pointers in the list propery tear
@@ -137,8 +134,7 @@ bool SVGAnimateElementBase::calculateToAtEndOfDurationValue(const String& toAtEn
 
 bool SVGAnimateElementBase::calculateFromAndToValues(const String& fromString, const String& toString)
 {
-    SVGElement* targetElement = this->targetElement();
-    if (!targetElement)
+    if (!this->targetElement())
         return false;
 
     determinePropertyValueTypes(fromString, toString);
@@ -149,8 +145,7 @@ bool SVGAnimateElementBase::calculateFromAndToValues(const String& fromString, c
 
 bool SVGAnimateElementBase::calculateFromAndByValues(const String& fromString, const String& byString)
 {
-    SVGElement* targetElement = this->targetElement();
-    if (!targetElement)
+    if (!this->targetElement())
         return false;
 
     if (animationMode() == ByAnimation && !isAdditive())
@@ -191,12 +186,12 @@ void SVGAnimateElementBase::resetAnimatedType()
     SVGAnimatedTypeAnimator* animator = ensureAnimator();
     ASSERT(m_animatedPropertyType == animator->type());
 
-    SVGElement* targetElement = this->targetElement();
+    auto targetElement = makeRefPtr(this->targetElement());
     if (!targetElement)
         return;
 
     const QualifiedName& attributeName = this->attributeName();
-    ShouldApplyAnimation shouldApply = shouldApplyAnimation(targetElement, attributeName);
+    ShouldApplyAnimation shouldApply = shouldApplyAnimation(targetElement.get(), attributeName);
 
     if (shouldApply == DontApplyAnimation)
         return;
@@ -222,8 +217,8 @@ void SVGAnimateElementBase::resetAnimatedType()
     String baseValue;
 
     if (shouldApply == ApplyCSSAnimation) {
-        ASSERT(SVGAnimationElement::isTargetAttributeCSSProperty(targetElement, attributeName));
-        computeCSSPropertyValue(targetElement, cssPropertyID(attributeName.localName()), baseValue);
+        ASSERT(SVGAnimationElement::isTargetAttributeCSSProperty(targetElement.get(), attributeName));
+        computeCSSPropertyValue(targetElement.get(), cssPropertyID(attributeName.localName()), baseValue);
     }
 
     if (!m_animatedType)
@@ -305,6 +300,11 @@ void SVGAnimateElementBase::clearAnimatedType(SVGElement* targetElement)
     if (!m_animatedType)
         return;
 
+    // If the SVGAnimatedType is a list type, e.g. SVGLengthListValues, the wrappers of the
+    // animated properties have to be detached from the items in the list before it's deleted.
+    if (!m_animatedProperties.isEmpty())
+        m_animator->animValWillChange(m_animatedProperties);
+
     if (!targetElement) {
         m_animatedType = nullptr;
         return;
@@ -341,7 +341,7 @@ void SVGAnimateElementBase::applyResultsToTarget()
     if (!m_animatedType)
         return;
 
-    SVGElement* targetElement = this->targetElement();
+    auto targetElement = makeRefPtr(this->targetElement());
     const QualifiedName& attributeName = this->attributeName();
 
     ASSERT(targetElement);
@@ -354,7 +354,7 @@ void SVGAnimateElementBase::applyResultsToTarget()
     }
 
     // We do update the style and the animation property independent of each other.
-    ShouldApplyAnimation shouldApply = shouldApplyAnimation(targetElement, attributeName);
+    ShouldApplyAnimation shouldApply = shouldApplyAnimation(targetElement.get(), attributeName);
     if (shouldApply == ApplyXMLandCSSAnimation)
         applyCSSPropertyToTargetAndInstances(*targetElement, attributeName, m_animatedType->valueAsString());
 
@@ -408,8 +408,7 @@ bool SVGAnimateElementBase::isAdditive() const
 float SVGAnimateElementBase::calculateDistance(const String& fromString, const String& toString)
 {
     // FIXME: A return value of float is not enough to support paced animations on lists.
-    SVGElement* targetElement = this->targetElement();
-    if (!targetElement)
+    if (!this->targetElement())
         return -1;
 
     return ensureAnimator()->calculateDistance(fromString, toString);

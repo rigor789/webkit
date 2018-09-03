@@ -30,18 +30,6 @@ namespace JSC {
     
 #if ENABLE(EXCEPTION_SCOPE_VERIFICATION)
 
-CatchScope::CatchScope(VM& vm, ExceptionEventLocation location)
-    : ExceptionScope(vm, location)
-{
-    m_vm.verifyExceptionCheckNeedIsSatisfied(m_recursionDepth, m_location);
-}
-
-CatchScope::~CatchScope()
-{
-    RELEASE_ASSERT(m_vm.m_topExceptionScope);
-    m_vm.verifyExceptionCheckNeedIsSatisfied(m_recursionDepth, m_location);
-}
-
 #endif // ENABLE(EXCEPTION_SCOPE_VERIFICATION)
     
 } // namespace JSC

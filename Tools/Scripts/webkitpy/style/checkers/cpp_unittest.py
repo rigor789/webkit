@@ -1528,6 +1528,16 @@ class CppStyleTest(CppStyleTestBase):
                          ' for improved thread safety.'
                          '  [runtime/threadsafe_fn] [2]')
 
+    def test_debug_security_assertion(self):
+        self.assert_lint(
+            'ASSERT_WITH_SECURITY_IMPLICATION(value)',
+            'Please replace ASSERT_WITH_SECURITY_IMPLICATION() with '
+            'RELEASE_ASSERT_WITH_SECURITY_IMPLICATION().'
+            '  [security/assertion] [5]')
+        self.assert_lint(
+            'RELEASE_ASSERT_WITH_SECURITY_IMPLICATION(value)',
+            '')
+
     # Test for insecure string functions like strcpy()/strcat().
     def test_insecure_string_operations(self):
         self.assert_lint(
@@ -1792,12 +1802,23 @@ class CppStyleTest(CppStyleTestBase):
             'int foo() override {',
             'Place brace on its own line for function definitions.  [whitespace/braces] [4]')
         self.assert_multi_line_lint(
+            'int foo() const final {',
+            'Place brace on its own line for function definitions.  [whitespace/braces] [4]')
+        self.assert_multi_line_lint(
+            'int foo() final {',
+            'Place brace on its own line for function definitions.  [whitespace/braces] [4]')
+        self.assert_multi_line_lint(
             'int foo() const\n'
             '{\n'
             '}\n',
             '')
         self.assert_multi_line_lint(
             'int foo() override\n'
+            '{\n'
+            '}\n',
+            '')
+        self.assert_multi_line_lint(
+            'int foo() final\n'
             '{\n'
             '}\n',
             '')
@@ -1818,6 +1839,11 @@ class CppStyleTest(CppStyleTestBase):
             '')
         self.assert_multi_line_lint(
             'int foo() const override\n'
+            '{\n'
+            '}\n',
+            '')
+        self.assert_multi_line_lint(
+            'int foo() const final\n'
             '{\n'
             '}\n',
             '')
@@ -1926,14 +1952,16 @@ class CppStyleTest(CppStyleTestBase):
         self.assert_lint('        ^(var , var_ref) {', 'Extra space in block arguments.  [whitespace/brackets] [4]', 'foo.m')
         self.assert_lint('        ^(var,var_ref) {', 'Missing space after ,  [whitespace/comma] [3]', 'foo.m')
         self.assert_lint('        ^(var, var_ref) {', 'Place brace on its own line for function definitions.  [whitespace/braces] [4]', 'foo.cpp')
-        self.assert_lint('        ^ {', '', 'foo.m')
-        self.assert_lint('        ^{', 'No space between ^ and block definition.  [whitespace/brackets] [4]', 'foo.m')
+        self.assert_lint('        ^{', '', 'foo.m')
+        self.assert_lint('        ^ {', 'Extra space between ^ and block definition.  [whitespace/brackets] [4]', 'foo.m')
+        self.assert_lint('        ^   {', 'Extra space between ^ and block definition.  [whitespace/brackets] [4]', 'foo.m')
         self.assert_lint('        ^ (arg1, arg2) {', 'Extra space between ^ and block arguments.  [whitespace/brackets] [4]', 'foo.m')
+        self.assert_lint('        ^(arg1, arg2){', 'Missing space before {  [whitespace/braces] [5]', 'foo.m')
 
     def test_objective_c_block_as_argument(self):
         self.assert_lint('        withLambda:^(var, var_ref) {', '', 'foo.mm')
-        self.assert_lint('        withLambda:^ {', '', 'foo.m')
-        self.assert_lint('        withLambda:^{', 'No space between ^ and block definition.  [whitespace/brackets] [4]', 'foo.m')
+        self.assert_lint('        withLambda:^{', '', 'foo.m')
+        self.assert_lint('        withLambda:^ {', 'Extra space between ^ and block definition.  [whitespace/brackets] [4]', 'foo.m')
 
     def test_spacing_around_else(self):
         self.assert_lint('}else {', 'Missing space before else'
@@ -2017,6 +2045,8 @@ class CppStyleTest(CppStyleTestBase):
         self.assert_multi_line_lint('#include <sys/io.h>\n', '')
         self.assert_multi_line_lint('#import <foo/bar.h>\n', '')
         self.assert_multi_line_lint('#if __has_include(<ApplicationServices/ApplicationServicesPriv.h>)\n', '')
+        self.assert_multi_line_lint('#elif __has_include(<ApplicationServices/ApplicationServicesPriv.h>)\n', '')
+        self.assert_multi_line_lint('#endif // __has_include(<ApplicationServices/ApplicationServicesPriv.h>)\n', '')
         self.assert_lint('Foo&& a = bar();', '')
 
     def test_operator_methods(self):
@@ -2848,7 +2878,7 @@ class OrderOfIncludesTest(CppStyleTestBase):
                                          '#else\n'
                                          '#include "foobar.h"\n'
                                          '#endif"\n'
-                                         '#include "bar.h"\n', # No flag because previous is in preprocessor section
+                                         '#include "bar.h"\n',  # No flag because previous is in preprocessor section.
                                          '')
 
         self.assert_language_rules_check('foo.cpp',
@@ -2859,7 +2889,7 @@ class OrderOfIncludesTest(CppStyleTestBase):
                                          '#include "baz.h"\n'
                                          '#endif"\n'
                                          '#include "bar.h"\n'
-                                         '#include "a.h"\n', # Should still flag this.
+                                         '#include "a.h"\n',  # Should still flag this.
                                          'Alphabetical sorting problem.  [build/include_order] [4]')
 
         self.assert_language_rules_check('foo.cpp',
@@ -2868,7 +2898,7 @@ class OrderOfIncludesTest(CppStyleTestBase):
                                          '\n'
                                          '#ifdef BAZ\n'
                                          '#include "baz.h"\n'
-                                         '#include "bar.h"\n' #Should still flag this
+                                         '#include "bar.h"\n'  # Should still flag this.
                                          '#endif"\n',
                                          'Alphabetical sorting problem.  [build/include_order] [4]')
 
@@ -2883,7 +2913,7 @@ class OrderOfIncludesTest(CppStyleTestBase):
                                          '#include "foobar.h"\n'
                                          '#endif"\n'
                                          '#include "bar.h"\n'
-                                         '#include "a.h"\n', # Should still flag this.
+                                         '#include "a.h"\n',  # Should still flag this.
                                          'Alphabetical sorting problem.  [build/include_order] [4]')
 
         # Check that after an already included error, the sorting rules still work.
@@ -4476,6 +4506,18 @@ class WebKitStyleTest(CppStyleTestBase):
             '}\n',
             'This { should be at the end of the previous line  [whitespace/braces] [4]')
         self.assert_multi_line_lint(
+            'typedef CF_OPTIONS(NSInteger, type)\n'
+            '{\n'
+            '    0,\n'
+            '    1\n'
+            '};',
+            'This { should be at the end of the previous line  [whitespace/braces] [4]')
+        self.assert_multi_line_lint(
+            'typedef CF_OPTIONS(NSInteger, type) {\n'
+            '    0,\n'
+            '    1\n'
+            '};', '')
+        self.assert_multi_line_lint(
             'typedef NS_ENUM(NSInteger, type)\n'
             '{\n'
             '    0,\n'
@@ -4484,6 +4526,30 @@ class WebKitStyleTest(CppStyleTestBase):
             'This { should be at the end of the previous line  [whitespace/braces] [4]')
         self.assert_multi_line_lint(
             'typedef NS_ENUM(NSInteger, type) {\n'
+            '    0,\n'
+            '    1\n'
+            '};', '')
+        self.assert_multi_line_lint(
+            'typedef NS_ERROR_ENUM(NSInteger, type)\n'
+            '{\n'
+            '    0,\n'
+            '    1\n'
+            '};',
+            'This { should be at the end of the previous line  [whitespace/braces] [4]')
+        self.assert_multi_line_lint(
+            'typedef NS_ERROR_ENUM(NSInteger, type) {\n'
+            '    0,\n'
+            '    1\n'
+            '};', '')
+        self.assert_multi_line_lint(
+            'typedef NS_OPTIONS(NSInteger, type)\n'
+            '{\n'
+            '    0,\n'
+            '    1\n'
+            '};',
+            'This { should be at the end of the previous line  [whitespace/braces] [4]')
+        self.assert_multi_line_lint(
+            'typedef NS_OPTIONS(NSInteger, type) {\n'
             '    0,\n'
             '    1\n'
             '};', '')

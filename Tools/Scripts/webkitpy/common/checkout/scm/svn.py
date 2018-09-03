@@ -171,10 +171,13 @@ class SVN(SCM, SVNRepository):
             # This is robust against cwd != self.checkout_root
             absolute_path = self.absolute_path(path)
             # Completely lame that there is no easy way to remove both types with one call.
-            if os.path.isdir(path):
-                os.rmdir(absolute_path)
-            else:
-                os.remove(absolute_path)
+            try:
+                if os.path.isdir(path):
+                    os.rmdir(absolute_path)
+                else:
+                    os.remove(absolute_path)
+            except:
+                _log.warning('Could not delete: "%s".', absolute_path)
 
     def status_command(self):
         return [self.executable_name, 'status']
@@ -240,7 +243,7 @@ class SVN(SCM, SVNRepository):
         log_command = ['log', '--quiet', '--limit=%s' % limit, path]
         try:
             log_output = self._run_svn(log_command, cwd=self.checkout_root)
-        except ScriptError, e:
+        except ScriptError as e:
             return []
         for line in log_output.splitlines():
             match = re.search('^r(?P<revision>\d+) ', line)

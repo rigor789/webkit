@@ -79,7 +79,6 @@
 #import <wtf/RetainPtr.h>
 
 #if !PLATFORM(IOS)
-#import <WebKit/WebIconDatabasePrivate.h>
 #import <wtf/SoftLinking.h>
 #endif
 
@@ -126,7 +125,7 @@ SOFT_LINK_STAGED_FRAMEWORK(WebInspectorUI, PrivateFrameworks, A)
 #endif
 
 @interface WebGeolocationPosition (Internal)
-- (id)initWithGeolocationPosition:(RefPtr<WebCore::GeolocationPosition>)coreGeolocationPosition;
+- (id)initWithGeolocationPosition:(WebCore::GeolocationPosition&&)coreGeolocationPosition;
 @end
 
 TestRunner::~TestRunner()
@@ -291,6 +290,13 @@ void TestRunner::notifyDone()
     m_waitToDump = false;
 }
 
+void TestRunner::forceImmediateCompletion()
+{
+    if (m_waitToDump && !WorkQueue::singleton().count())
+        dump();
+    m_waitToDump = false;
+}
+
 static inline std::string stringFromJSString(JSStringRef jsString)
 {
     size_t maxBufferSize = JSStringGetMaximumUTF8CStringSize(jsString);
@@ -436,15 +442,25 @@ void TestRunner::setMockDeviceOrientation(bool canProvideAlpha, double alpha, bo
     [orientation release];
 }
 
-void TestRunner::setMockGeolocationPosition(double latitude, double longitude, double accuracy, bool providesAltitude, double altitude, bool providesAltitudeAccuracy, double altitudeAccuracy, bool providesHeading, double heading, bool providesSpeed, double speed)
+void TestRunner::setMockGeolocationPosition(double latitude, double longitude, double accuracy, bool providesAltitude, double altitude, bool providesAltitudeAccuracy, double altitudeAccuracy, bool providesHeading, double heading, bool providesSpeed, double speed, bool providesFloorLevel, double floorLevel)
 {
     WebGeolocationPosition *position = nil;
     if (!providesAltitude && !providesAltitudeAccuracy && !providesHeading && !providesSpeed) {
         // Test the exposed API.
         position = [[WebGeolocationPosition alloc] initWithTimestamp:currentTime() latitude:latitude longitude:longitude accuracy:accuracy];
     } else {
-        auto coreGeolocationPosition = WebCore::GeolocationPosition::create(currentTime(), latitude, longitude, accuracy, providesAltitude, altitude, providesAltitudeAccuracy, altitudeAccuracy, providesHeading, heading, providesSpeed, speed);
-        position = [[WebGeolocationPosition alloc] initWithGeolocationPosition:(WTFMove(coreGeolocationPosition))];
+        WebCore::GeolocationPosition geolocationPosition { currentTime(), latitude, longitude, accuracy };
+        if (providesAltitude)
+            geolocationPosition.altitude = altitude;
+        if (providesAltitudeAccuracy)
+            geolocationPosition.altitudeAccuracy = altitudeAccuracy;
+        if (providesHeading)
+            geolocationPosition.heading = heading;
+        if (providesSpeed)
+            geolocationPosition.speed = speed;
+        if (providesFloorLevel)
+            geolocationPosition.floorLevel = floorLevel;
+        position = [[WebGeolocationPosition alloc] initWithGeolocationPosition:(WTFMove(geolocationPosition))];
     }
     [[MockGeolocationProvider shared] setPosition:position];
     [position release];
@@ -574,11 +590,6 @@ void TestRunner::setValueForUser(JSContextRef context, JSValueRef nodeObject, JS
 
     RetainPtr<CFStringRef> valueCF = adoptCF(JSStringCopyCFString(kCFAllocatorDefault, value));
     [(DOMHTMLInputElement *)element setValueForUser:(NSString *)valueCF.get()];
-}
-
-void TestRunner::setViewModeMediaFeature(JSStringRef mode)
-{
-    // FIXME: implement
 }
 
 void TestRunner::dispatchPendingLoadRequests()

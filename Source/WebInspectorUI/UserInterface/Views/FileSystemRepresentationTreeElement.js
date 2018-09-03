@@ -1,4 +1,4 @@
-WebInspector.FileSystemRepresentationTreeElement = class FileSystemRepresentationTreeElement extends WebInspector.FolderTreeElement
+WI.FileSystemRepresentationTreeElement = class FileSystemRepresentationTreeElement extends WI.FolderTreeElement
 {
     constructor(mainFrame)
     {
@@ -11,19 +11,19 @@ WebInspector.FileSystemRepresentationTreeElement = class FileSystemRepresentatio
         this.expanded = true;
     }
 
-    onpopulate() 
+    onpopulate()
     {
         if (this.foldersByPath.get("/app").children.length)
             return;
 
-        for(var resource of this.resources) 
+        for(var resource of this.resources)
         {
             var path = resource.urlComponents.path;
             var pathComponents = path.replace(/^\//g, "").split('/');
             var fileName = pathComponents[pathComponents.length - 1];
             var directoryPath = path.substring(0, path.lastIndexOf('/'));
             var parentFolderElement;
-            var resourceElement = new WebInspector.ResourceTreeElement(resource, null);
+            var resourceElement = new WI.ResourceTreeElement(resource, null);
 
             if(this.foldersByPath.has(directoryPath)) {
                 parentFolderElement = this.foldersByPath.get(directoryPath);
@@ -61,7 +61,7 @@ WebInspector.FileSystemRepresentationTreeElement = class FileSystemRepresentatio
         return this._compareTreeElementsByMainTitle(a, b);
     }
 
-    _generateParentFolderElement(pathComponents) 
+    _generateParentFolderElement(pathComponents)
     {
         var currentPath = "";
         var nextPath = "";
@@ -69,10 +69,10 @@ WebInspector.FileSystemRepresentationTreeElement = class FileSystemRepresentatio
         for(var pathComponent of pathComponents) {
             nextPath = currentPath + '/' + pathComponent;
              if(!this.foldersByPath.has(nextPath)) {
-                parentFolderElement = new WebInspector.FolderTreeElement(pathComponent, "", [], null);
+                parentFolderElement = new WI.FolderTreeElement(pathComponent, "", [], null);
 
                 var parentFolder = this.foldersByPath.get(currentPath);
-                parentFolder.insertChild(parentFolderElement, insertionIndexForObjectInListSortedByFunction(parentFolderElement, parentFolder.children, this.compareChildTreeElements.bind(this)));      
+                parentFolder.insertChild(parentFolderElement, insertionIndexForObjectInListSortedByFunction(parentFolderElement, parentFolder.children, this.compareChildTreeElements.bind(this)));
                 this.foldersByPath.set(nextPath, parentFolderElement);
              }
              currentPath = nextPath;

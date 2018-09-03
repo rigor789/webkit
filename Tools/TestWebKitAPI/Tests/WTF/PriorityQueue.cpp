@@ -56,7 +56,11 @@ static T dequeue(PriorityQueue<T, isHigherPriority>& queue)
 TEST(WTF_PriorityQueue, Basic)
 {
     const unsigned numElements = 10;
+#if defined(_MSC_VER) && _MSC_VER < 1910 // FIXME: Remove this workaround after we drop MSVC 2015 support (https://bugs.webkit.org/show_bug.cgi?id=176443).
+    PriorityQueue<unsigned, isLessThan<unsigned>> queue;
+#else
     PriorityQueue<unsigned> queue;
+#endif
 
     EXPECT_EQ(0_z, queue.size());
     EXPECT_TRUE(queue.isEmpty());
@@ -76,7 +80,11 @@ TEST(WTF_PriorityQueue, Basic)
 TEST(WTF_PriorityQueue, CustomPriorityFunction)
 {
     const unsigned numElements = 10;
+#if defined(_MSC_VER) && _MSC_VER < 1910 // FIXME: Remove this workaround after we drop MSVC 2015 support (https://bugs.webkit.org/show_bug.cgi?id=176443).
     PriorityQueue<unsigned, isGreaterThan<unsigned>> queue;
+#else
+    PriorityQueue<unsigned, &isGreaterThan<unsigned>> queue;
+#endif
 
     EXPECT_EQ(0_z, queue.size());
     EXPECT_TRUE(queue.isEmpty());
@@ -97,15 +105,20 @@ TEST(WTF_PriorityQueue, CustomPriorityFunction)
 }
 
 template<bool (*isHigherPriority)(const unsigned&, const unsigned&)>
-static bool compareMove(const MoveOnly& m1, const MoveOnly& m2)
-{
-    return isHigherPriority(m1.value(), m2.value());
-}
-
+struct CompareMove {
+    static bool compare(const MoveOnly& m1, const MoveOnly& m2)
+    {
+        return isHigherPriority(m1.value(), m2.value());
+    }
+};
 
 TEST(WTF_PriorityQueue, MoveOnly)
 {
-    PriorityQueue<MoveOnly, compareMove<isLessThan<unsigned>>> queue;
+#if defined(_MSC_VER) && _MSC_VER < 1910 // FIXME: Remove this workaround after we drop MSVC 2015 support (https://bugs.webkit.org/show_bug.cgi?id=176443).
+    PriorityQueue<MoveOnly, &CompareMove<isLessThan<unsigned>>::compare> queue;
+#else
+    PriorityQueue<MoveOnly, &CompareMove<&isLessThan<unsigned>>::compare> queue;
+#endif
 
     Vector<unsigned> values = { 23, 54, 4, 8, 1, 2, 4, 0 };
     Vector<unsigned> sorted = values;
@@ -122,7 +135,11 @@ TEST(WTF_PriorityQueue, MoveOnly)
 
 TEST(WTF_PriorityQueue, DecreaseKey)
 {
-    PriorityQueue<MoveOnly, compareMove<isLessThan<unsigned>>> queue;
+#if defined(_MSC_VER) && _MSC_VER < 1910 // FIXME: Remove this workaround after we drop MSVC 2015 support (https://bugs.webkit.org/show_bug.cgi?id=176443).
+    PriorityQueue<MoveOnly, &CompareMove<isLessThan<unsigned>>::compare> queue;
+#else
+    PriorityQueue<MoveOnly, &CompareMove<&isLessThan<unsigned>>::compare> queue;
+#endif
 
     Vector<unsigned> values = { 23, 54, 4, 8, 1, 2, 4, 0 };
     Vector<unsigned> sorted = values;
@@ -148,7 +165,11 @@ TEST(WTF_PriorityQueue, DecreaseKey)
 
 TEST(WTF_PriorityQueue, IncreaseKey)
 {
-    PriorityQueue<MoveOnly, compareMove<isGreaterThan<unsigned>>> queue;
+#if defined(_MSC_VER) && _MSC_VER < 1910 // FIXME: Remove this workaround after we drop MSVC 2015 support (https://bugs.webkit.org/show_bug.cgi?id=176443).
+    PriorityQueue<MoveOnly, &CompareMove<isGreaterThan<unsigned>>::compare> queue;
+#else
+    PriorityQueue<MoveOnly, &CompareMove<&isGreaterThan<unsigned>>::compare> queue;
+#endif
 
     Vector<unsigned> values = { 23, 54, 4, 8, 1, 2, 4, 0 };
     Vector<unsigned> sorted = values;
@@ -174,7 +195,11 @@ TEST(WTF_PriorityQueue, IncreaseKey)
 
 TEST(WTF_PriorityQueue, Iteration)
 {
-    PriorityQueue<MoveOnly, compareMove<isGreaterThan<unsigned>>> queue;
+#if defined(_MSC_VER) && _MSC_VER < 1910 // FIXME: Remove this workaround after we drop MSVC 2015 support (https://bugs.webkit.org/show_bug.cgi?id=176443).
+    PriorityQueue<MoveOnly, CompareMove<isGreaterThan<unsigned>>::compare> queue;
+#else
+    PriorityQueue<MoveOnly, &CompareMove<&isGreaterThan<unsigned>>::compare> queue;
+#endif
 
     Vector<unsigned> values = { 23, 54, 4, 8, 1, 2, 4, 0 };
     Vector<unsigned> sorted = values;
@@ -206,7 +231,11 @@ TEST(WTF_PriorityQueue, RandomActions)
         return randomNumber;
     };
 
+#if defined(_MSC_VER) && _MSC_VER < 1910 // FIXME: Remove this workaround after we drop MSVC 2015 support (https://bugs.webkit.org/show_bug.cgi?id=176443).
+    PriorityQueue<uint64_t, isLessThan<uint64_t>> queue;
+#else
     PriorityQueue<uint64_t> queue;
+#endif
     Vector<uint64_t> values;
 
     enum Cases {

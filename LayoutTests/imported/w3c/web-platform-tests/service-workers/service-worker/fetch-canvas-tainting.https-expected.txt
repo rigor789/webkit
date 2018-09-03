@@ -1,0 +1,3 @@
+
+PASS Verify canvas tainting of fetched image in a Service Worker 
+

@@ -75,7 +75,7 @@ void UIScriptController::doAfterVisibleContentRectUpdate(JSValueRef callback)
     doAsyncTask(callback);
 }
 
-void UIScriptController::insertText(JSStringRef text, int location, int length)
+void UIScriptController::replaceTextAtRange(JSStringRef text, int location, int length)
 {
 #if WK_API_ENABLED
     if (location == -1)
@@ -164,6 +164,10 @@ void UIScriptController::simulateRotationLikeSafari(DeviceOrientation*, JSValueR
 {
 }
 
+void UIScriptController::findString(JSStringRef, unsigned long options, unsigned long maxCount)
+{
+}
+
 void UIScriptController::removeViewFromWindow(JSValueRef callback)
 {
 #if WK_API_ENABLED
@@ -233,6 +237,28 @@ void UIScriptController::platformPlayBackEventStream(JSStringRef eventStream, JS
 {
     RetainPtr<CFStringRef> stream = adoptCF(JSStringCopyCFString(kCFAllocatorDefault, eventStream));
     playBackEvents(m_context, (NSString *)stream.get(), callback);
+}
+
+void UIScriptController::firstResponderSuppressionForWebView(bool shouldSuppress)
+{
+#if WK_API_ENABLED
+    auto* webView = TestController::singleton().mainWebView()->platformView();
+    [webView _setShouldSuppressFirstResponderChanges:shouldSuppress];
+#else
+    UNUSED_PARAM(shouldSuppress);
+#endif
+}
+
+void UIScriptController::makeWindowContentViewFirstResponder()
+{
+    NSWindow *window = [TestController::singleton().mainWebView()->platformView() window];
+    [window makeFirstResponder:[window contentView]];
+}
+
+bool UIScriptController::isWindowContentViewFirstResponder() const
+{
+    NSWindow *window = [TestController::singleton().mainWebView()->platformView() window];
+    return [window firstResponder] == [window contentView];
 }
 
 } // namespace WTR

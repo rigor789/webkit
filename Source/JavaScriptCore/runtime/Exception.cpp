@@ -66,6 +66,8 @@ void Exception::visitChildren(JSCell* cell, SlotVisitor& visitor)
     Base::visitChildren(thisObject, visitor);
 
     visitor.append(thisObject->m_value);
+    for (StackFrame& frame : thisObject->m_stack)
+        frame.visitChildren(visitor);
 }
 
 Exception::Exception(VM& vm)
@@ -82,13 +84,13 @@ void Exception::finishCreation(VM& vm, JSValue thrownValue, StackCaptureAction a
     Base::finishCreation(vm);
     JSObject* asObject = thrownValue.getObject();
     if (asObject != nullptr) {
-        asObject->putDirect(vm, vm.propertyNames->builtinNames().nsExceptionIdentifierPrivateName(), this, DontEnum | ReadOnly | DontDelete);
+        asObject->putDirect(vm, vm.propertyNames->builtinNames().nsExceptionIdentifierPrivateName(), this, PropertyAttribute::DontEnum | PropertyAttribute::ReadOnly | PropertyAttribute::DontDelete);
     }
     m_value.set(vm, this, thrownValue);
 
     Vector<StackFrame> stackTrace;
     if (action == StackCaptureAction::CaptureStack)
-        vm.interpreter->getStackTrace(stackTrace, 0, Options::exceptionStackTraceLimit());
+        vm.interpreter->getStackTrace(this, stackTrace, 0, Options::exceptionStackTraceLimit());
     m_stack = WTFMove(stackTrace);
 }
 

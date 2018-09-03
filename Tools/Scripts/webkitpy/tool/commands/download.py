@@ -127,6 +127,7 @@ class LandCowhand(AbstractSequencedCommand):
     name = "land-cowhand"
     help_text = "Prepares a ChangeLog and lands the current working directory diff."
     steps = [
+        steps.SortXcodeProjectFiles,
         steps.PrepareChangeLog,
         steps.EditChangeLog,
         steps.CheckStyle,
@@ -199,7 +200,7 @@ class AbstractPatchSequencingCommand(AbstractPatchProcessingCommand):
     def _prepare_to_process(self, options, args, tool):
         try:
             self.state = self._prepare_state(options, args, tool)
-        except ScriptError, e:
+        except ScriptError as e:
             _log.error(e.message_with_output())
             self._exit(e.exit_code or 2)
         self._prepare_sequence.run_and_handle_errors(tool, options, self.state)

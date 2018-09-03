@@ -36,6 +36,8 @@
 
 #if PLATFORM(MAC)
 
+#import "AppKitTestSPI.h"
+
 namespace WTR {
 
 void UIScriptController::doAsyncTask(JSValueRef callback)
@@ -64,8 +66,13 @@ void UIScriptController::doAfterVisibleContentRectUpdate(JSValueRef callback)
     doAsyncTask(callback);
 }
 
-void UIScriptController::insertText(JSStringRef, int, int)
+void UIScriptController::replaceTextAtRange(JSStringRef text, int location, int length)
 {
+    auto textToInsert = adoptCF(JSStringCopyCFString(kCFAllocatorDefault, text));
+    auto rangeAttribute = adoptNS([[NSDictionary alloc] initWithObjectsAndKeys:NSStringFromRange(NSMakeRange(location == -1 ? NSNotFound : location, length)), NSTextInputReplacementRangeAttributeName, nil]);
+    auto textAndRange = adoptNS([[NSAttributedString alloc] initWithString:(NSString *)textToInsert.get() attributes:rangeAttribute.get()]);
+
+    [mainFrame.webView insertText:textAndRange.get()];
 }
 
 void UIScriptController::zoomToScale(double scale, JSValueRef callback)
@@ -116,6 +123,10 @@ void UIScriptController::simulateRotationLikeSafari(DeviceOrientation*, JSValueR
 {
 }
 
+void UIScriptController::findString(JSStringRef, unsigned long options, unsigned long maxCount)
+{
+}
+
 void UIScriptController::removeViewFromWindow(JSValueRef callback)
 {
     unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
@@ -154,6 +165,19 @@ void UIScriptController::completeBackSwipe(JSValueRef callback)
 
 void UIScriptController::platformPlayBackEventStream(JSStringRef, JSValueRef)
 {
+}
+
+void UIScriptController::firstResponderSuppressionForWebView(bool)
+{
+}
+
+void UIScriptController::makeWindowContentViewFirstResponder()
+{
+}
+
+bool UIScriptController::isWindowContentViewFirstResponder() const
+{
+    return false;
 }
 
 }

@@ -199,7 +199,7 @@ class FileSystem(object):
         """Create the specified directory if it doesn't already exist."""
         try:
             os.makedirs(self.join(*path))
-        except OSError, e:
+        except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
 
@@ -246,19 +246,19 @@ class FileSystem(object):
                                              codecs.getwriter('utf8'),
                                              'replace')
 
-    def read_text_file(self, path):
+    def read_text_file(self, path, errors='strict'):
         """Return the contents of the file at the given path as a Unicode string.
 
         The file is read assuming it is a UTF-8 encoded file with no BOM."""
-        with codecs.open(path, 'r', 'utf8') as f:
+        with codecs.open(path, 'r', 'utf8', errors=errors) as f:
             return f.read()
 
-    def write_text_file(self, path, contents):
+    def write_text_file(self, path, contents, errors='strict'):
         """Write the contents to the file at the given location.
 
         The file is written encoded as UTF-8 with no BOM."""
-        with codecs.open(path, 'w', 'utf-8') as f:
-            f.write(contents.decode('utf-8') if type(contents) == str else contents)
+        with codecs.open(path, 'w', 'utf-8', errors=errors) as f:
+            f.write(contents.decode('utf-8', errors=errors) if type(contents) == str else contents)
 
     def sha1(self, path):
         contents = self.read_binary_file(path)
@@ -287,7 +287,7 @@ class FileSystem(object):
             try:
                 osremove(path)
                 return True
-            except exceptions.WindowsError, e:
+            except exceptions.WindowsError as e:
                 time.sleep(sleep_interval)
                 retry_timeout_sec -= sleep_interval
                 if retry_timeout_sec < 0:

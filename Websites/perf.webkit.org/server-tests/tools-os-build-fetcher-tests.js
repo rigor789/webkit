@@ -30,15 +30,15 @@ describe('OSBuildFetcher', function() {
         'password': 'somePassword'
     };
 
-    const subCommitWithWebKit = {
+    const ownedCommitWithWebKit = {
         'WebKit': {'revision': '141978'}
     };
 
-    const anotherSubCommitWithWebKit = {
+    const anotherownedCommitWithWebKit = {
         'WebKit': {'revision': '141999'}
     };
 
-    const anotherSubCommitWithWebKitAndJavaScriptCore = {
+    const anotherownedCommitWithWebKitAndJavaScriptCore = {
         'WebKit': {'revision': '142000'},
         'JavaScriptCore': {'revision': '142000'}
     };
@@ -61,14 +61,14 @@ describe('OSBuildFetcher', function() {
         'customCommands': [
             {
                 'command': ['list', 'all osx 16Dxx builds'],
-                'subCommitCommand': ['list', 'subCommit', 'for', 'revision'],
+                'ownedCommitCommand': ['list', 'ownedCommit', 'for', 'revision'],
                 'linesToIgnore': '^\\.*$',
                 'minRevision': 'Sierra16D0',
                 'maxRevision': 'Sierra16D999'
             },
             {
                 'command': ['list', 'all osx 16Exx builds'],
-                'subCommitCommand': ['list', 'subCommit', 'for', 'revision'],
+                'ownedCommitCommand': ['list', 'ownedCommit', 'for', 'revision'],
                 'linesToIgnore': '^\\.*$',
                 'minRevision': 'Sierra16E0',
                 'maxRevision': 'Sierra16E999'
@@ -77,7 +77,7 @@ describe('OSBuildFetcher', function() {
     };
 
 
-    const configWithoutSubCommitCommand = {
+    const configWithoutownedCommitCommand = {
         'name': 'OSX',
         'customCommands': [
             {
@@ -97,7 +97,7 @@ describe('OSBuildFetcher', function() {
 
     describe('OSBuilderFetcher._computeOrder', () => {
         it('should calculate the right order for a given valid revision', () => {
-            const fetcher = new OSBuildFetcher();
+            const fetcher = new OSBuildFetcher({});
             assert.equal(fetcher._computeOrder('Sierra16D32'), 1603003200);
             assert.equal(fetcher._computeOrder('16D321'), 1603032100);
             assert.equal(fetcher._computeOrder('16d321'), 1603032100);
@@ -108,7 +108,7 @@ describe('OSBuildFetcher', function() {
         });
 
         it('should throw assertion error when given a invalid revision', () => {
-            const fetcher = new OSBuildFetcher();
+            const fetcher = new OSBuildFetcher({});
             assert.throws(() => fetcher._computeOrder('invalid'), (error) => error.name == 'AssertionError');
             assert.throws(() => fetcher._computeOrder(''), (error) => error.name == 'AssertionError');
             assert.throws(() => fetcher._computeOrder('16'), (error) => error.name == 'AssertionError');
@@ -124,7 +124,7 @@ describe('OSBuildFetcher', function() {
     describe('OSBuilderFetcher._commitsForAvailableBuilds', () => {
         it('should only return commits whose orders are higher than specified order', () => {
             const logger = new MockLogger;
-            const fetchter = new OSBuildFetcher(null, null, null, MockSubprocess, logger);
+            const fetchter = new OSBuildFetcher({}, null, null, MockSubprocess, logger);
             const waitForInvocationPromise = MockSubprocess.waitForInvocation();
             const fetchCommitsPromise = fetchter._commitsForAvailableBuilds('OSX', ['list', 'build1'], '^\\.*$', 1604000000);
 
@@ -141,68 +141,68 @@ describe('OSBuildFetcher', function() {
         });
     });
 
-    describe('OSBuildFetcher._addSubCommitsForBuild', () => {
-        it('should add sub-commit info for commits', () => {
+    describe('OSBuildFetcher._addOwnedCommitsForBuild', () => {
+        it('should add owned-commit info for commits', () => {
             const logger = new MockLogger;
-            const fetchter = new OSBuildFetcher(null, null, null, MockSubprocess, logger);
+            const fetchter = new OSBuildFetcher({}, null, null, MockSubprocess, logger);
             const waitForInvocationPromise = MockSubprocess.waitForInvocation();
-            const addSubCommitPromise = fetchter._addSubCommitsForBuild([osxCommit, anotherOSXCommit], ['subCommit', 'for', 'revision']);
+            const addownedCommitPromise = fetchter._addOwnedCommitsForBuild([osxCommit, anotherOSXCommit], ['ownedCommit', 'for', 'revision']);
 
             return waitForInvocationPromise.then(() => {
                 assert.equal(MockSubprocess.invocations.length, 1);
-                assert.deepEqual(MockSubprocess.invocations[0].command, ['subCommit', 'for', 'revision', 'Sierra16D32']);
-                MockSubprocess.invocations[0].resolve(JSON.stringify(subCommitWithWebKit));
+                assert.deepEqual(MockSubprocess.invocations[0].command, ['ownedCommit', 'for', 'revision', 'Sierra16D32']);
+                MockSubprocess.invocations[0].resolve(JSON.stringify(ownedCommitWithWebKit));
                 MockSubprocess.reset();
                 return MockSubprocess.waitForInvocation();
             }).then(() => {
                 assert.equal(MockSubprocess.invocations.length, 1);
-                assert.deepEqual(MockSubprocess.invocations[0].command, ['subCommit', 'for', 'revision', 'Sierra16E32']);
-                MockSubprocess.invocations[0].resolve(JSON.stringify(anotherSubCommitWithWebKit));
-                return addSubCommitPromise;
+                assert.deepEqual(MockSubprocess.invocations[0].command, ['ownedCommit', 'for', 'revision', 'Sierra16E32']);
+                MockSubprocess.invocations[0].resolve(JSON.stringify(anotherownedCommitWithWebKit));
+                return addownedCommitPromise;
             }).then((results) => {
                 assert.equal(results.length, 2);
                 assert.equal(results[0]['repository'], osxCommit['repository']);
                 assert.equal(results[0]['revision'], osxCommit['revision']);
-                assert.deepEqual(results[0]['subCommits'], subCommitWithWebKit);
+                assert.deepEqual(results[0]['ownedCommits'], ownedCommitWithWebKit);
                 assert.equal(results[1]['repository'], anotherOSXCommit['repository']);
                 assert.equal(results[1]['revision'], anotherOSXCommit['revision']);
-                assert.deepEqual(results[1]['subCommits'], anotherSubCommitWithWebKit);
+                assert.deepEqual(results[1]['ownedCommits'], anotherownedCommitWithWebKit);
             });
         });
 
-        it('should fail if the command to get sub-commit info fails', () => {
+        it('should fail if the command to get owned-commit info fails', () => {
             const logger = new MockLogger;
-            const fetchter = new OSBuildFetcher(null, null, null, MockSubprocess, logger);
+            const fetchter = new OSBuildFetcher({}, null, null, MockSubprocess, logger);
             const waitForInvocationPromise = MockSubprocess.waitForInvocation();
-            const addSubCommitPromise = fetchter._addSubCommitsForBuild([osxCommit], ['subCommit', 'for', 'revision'])
+            const addownedCommitPromise = fetchter._addOwnedCommitsForBuild([osxCommit], ['ownedCommit', 'for', 'revision'])
 
             return waitForInvocationPromise.then(() => {
                 assert.equal(MockSubprocess.invocations.length, 1);
-                assert.deepEqual(MockSubprocess.invocations[0].command, ['subCommit', 'for', 'revision', 'Sierra16D32']);
-                MockSubprocess.invocations[0].reject('Failed getting sub-commit');
+                assert.deepEqual(MockSubprocess.invocations[0].command, ['ownedCommit', 'for', 'revision', 'Sierra16D32']);
+                MockSubprocess.invocations[0].reject('Failed getting owned-commit');
 
-                return addSubCommitPromise.then(() => {
+                return addownedCommitPromise.then(() => {
                     assert(false, 'should never be reached');
                 }, (error_output) => {
                     assert(error_output);
-                    assert.equal(error_output, 'Failed getting sub-commit');
+                    assert.equal(error_output, 'Failed getting owned-commit');
                 });
             });
         });
 
 
-        it('should fail if entries in sub-commits does not contain revision', () => {
+        it('should fail if entries in owned-commits does not contain revision', () => {
             const logger = new MockLogger;
-            const fetchter = new OSBuildFetcher(null, null, null, MockSubprocess, logger);
+            const fetchter = new OSBuildFetcher({}, null, null, MockSubprocess, logger);
             const waitForInvocationPromise = MockSubprocess.waitForInvocation();
-            const addSubCommitPromise = fetchter._addSubCommitsForBuild([osxCommit], ['subCommit', 'for', 'revision'])
+            const addownedCommitPromise = fetchter._addOwnedCommitsForBuild([osxCommit], ['ownedCommit', 'for', 'revision'])
 
             return waitForInvocationPromise.then(() => {
                 assert.equal(MockSubprocess.invocations.length, 1);
-                assert.deepEqual(MockSubprocess.invocations[0].command, ['subCommit', 'for', 'revision', 'Sierra16D32']);
+                assert.deepEqual(MockSubprocess.invocations[0].command, ['ownedCommit', 'for', 'revision', 'Sierra16D32']);
                 MockSubprocess.invocations[0].resolve('{"WebKit":{"RandomKey": "RandomValue"}}');
 
-                return addSubCommitPromise.then(() => {
+                return addownedCommitPromise.then(() => {
                     assert(false, 'should never be reached');
                 }, (error_output) => {
                     assert(error_output);
@@ -223,7 +223,7 @@ describe('OSBuildFetcher', function() {
             TestServer.database().disconnect();
         });
 
-        it('should report all build commits with sub-commits', () => {
+        it('should report all build commits with owned-commits', () => {
             const logger = new MockLogger;
             const fetchter = new OSBuildFetcher(config, TestServer.remoteAPI(), slaveAuth, MockSubprocess, logger);
             const db = TestServer.database();
@@ -260,8 +260,8 @@ describe('OSBuildFetcher', function() {
                 return MockSubprocess.resetAndWaitForInvocation();
             }).then(() => {
                 assert.equal(invocations.length, 1);
-                assert.deepEqual(invocations[0].command, ['list', 'subCommit', 'for', 'revision', 'Sierra16D69']);
-                invocations[0].resolve(JSON.stringify(subCommitWithWebKit));
+                assert.deepEqual(invocations[0].command, ['list', 'ownedCommit', 'for', 'revision', 'Sierra16D69']);
+                invocations[0].resolve(JSON.stringify(ownedCommitWithWebKit));
                 return MockSubprocess.resetAndWaitForInvocation();
             }).then(() => {
                 assert.equal(invocations.length, 1);
@@ -270,13 +270,13 @@ describe('OSBuildFetcher', function() {
                 return MockSubprocess.resetAndWaitForInvocation();
             }).then(() => {
                 assert.equal(invocations.length, 1);
-                assert.deepEqual(invocations[0].command, ['list', 'subCommit', 'for', 'revision', 'Sierra16E33h']);
-                invocations[0].resolve(JSON.stringify(anotherSubCommitWithWebKit));
+                assert.deepEqual(invocations[0].command, ['list', 'ownedCommit', 'for', 'revision', 'Sierra16E33h']);
+                invocations[0].resolve(JSON.stringify(anotherownedCommitWithWebKit));
                 return MockSubprocess.resetAndWaitForInvocation();
             }).then(() => {
                 assert.equal(invocations.length, 1);
-                assert.deepEqual(invocations[0].command, ['list', 'subCommit', 'for', 'revision', 'Sierra16E34']);
-                invocations[0].resolve(JSON.stringify(anotherSubCommitWithWebKitAndJavaScriptCore));
+                assert.deepEqual(invocations[0].command, ['list', 'ownedCommit', 'for', 'revision', 'Sierra16E34']);
+                invocations[0].resolve(JSON.stringify(anotherownedCommitWithWebKitAndJavaScriptCore));
                 return fetchAvailableBuildsPromise;
             }).then((results) => {
                 assert.equal(results.length, 3);
@@ -290,8 +290,8 @@ describe('OSBuildFetcher', function() {
                 return MockSubprocess.resetAndWaitForInvocation();
             }).then(() => {
                 assert.equal(invocations.length, 1);
-                assert.deepEqual(invocations[0].command, ['list', 'subCommit', 'for', 'revision', 'Sierra16D69']);
-                invocations[0].resolve(JSON.stringify(subCommitWithWebKit));
+                assert.deepEqual(invocations[0].command, ['list', 'ownedCommit', 'for', 'revision', 'Sierra16D69']);
+                invocations[0].resolve(JSON.stringify(ownedCommitWithWebKit));
                 return MockSubprocess.resetAndWaitForInvocation();
             }).then(() => {
                 assert.equal(invocations.length, 1);
@@ -300,13 +300,13 @@ describe('OSBuildFetcher', function() {
                 return MockSubprocess.resetAndWaitForInvocation();
             }).then(() => {
                 assert.equal(invocations.length, 1);
-                assert.deepEqual(invocations[0].command, ['list', 'subCommit', 'for', 'revision', 'Sierra16E33h']);
-                invocations[0].resolve(JSON.stringify(anotherSubCommitWithWebKit));
+                assert.deepEqual(invocations[0].command, ['list', 'ownedCommit', 'for', 'revision', 'Sierra16E33h']);
+                invocations[0].resolve(JSON.stringify(anotherownedCommitWithWebKit));
                 return MockSubprocess.resetAndWaitForInvocation();
             }).then(() => {
                 assert.equal(invocations.length, 1);
-                invocations[0].resolve(JSON.stringify(anotherSubCommitWithWebKitAndJavaScriptCore));
-                assert.deepEqual(invocations[0].command, ['list', 'subCommit', 'for', 'revision', 'Sierra16E34']);
+                invocations[0].resolve(JSON.stringify(anotherownedCommitWithWebKitAndJavaScriptCore));
+                assert.deepEqual(invocations[0].command, ['list', 'ownedCommit', 'for', 'revision', 'Sierra16E34']);
 
                 return fetchAndReportPromise;
             }).then((result) => {
@@ -326,7 +326,7 @@ describe('OSBuildFetcher', function() {
 
                 assert.equal(webkitRepository.length, 1);
                 assert.equal(webkitRepository[0]['owner'], 10);
-                assert.equal(jscRepository.length, 1)
+                assert.equal(jscRepository.length, 1);
                 assert.equal(jscRepository[0]['owner'], 10);
 
                 assert.equal(osxCommit16D69.length, 1);
@@ -355,9 +355,9 @@ describe('OSBuildFetcher', function() {
             });
         });
 
-        it('should report commits without sub-commits if "subCommitCommand" is not specified in config', () => {
+        it('should report commits without owned-commits if "ownedCommitCommand" is not specified in config', () => {
             const logger = new MockLogger;
-            const fetchter = new OSBuildFetcher(configWithoutSubCommitCommand, TestServer.remoteAPI(), slaveAuth, MockSubprocess, logger);
+            const fetchter = new OSBuildFetcher(configWithoutownedCommitCommand, TestServer.remoteAPI(), slaveAuth, MockSubprocess, logger);
             const db = TestServer.database();
             let fetchAndReportPromise = null;
             let fetchAvailableBuildsPromise = null;
@@ -412,7 +412,7 @@ describe('OSBuildFetcher', function() {
                 const osxCommit16E34 = results[4];
 
                 assert.equal(webkitRepository.length, 0);
-                assert.equal(jscRepository.length, 0)
+                assert.equal(jscRepository.length, 0);
 
                 assert.equal(osxCommit16D69.length, 1);
                 assert.equal(osxCommit16D69[0]['repository'], 10);
@@ -478,8 +478,8 @@ describe('OSBuildFetcher', function() {
                 return MockSubprocess.resetAndWaitForInvocation();
             }).then(() => {
                 assert.equal(invocations.length, 1);
-                assert.deepEqual(invocations[0].command, ['list', 'subCommit', 'for', 'revision', 'Sierra16D69']);
-                MockSubprocess.invocations[0].resolve(JSON.stringify(subCommitWithWebKit));
+                assert.deepEqual(invocations[0].command, ['list', 'ownedCommit', 'for', 'revision', 'Sierra16D69']);
+                MockSubprocess.invocations[0].resolve(JSON.stringify(ownedCommitWithWebKit));
                 return MockSubprocess.resetAndWaitForInvocation();
             }).then(() => {
                 assert.equal(invocations.length, 1);
@@ -487,12 +487,12 @@ describe('OSBuildFetcher', function() {
                 invocations[0].resolve('\n\nSierra16E32\nSierra16E33\nSierra16E33h\nSierra16E34');
                 return MockSubprocess.resetAndWaitForInvocation();
             }).then(() => {
-                assert.deepEqual(invocations[0].command, ['list', 'subCommit', 'for', 'revision', 'Sierra16E33h']);
-                invocations[0].resolve(JSON.stringify(anotherSubCommitWithWebKit));
+                assert.deepEqual(invocations[0].command, ['list', 'ownedCommit', 'for', 'revision', 'Sierra16E33h']);
+                invocations[0].resolve(JSON.stringify(anotherownedCommitWithWebKit));
                 return MockSubprocess.resetAndWaitForInvocation();
             }).then(() => {
                 assert.equal(invocations.length, 1);
-                assert.deepEqual(invocations[0].command, ['list', 'subCommit', 'for', 'revision', 'Sierra16E34']);
+                assert.deepEqual(invocations[0].command, ['list', 'ownedCommit', 'for', 'revision', 'Sierra16E34']);
                 invocations[0].reject('Command failed');
                 return fetchAndReportPromise.then(() => {
                     assert(false, 'should never be reached');

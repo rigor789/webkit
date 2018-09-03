@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2009-2018 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
 #pragma once
 
 #include "ExecutableAllocator.h"
-#include "JSCPoisonedPtr.h"
+#include "JSCPoison.h"
 #include <wtf/DataLog.h>
 #include <wtf/PrintStream.h>
 #include <wtf/RefPtr.h>
@@ -48,6 +48,9 @@
     ASSERT(ptr)
 #define ASSERT_VALID_CODE_OFFSET(offset) // Anything goes!
 #endif
+
+#define ASSERT_VALID_POISONED_CODE_POINTER(ptr) \
+    ASSERT_VALID_CODE_POINTER(ptr.unpoisoned())
 
 namespace JSC {
 
@@ -290,7 +293,7 @@ public:
     {
         m_value.assertIsPoisoned();
         ASSERT(value);
-        ASSERT_VALID_CODE_POINTER(m_value);
+        ASSERT_VALID_POISONED_CODE_POINTER(m_value);
     }
     
     static MacroAssemblerCodePtr createFromExecutableAddress(void* value)
@@ -310,7 +313,7 @@ public:
     {
         ASSERT(ra.value());
         m_value.assertIsPoisoned();
-        ASSERT_VALID_CODE_POINTER(m_value);
+        ASSERT_VALID_POISONED_CODE_POINTER(m_value);
     }
 
     PoisonedMasmPtr poisonedPtr() const { return m_value; }
@@ -327,7 +330,7 @@ public:
     T dataLocation() const
     {
         m_value.assertIsPoisoned();
-        ASSERT_VALID_CODE_POINTER(m_value);
+        ASSERT_VALID_POISONED_CODE_POINTER(m_value);
         return bitwise_cast<T>(m_value ? m_value.unpoisoned<char*>() - 1 - 1 : nullptr);
     }
 #else
@@ -389,8 +392,8 @@ public:
     static void initialize();
 
 private:
-    static PoisonedMasmPtr emptyValue() { return PoisonedMasmPtr(1); }
-    static PoisonedMasmPtr deletedValue() { return PoisonedMasmPtr(2); }
+    static PoisonedMasmPtr emptyValue() { return PoisonedMasmPtr(AlreadyPoisoned, 1); }
+    static PoisonedMasmPtr deletedValue() { return PoisonedMasmPtr(AlreadyPoisoned, 2); }
 
     PoisonedMasmPtr m_value;
 };

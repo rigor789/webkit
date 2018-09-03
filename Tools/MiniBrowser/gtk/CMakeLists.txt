@@ -36,7 +36,7 @@ set(MiniBrowser_SYSTEM_INCLUDE_DIRECTORIES
 
 set(MiniBrowser_LIBRARIES
     ${JavaScriptCore_LIBRARY_NAME}
-    WebKit2
+    WebKit
     ${GTK3_LIBRARIES}
     ${GLIB_LIBRARIES}
     ${LIBSOUP_LIBRARIES}
@@ -60,5 +60,7 @@ include_directories(${MiniBrowser_INCLUDE_DIRECTORIES})
 include_directories(SYSTEM ${MiniBrowser_SYSTEM_INCLUDE_DIRECTORIES})
 add_executable(MiniBrowser ${MiniBrowser_SOURCES})
 target_link_libraries(MiniBrowser ${MiniBrowser_LIBRARIES})
+
+WEBKIT_ADD_TARGET_CXX_FLAGS(MiniBrowser -Wno-unused-parameter)
 
 install(TARGETS MiniBrowser DESTINATION "${LIBEXEC_INSTALL_DIR}")

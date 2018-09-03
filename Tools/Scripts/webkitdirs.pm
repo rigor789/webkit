@@ -160,6 +160,7 @@ my $vsVersion;
 my $windowsSourceDir;
 my $winVersion;
 my $willUseVCExpressWhenBuilding = 0;
+my $vsWhereFoundInstallation;
 
 # Defined in VCSUtils.
 sub exitStatus($);
@@ -589,6 +590,49 @@ sub programFilesPathX86
     return $programFilesPathX86;
 }
 
+sub requireModulesForVSWhere
+{
+    require Encode;
+    require Encode::Locale;
+    require JSON::PP;
+}
+
+sub pickCurrentVisualStudioInstallation
+{
+    return $vsWhereFoundInstallation if defined $vsWhereFoundInstallation;
+
+    requireModulesForVSWhere();
+    determineSourceDir();
+
+    # Prefer Enterprise, then Professional, then Community, then
+    # anything else that provides MSBuild.
+    foreach my $productType ((
+        'Microsoft.VisualStudio.Product.Enterprise',
+        'Microsoft.VisualStudio.Product.Professional',
+        'Microsoft.VisualStudio.Product.Community',
+        undef
+    )) {
+        my $command = "$sourceDir/WebKitLibraries/win/tools/vswhere -nologo -latest -format json -requires Microsoft.Component.MSBuild";
+        if (defined $productType) {
+            $command .= " -products $productType";
+        }
+        my $vsWhereOut = `$command`;
+        my $installations = [];
+        eval {
+            $installations = JSON::PP::decode_json(Encode::encode('UTF-8' => Encode::decode(console_in => $vsWhereOut)));
+        };
+        print "Error getting Visual Studio Location: $@\n" if $@;
+        undef $@;
+
+        if (scalar @$installations) {
+            my $installation = $installations->[0];
+            $vsWhereFoundInstallation = $installation;
+            return $installation;
+        }
+    }
+    return undef;
+}
+
 sub visualStudioInstallDir
 {
     return $vsInstallDir if defined $vsInstallDir;
@@ -597,9 +641,9 @@ sub visualStudioInstallDir
         $vsInstallDir = $ENV{'VSINSTALLDIR'};
         $vsInstallDir =~ s|[\\/]$||;
     } else {
-        $vsInstallDir = File::Spec->catdir(programFilesPathX86(), "Microsoft Visual Studio", "2017", "Community");
+        $vsInstallDir = visualStudioInstallDirVSWhere();
         if (not -e $vsInstallDir) {
-            $vsInstallDir = File::Spec->catdir(programFilesPathX86(), "Microsoft Visual Studio 14.0");
+            $vsInstallDir = visualStudioInstallDirFallback();
         }
     }
     chomp($vsInstallDir = `cygpath "$vsInstallDir"`) if isCygwin();
@@ -608,30 +652,45 @@ sub visualStudioInstallDir
     return $vsInstallDir;
 }
 
+sub visualStudioInstallDirVSWhere
+{
+    pickCurrentVisualStudioInstallation();
+    if (defined($vsWhereFoundInstallation)) {
+        return $vsWhereFoundInstallation->{installationPath};
+    }
+    return undef;
+}
+
+sub visualStudioInstallDirFallback
+{
+    foreach my $productType ((
+        'Enterprise',
+        'Professional',
+        'Community',
+    )) {
+        my $installdir = File::Spec->catdir(programFilesPathX86(),
+            "Microsoft Visual Studio", "2017", $productType);
+        my $msbuilddir = File::Spec->catdir($installdir,
+            "MSBuild", "15.0", "bin");
+        if (-e $installdir && -e $msbuilddir) {
+            return $installdir;
+        }
+    }
+    return undef;
+}
+
 sub msBuildInstallDir
 {
     return $msBuildInstallDir if defined $msBuildInstallDir;
 
-    $msBuildInstallDir = File::Spec->catdir(programFilesPathX86(), "Microsoft Visual Studio", "2017", "Community", "MSBuild", "15.0", "Bin");
-    if (not -e $msBuildInstallDir) {
-        $msBuildInstallDir = File::Spec->catdir(programFilesPathX86(), "MSBuild", "14.0", "Bin");
-    }
+    my $installDir = visualStudioInstallDir();
+    $msBuildInstallDir = File::Spec->catdir($installDir,
+        "MSBuild", "15.0", "bin");
+
     chomp($msBuildInstallDir = `cygpath "$msBuildInstallDir"`) if isCygwin();
 
     print "Using MSBuild: $msBuildInstallDir\n";
     return $msBuildInstallDir;
-}
-
-sub visualStudioVersion
-{
-    return $vsVersion if defined $vsVersion;
-
-    my $installDir = visualStudioInstallDir();
-
-    $vsVersion = ($installDir =~ /Microsoft Visual Studio ([0-9]+\.[0-9]*)/) ? $1 : "14";
-
-    print "Using Visual Studio $vsVersion\n";
-    return $vsVersion;
 }
 
 sub determineConfigurationForVisualStudio
@@ -663,7 +722,7 @@ sub determineConfigurationProductDir
             $configurationProductDir = "$baseProductDir";
         } else {
             $configurationProductDir = "$baseProductDir/$configuration";
-            $configurationProductDir .= "-" . xcodeSDKPlatformName() if isIOSWebKit();
+            $configurationProductDir .= "-" . xcodeSDKPlatformName() if isEmbeddedWebKit();
         }
     }
 }
@@ -1719,13 +1778,13 @@ sub setupAppleWinEnv()
     } else {
         if (!defined $ENV{'WEBKIT_LIBRARIES'} || !$ENV{'WEBKIT_LIBRARIES'}) {
             print "Warning: You must set the 'WebKit_Libraries' environment variable\n";
-            print "         to be able build WebKit from within Visual Studio 2013 and newer.\n";
+            print "         to be able build WebKit from within Visual Studio 2017 and newer.\n";
             print "         Make sure that 'WebKit_Libraries' points to the\n";
             print "         'WebKitLibraries/win' directory, not the 'WebKitLibraries/' directory.\n\n";
         }
         if (!defined $ENV{'WEBKIT_OUTPUTDIR'} || !$ENV{'WEBKIT_OUTPUTDIR'}) {
             print "Warning: You must set the 'WebKit_OutputDir' environment variable\n";
-            print "         to be able build WebKit from within Visual Studio 2013 and newer.\n\n";
+            print "         to be able build WebKit from within Visual Studio 2017 and newer.\n\n";
         }
         if (!defined $ENV{'MSBUILDDISABLENODEREUSE'} || !$ENV{'MSBUILDDISABLENODEREUSE'}) {
             print "Warning: You should set the 'MSBUILDDISABLENODEREUSE' environment variable to '1'\n";
@@ -1746,19 +1805,14 @@ sub setupCygwinEnv()
 
     my $programFilesPath = programFilesPath();
     my $visualStudioPath = File::Spec->catfile(visualStudioInstallDir(), qw(Common7 IDE devenv.com));
-    if (-e $visualStudioPath) {
-        # Visual Studio is installed;
-        if (visualStudioVersion() eq "12") {
-            $visualStudioPath = File::Spec->catfile(visualStudioInstallDir(), qw(Common7 IDE devenv.exe));
-        }
-    } else {
+    if (!-e $visualStudioPath) {
         # Visual Studio not found, try VC++ Express
         $visualStudioPath = File::Spec->catfile(visualStudioInstallDir(), qw(Common7 IDE WDExpress.exe));
         if (! -e $visualStudioPath) {
             print "*************************************************************\n";
             print "Cannot find '$visualStudioPath'\n";
             print "Please execute the file 'vcvars32.bat' from\n";
-            print "'$programFilesPath\\Microsoft Visual Studio 14.0\\VC\\bin\\'\n";
+            print "your Visual Studio 2017 installation\n";
             print "to setup the necessary environment variables.\n";
             print "*************************************************************\n";
             die;
@@ -1977,16 +2031,17 @@ sub shouldRemoveCMakeCache(@)
         return 1;
     }
 
-    my $inspectorUserInterfaceDircetory = File::Spec->catdir(sourceDir(), "Source", "WebInspectorUI", "UserInterface");
-    if ($cacheFileModifiedTime < stat($inspectorUserInterfaceDircetory)->mtime) {
+    # FIXME: This probably does not work as expected, or the next block to
+    # delete the images subdirectory would not be here. Directory mtime does not
+    # percolate upwards when files are added or removed from subdirectories.
+    my $inspectorUserInterfaceDirectory = File::Spec->catdir(sourceDir(), "Source", "WebInspectorUI", "UserInterface");
+    if ($cacheFileModifiedTime < stat($inspectorUserInterfaceDirectory)->mtime) {
         return 1;
     }
 
-    if (isGtk() or isWPE()) {
-        my $gtkImageDircetory = File::Spec->catdir(sourceDir(), "Source", "WebInspectorUI", "UserInterface", "Images", "gtk");
-        if ($cacheFileModifiedTime < stat($gtkImageDircetory)->mtime) {
-            return 1;
-        }
+    my $inspectorImageDirectory = File::Spec->catdir(sourceDir(), "Source", "WebInspectorUI", "UserInterface", "Images");
+    if ($cacheFileModifiedTime < stat($inspectorImageDirectory)->mtime) {
+        return 1;
     }
 
     if(isAnyWindows()) {
@@ -2084,7 +2139,7 @@ sub generateBuildSystemFromCMakeProject
             push @args, "Ninja";
         }
     } elsif (isAnyWindows() && isWin64()) {
-        push @args, '-G "Visual Studio 14 2015 Win64"';
+        push @args, '-G "Visual Studio 15 2017 Win64"';
     }
     # Do not show progress of generating bindings in interactive Ninja build not to leave noisy lines on tty
     push @args, '-DSHOW_BINDINGS_GENERATION_PROGRESS=1' unless ($willUseNinja && -t STDOUT);
@@ -2092,8 +2147,6 @@ sub generateBuildSystemFromCMakeProject
     # Some ports have production mode, but build-webkit should always use developer mode.
     push @args, "-DDEVELOPER_MODE=ON" if isGtk() || isJSCOnly() || isWPE();
 
-    # Don't warn variables which aren't used by cmake ports.
-    push @args, "--no-warn-unused-cli";
     push @args, @cmakeArgs if @cmakeArgs;
 
     my $cmakeSourceDir = isCygwin() ? windowsSourceDir() : sourceDir();

@@ -64,9 +64,7 @@ AudioSession::AudioSession()
 {
 }
 
-AudioSession::~AudioSession()
-{
-}
+AudioSession::~AudioSession() = default;
 
 AudioSession::CategoryType AudioSession::category() const
 {
@@ -131,6 +129,16 @@ bool AudioSession::tryToSetActive(bool)
 {
     notImplemented();
     return true;
+}
+
+RouteSharingPolicy AudioSession::routeSharingPolicy() const
+{
+    return RouteSharingPolicy::Default;
+}
+
+String AudioSession::routingContextUID() const
+{
+    return emptyString();
 }
 
 size_t AudioSession::preferredBufferSize() const

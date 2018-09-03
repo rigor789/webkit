@@ -28,21 +28,33 @@
 #include "ExceptionScope.h"
 
 namespace JSC {
-    
+
 #if ENABLE(EXCEPTION_SCOPE_VERIFICATION)
-    
+
 // If a function can clear JS exceptions, it should declare a CatchScope at the
 // top of the function (as early as possible) using the DECLARE_CATCH_SCOPE macro.
 // Declaring a CatchScope in a function means that the function intends to clear
 // pending exceptions before returning to its caller.
-    
+
 class CatchScope : public ExceptionScope {
 public:
-    JS_EXPORT_PRIVATE CatchScope(VM&, ExceptionEventLocation);
+    ALWAYS_INLINE CatchScope(VM& vm, ExceptionEventLocation location)
+        : ExceptionScope(vm, location)
+    {
+#ifndef NDEBUG
+        m_vm.verifyExceptionCheckNeedIsSatisfied(m_recursionDepth, m_location);
+#endif // NDEBUG
+    }
     CatchScope(const CatchScope&) = delete;
     CatchScope(CatchScope&&) = default;
 
-    JS_EXPORT_PRIVATE ~CatchScope();
+    ALWAYS_INLINE ~CatchScope()
+    {
+        RELEASE_ASSERT(m_vm.m_topExceptionScope);
+#ifndef NDEBUG
+        m_vm.verifyExceptionCheckNeedIsSatisfied(m_recursionDepth, m_location);
+#endif // NDEBUG
+    }
 
     void clearException() { m_vm.clearException(); }
 };
@@ -67,5 +79,12 @@ public:
     JSC::CatchScope((vm__))
 
 #endif // ENABLE(EXCEPTION_SCOPE_VERIFICATION)
+
+#define CLEAR_AND_RETURN_IF_EXCEPTION(scope__, value__) do { \
+        if (UNLIKELY((scope__).exception())) { \
+            (scope__).clearException(); \
+            return value__; \
+        } \
+    } while (false)
 
 } // namespace JSC

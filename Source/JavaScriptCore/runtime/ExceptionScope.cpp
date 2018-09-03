@@ -33,41 +33,26 @@
 #include <wtf/Threading.h>
 
 namespace JSC {
-    
-#if ENABLE(EXCEPTION_SCOPE_VERIFICATION)
-    
-ExceptionScope::ExceptionScope(VM& vm, ExceptionEventLocation location)
-    : m_vm(vm)
-    , m_previousScope(vm.m_topExceptionScope)
-    , m_location(location)
-    , m_recursionDepth(m_previousScope ? m_previousScope->m_recursionDepth + 1 : 0)
-{
-    m_vm.m_topExceptionScope = this;
-}
 
-ExceptionScope::~ExceptionScope()
-{
-    RELEASE_ASSERT(m_vm.m_topExceptionScope);
-    m_vm.m_topExceptionScope = m_previousScope;
-}
+#if ENABLE(EXCEPTION_SCOPE_VERIFICATION)
 
 CString ExceptionScope::unexpectedExceptionMessage()
 {
     StringPrintStream out;
 
-    out.println("Unexpected exception observed on thread ", currentThread(), " at:");
+    out.println("Unexpected exception observed on thread ", Thread::current(), " at:");
     auto currentStack = StackTrace::captureStackTrace(Options::unexpectedExceptionStackTraceLimit(), 1);
     currentStack->dump(out, "    ");
 
     if (!m_vm.nativeStackTraceOfLastThrow())
         return CString();
-    
-    out.println("The exception was thrown from thread ", m_vm.throwingThread(), " at:");
+
+    out.println("The exception was thrown from thread ", *m_vm.throwingThread(), " at:");
     m_vm.nativeStackTraceOfLastThrow()->dump(out, "    ");
 
     return out.toCString();
 }
 
 #endif // ENABLE(EXCEPTION_SCOPE_VERIFICATION)
-    
+
 } // namespace JSC

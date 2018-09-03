@@ -1,5 +1,23 @@
+# -----------------------------------------------------------------------------
+# Determine CMake version and build type.
+# -----------------------------------------------------------------------------
+#
+# NOTE: cmake_minimum_required() and project() *MUST* be the two fist commands
+# used, see https://cmake.org/cmake/help/v3.3/command/project.html -- the
+# latter in particular handles loading a bunch of shared CMake definitions
+# and loading the cross-compilation settings from CMAKE_TOOLCHAIN_FILE.
+#
+
 cmake_minimum_required(VERSION 3.3)
+
 project(WebKit)
+
+if (NOT CMAKE_BUILD_TYPE)
+    message(WARNING "No CMAKE_BUILD_TYPE value specified, defaulting to RelWithDebInfo.")
+    set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build." FORCE)
+else ()
+    message(STATUS "The CMake build type is: ${CMAKE_BUILD_TYPE}")
+endif ()
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/Source/cmake")
 
@@ -73,8 +91,6 @@ elseif (LOWERCASE_CMAKE_SYSTEM_PROCESSOR MATCHES "^aarch64")
     set(WTF_CPU_ARM64 1)
 elseif (LOWERCASE_CMAKE_SYSTEM_PROCESSOR MATCHES "^mips")
     set(WTF_CPU_MIPS 1)
-elseif (LOWERCASE_CMAKE_SYSTEM_PROCESSOR MATCHES "sh4")
-    set(WTF_CPU_SH4 1)
 elseif (LOWERCASE_CMAKE_SYSTEM_PROCESSOR MATCHES "(x64|x86_64|amd64)")
     set(WTF_CPU_X86_64 1)
 elseif (LOWERCASE_CMAKE_SYSTEM_PROCESSOR MATCHES "(i[3-6]86|x86)")
@@ -85,14 +101,8 @@ elseif (LOWERCASE_CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64")
     set(WTF_CPU_PPC64 1)
 elseif (LOWERCASE_CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64le")
     set(WTF_CPU_PPC64LE 1)
-elseif (LOWERCASE_CMAKE_SYSTEM_PROCESSOR MATCHES "parisc*")
-    set(WTF_CPU_HPPA 1)
-elseif (LOWERCASE_CMAKE_SYSTEM_PROCESSOR MATCHES "s390")
-    set(WTF_CPU_S390 1)
-elseif (LOWERCASE_CMAKE_SYSTEM_PROCESSOR MATCHES "s390x")
-    set(WTF_CPU_S390X 1)
 else ()
-    message(FATAL_ERROR "Unknown CPU '${LOWERCASE_CMAKE_SYSTEM_PROCESSOR}'")
+    set(WTF_CPU_UNKNOWN 1)
 endif ()
 
 # -----------------------------------------------------------------------------
@@ -113,24 +123,18 @@ endif ()
 # -----------------------------------------------------------------------------
 # Default library types
 # -----------------------------------------------------------------------------
-option(SHARED_CORE "build WebCore as a shared library")
-
-if (SHARED_CORE)
-    set(WebCore_LIBRARY_TYPE SHARED)
-else ()
-    set(WebCore_LIBRARY_TYPE STATIC)
-endif ()
-
-if (ENABLE_STATIC_JSC)
-    set(JavaScriptCore_LIBRARY_TYPE STATIC)
-else ()
-    set(JavaScriptCore_LIBRARY_TYPE SHARED)
-endif ()
-
+# By default, only the highest-level libraries, WebKitLegacy and WebKit, are
+# shared, because properly building shared libraries that depend on each other
+# can be tricky. Override these in Options*.cmake for your port as needed.
+set(WTF_LIBRARY_TYPE STATIC)
+set(JavaScriptCore_LIBRARY_TYPE STATIC)
 set(PAL_LIBRARY_TYPE STATIC)
+set(WebCore_LIBRARY_TYPE STATIC)
+set(WebKitLegacy_LIBRARY_TYPE SHARED)
 set(WebKit_LIBRARY_TYPE SHARED)
-set(WebKit2_LIBRARY_TYPE SHARED)
 set(WebCoreTestSupport_LIBRARY_TYPE STATIC)
+
+set(CMAKE_POSITION_INDEPENDENT_CODE True)
 
 # -----------------------------------------------------------------------------
 # Install JavaScript shell
@@ -158,11 +162,6 @@ if (ENABLE_API_TESTS)
 endif ()
 
 # -----------------------------------------------------------------------------
-# Define packaging
-# -----------------------------------------------------------------------------
-include(WebKitPackaging)
-
-# -----------------------------------------------------------------------------
 # Add module directories
 # -----------------------------------------------------------------------------
 add_subdirectory(Source)
@@ -172,6 +171,14 @@ add_subdirectory(Source)
 # -----------------------------------------------------------------------------
 if (ENABLE_TOOLS)
     add_subdirectory(Tools)
+endif ()
+
+if ("${PORT}" STREQUAL "GTK" OR "${PORT}" STREQUAL "WPE")
+    if (DEVELOPER_MODE)
+        add_subdirectory(PerformanceTests)
+    endif ()
+else ()
+    add_subdirectory(PerformanceTests)
 endif ()
 
 # -----------------------------------------------------------------------------

@@ -28,36 +28,73 @@
 #include "VM.h"
 
 namespace JSC {
-    
+
 class Exception;
-    
+
 #if ENABLE(EXCEPTION_SCOPE_VERIFICATION)
-    
+
+#define EXCEPTION_ASSERT(assertion) RELEASE_ASSERT(assertion)
+#define EXCEPTION_ASSERT_UNUSED(variable, assertion) RELEASE_ASSERT(assertion)
+#define EXCEPTION_ASSERT_WITH_MESSAGE(assertion, message) RELEASE_ASSERT_WITH_MESSAGE(assertion, message)
 class ExceptionScope {
 public:
-    VM& vm() const { return m_vm; }
-    unsigned recursionDepth() const { return m_recursionDepth; }
-    Exception* exception() { return m_vm.exception(); }
+    ALWAYS_INLINE VM& vm() const { return m_vm; }
+#ifdef NDEBUG
+    ALWAYS_INLINE unsigned recursionDepth() const { return *reinterpret_cast<unsigned*>(&m_vm.m_topExceptionScope) - 1 /* 0-based */; }
+#else
+    ALWAYS_INLINE unsigned recursionDepth() const { return m_recursionDepth; }
+#endif
+    ALWAYS_INLINE Exception* exception() { return m_vm.exception(); }
 
-    ALWAYS_INLINE void assertNoException() { ASSERT_WITH_MESSAGE(!exception(), "%s", unexpectedExceptionMessage().data()); }
+    ALWAYS_INLINE void assertNoException() { RELEASE_ASSERT_WITH_MESSAGE(!exception(), "%s", unexpectedExceptionMessage().data()); }
     ALWAYS_INLINE void releaseAssertNoException() { RELEASE_ASSERT_WITH_MESSAGE(!exception(), "%s", unexpectedExceptionMessage().data()); }
 
 protected:
-    ExceptionScope(VM&, ExceptionEventLocation);
+	ALWAYS_INLINE ExceptionScope(VM& vm, ExceptionEventLocation location)
+		: m_vm(vm)
+#ifdef NDEBUG
+    {
+        (*reinterpret_cast<unsigned*>(&m_vm.m_topExceptionScope))++;
+    }
+#else
+    , m_previousScope(vm.m_topExceptionScope)
+    , m_location(location)
+    , m_recursionDepth(m_previousScope ? m_previousScope->m_recursionDepth + 1 : 0)
+    {
+        m_vm.m_topExceptionScope = this;
+    }
+#endif // NDEBUG
+
     ExceptionScope(const ExceptionScope&) = delete;
     ExceptionScope(ExceptionScope&&) = default;
-    ~ExceptionScope();
+
+	ALWAYS_INLINE ~ExceptionScope()
+	{
+		RELEASE_ASSERT(m_vm.m_topExceptionScope);
+#ifdef NDEBUG
+        (*reinterpret_cast<unsigned*>(&m_vm.m_topExceptionScope))--;
+#else
+        m_vm.m_topExceptionScope = m_previousScope;
+#endif // NDEBUG
+	}
+
 
     JS_EXPORT_PRIVATE CString unexpectedExceptionMessage();
 
     VM& m_vm;
+#ifndef NDEBUG
     ExceptionScope* m_previousScope;
     ExceptionEventLocation m_location;
     unsigned m_recursionDepth;
+#endif // NDEBUG
 };
-    
+
 #else // not ENABLE(EXCEPTION_SCOPE_VERIFICATION)
-    
+
+#define EXCEPTION_ASSERT(x) ASSERT(x)
+#define EXCEPTION_ASSERT_UNUSED(variable, assertion) ASSERT_UNUSED(variable, assertion)
+#define EXCEPTION_ASSERT_WITH_MESSAGE(assertion, message) ASSERT_WITH_MESSAGE(assertion, message)
+
 class ExceptionScope {
 public:
     ALWAYS_INLINE VM& vm() const { return m_vm; }
@@ -77,7 +114,7 @@ protected:
 
     VM& m_vm;
 };
-    
+
 #endif // ENABLE(EXCEPTION_SCOPE_VERIFICATION)
 
 #define RETURN_IF_EXCEPTION(scope__, value__) do { \
