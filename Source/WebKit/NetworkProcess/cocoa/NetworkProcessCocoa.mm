@@ -219,10 +219,9 @@ void NetworkProcess::setStorageAccessAPIEnabled(bool enabled)
 
 void NetworkProcess::syncAllCookies()
 {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     _CFHTTPCookieStorageFlushCookieStores();
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
 }
 
 }

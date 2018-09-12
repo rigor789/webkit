@@ -2000,6 +2000,9 @@ static inline bool containsKanaLetters(const String& pattern)
     return false;
 }
 
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
+// NOTE: ICU's unorm_normalize function is deprecated.
+
 static void normalizeCharacters(const UChar* characters, unsigned length, Vector<UChar>& buffer)
 {
     ASSERT(length);
@@ -2020,6 +2023,8 @@ static void normalizeCharacters(const UChar* characters, unsigned length, Vector
     unorm_normalize(characters, length, UNORM_NFC, 0, buffer.data(), bufferSize, &status);
     ASSERT(status == U_STRING_NOT_TERMINATED_WARNING);
 }
+
+ALLOW_DEPRECATED_DECLARATIONS_END
 
 static bool isNonLatin1Separator(UChar32 character)
 {

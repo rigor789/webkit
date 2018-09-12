@@ -49,7 +49,9 @@ bool getCommonCryptoDigestAlgorithm(CryptoAlgorithmIdentifier hashFunction, CCDi
 {
     switch (hashFunction) {
     case CryptoAlgorithmIdentifier::SHA_1:
+        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         algorithm = kCCDigestSHA1;
+        ALLOW_DEPRECATED_DECLARATIONS_END
         return true;
     case CryptoAlgorithmIdentifier::SHA_224:
         algorithm = kCCDigestSHA224;

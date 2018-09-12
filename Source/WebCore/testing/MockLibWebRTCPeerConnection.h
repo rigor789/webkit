@@ -27,8 +27,14 @@
 #if USE(LIBWEBRTC)
 
 #include "LibWebRTCMacros.h"
+
+ALLOW_UNUSED_PARAMETERS_BEGIN
+
 #include <webrtc/api/mediastreaminterface.h>
 #include <webrtc/api/peerconnectioninterface.h>
+
+ALLOW_UNUSED_PARAMETERS_END
+
 #include <wtf/text/WTFString.h>
 
 namespace WebCore {

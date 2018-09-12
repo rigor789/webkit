@@ -626,10 +626,9 @@ static std::optional<NSInteger> toTag(ContextMenuAction action)
 
 - (NSView *)_web_borderView
 {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     return _borderView;
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
 }
 
 @end
@@ -1494,10 +1493,9 @@ static NSControlStateValue kit(TriState state)
 {
     NSEvent *fakeEvent = [NSEvent mouseEventWithType:NSEventTypeMouseMoved
         location:[[self window]
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         convertScreenToBase:[NSEvent mouseLocation]]
-#pragma clang diagnostic pop
+ALLOW_DEPRECATED_DECLARATIONS_END
         modifierFlags:[[NSApp currentEvent] modifierFlags]
         timestamp:[NSDate timeIntervalSinceReferenceDate]
         windowNumber:[[self window] windowNumber]
@@ -1538,19 +1536,17 @@ static NSControlStateValue kit(TriState state)
 #if PLATFORM(MAC)
     ASSERT(!_private->subviewsSetAside);
     ASSERT(_private->savedSubviews == nil);
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     _private->savedSubviews = _subviews;
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
     // We need to keep the layer-hosting view in the subviews, otherwise the layers flash.
     if (_private->layerHostingView) {
         NSArray* newSubviews = [[NSArray alloc] initWithObjects:_private->layerHostingView, nil];
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         _subviews = newSubviews;
     } else
         _subviews = nil;
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
     _private->subviewsSetAside = YES;
 #endif
  }
@@ -1560,14 +1556,13 @@ static NSControlStateValue kit(TriState state)
 #if PLATFORM(MAC)
     ASSERT(_private->subviewsSetAside);
     if (_private->layerHostingView) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         [_subviews release];
         _subviews = _private->savedSubviews;
     } else {
         ASSERT(_subviews == nil);
         _subviews = _private->savedSubviews;
-#pragma clang diagnostic pop
+        ALLOW_DEPRECATED_DECLARATIONS_END
     }
     _private->savedSubviews = nil;
     _private->subviewsSetAside = NO;
@@ -2104,10 +2099,9 @@ static bool mouseEventIsPartOfClickOrDrag(NSEvent *event)
 
     NSEvent *fakeEvent = [NSEvent mouseEventWithType:NSEventTypeLeftMouseDragged
         location:[[self window]
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         convertScreenToBase:[NSEvent mouseLocation]]
-#pragma clang diagnostic pop
+ALLOW_DEPRECATED_DECLARATIONS_END
         modifierFlags:[[NSApp currentEvent] modifierFlags]
         timestamp:[NSDate timeIntervalSinceReferenceDate]
         windowNumber:[[self window] windowNumber]
@@ -3976,10 +3970,9 @@ static BOOL currentScrollIsBlit(NSView *clipView)
 #if PLATFORM(MAC)
     // Only do the synchronization dance if we're drawing into the window, otherwise
     // we risk disabling screen updates when no flush is pending.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     if ([NSGraphicsContext currentContext] == [[self window] graphicsContext] && [webView _needsOneShotDrawingSynchronization]) {
-#pragma clang diagnostic pop
+        ALLOW_DEPRECATED_DECLARATIONS_END
         // Disable screen updates to minimize the chances of the race between the CA
         // display link and AppKit drawing causing flashes.
         [[self window] disableScreenUpdatesUntilFlush];
@@ -4211,12 +4204,11 @@ static BOOL currentScrollIsBlit(NSView *clipView)
     if (Frame* coreframe = core([self _frame]))
         coreframe->eventHandler().mouseDown(event);
 #else
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     NSInputManager *currentInputManager = [NSInputManager currentInputManager];
 
     if (![currentInputManager wantsToHandleMouseEvents] || ![currentInputManager handleMouseEvent:event]) {
-#pragma clang diagnostic pop
+        ALLOW_DEPRECATED_DECLARATIONS_END
         [_private->completionController endRevertingChange:NO moveLeft:NO];
 
         // If the web page handles the context menu event and menuForEvent: returns nil, we'll get control click events here.
@@ -4271,12 +4263,11 @@ static BOOL currentScrollIsBlit(NSView *clipView)
     // the current event prevents that from causing a problem inside WebKit or AppKit code.
     [[event retain] autorelease];
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     NSInputManager *currentInputManager = [NSInputManager currentInputManager];
     if ([currentInputManager wantsToHandleMouseEvents] && [currentInputManager handleMouseEvent:event])
         return;
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
 
     [self retain];
 
@@ -4441,12 +4432,11 @@ static bool matchesExtensionOrEquivalent(NSString *filename, NSString *extension
     [self _setMouseDownEvent:nil];
 
 #if PLATFORM(MAC)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     NSInputManager *currentInputManager = [NSInputManager currentInputManager];
     if ([currentInputManager wantsToHandleMouseEvents] && [currentInputManager handleMouseEvent:event])
         return;
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
 
     [self retain];
@@ -4798,10 +4788,9 @@ static RefPtr<KeyboardEvent> currentKeyboardEvent(Frame* coreFrame)
 - (void)_endPrintModeAndRestoreWindowAutodisplay
 {
     [self _endPrintMode];
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     [[self window] setAutodisplay:YES];
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
 }
 
 - (void)_delayedEndPrintMode:(NSPrintOperation *)initiatingOperation
@@ -4836,10 +4825,9 @@ static RefPtr<KeyboardEvent> currentKeyboardEvent(Frame* coreFrame)
     // Must do this explicit display here, because otherwise the view might redisplay while the print
     // sheet was up, using printer fonts (and looking different).
     [self displayIfNeeded];
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     [[self window] setAutodisplay:NO];
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
 
     [[self _webView] _adjustPrintingMarginsForHeaderAndFooter];
     NSPrintOperation *printOperation = [NSPrintOperation currentOperation];
@@ -5027,10 +5015,9 @@ static RefPtr<KeyboardEvent> currentKeyboardEvent(Frame* coreFrame)
 #if PLATFORM(IOS)
         return [accTree accessibilityHitTest:point];
 #else
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         NSPoint windowCoord = [[self window] convertScreenToBase:point];
-#pragma clang diagnostic pop
+        ALLOW_DEPRECATED_DECLARATIONS_END
         return [accTree accessibilityHitTest:[self convertPoint:windowCoord fromView:nil]];
 #endif
     }
@@ -5068,10 +5055,9 @@ static RefPtr<KeyboardEvent> currentKeyboardEvent(Frame* coreFrame)
 
 - (NSDictionary *)_fontAttributesFromFontPasteboard
 {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     NSPasteboard *fontPasteboard = [NSPasteboard pasteboardWithName:NSFontPboard];
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
     if (fontPasteboard == nil)
         return nil;
     NSData *data = [fontPasteboard dataForType:legacyFontPasteboardType()];
@@ -5095,10 +5081,9 @@ static RefPtr<KeyboardEvent> currentKeyboardEvent(Frame* coreFrame)
 
 - (NSString *)_colorAsString:(NSColor *)color
 {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     NSColor *rgbColor = [color colorUsingColorSpaceName:NSDeviceRGBColorSpace];
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
     // FIXME: If color is non-nil and rgbColor is nil, that means we got some kind
     // of fancy color that can't be converted to RGB. Changing that to "transparent"
     // might not be great, but it's probably OK.
@@ -5279,10 +5264,9 @@ static RefPtr<KeyboardEvent> currentKeyboardEvent(Frame* coreFrame)
 
     // Put RTF with font attributes on the pasteboard.
     // Maybe later we should add a pasteboard type that contains CSS text for "native" copy and paste font.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     NSPasteboard *fontPasteboard = [NSPasteboard pasteboardWithName:NSFontPboard];
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
     [fontPasteboard declareTypes:[NSArray arrayWithObject:legacyFontPasteboardType()] owner:nil];
     [fontPasteboard setData:[self _selectionStartFontAttributesAsRTF] forType:legacyFontPasteboardType()];
 }
@@ -6118,15 +6102,14 @@ static BOOL writingDirectionKeyBindingsEnabled()
     const Vector<KeypressCommand>& commands = parameters->event->keypressCommands();
 
     for (size_t i = 0; i < commands.size(); ++i) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         if (commands[i].commandName == "insertText:")
             [self insertText:commands[i].text];
         else if (commands[i].commandName == "noop:")
             ; // Do nothing. This case can be removed once <rdar://problem/9025012> is fixed.
         else
             [self doCommandBySelector:NSSelectorFromString(commands[i].commandName)];
-#pragma clang diagnostic pop
+        ALLOW_DEPRECATED_DECLARATIONS_END
     }
     parameters->event->keypressCommands().clear();
     parameters->shouldSaveCommands = wasSavingCommands;
@@ -6322,10 +6305,9 @@ static BOOL writingDirectionKeyBindingsEnabled()
         // If we are in a layer-backed view, we need to manually initialize the geometry for our layer.
         [viewLayer setBounds:NSRectToCGRect([_private->layerHostingView bounds])];
         [viewLayer setAnchorPoint:CGPointMake(0, [self isFlipped] ? 1 : 0)];
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         CGPoint layerPosition = NSPointToCGPoint([self convertPointToBase:[_private->layerHostingView frame].origin]);
-#pragma clang diagnostic pop
+        ALLOW_DEPRECATED_DECLARATIONS_END
         [viewLayer setPosition:layerPosition];
     }
     
@@ -6455,10 +6437,9 @@ static BOOL writingDirectionKeyBindingsEnabled()
         LOG(TextInput, "textStorage -> nil");
         return nil;
     }
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     NSAttributedString *result = [self attributedSubstringFromRange:NSMakeRange(0, UINT_MAX)];
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
 
     LOG(TextInput, "textStorage -> \"%@\"", result ? [result string] : @"");
     
@@ -6935,15 +6916,14 @@ static void extractUnderlines(NSAttributedString *string, Vector<CompositionUnde
 
     unsigned start;
     unsigned end;
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     if (coreFrame->editor().getCompositionSelection(start, end))
         [[NSInputManager currentInputManager] markedTextSelectionChanged:NSMakeRange(start, end - start) client:self];
     else {
         coreFrame->editor().cancelComposition();
         [[NSInputManager currentInputManager] markedTextAbandoned:self];
     }
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
 }
 
 #endif

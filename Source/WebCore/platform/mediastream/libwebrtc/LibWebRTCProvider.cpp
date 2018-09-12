@@ -33,11 +33,13 @@
 #if USE(LIBWEBRTC)
 #include "LibWebRTCAudioModule.h"
 #include "Logging.h"
+ALLOW_UNUSED_PARAMETERS_BEGIN
 #include "VideoToolBoxDecoderFactory.h"
 #include "VideoToolBoxEncoderFactory.h"
 #include <dlfcn.h>
 #include <webrtc/api/peerconnectionfactoryproxy.h>
 #include <webrtc/base/physicalsocketserver.h>
+ALLOW_UNUSED_PARAMETERS_END
 #include <webrtc/p2p/client/basicportallocator.h>
 #include <webrtc/pc/peerconnectionfactory.h>
 #include <wtf/Function.h>

@@ -29,9 +29,13 @@
 #if USE(LIBWEBRTC)
 
 #include "Logging.h"
+
+ALLOW_UNUSED_PARAMETERS_BEGIN
+
 #include <webrtc/api/video/i420_buffer.h>
 #include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
 #include <webrtc/sdk/objc/Framework/Classes/Video/corevideo_frame_buffer.h>
+ALLOW_UNUSED_PARAMETERS_END
 
 #include <pal/cf/CoreMediaSoftLink.h>
 #include "CoreVideoSoftLink.h"

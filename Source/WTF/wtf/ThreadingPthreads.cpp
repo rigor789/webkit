@@ -110,15 +110,8 @@ static LazyNeverDestroyed<Semaphore> globalSemaphoreForSuspendResume;
 static constexpr const int SigThreadSuspendResume = SIGUSR1;
 static std::atomic<Thread*> targetThread { nullptr };
 
-#if COMPILER(GCC)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreturn-local-addr"
-#endif // COMPILER(GCC)
-
-#if COMPILER(CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wreturn-stack-address"
-#endif // COMPILER(CLANG)
+IGNORE_GCC_WARNINGS_BEGIN("return-local-addr")
+IGNORE_CLANG_WARNINGS_BEGIN("return-stack-address")
 
 static UNUSED_FUNCTION NEVER_INLINE void* getApproximateStackPointer()
 {
@@ -126,13 +119,8 @@ static UNUSED_FUNCTION NEVER_INLINE void* getApproximateStackPointer()
     return &stackLocation;
 }
 
-#if COMPILER(GCC)
-#pragma GCC diagnostic pop
-#endif // COMPILER(GCC)
-
-#if COMPILER(CLANG)
-#pragma clang diagnostic pop
-#endif // COMPILER(CLANG)
+IGNORE_CLANG_WARNINGS_END
+IGNORE_GCC_WARNINGS_END
 
 static UNUSED_FUNCTION bool isOnAlternativeSignalStack()
 {

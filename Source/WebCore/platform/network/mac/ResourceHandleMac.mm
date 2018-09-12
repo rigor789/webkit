@@ -230,7 +230,9 @@ void ResourceHandle::createNSURLConnection(id delegate, bool shouldUseCredential
     // web content for purposes of App Transport Security.
     [propertyDictionary setObject:@{@"NSAllowsArbitraryLoadsInWebContent": @YES} forKey:@"_kCFURLConnectionPropertyATSFrameworkOverrides"];
 
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     d->m_connection = adoptNS([[NSURLConnection alloc] _initWithRequest:nsRequest delegate:delegate usesCache:usesCache maxContentLength:0 startImmediately:NO connectionProperties:propertyDictionary]);
+ALLOW_DEPRECATED_DECLARATIONS_END
 }
 
 bool ResourceHandle::start()

@@ -67,10 +67,9 @@ RetainPtr<NSImage> scaleDragImage(RetainPtr<NSImage> image, FloatSize scale)
     NSSize newSize = NSMakeSize((originalSize.width * scale.width()), (originalSize.height * scale.height()));
     newSize.width = roundf(newSize.width);
     newSize.height = roundf(newSize.height);
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     [image setScalesWhenResized:YES];
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
     [image setSize:newSize];
     return image;
 }
@@ -302,10 +301,9 @@ DragImageRef createDragImageForLink(Element&, URL& url, const String& title, Tex
     RetainPtr<NSImage> dragImage = adoptNS([[NSImage alloc] initWithSize:imageSize]);
     [dragImage lockFocus];
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     GraphicsContext context((CGContextRef)[NSGraphicsContext currentContext].graphicsPort);
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
 
 #if __MAC_OS_X_VERSION_MIN_REQUIRED < 101300
     context.translate(linkImageShadowRadius, linkImageShadowRadius - linkImageShadowOffsetY);

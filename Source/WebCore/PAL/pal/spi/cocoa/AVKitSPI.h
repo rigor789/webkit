@@ -34,10 +34,9 @@
 #if USE(APPLE_INTERNAL_SDK)
 
 #import <AVKit/AVPlayerController.h>
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wobjc-property-no-attribute"
+IGNORE_CLANG_WARNINGS_BEGIN("objc-property-no-attribute")
 #import <AVKit/AVPlayerLayerView.h>
-#pragma clang diagnostic pop
+IGNORE_CLANG_WARNINGS_END
 #import <AVKit/AVPlayerViewController_Private.h>
 #import <AVKit/AVPlayerViewController_WebKitOnly.h>
 

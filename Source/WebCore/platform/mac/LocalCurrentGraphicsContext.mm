@@ -30,8 +30,7 @@ LocalCurrentGraphicsContext::LocalCurrentGraphicsContext(GraphicsContext& graphi
 {
     graphicsContext.save();
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     CGContextRef cgContext = this->cgContext();
     if (cgContext == [[NSGraphicsContext currentContext] graphicsPort]) {
         m_savedNSGraphicsContext = 0;
@@ -40,7 +39,7 @@ LocalCurrentGraphicsContext::LocalCurrentGraphicsContext(GraphicsContext& graphi
 
     m_savedNSGraphicsContext = [[NSGraphicsContext currentContext] retain];
     NSGraphicsContext* newContext = [NSGraphicsContext graphicsContextWithGraphicsPort:cgContext flipped:YES];
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
     [NSGraphicsContext setCurrentContext:newContext];
     m_didSetGraphicsContext = true;
 }

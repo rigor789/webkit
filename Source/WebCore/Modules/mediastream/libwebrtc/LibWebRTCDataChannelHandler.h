@@ -28,7 +28,16 @@
 
 #include "LibWebRTCMacros.h"
 #include "RTCDataChannelHandler.h"
+
+ALLOW_UNUSED_PARAMETERS_BEGIN
+
 #include <webrtc/api/datachannelinterface.h>
+
+ALLOW_UNUSED_PARAMETERS_END
+
+namespace webrtc {
+struct DataChannelInit;
+}
 
 namespace WebCore {
 

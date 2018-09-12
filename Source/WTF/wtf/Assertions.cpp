@@ -79,10 +79,9 @@ extern "C" {
 static void logToStderr(const char* buffer)
 {
 #if USE(APPLE_SYSTEM_LOG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     asl_log(0, 0, ASL_LEVEL_NOTICE, "%s", buffer);
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
     fputs(buffer, stderr);
 }
@@ -96,14 +95,9 @@ static void vprintf_stderr_common(const char* format, va_list args)
     if (strstr(format, "%@")) {
         auto cfFormat = adoptCF(CFStringCreateWithCString(nullptr, format, kCFStringEncodingUTF8));
 
-#if COMPILER(CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-nonliteral"
-#endif
+        ALLOW_NONLITERAL_FORMAT_BEGIN
         auto str = adoptCF(CFStringCreateWithFormatAndArguments(nullptr, nullptr, cfFormat.get(), args));
-#if COMPILER(CLANG)
-#pragma clang diagnostic pop
-#endif
+        ALLOW_NONLITERAL_FORMAT_END
         CFIndex length = CFStringGetMaximumSizeForEncoding(CFStringGetLength(str.get()), kCFStringEncodingUTF8);
         Vector<char, InitialBufferSize> buffer(length + 1);
 
@@ -114,13 +108,12 @@ static void vprintf_stderr_common(const char* format, va_list args)
     }
 
 #if USE(APPLE_SYSTEM_LOG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     va_list copyOfArgs;
     va_copy(copyOfArgs, args);
     asl_vlog(0, 0, ASL_LEVEL_NOTICE, format, copyOfArgs);
     va_end(copyOfArgs);
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
 
     // Fall through to write to stderr in the same manner as other platforms.
@@ -142,10 +135,7 @@ static void vprintf_stderr_common(const char* format, va_list args)
     vfprintf(stderr, format, args);
 }
 
-#if COMPILER(GCC_OR_CLANG)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-#endif
+ALLOW_NONLITERAL_FORMAT_BEGIN
 
 static void vprintf_stderr_with_prefix(const char* prefix, const char* format, va_list args)
 {
@@ -175,9 +165,7 @@ static void vprintf_stderr_with_trailing_newline(const char* format, va_list arg
     vprintf_stderr_common(formatWithNewline.get(), args);
 }
 
-#if COMPILER(GCC_OR_CLANG)
-#pragma GCC diagnostic pop
-#endif
+ALLOW_NONLITERAL_FORMAT_END
 
 WTF_ATTRIBUTE_PRINTF(1, 2)
 static void printf_stderr_common(const char* format, ...)
@@ -426,14 +414,9 @@ void WTFLogWithLevel(WTFLogChannel* channel, WTFLogLevel level, const char* form
     va_list args;
     va_start(args, format);
 
-#if COMPILER(CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-nonliteral"
-#endif
+    ALLOW_NONLITERAL_FORMAT_BEGIN
     WTFLog(channel, format, args);
-#if COMPILER(CLANG)
-#pragma clang diagnostic pop
-#endif
+    ALLOW_NONLITERAL_FORMAT_END
 
     va_end(args);
 }
@@ -456,14 +439,9 @@ void WTFLog(WTFLogChannel* channel, const char* format, ...)
     va_list args;
     va_start(args, format);
 
-#if COMPILER(CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-nonliteral"
-#endif
+    ALLOW_NONLITERAL_FORMAT_BEGIN
     String loggingString = String::format(format, args);
-#if COMPILER(CLANG)
-#pragma clang diagnostic pop
-#endif
+    ALLOW_NONLITERAL_FORMAT_END
 
     va_end(args);
 
@@ -483,14 +461,9 @@ void WTFLogVerbose(const char* file, int line, const char* function, WTFLogChann
     va_list args;
     va_start(args, format);
 
-#if COMPILER(CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-nonliteral"
-#endif
+    ALLOW_NONLITERAL_FORMAT_BEGIN
     WTFLog(channel, format, args);
-#if COMPILER(CLANG)
-#pragma clang diagnostic pop
-#endif
+    ALLOW_NONLITERAL_FORMAT_END
 
     va_end(args);
 
