@@ -33,6 +33,8 @@
 #include <TargetConditionals.h>
 #endif
 
+#define USE_APPLE_INTERNAL_SDK 0
+
 #define BPLATFORM(PLATFORM) (defined BPLATFORM_##PLATFORM && BPLATFORM_##PLATFORM)
 #define BOS(OS) (defined BOS_##OS && BOS_##OS)
 

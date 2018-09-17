@@ -37,13 +37,13 @@
 #include "VMAllocate.h"
 #include <mutex>
 
-#if !BOS(DARWIN)
+#if !BOS(DARWIN) || !USE_APPLE_INTERNAL_SDK
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #endif
 
-#if BOS(DARWIN)
+#if BOS(DARWIN) && USE_APPLE_INTERNAL_SDK
 typedef struct __CCRandom* CCRandomRef;
 
 extern "C" {
@@ -114,7 +114,7 @@ void ARC4RandomNumberGenerator::stir()
     unsigned char randomness[128];
     size_t length = sizeof(randomness);
 
-#if BOS(DARWIN)
+#if BOS(DARWIN) && USE_APPLE_INTERNAL_SDK
     RELEASE_BASSERT(!CCRandomCopyBytes(kCCRandomDefault, randomness, length));
 #else
     static std::once_flag onceFlag;
