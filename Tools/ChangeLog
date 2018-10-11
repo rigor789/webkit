@@ -1,3 +1,1841 @@
+2018-08-10  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r234730. rdar://problem/43144157
+
+    REGRESSION (r232083): WKWebView loses first-party cookies on iOS
+    https://bugs.webkit.org/show_bug.cgi?id=188443
+    <rdar://problem/42991584>
+    
+    Patch by Sihui Liu <sihui_liu@apple.com> on 2018-08-09
+    Reviewed by Chris Dumez.
+    
+    Source/WebKit:
+    
+    Revert the change to set sharedCookieStorage for iOS as it is breaking Kayak.
+    
+    * NetworkProcess/NetworkProcess.h:
+    * NetworkProcess/NetworkProcessCreationParameters.cpp:
+    (WebKit::NetworkProcessCreationParameters::encode const):
+    (WebKit::NetworkProcessCreationParameters::decode):
+    * NetworkProcess/NetworkProcessCreationParameters.h:
+    * NetworkProcess/cocoa/NetworkProcessCocoa.mm:
+    (WebKit::NetworkProcess::platformInitializeNetworkProcessCocoa):
+    * Shared/WebProcessCreationParameters.cpp:
+    (WebKit::WebProcessCreationParameters::encode const):
+    (WebKit::WebProcessCreationParameters::decode):
+    * Shared/WebProcessCreationParameters.h:
+    * UIProcess/Cocoa/WebProcessPoolCocoa.mm:
+    (WebKit::WebProcessPool::platformInitializeWebProcess):
+    (WebKit::WebProcessPool::platformInitializeNetworkProcess):
+    
+    Tools:
+    
+    Skip WebKit.WKHTTPCookieStoreWithoutProcessPool on iOS.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/WKHTTPCookieStore.mm:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234730 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-08-09  Sihui Liu  <sihui_liu@apple.com>
+
+            REGRESSION (r232083): WKWebView loses first-party cookies on iOS
+            https://bugs.webkit.org/show_bug.cgi?id=188443
+            <rdar://problem/42991584>
+
+            Reviewed by Chris Dumez.
+
+            Skip WebKit.WKHTTPCookieStoreWithoutProcessPool on iOS.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/WKHTTPCookieStore.mm:
+
+2018-08-03  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234547. rdar://problem/42902608
+
+    Unreviewed gardening; r234534 changed the policy for what audio session is set when a
+    media element is paused. Updating the test to reflect the new policy.
+    
+    * TestWebKitAPI/Tests/WebKitLegacy/ios/AudioSessionCategoryIOS.mm:
+    (TestWebKitAPI::TEST):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234547 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-08-03  Jer Noble  <jer.noble@apple.com>
+
+            Unreviewed gardening; r234534 changed the policy for what audio session is set when a
+            media element is paused. Updating the test to reflect the new policy.
+
+            * TestWebKitAPI/Tests/WebKitLegacy/ios/AudioSessionCategoryIOS.mm:
+            (TestWebKitAPI::TEST):
+
+2018-08-03  Babak Shafiei  <bshafiei@apple.com>
+
+        Revert r234547. rdar://problem/42902608
+
+2018-08-03  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r234547. rdar://problem/42902608
+
+    Unreviewed gardening; r234534 changed the policy for what audio session is set when a
+    media element is paused. Updating the test to reflect the new policy.
+    
+    * TestWebKitAPI/Tests/WebKitLegacy/ios/AudioSessionCategoryIOS.mm:
+    (TestWebKitAPI::TEST):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234547 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-08-03  Jer Noble  <jer.noble@apple.com>
+
+            Unreviewed gardening; r234534 changed the policy for what audio session is set when a
+            media element is paused. Updating the test to reflect the new policy.
+
+            * TestWebKitAPI/Tests/WebKitLegacy/ios/AudioSessionCategoryIOS.mm:
+            (TestWebKitAPI::TEST):
+
+2018-08-02  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Cherry-pick r234521. rdar://problem/42387347
+
+    Skip API test DataInteractionTests.CustomActionSheetPopover on current SDKs.
+    https://bugs.webkit.org/show_bug.cgi?id=175204
+    
+    Unreviewed test gardening.
+    
+    * TestWebKitAPI/Tests/ios/DataInteractionTests.mm:
+    
+    git-svn-id: http://svn.webkit.org/repository/webkit/trunk@234521 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-08-02  Ryan Haddad  <ryanhaddad@apple.com>
+
+            Skip API test DataInteractionTests.CustomActionSheetPopover on current SDKs.
+            https://bugs.webkit.org/show_bug.cgi?id=175204
+
+            Unreviewed test gardening.
+
+            * TestWebKitAPI/Tests/ios/DataInteractionTests.mm:
+
+2018-07-30  Babak Shafiei  <bshafiei@apple.com>
+
+        Revert r233926. rdar://problem/42354941
+
+2018-07-29  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234330. rdar://problem/42721217
+
+    Be more conservative with compositing layer creation when memory is low
+    https://bugs.webkit.org/show_bug.cgi?id=187866
+    rdar://problem/42366345
+    
+    Reviewed by Zalan Bujtas.
+    
+    Source/WebCore:
+    
+    When process physical footprint is above a fraction of the jetsam limit, be more conservative in making
+    compositing layers. We avoid compositing for these situations:
+    1. Layers with 3D transforms which are affine (like translateZ(0)).
+    2. Layers with will-change
+    3. Layers for canvases (other than WebGL/WebGPU)
+    
+    We reuse some macOS code in MemoryPressureHandler() but choose different thresholds for iOS,
+    falling into "conservative mode" at 50% of jetsam limit, and "strict mode" at 65%.
+    Compositing chooses to be more conservative in either "conservative" or "strict" memory modes.
+    
+    Plumb through a "compositingPolicyOverride" both so that on-device testing isn't
+    flakily falling into a different mode, and so that we can impose the conservative
+    mode for testing.
+    
+    Test: compositing/layer-creation/compositing-policy.html
+    
+    * page/Page.h:
+    (WebCore::Page::compositingPolicyOverride const):
+    (WebCore::Page::setCompositingPolicyOverride):
+    * platform/graphics/transforms/Matrix3DTransformOperation.cpp:
+    (WebCore::Matrix3DTransformOperation::isRepresentableIn2D const):
+    * platform/graphics/transforms/Matrix3DTransformOperation.h:
+    * platform/graphics/transforms/PerspectiveTransformOperation.h:
+    * platform/graphics/transforms/RotateTransformOperation.h:
+    * platform/graphics/transforms/ScaleTransformOperation.h:
+    * platform/graphics/transforms/TransformOperation.h:
+    (WebCore::TransformOperation::isRepresentableIn2D const):
+    * platform/graphics/transforms/TransformOperations.h:
+    (WebCore::TransformOperations::has3DOperation const):
+    (WebCore::TransformOperations::isRepresentableIn2D const):
+    * platform/graphics/transforms/TranslateTransformOperation.h:
+    * rendering/RenderLayerBacking.cpp:
+    (WebCore::RenderLayerBacking::updateGeometry):
+    * rendering/RenderLayerCompositor.cpp:
+    (WebCore::RenderLayerCompositor::cacheAcceleratedCompositingFlags):
+    (WebCore::RenderLayerCompositor::updateCompositingPolicy):
+    (WebCore::RenderLayerCompositor::updateCompositingLayers):
+    (WebCore::RenderLayerCompositor::requiresCompositingForTransform const):
+    (WebCore::RenderLayerCompositor::requiresCompositingForVideo const):
+    (WebCore::RenderLayerCompositor::requiresCompositingForCanvas const):
+    (WebCore::RenderLayerCompositor::requiresCompositingForPlugin const):
+    (WebCore::RenderLayerCompositor::requiresCompositingForWillChange const):
+    (WebCore::RenderLayerCompositor::needsFixedRootBackgroundLayer const):
+    (WebCore::operator<<):
+    * rendering/RenderLayerCompositor.h:
+    * testing/Internals.cpp:
+    (WebCore::Internals::setCompositingPolicyOverride):
+    (WebCore::Internals::compositingPolicyOverride const):
+    * testing/Internals.h:
+    * testing/Internals.idl:
+    
+    Source/WebKit:
+    
+    When process physical footprint is above a fraction of the jetsam limit, be more conservative in making
+    compositing layers. We avoid compositing for these situations:
+    1. Layers with 3D transforms which are affine (like translateZ(0)).
+    2. Layers with will-change
+    3. Layers for canvases (other than WebGL/WebGPU)
+    
+    We reuse some macOS code in MemoryPressureHandler() but choose different thresholds for iOS,
+    falling into "conservative mode" at 50% of jetsam limit, and "strict mode" at 65%.
+    Compositing chooses to be more conservative in either "conservative" or "strict" memory modes.
+    
+    Plumb through a "compositingPolicyOverride" both so that on-device testing isn't
+    flakily falling into a different mode, and so that we can impose the conservative
+    mode for testing.
+    
+    * WebProcess/InjectedBundle/API/c/WKBundlePage.cpp:
+    (WKBundlePageSetCompositingPolicyOverride):
+    * WebProcess/InjectedBundle/API/c/WKBundlePagePrivate.h:
+    
+    Source/WTF:
+    
+    When process physical footprint is above a fraction of the jetsam limit, be more conservative in making
+    compositing layers. We avoid compositing for these situations:
+    1. Layers with 3D transforms which are affine (like translateZ(0)).
+    2. Layers with will-change
+    3. Layers for canvases (other than WebGL/WebGPU)
+    
+    We reuse some macOS code in MemoryPressureHandler() but choose different thresholds for iOS,
+    falling into "conservative mode" at 50% of jetsam limit, and "strict mode" at 65%.
+    Compositing chooses to be more conservative in either "conservative" or "strict" memory modes.
+    
+    Plumb through a "compositingPolicyOverride" both so that on-device testing isn't
+    flakily falling into a different mode, and so that we can impose the conservative
+    mode for testing.
+    
+    * wtf/MemoryPressureHandler.cpp:
+    (WTF::thresholdForPolicy):
+    (WTF::MemoryPressureHandler::currentMemoryUsagePolicy):
+    * wtf/MemoryPressureHandler.h:
+    
+    Tools:
+    
+    When process physical footprint is above a fraction of the jetsam limit, be more conservative in making
+    compositing layers. We avoid compositing for these situations:
+    1. Layers with 3D transforms which are affine (like translateZ(0)).
+    2. Layers with will-change
+    3. Layers for canvases (other than WebGL/WebGPU)
+    
+    We reuse some macOS code in MemoryPressureHandler() but choose different thresholds for iOS,
+    falling into "conservative mode" at 50% of jetsam limit, and "strict mode" at 65%.
+    Compositing chooses to be more conservative in either "conservative" or "strict" memory modes.
+    
+    Plumb through a "compositingPolicyOverride" both so that on-device testing isn't
+    flakily falling into a different mode, and so that we can impose the conservative
+    mode for testing.
+    
+    * WebKitTestRunner/InjectedBundle/InjectedBundlePage.cpp:
+    (WTR::InjectedBundlePage::prepare):
+    
+    LayoutTests:
+    
+    * compositing/layer-creation/compositing-policy-expected.txt: Added.
+    * compositing/layer-creation/compositing-policy.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234330 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-27  Simon Fraser  <simon.fraser@apple.com>
+
+            Be more conservative with compositing layer creation when memory is low
+            https://bugs.webkit.org/show_bug.cgi?id=187866
+            rdar://problem/42366345
+
+            Reviewed by Zalan Bujtas.
+
+            When process physical footprint is above a fraction of the jetsam limit, be more conservative in making
+            compositing layers. We avoid compositing for these situations:
+            1. Layers with 3D transforms which are affine (like translateZ(0)).
+            2. Layers with will-change
+            3. Layers for canvases (other than WebGL/WebGPU)
+
+            We reuse some macOS code in MemoryPressureHandler() but choose different thresholds for iOS,
+            falling into "conservative mode" at 50% of jetsam limit, and "strict mode" at 65%.
+            Compositing chooses to be more conservative in either "conservative" or "strict" memory modes.
+
+            Plumb through a "compositingPolicyOverride" both so that on-device testing isn't
+            flakily falling into a different mode, and so that we can impose the conservative
+            mode for testing.
+
+            * WebKitTestRunner/InjectedBundle/InjectedBundlePage.cpp:
+            (WTR::InjectedBundlePage::prepare):
+
+2018-07-26  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233926. rdar://problem/42354941
+
+    PiP from Element Fullscreen should match AVKit's behavior
+    https://bugs.webkit.org/show_bug.cgi?id=187623
+    Source/WebCore:
+    
+    Reviewed by Jon Lee.
+    
+    PiP behavior should be defined at the WebKit2 level, and not in HTMLMediaElement:
+    
+    * html/HTMLMediaElement.cpp:
+    (WebCore::HTMLMediaElement::enterFullscreen):
+    
+    Add an accessor for pictureInPictureWasStartedWhenEnteringBackground():
+    
+    * platform/cocoa/VideoFullscreenModelVideoElement.mm:
+    (VideoFullscreenInterfaceAVKit::pictureInPictureWasStartedWhenEnteringBackground const):
+    
+    Add VideoFullscreenModelClient virutal methods for PiP change notifications:
+    
+    * platform/cocoa/VideoFullscreenModel.h:
+    (WebCore::VideoFullscreenModelClient::hasVideoChanged):
+    (WebCore::VideoFullscreenModelClient::videoDimensionsChanged):
+    (WebCore::VideoFullscreenModelClient::willEnterPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::didEnterPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::failedToEnterPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::willExitPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::didExitPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::failedToExitPictureInPicture):
+    * platform/cocoa/VideoFullscreenModelVideoElement.h:
+    * platform/cocoa/VideoFullscreenModelVideoElement.mm:
+    (VideoFullscreenModelVideoElement::willEnterPictureInPicture):
+    (VideoFullscreenModelVideoElement::didEnterPictureInPicture):
+    (VideoFullscreenModelVideoElement::failedToEnterPictureInPicture):
+    (VideoFullscreenModelVideoElement::willExitPictureInPicture):
+    (VideoFullscreenModelVideoElement::didExitPictureInPicture):
+    (VideoFullscreenModelVideoElement::failedToExitPictureInPicture):
+    * platform/ios/VideoFullscreenInterfaceAVKit.h:
+    * platform/ios/VideoFullscreenInterfaceAVKit.mm:
+    (-[WebAVPlayerLayer layoutSublayers]):
+    (-[WebAVPlayerLayer resolveBounds]):
+    (-[WebAVPlayerLayer setVideoGravity:]):
+    (VideoFullscreenInterfaceAVKit::setupFullscreen):
+    (VideoFullscreenInterfaceAVKit::presentingViewController):
+    (VideoFullscreenInterfaceAVKit::willStartPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::didStartPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::failedToStartPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::willStopPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::didStopPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::shouldExitFullscreenWithReason):
+    (VideoFullscreenInterfaceAVKit::doSetup):
+    * platform/ios/WebVideoFullscreenControllerAVKit.mm:
+    (VideoFullscreenControllerContext::willEnterPictureInPicture):
+    (VideoFullscreenControllerContext::didEnterPictureInPicture):
+    (VideoFullscreenControllerContext::failedToEnterPictureInPicture):
+    (VideoFullscreenControllerContext::willExitPictureInPicture):
+    (VideoFullscreenControllerContext::didExitPictureInPicture):
+    (VideoFullscreenControllerContext::failedToExitPictureInPicture):
+    * platform/mac/VideoFullscreenInterfaceMac.h:
+    (WebCore::VideoFullscreenInterfaceMac::requestHideAndExitFullscreen): Deleted.
+    * platform/mac/VideoFullscreenInterfaceMac.mm:
+    (-[WebVideoFullscreenInterfaceMacObjC invalidateFullscreenState]):
+    (-[WebVideoFullscreenInterfaceMacObjC exitPIP]):
+    (-[WebVideoFullscreenInterfaceMacObjC exitPIPAnimatingToRect:inWindow:]):
+    (-[WebVideoFullscreenInterfaceMacObjC pipShouldClose:]):
+    (-[WebVideoFullscreenInterfaceMacObjC pipDidClose:]):
+    (WebCore::VideoFullscreenInterfaceMac::enterFullscreen):
+    (WebCore::VideoFullscreenInterfaceMac::exitFullscreen):
+    (WebCore::VideoFullscreenInterfaceMac::exitFullscreenWithoutAnimationToMode):
+    (WebCore::VideoFullscreenInterfaceMac::requestHideAndExitFullscreen):
+    
+    Source/WebCore/PAL:
+    
+    Reviewed by Jon Lee.
+    
+    * pal/spi/mac/PIPSPI.h:
+    
+    Source/WebKit:
+    
+    Reviewed by Jon Lee.
+    
+    * UIProcess/Cocoa/PlaybackSessionManagerProxy.h:
+    (WebKit::PlaybackSessionManagerProxy::controlsManagerContextId const):
+    * UIProcess/Cocoa/VideoFullscreenManagerProxy.h:
+    * UIProcess/Cocoa/VideoFullscreenManagerProxy.mm:
+    (WebKit::VideoFullscreenModelContext::willEnterPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::didEnterPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::failedToEnterPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::willExitPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::didExitPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::failedToExitPictureInPicture):
+    (WebKit::VideoFullscreenManagerProxy::controlsManagerInterface):
+    * UIProcess/ios/fullscreen/WKFullScreenViewController.mm:
+    (WKFullScreenViewControllerVideoFullscreenModelClient::setParent):
+    (WKFullScreenViewControllerVideoFullscreenModelClient::setInterface):
+    (WKFullScreenViewControllerVideoFullscreenModelClient::interface const):
+    (-[WKFullScreenViewController initWithWebView:]):
+    (-[WKFullScreenViewController dealloc]):
+    (-[WKFullScreenViewController videoControlsManagerDidChange]):
+    (-[WKFullScreenViewController ensurePiPAnimator]):
+    (-[WKFullScreenViewController willEnterPictureInPicture]):
+    (-[WKFullScreenViewController didEnterPictureInPicture]):
+    (-[WKFullScreenViewController failedToEnterPictureInPicture]):
+    (-[WKFullScreenViewController loadView]):
+    (-[WKFullScreenViewController viewWillAppear:]):
+    * UIProcess/Cocoa/WebViewImpl.mm:
+    (WebKit::WebViewImpl::videoControlsManagerDidChange):
+    * UIProcess/mac/WKFullScreenWindowController.h:
+    * UIProcess/mac/WKFullScreenWindowController.mm:
+    (WebKit::WKFullScreenWindowControllerVideoFullscreenModelClient::setParent):
+    (WebKit::WKFullScreenWindowControllerVideoFullscreenModelClient::setInterface):
+    (WebKit::WKFullScreenWindowControllerVideoFullscreenModelClient::interface const):
+    (-[WKFullScreenWindowController initWithWindow:webView:page:]):
+    (-[WKFullScreenWindowController dealloc]):
+    (-[WKFullScreenWindowController videoControlsManagerDidChange]):
+    (-[WKFullScreenWindowController willEnterPictureInPicture]):
+    
+    Tools:
+    
+    <rdar://problem/41212379>
+    
+    Reviewed by Jon Lee.
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/ExitFullscreenOnEnterPiP.html: Added.
+    * TestWebKitAPI/Tests/WebKitCocoa/ExitFullscreenOnEnterPiP.mm: Added.
+    (-[ExitFullscreenOnEnterPiPUIDelegate _webView:hasVideoInPictureInPictureDidChange:]):
+    (-[ExitFullscreenOnEnterPiPUIDelegate _webViewDidEnterFullscreen:]):
+    (-[ExitFullscreenOnEnterPiPUIDelegate _webViewDidExitFullscreen:]):
+    (TestWebKitAPI::TEST):
+    
+    LayoutTests:
+    
+    Reviewed by Jon Lee.
+    
+    * TestExpectations:
+    * media/fullscreen-video-going-into-pip-expected.txt: Removed.
+    * media/fullscreen-video-going-into-pip.html: Removed.
+    * media/video-contained-in-fullscreen-element-going-into-pip-expected.txt: Removed.
+    * media/video-contained-in-fullscreen-element-going-into-pip.html: Removed.
+    * platform/mac-wk2/TestExpectations:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233926 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-18  Jer Noble  <jer.noble@apple.com>
+
+            PiP from Element Fullscreen should match AVKit's behavior
+            https://bugs.webkit.org/show_bug.cgi?id=187623
+            <rdar://problem/41212379>
+
+            Reviewed by Jon Lee.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKitCocoa/ExitFullscreenOnEnterPiP.html: Added.
+            * TestWebKitAPI/Tests/WebKitCocoa/ExitFullscreenOnEnterPiP.mm: Added.
+            (-[ExitFullscreenOnEnterPiPUIDelegate _webView:hasVideoInPictureInPictureDidChange:]):
+            (-[ExitFullscreenOnEnterPiPUIDelegate _webViewDidEnterFullscreen:]):
+            (-[ExitFullscreenOnEnterPiPUIDelegate _webViewDidExitFullscreen:]):
+            (TestWebKitAPI::TEST):
+
+2018-07-26  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234272. rdar://problem/42645434
+
+    Unreviewed, rolling out r234181 and r234189.
+    https://bugs.webkit.org/show_bug.cgi?id=188075
+    
+    These are not needed right now (Requested by thorton on
+    #webkit).
+    
+    Reverted changesets:
+    
+    "Enable Web Content Filtering on watchOS"
+    https://bugs.webkit.org/show_bug.cgi?id=187979
+    https://trac.webkit.org/changeset/234181
+    
+    "HAVE(PARENTAL_CONTROLS) should be true on watchOS"
+    https://bugs.webkit.org/show_bug.cgi?id=187985
+    https://trac.webkit.org/changeset/234189
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234272 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-26  Commit Queue  <commit-queue@webkit.org>
+
+            Unreviewed, rolling out r234181 and r234189.
+            https://bugs.webkit.org/show_bug.cgi?id=188075
+
+            These are not needed right now (Requested by thorton on
+            #webkit).
+
+            Reverted changesets:
+
+            "Enable Web Content Filtering on watchOS"
+            https://bugs.webkit.org/show_bug.cgi?id=187979
+            https://trac.webkit.org/changeset/234181
+
+            "HAVE(PARENTAL_CONTROLS) should be true on watchOS"
+            https://bugs.webkit.org/show_bug.cgi?id=187985
+            https://trac.webkit.org/changeset/234189
+
+2018-07-25  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234181. rdar://problem/42604524
+
+    Enable Web Content Filtering on watchOS
+    https://bugs.webkit.org/show_bug.cgi?id=187979
+    <rdar://problem/42559346>
+    
+    Reviewed by Wenson Hsieh.
+    
+    Source/JavaScriptCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore/PAL:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKit:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKitLegacy/mac:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Tools:
+    
+    * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234181 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-24  Tim Horton  <timothy_horton@apple.com>
+
+            Enable Web Content Filtering on watchOS
+            https://bugs.webkit.org/show_bug.cgi?id=187979
+            <rdar://problem/42559346>
+
+            Reviewed by Wenson Hsieh.
+
+            * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+
+2018-07-25  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234111. rdar://problem/42604691
+
+    WebResourceLoadStatisticsStore fails to unregister itself as a MessageReceiver in its destructor
+    https://bugs.webkit.org/show_bug.cgi?id=187910
+    <rdar://problem/42356526>
+    
+    Reviewed by Brent Fulgham.
+    
+    Source/WebCore:
+    
+    Add internals API that causes the ResourceLoadObserver to notify its observer, and avoid waiting
+    for the 5 second delay.
+    
+    * testing/Internals.cpp:
+    (WebCore::Internals::notifyResourceLoadObserver):
+    * testing/Internals.h:
+    * testing/Internals.idl:
+    
+    Source/WebKit:
+    
+    The WebResourceLoadStatisticsStore was only removing itself as a MessageReceiver from the WebProcessProxy
+    and that WebProcessProxy's connection was getting closed. However, it is possible for the
+    WebResourceLoadStatisticsStore to get destroyed before this happens. This would lead to crashes such as
+    the one in <rdar://problem/42356526>.
+    
+    To address the issue, we let the WebsiteDataStore take care of registering / unregistering the
+    WebResourceLoadStatisticsStore as a MessageReceiver with the WebProcessProxy. This is more reliable since
+    the WebsiteDataStore is the one that subclasses WebProcessLifetimeObserver. Make sure the
+    WebResourceLoadStatisticsStore is removed as a MessageReceiver whenever the WebsiteDataStore is destroyed
+    or WebsiteDataStore::m_resourceLoadStatistics gets cleared.
+    
+    * UIProcess/WebResourceLoadStatisticsStore.cpp:
+    * UIProcess/WebResourceLoadStatisticsStore.h:
+    Drop logic to add / remove the WebResourceLoadStatisticsStore as a receiver now that the
+    WebsiteDataStore takes care of it.
+    
+    * UIProcess/WebsiteData/WebsiteDataStore.cpp:
+    (WebKit::WebsiteDataStore::~WebsiteDataStore):
+    Make sure the WebResourceLoadStatisticsStore gets unregistered as a MessageReceiver from all associated
+    WebProcessProxy objects when the WebsiteDataStore gets destroyed.
+    
+    (WebKit::WebsiteDataStore::webProcessWillOpenConnection):
+    (WebKit::WebsiteDataStore::webProcessDidCloseConnection):
+    Register / Unregister the WebResourceLoadStatisticsStore as a MessageReceiver with the WebProcessProxy.
+    
+    (WebKit::WebsiteDataStore::setResourceLoadStatisticsEnabled):
+    Make sure we unregister the WebResourceLoadStatisticsStore as a MessageReceiver with all associated
+    WebProcessProxy objects before we clear m_resourceLoadStatistics as this will causes the
+    WebResourceLoadStatisticsStore to get destroyed.
+    
+    (WebKit::WebsiteDataStore::unregisterWebResourceLoadStatisticsStoreAsMessageReceiver):
+    (WebKit::WebsiteDataStore::registerWebResourceLoadStatisticsStoreAsMessageReceiver):
+    Add utility functions to register / unregister WebResourceLoadStatisticsStore as a MessageReceiver with
+    all associated WebProcessProxy objects.
+    
+    (WebKit::WebsiteDataStore::enableResourceLoadStatisticsAndSetTestingCallback):
+    Register the new WebResourceLoadStatisticsStore as a MessageReceiver with all associated WebProcessProxy
+    objects in case setResourceLoadStatisticsEnabled(true) gets called *after* we've already started
+    WebProcesses.
+    
+    * UIProcess/WebsiteData/WebsiteDataStore.h:
+    
+    Tools:
+    
+    Add API test coverage.
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/ResourceLoadStatistics.mm:
+    (-[DisableITPDuringNavigationDelegate webView:didCommitNavigation:]):
+    (-[DisableITPDuringNavigationDelegate webView:didFinishNavigation:]):
+    (TEST):
+    * TestWebKitAPI/Tests/WebKitCocoa/notify-resourceLoadObserver.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234111 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-23  Chris Dumez  <cdumez@apple.com>
+
+            WebResourceLoadStatisticsStore fails to unregister itself as a MessageReceiver in its destructor
+            https://bugs.webkit.org/show_bug.cgi?id=187910
+            <rdar://problem/42356526>
+
+            Reviewed by Brent Fulgham.
+
+            Add API test coverage.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKitCocoa/ResourceLoadStatistics.mm:
+            (-[DisableITPDuringNavigationDelegate webView:didCommitNavigation:]):
+            (-[DisableITPDuringNavigationDelegate webView:didFinishNavigation:]):
+            (TEST):
+            * TestWebKitAPI/Tests/WebKitCocoa/notify-resourceLoadObserver.html: Added.
+
+2018-07-25  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234064. rdar://problem/42451634
+
+    Picking a color from the color panel for typing attributes needs to inverse transform through color-filter
+    https://bugs.webkit.org/show_bug.cgi?id=187846
+    
+    Patch by Ryosuke Niwa <rniwa@apple.com> on 2018-07-20
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    This patch refines the color inversion for editing introduced in r234005 so that font panels and WebKit embedders
+    can get and set inverted colors using attributed strings for a selected text in an editable region.
+    
+    More specifically, when font panels or WebKit embedders set a font color or a background color via WebView's
+    _applyStyleToSelection and _applyEditingStyleToSelection, WebKit would automatically invert the color before inserting
+    into DOM so that the color visible to the user matches that's given to WebKit. Conversely,
+    [WebView attributedSubstringFromRange:nsRange] now return the color visible to the user, i.e. the color after
+    the color filter had been applied, so that some WebKit embedders can present the visually identical color to the user.
+    
+    Because DOM never sees the color filter's effect in the computed style, etc... this patch reverts the change made to
+    StyleChange in r234005 to avoid inverting the color passed to execCommand. This makes editing apps which is unaware
+    of the dark mode or -apple-color-filter continue to function (because the color picker implemented in DOM will be
+    applied of the same color filter before being presented to the user).
+    
+    Finally, this patch introduces a testing hook in applyCommandToFrame so that executing foreColor or backColor with
+    the soruce of CommandFromMenuOrKeyBinding would trigger the same code path as the one taken by Objective-C
+    
+    Tests: editing/execCommand/set-backColor-with-color-filter-from-scripts.html
+           editing/execCommand/set-foreColor-with-color-filter-from-scripts.html
+           editing/mac/attributed-string/attribute-string-for-copy-with-color-filter.html
+           editing/style/set-backColor-with-color-filter.html
+           editing/style/set-foreColor-with-color-filter.html
+    
+    * editing/EditingStyle.cpp:
+    (WebCore::EditingStyle::inverseTransformColorIfNeeded): Added.
+    (WebCore::StyleChange::StyleChange): Revert the change made in r234005 since this code is also used by execCommand
+    which is not desirable, and won't work for background color.
+    (WebCore::StyleChange::extractTextStyles): Ditto.
+    * editing/EditingStyle.h:
+    * editing/Editor.cpp:
+    (WebCore::Editor::applyStyle):
+    (WebCore::Editor::applyStyleToSelection): Call EditingStyle::inverseTransformColorIfNeeded when ColorFilterMode is
+    set to InvertColor.
+    * editing/Editor.h:
+    * editing/EditorCommand.cpp:
+    (WebCore::applyCommandToFrame): Added the aforementioned testing hook.
+    * editing/cocoa/HTMLConverter.mm:
+    (WebCore::editingAttributedStringFromRange): Take the color filtr into account. Some WebKit embedders use this
+    function to compute the font color in the selected text. Note that this function is mostly used for input methods
+    so the color doesn't really matter, and its implementation is distinct from that of HTMLConverter.
+    
+    Source/WebKitLegacy/mac:
+    
+    Invert the filtered font and background colors when using font panels, font pasteboard, and other Objective-C APIs.
+    
+    * WebView/WebHTMLView.mm:
+    (-[WebHTMLView _applyStyleToSelection:withUndoAction:]): Share code with _applyEditingStyleToSelection.
+    (-[WebHTMLView _applyEditingStyleToSelection:withUndoAction:]):
+    
+    Tools:
+    
+    Fixed the bug that testRunner.execCommand was using the second argument as the value.
+    
+    The second argument, aShowDefaultUI, should always be ignored in testRunner.execCommand,
+    and the third argument should be used as the value. DumpRenderTree's implementation does this already.
+    
+    * WebKitTestRunner/InjectedBundle/Bindings/TestRunner.idl:
+    * WebKitTestRunner/InjectedBundle/TestRunner.cpp:
+    (WTR::TestRunner::execCommand):
+    * WebKitTestRunner/InjectedBundle/TestRunner.h:
+    
+    LayoutTests:
+    
+    Added tests to make sure foreground or background colors specified in execCommand don't get inverted.
+    
+    Fixed the test which was asserting that textInputController.attributedSubstringFromRange doesn't invert the color
+    since that's exactly what WebKit embedders uses to compute the style for color pickers.
+    
+    Added new tests for copy & paste case using textInputController.legacyAttributedString.
+    
+    * editing/execCommand/set-backColor-with-color-filter-from-scripts-expected.txt: Added.
+    * editing/execCommand/set-backColor-with-color-filter-from-scripts.html: Added.
+    * editing/execCommand/set-foreColor-with-color-filter-from-scripts-expected.txt: Added.
+    * editing/execCommand/set-foreColor-with-color-filter-from-scripts.html: Added.
+    * editing/mac/attributed-string/attrib-string-range-with-color-filter-expected.txt:
+    * editing/mac/attributed-string/attrib-string-range-with-color-filter.html: This test uses attributedSubstringFromRange,
+    which implemented using editingAttributedStringFromRange in WebCore. Since this is exactly what WebKit embedders uses
+    to compute the current style of the selected text, we need to invert the color here. This API's main clinet is input methods
+    so this shouldn't affect other editing operations, in particular, copy and paste, which uses HTMLConverter.
+    * editing/mac/attributed-string/attribute-string-for-copy-with-color-filter-expected.txt: Added.
+    * editing/mac/attributed-string/attribute-string-for-copy-with-color-filter.html: Added. Make sure the attributed string
+    generated for copy & paste does not invert foreground or background colors via textInputController.legacyAttributedString.
+    This is testing HTMLConverter, not editingAttributedStringFromRange, used by WebKit embedders and input methods.
+    * editing/mac/attributed-string/attributed-string-for-typing-with-color-filter-expected.txt:
+    * editing/mac/attributed-string/attributed-string-for-typing-with-color-filter.html: Added background color in the test.
+    * editing/style/set-backColor-with-color-filter-expected.txt: Added.
+    * editing/style/set-backColor-with-color-filter.html: Added.
+    * editing/style/set-foreColor-with-color-filter-expected.txt: Renamed from exec-command-foreColor-with-color-filter-expected.txt.
+    * editing/style/set-foreColor-with-color-filter.html: Renamed from exec-command-foreColor-with-color-filter.html.
+    Updated the test to use testRunner.execCommand which uses CommandFromMenuOrKeyBinding in applyCommandToFrame since we're
+    trying to test the code path taken by WebKit embedders and font panel here.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234064 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-20  Ryosuke Niwa  <rniwa@apple.com>
+
+            Picking a color from the color panel for typing attributes needs to inverse transform through color-filter
+            https://bugs.webkit.org/show_bug.cgi?id=187846
+
+            Reviewed by Simon Fraser.
+
+            Fixed the bug that testRunner.execCommand was using the second argument as the value.
+
+            The second argument, aShowDefaultUI, should always be ignored in testRunner.execCommand,
+            and the third argument should be used as the value. DumpRenderTree's implementation does this already.
+
+            * WebKitTestRunner/InjectedBundle/Bindings/TestRunner.idl:
+            * WebKitTestRunner/InjectedBundle/TestRunner.cpp:
+            (WTR::TestRunner::execCommand):
+            * WebKitTestRunner/InjectedBundle/TestRunner.h:
+
+2018-07-24  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Cherry-pick r234115. rdar://problem/42557644
+
+    DRT relies on [webView display] to call -viewWillDraw on the WebHTMLView
+    https://bugs.webkit.org/show_bug.cgi?id=187924
+    <rdar://problem/41745884>
+    
+    Reviewed by Simon Fraser.
+    
+    WebKit relies on -viewWillDraw getting called on WebHTMLView, even though that view has not been marked as needing display.
+    
+    * DumpRenderTree/mac/PixelDumpSupportMac.mm:
+    (createBitmapContextFromWebView):
+    
+    
+    git-svn-id: http://svn.webkit.org/repository/webkit/trunk@234115 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-23  Zalan Bujtas  <zalan@apple.com>
+
+            DRT relies on [webView display] to call -viewWillDraw on the WebHTMLView
+            https://bugs.webkit.org/show_bug.cgi?id=187924
+            <rdar://problem/41745884>
+
+            Reviewed by Simon Fraser.
+
+            WebKit relies on -viewWillDraw getting called on WebHTMLView, even though that view has not been marked as needing display.
+
+            * DumpRenderTree/mac/PixelDumpSupportMac.mm:
+            (createBitmapContextFromWebView):
+
+2018-07-20  Babak Shafiei  <bshafiei@apple.com>
+
+        Revert r233926. rdar://problem/42446531
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233915. rdar://problem/42345407
+
+    Add SPI to defer running async script until after document load
+    https://bugs.webkit.org/show_bug.cgi?id=187748
+    <rdar://problem/42317378>
+    
+    Reviewed by Ryosuke Niwa and Tim Horton.
+    
+    Source/WebCore:
+    
+    On watchOS, we currently observe that time-consuming async scripts can block the first paint of Reader, leaving
+    the user with a blank screen for tens of seconds. One way to mitigate this is to defer async script execution
+    until after document load (i.e. the same timing as DOMContentLoaded).
+    
+    This patch introduces an SPI configuration allowing internal clients to defer execution of asynchronous script
+    until after document load; this, in combination with the parser yielding token introduced in r233891, allows
+    Safari on watchOS to avoid being blocked on slow script execution before the first paint of the Reader page on
+    most article-like pages. See below for more details.
+    
+    Test: RunScriptAfterDocumentLoad.ExecutionOrderOfScriptsInDocument
+    
+    * dom/Document.cpp:
+    (WebCore::Document::shouldDeferAsynchronousScriptsUntilParsingFinishes const):
+    (WebCore::Document::finishedParsing):
+    
+    Notify ScriptRunner when the Document has finished parsing, and is about to fire DOMContentLoaded.
+    
+    * dom/Document.h:
+    * dom/ScriptRunner.cpp:
+    (WebCore::ScriptRunner::documentFinishedParsing):
+    
+    When the document is finished parsing, kick off the script execution timer if needed to run any async script
+    that has been deferred.
+    
+    (WebCore::ScriptRunner::notifyFinished):
+    (WebCore::ScriptRunner::timerFired):
+    
+    Instead of always taking from the list of async scripts to execute, check our document to see whether we should
+    defer this until after document load. If so, ignore `m_scriptsToExecuteSoon`.
+    
+    * dom/ScriptRunner.h:
+    * page/Settings.yaml:
+    
+    Add a WebCore setting for this behavior.
+    
+    Source/WebKit:
+    
+    Add plumbing for a new ShouldDeferAsynchronousScriptsUntilAfterDocumentLoad configuration that determines
+    whether async script execution should be deferred until document load (i.e. DOMContentLoaded). This
+    configuration defaults to NO on all platforms. See WebCore ChangeLog for more detail.
+    
+    * Shared/WebPreferences.yaml:
+    * UIProcess/API/Cocoa/WKWebView.mm:
+    (-[WKWebView _initializeWithConfiguration:]):
+    * UIProcess/API/Cocoa/WKWebViewConfiguration.mm:
+    (-[WKWebViewConfiguration init]):
+    (-[WKWebViewConfiguration copyWithZone:]):
+    (-[WKWebViewConfiguration _shouldDeferAsynchronousScriptsUntilAfterDocumentLoad]):
+    (-[WKWebViewConfiguration _setShouldDeferAsynchronousScriptsUntilAfterDocumentLoad:]):
+    * UIProcess/API/Cocoa/WKWebViewConfigurationPrivate.h:
+    
+    Tools:
+    
+    Add an API test to verify that when the deferred async script configuration is set, async scripts will be
+    executed after the DOMContentLoaded event.
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/RunScriptAfterDocumentLoad.mm: Added.
+    (TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233915 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-18  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            Add SPI to defer running async script until after document load
+            https://bugs.webkit.org/show_bug.cgi?id=187748
+            <rdar://problem/42317378>
+
+            Reviewed by Ryosuke Niwa and Tim Horton.
+
+            Add an API test to verify that when the deferred async script configuration is set, async scripts will be
+            executed after the DOMContentLoaded event.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKitCocoa/RunScriptAfterDocumentLoad.mm: Added.
+            (TEST):
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233891. rdar://problem/42345327
+
+    Add an SPI hook to allow clients to yield document parsing and script execution
+    https://bugs.webkit.org/show_bug.cgi?id=187682
+    <rdar://problem/42207453>
+    
+    Reviewed by Ryosuke Niwa.
+    
+    Source/WebCore:
+    
+    Using a single web process for both the Reader page and original web page on watchOS has multiple benefits,
+    including: (1) allowing the user to bail out of Reader and view the original web page without having to load it
+    again, and (2) improving the bringup time of the Reader page, since subresources are already cached in process
+    and we don't eat the additional cost of a web process launch if prewarming fails.
+    
+    However, this has some drawbacks as well, one of which is that main thread work being done on behalf of the
+    original page may contend with work being done to load and render the Reader page. This is especially bad when
+    the page is in the middle of executing heavy script after Safari has already detected that the Reader version of
+    the page is available, but before it has finished loading the Reader page. The result is that script on the
+    original page may block the first paint of the Reader page (on New York Times articles, this often leads to an
+    apparent page load time of 25-35 seconds before the user sees anything besides a blank screen).
+    
+    To mitigate this, we introduce a way for injected bundle clients to yield parsing and async script execution on
+    a document. This capability is surfaced in the form of an opaque token which clients may request from a
+    WKDOMDocument. Construction of the token causes the document to begin yielding and defer execution of previously
+    scheduled scripts, only if there were no active tokens on the document already. Similarly, destruction of all
+    active tokens on the document causes it to stop yielding and resume execution of scripts if needed.
+    
+    Tests:  ParserYieldTokenTests.PreventDocumentLoadByTakingParserYieldToken
+            ParserYieldTokenTests.TakeMultipleParserYieldTokens
+            ParserYieldTokenTests.DeferredScriptExecutesBeforeDocumentLoadWhenTakingParserYieldToken
+            ParserYieldTokenTests.AsyncScriptRunsWhenFetched
+    
+    * dom/Document.cpp:
+    (WebCore::Document::implicitOpen):
+    
+    If the parser yield token was taken before the document's parser was created, tell the parser's scheduler to
+    start yielding immediately after creation.
+    
+    (WebCore::DocumentParserYieldToken::DocumentParserYieldToken):
+    (WebCore::DocumentParserYieldToken::~DocumentParserYieldToken):
+    * dom/Document.h:
+    
+    Introduce a parser yield count to Document; as long as this count is greater than 0, we consider the Document to
+    have active yield tokens. When constructing or destroying a ParserYieldToken, we increment and decrement the
+    parser yield count (respectively).
+    
+    (WebCore::Document::createParserYieldToken):
+    (WebCore::Document::hasActiveParserYieldToken const):
+    * dom/DocumentParser.h:
+    (WebCore::DocumentParser::didBeginYieldingParser):
+    (WebCore::DocumentParser::didEndYieldingParser):
+    
+    Hooks for Document to tell its parser that we've started or finished yielding. This updates a flag on the
+    parser's scheduler which is consulted when we determine whether to yield before a pumping token or executing
+    script.
+    
+    * dom/ScriptRunner.cpp:
+    (WebCore::ScriptRunner::resume):
+    (WebCore::ScriptRunner::notifyFinished):
+    * dom/ScriptRunner.h:
+    (WebCore::ScriptRunner::didBeginYieldingParser):
+    (WebCore::ScriptRunner::didEndYieldingParser):
+    
+    Hooks for Document to tell its ScriptRunner that we've started or finished yielding. These wrap calls to suspend
+    and resume.
+    
+    * html/parser/HTMLDocumentParser.cpp:
+    (WebCore::HTMLDocumentParser::didBeginYieldingParser):
+    (WebCore::HTMLDocumentParser::didEndYieldingParser):
+    
+    Plumb to didBegin/didEnd calls to the HTMLParserScheduler.
+    
+    * html/parser/HTMLDocumentParser.h:
+    * html/parser/HTMLParserScheduler.cpp:
+    (WebCore::HTMLParserScheduler::shouldYieldBeforeExecutingScript):
+    * html/parser/HTMLParserScheduler.h:
+    (WebCore::HTMLParserScheduler::shouldYieldBeforeToken):
+    
+    Consult a flag when determining whether to yield. This flag is set to true only while the document has an active
+    parser yield token.
+    
+    (WebCore::HTMLParserScheduler::isScheduledForResume const):
+    
+    Consider the parser scheduler to be scheduled for resume if there are active tokens. Without this change, we
+    incorrectly consider the document to be finished loading when we have yield tokens, since it appears that the
+    parser is no longer scheduled to pump its tokenizer.
+    
+    (WebCore::HTMLParserScheduler::didBeginYieldingParser):
+    (WebCore::HTMLParserScheduler::didEndYieldingParser):
+    
+    When the Document begins yielding due to the documet having active tokens or ends yielding after the document
+    loses all of its yield tokens, update a flag on the parser scheduler. After we finish yielding, additionally
+    reschedule the parser if needed to ensure that we continue parsing the document; without this additional change
+    to resume, we'll never get the document load or load events after relinquishing the yield token.
+    
+    Source/WebKit:
+    
+    Add hooks to WKDOMDocument to create and return an internal WKDOMDocumentParserYieldToken object, whose lifetime
+    is tied to a document parser yield token. See WebCore ChangeLog for more detail.
+    
+    * WebProcess/InjectedBundle/API/mac/WKDOMDocument.h:
+    * WebProcess/InjectedBundle/API/mac/WKDOMDocument.mm:
+    (-[WKDOMDocumentParserYieldToken initWithDocument:]):
+    (-[WKDOMDocument parserYieldToken]):
+    
+    Tools:
+    
+    Add a few tests to exercise the new document yield token SPI, verifying that clients can use the SPI to defer
+    document load, and that doing so doesn't cause deferred `script` to execute in the wrong order (i.e. before
+    synchronous script, or after "DOMContentLoaded").
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/ParserYieldTokenPlugIn.mm: Added.
+    (-[ParserYieldTokenPlugIn takeDocumentParserTokenAfterCommittingLoad]):
+    (-[ParserYieldTokenPlugIn releaseDocumentParserToken]):
+    (-[ParserYieldTokenPlugIn webProcessPlugInBrowserContextController:didCommitLoadForFrame:]):
+    (-[ParserYieldTokenPlugIn webProcessPlugIn:didCreateBrowserContextController:]):
+    (-[ParserYieldTokenPlugIn webProcessPlugInBrowserContextController:didFinishDocumentLoadForFrame:]):
+    (-[ParserYieldTokenPlugIn webProcessPlugInBrowserContextController:didFinishLoadForFrame:]):
+    
+    Add an injected bundle object that knows how to take and release multiple document parser yield tokens.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/ParserYieldTokenTests.h: Added.
+    * TestWebKitAPI/Tests/WebKitCocoa/ParserYieldTokenTests.mm: Added.
+    (+[ParserYieldTokenTestWebView webView]):
+    (-[ParserYieldTokenTestWebView bundle]):
+    (-[ParserYieldTokenTestWebView schemeHandler]):
+    (-[ParserYieldTokenTestWebView didFinishDocumentLoad]):
+    (-[ParserYieldTokenTestWebView didFinishLoad]):
+    (waitForDelay):
+    (TEST):
+    * TestWebKitAPI/Tests/WebKitCocoa/TestURLSchemeHandler.h: Added.
+    * TestWebKitAPI/Tests/WebKitCocoa/TestURLSchemeHandler.mm: Added.
+    (-[TestURLSchemeHandler webView:startURLSchemeTask:]):
+    (-[TestURLSchemeHandler webView:stopURLSchemeTask:]):
+    (-[TestURLSchemeHandler setStartURLSchemeTaskHandler:]):
+    (-[TestURLSchemeHandler startURLSchemeTaskHandler]):
+    (-[TestURLSchemeHandler setStopURLSchemeTaskHandler:]):
+    (-[TestURLSchemeHandler stopURLSchemeTaskHandler]):
+    
+    Add a new test helper class to handle custom schemes via a block-based API.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/text-with-async-script.html: Added.
+    
+    New test HTML page that contains a deferred script element, a synchronous script element, another deferred
+    script element, and then some text, images, and links.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/text-with-deferred-script.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233891 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-17  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            Add an SPI hook to allow clients to yield document parsing and script execution
+            https://bugs.webkit.org/show_bug.cgi?id=187682
+            <rdar://problem/42207453>
+
+            Reviewed by Ryosuke Niwa.
+
+            Add a few tests to exercise the new document yield token SPI, verifying that clients can use the SPI to defer
+            document load, and that doing so doesn't cause deferred `script` to execute in the wrong order (i.e. before
+            synchronous script, or after "DOMContentLoaded").
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKitCocoa/ParserYieldTokenPlugIn.mm: Added.
+            (-[ParserYieldTokenPlugIn takeDocumentParserTokenAfterCommittingLoad]):
+            (-[ParserYieldTokenPlugIn releaseDocumentParserToken]):
+            (-[ParserYieldTokenPlugIn webProcessPlugInBrowserContextController:didCommitLoadForFrame:]):
+            (-[ParserYieldTokenPlugIn webProcessPlugIn:didCreateBrowserContextController:]):
+            (-[ParserYieldTokenPlugIn webProcessPlugInBrowserContextController:didFinishDocumentLoadForFrame:]):
+            (-[ParserYieldTokenPlugIn webProcessPlugInBrowserContextController:didFinishLoadForFrame:]):
+
+            Add an injected bundle object that knows how to take and release multiple document parser yield tokens.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/ParserYieldTokenTests.h: Added.
+            * TestWebKitAPI/Tests/WebKitCocoa/ParserYieldTokenTests.mm: Added.
+            (+[ParserYieldTokenTestWebView webView]):
+            (-[ParserYieldTokenTestWebView bundle]):
+            (-[ParserYieldTokenTestWebView schemeHandler]):
+            (-[ParserYieldTokenTestWebView didFinishDocumentLoad]):
+            (-[ParserYieldTokenTestWebView didFinishLoad]):
+            (waitForDelay):
+            (TEST):
+            * TestWebKitAPI/Tests/WebKitCocoa/TestURLSchemeHandler.h: Added.
+            * TestWebKitAPI/Tests/WebKitCocoa/TestURLSchemeHandler.mm: Added.
+            (-[TestURLSchemeHandler webView:startURLSchemeTask:]):
+            (-[TestURLSchemeHandler webView:stopURLSchemeTask:]):
+            (-[TestURLSchemeHandler setStartURLSchemeTaskHandler:]):
+            (-[TestURLSchemeHandler startURLSchemeTaskHandler]):
+            (-[TestURLSchemeHandler setStopURLSchemeTaskHandler:]):
+            (-[TestURLSchemeHandler stopURLSchemeTaskHandler]):
+
+            Add a new test helper class to handle custom schemes via a block-based API.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/text-with-async-script.html: Added.
+
+            New test HTML page that contains a deferred script element, a synchronous script element, another deferred
+            script element, and then some text, images, and links.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/text-with-deferred-script.html: Added.
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233927. rdar://problem/42354954
+
+    -_beginAnimatedResizeWithUpdates: can leave view in bad state if called during an existing animation
+    https://bugs.webkit.org/show_bug.cgi?id=187739
+    Source/WebKit:
+    
+    Reviewed by Tim Horton.
+    
+    It's not enough to reset _dynamicViewportUpdateMode to NotResizing; other parts of the code
+    check whether _resizeAnimationView is non-nil, the contentView may be hidden, etc. Add a new
+    internal method _cancelAnimatedResize that cleans up state when a call to
+    _beginAnimatedResizeWithUpdates: fails.
+    
+    * UIProcess/API/Cocoa/WKWebView.mm:
+    (-[WKWebView _processDidExit]):
+    (-[WKWebView _cancelAnimatedResize]):
+    (-[WKWebView _didCompleteAnimatedResize]):
+    (-[WKWebView _beginAnimatedResizeWithUpdates:]):
+    
+    Tools:
+    
+    <rdar://problem/42304518>
+    
+    Reviewed by Tim Horton.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/AnimatedResize.mm:
+    (TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233927 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-18  Jer Noble  <jer.noble@apple.com>
+
+            -_beginAnimatedResizeWithUpdates: can leave view in bad state if called during an existing animation
+            https://bugs.webkit.org/show_bug.cgi?id=187739
+            <rdar://problem/42304518>
+
+            Reviewed by Tim Horton.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/AnimatedResize.mm:
+            (TEST):
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233926. rdar://problem/42354941
+
+    PiP from Element Fullscreen should match AVKit's behavior
+    https://bugs.webkit.org/show_bug.cgi?id=187623
+    Source/WebCore:
+    
+    Reviewed by Jon Lee.
+    
+    PiP behavior should be defined at the WebKit2 level, and not in HTMLMediaElement:
+    
+    * html/HTMLMediaElement.cpp:
+    (WebCore::HTMLMediaElement::enterFullscreen):
+    
+    Add an accessor for pictureInPictureWasStartedWhenEnteringBackground():
+    
+    * platform/cocoa/VideoFullscreenModelVideoElement.mm:
+    (VideoFullscreenInterfaceAVKit::pictureInPictureWasStartedWhenEnteringBackground const):
+    
+    Add VideoFullscreenModelClient virutal methods for PiP change notifications:
+    
+    * platform/cocoa/VideoFullscreenModel.h:
+    (WebCore::VideoFullscreenModelClient::hasVideoChanged):
+    (WebCore::VideoFullscreenModelClient::videoDimensionsChanged):
+    (WebCore::VideoFullscreenModelClient::willEnterPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::didEnterPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::failedToEnterPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::willExitPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::didExitPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::failedToExitPictureInPicture):
+    * platform/cocoa/VideoFullscreenModelVideoElement.h:
+    * platform/cocoa/VideoFullscreenModelVideoElement.mm:
+    (VideoFullscreenModelVideoElement::willEnterPictureInPicture):
+    (VideoFullscreenModelVideoElement::didEnterPictureInPicture):
+    (VideoFullscreenModelVideoElement::failedToEnterPictureInPicture):
+    (VideoFullscreenModelVideoElement::willExitPictureInPicture):
+    (VideoFullscreenModelVideoElement::didExitPictureInPicture):
+    (VideoFullscreenModelVideoElement::failedToExitPictureInPicture):
+    * platform/ios/VideoFullscreenInterfaceAVKit.h:
+    * platform/ios/VideoFullscreenInterfaceAVKit.mm:
+    (-[WebAVPlayerLayer layoutSublayers]):
+    (-[WebAVPlayerLayer resolveBounds]):
+    (-[WebAVPlayerLayer setVideoGravity:]):
+    (VideoFullscreenInterfaceAVKit::setupFullscreen):
+    (VideoFullscreenInterfaceAVKit::presentingViewController):
+    (VideoFullscreenInterfaceAVKit::willStartPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::didStartPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::failedToStartPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::willStopPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::didStopPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::shouldExitFullscreenWithReason):
+    (VideoFullscreenInterfaceAVKit::doSetup):
+    * platform/ios/WebVideoFullscreenControllerAVKit.mm:
+    (VideoFullscreenControllerContext::willEnterPictureInPicture):
+    (VideoFullscreenControllerContext::didEnterPictureInPicture):
+    (VideoFullscreenControllerContext::failedToEnterPictureInPicture):
+    (VideoFullscreenControllerContext::willExitPictureInPicture):
+    (VideoFullscreenControllerContext::didExitPictureInPicture):
+    (VideoFullscreenControllerContext::failedToExitPictureInPicture):
+    * platform/mac/VideoFullscreenInterfaceMac.h:
+    (WebCore::VideoFullscreenInterfaceMac::requestHideAndExitFullscreen): Deleted.
+    * platform/mac/VideoFullscreenInterfaceMac.mm:
+    (-[WebVideoFullscreenInterfaceMacObjC invalidateFullscreenState]):
+    (-[WebVideoFullscreenInterfaceMacObjC exitPIP]):
+    (-[WebVideoFullscreenInterfaceMacObjC exitPIPAnimatingToRect:inWindow:]):
+    (-[WebVideoFullscreenInterfaceMacObjC pipShouldClose:]):
+    (-[WebVideoFullscreenInterfaceMacObjC pipDidClose:]):
+    (WebCore::VideoFullscreenInterfaceMac::enterFullscreen):
+    (WebCore::VideoFullscreenInterfaceMac::exitFullscreen):
+    (WebCore::VideoFullscreenInterfaceMac::exitFullscreenWithoutAnimationToMode):
+    (WebCore::VideoFullscreenInterfaceMac::requestHideAndExitFullscreen):
+    
+    Source/WebCore/PAL:
+    
+    Reviewed by Jon Lee.
+    
+    * pal/spi/mac/PIPSPI.h:
+    
+    Source/WebKit:
+    
+    Reviewed by Jon Lee.
+    
+    * UIProcess/Cocoa/PlaybackSessionManagerProxy.h:
+    (WebKit::PlaybackSessionManagerProxy::controlsManagerContextId const):
+    * UIProcess/Cocoa/VideoFullscreenManagerProxy.h:
+    * UIProcess/Cocoa/VideoFullscreenManagerProxy.mm:
+    (WebKit::VideoFullscreenModelContext::willEnterPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::didEnterPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::failedToEnterPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::willExitPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::didExitPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::failedToExitPictureInPicture):
+    (WebKit::VideoFullscreenManagerProxy::controlsManagerInterface):
+    * UIProcess/ios/fullscreen/WKFullScreenViewController.mm:
+    (WKFullScreenViewControllerVideoFullscreenModelClient::setParent):
+    (WKFullScreenViewControllerVideoFullscreenModelClient::setInterface):
+    (WKFullScreenViewControllerVideoFullscreenModelClient::interface const):
+    (-[WKFullScreenViewController initWithWebView:]):
+    (-[WKFullScreenViewController dealloc]):
+    (-[WKFullScreenViewController videoControlsManagerDidChange]):
+    (-[WKFullScreenViewController ensurePiPAnimator]):
+    (-[WKFullScreenViewController willEnterPictureInPicture]):
+    (-[WKFullScreenViewController didEnterPictureInPicture]):
+    (-[WKFullScreenViewController failedToEnterPictureInPicture]):
+    (-[WKFullScreenViewController loadView]):
+    (-[WKFullScreenViewController viewWillAppear:]):
+    * UIProcess/Cocoa/WebViewImpl.mm:
+    (WebKit::WebViewImpl::videoControlsManagerDidChange):
+    * UIProcess/mac/WKFullScreenWindowController.h:
+    * UIProcess/mac/WKFullScreenWindowController.mm:
+    (WebKit::WKFullScreenWindowControllerVideoFullscreenModelClient::setParent):
+    (WebKit::WKFullScreenWindowControllerVideoFullscreenModelClient::setInterface):
+    (WebKit::WKFullScreenWindowControllerVideoFullscreenModelClient::interface const):
+    (-[WKFullScreenWindowController initWithWindow:webView:page:]):
+    (-[WKFullScreenWindowController dealloc]):
+    (-[WKFullScreenWindowController videoControlsManagerDidChange]):
+    (-[WKFullScreenWindowController willEnterPictureInPicture]):
+    
+    Tools:
+    
+    <rdar://problem/41212379>
+    
+    Reviewed by Jon Lee.
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/ExitFullscreenOnEnterPiP.html: Added.
+    * TestWebKitAPI/Tests/WebKitCocoa/ExitFullscreenOnEnterPiP.mm: Added.
+    (-[ExitFullscreenOnEnterPiPUIDelegate _webView:hasVideoInPictureInPictureDidChange:]):
+    (-[ExitFullscreenOnEnterPiPUIDelegate _webViewDidEnterFullscreen:]):
+    (-[ExitFullscreenOnEnterPiPUIDelegate _webViewDidExitFullscreen:]):
+    (TestWebKitAPI::TEST):
+    
+    LayoutTests:
+    
+    Reviewed by Jon Lee.
+    
+    * TestExpectations:
+    * media/fullscreen-video-going-into-pip-expected.txt: Removed.
+    * media/fullscreen-video-going-into-pip.html: Removed.
+    * media/video-contained-in-fullscreen-element-going-into-pip-expected.txt: Removed.
+    * media/video-contained-in-fullscreen-element-going-into-pip.html: Removed.
+    * platform/mac-wk2/TestExpectations:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233926 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-18  Jer Noble  <jer.noble@apple.com>
+
+            PiP from Element Fullscreen should match AVKit's behavior
+            https://bugs.webkit.org/show_bug.cgi?id=187623
+            <rdar://problem/41212379>
+
+            Reviewed by Jon Lee.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKitCocoa/ExitFullscreenOnEnterPiP.html: Added.
+            * TestWebKitAPI/Tests/WebKitCocoa/ExitFullscreenOnEnterPiP.mm: Added.
+            (-[ExitFullscreenOnEnterPiPUIDelegate _webView:hasVideoInPictureInPictureDidChange:]):
+            (-[ExitFullscreenOnEnterPiPUIDelegate _webViewDidEnterFullscreen:]):
+            (-[ExitFullscreenOnEnterPiPUIDelegate _webViewDidExitFullscreen:]):
+            (TestWebKitAPI::TEST):
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233913. rdar://problem/42354927
+
+    Fix the parsing of colors in attributed string tests, and make it possible to dump the typing attributes
+    https://bugs.webkit.org/show_bug.cgi?id=187747
+    
+    Reviewed by Ryosuke Niwa.
+    
+    Tools:
+    
+    Add textInputController.attributedStringForTyping(), which returns a one-character
+    attributed string whose attributes are the typing attributes, making it possible to
+    test -[WebView typingAttributes].
+    
+    Sadly WebCore's convertObjcValueToValue() doesn't know how to convert NSDictionary,
+    so we can't return -typingAttributes directly.
+    
+    * DumpRenderTree/mac/TextInputControllerMac.m:
+    (+[TextInputController isSelectorExcludedFromWebScript:]):
+    (-[TextInputController attributedStringForTyping]):
+    
+    LayoutTests:
+    
+    Fix the parsing of color properties in dump-attributed-string.js, and treat NSStrokeColor as
+    a color. Rebase all the affected tests. Give macOS Sierra its own expectations with the legacy NSCustomColorSpace.
+    
+    Add attributed-string-for-typing.html which tests typingAttributes.
+    
+    * editing/mac/attributed-string/anchor-element-expected.txt:
+    * editing/mac/attributed-string/attributed-string-for-typing-expected.txt: Added.
+    * editing/mac/attributed-string/attributed-string-for-typing.html: Added.
+    * editing/mac/attributed-string/basic-expected.txt:
+    * editing/mac/attributed-string/comment-cdata-section-expected.txt:
+    * editing/mac/attributed-string/font-size-expected.txt:
+    * editing/mac/attributed-string/font-style-variant-effect-expected.txt:
+    * editing/mac/attributed-string/font-weight-expected.txt:
+    * editing/mac/attributed-string/letter-spacing-expected.txt:
+    * editing/mac/attributed-string/resources/dump-attributed-string.js:
+    (dumpAttributedString):
+    (formatNonParagraphAttributeValue):
+    (parseNSColorDescription):
+    (window.onload):
+    (serializeAttributedString.log): Deleted.
+    (serializeAttributedString.): Deleted.
+    (serializeAttributedString): Deleted.
+    * editing/mac/attributed-string/text-decorations-expected.txt:
+    * editing/mac/attributed-string/vertical-align-expected.txt:
+    * platform/mac-sierra/editing/mac/attributed-string/anchor-element-expected.txt:
+    * platform/mac-sierra/editing/mac/attributed-string/attributed-string-for-typing-expected.txt: Added.
+    * platform/mac-sierra/editing/mac/attributed-string/basic-expected.txt:
+    * platform/mac-sierra/editing/mac/attributed-string/comment-cdata-section-expected.txt:
+    * platform/mac-sierra/editing/mac/attributed-string/font-size-expected.txt:
+    * platform/mac-sierra/editing/mac/attributed-string/font-style-variant-effect-expected.txt:
+    * platform/mac-sierra/editing/mac/attributed-string/font-weight-expected.txt:
+    * platform/mac-sierra/editing/mac/attributed-string/letter-spacing-expected.txt:
+    * platform/mac-sierra/editing/mac/attributed-string/text-decorations-expected.txt:
+    * platform/mac-sierra/editing/mac/attributed-string/vertical-align-expected.txt:
+    * platform/mac/editing/mac/attributed-string/anchor-element-expected.txt: Removed.
+    * platform/mac/editing/mac/attributed-string/basic-expected.txt: Removed.
+    * platform/mac/editing/mac/attributed-string/comment-cdata-section-expected.txt: Removed.
+    * platform/mac/editing/mac/attributed-string/font-size-expected.txt: Removed.
+    * platform/mac/editing/mac/attributed-string/font-style-variant-effect-expected.txt: Removed.
+    * platform/mac/editing/mac/attributed-string/font-weight-expected.txt: Removed.
+    * platform/mac/editing/mac/attributed-string/letter-spacing-expected.txt: Removed.
+    * platform/mac/editing/mac/attributed-string/text-decorations-expected.txt: Removed.
+    * platform/mac/editing/mac/attributed-string/vertical-align-expected.txt: Removed.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233913 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-18  Simon Fraser  <simon.fraser@apple.com>
+
+            Fix the parsing of colors in attributed string tests, and make it possible to dump the typing attributes
+            https://bugs.webkit.org/show_bug.cgi?id=187747
+
+            Reviewed by Ryosuke Niwa.
+
+            Add textInputController.attributedStringForTyping(), which returns a one-character
+            attributed string whose attributes are the typing attributes, making it possible to
+            test -[WebView typingAttributes].
+
+            Sadly WebCore's convertObjcValueToValue() doesn't know how to convert NSDictionary,
+            so we can't return -typingAttributes directly.
+
+            * DumpRenderTree/mac/TextInputControllerMac.m:
+            (+[TextInputController isSelectorExcludedFromWebScript:]):
+            (-[TextInputController attributedStringForTyping]):
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233899. rdar://problem/42345370
+
+    REGRESSION: [macOS Sierra] TestWebKitAPI.WebKit.WebsiteDataStoreCustomPaths is a flaky failure
+    https://bugs.webkit.org/show_bug.cgi?id=187066
+    <rdar://problem/41609065>
+    
+    Reviewed by Chris Dumez.
+    
+    In r232668 we started to do reload if web process crashes by default. As we killed the web
+    process explicitly in this test, if web page got reloaded, messages would be sent again,
+    and flag set in message handler could keep the test continue to evaluate the expectation
+    without waiting for removeDataOfTypes to finish.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/WebsiteDataStoreCustomPaths.mm:
+    (-[WebsiteDataStoreCustomPathsMessageHandler webViewWebContentProcessDidTerminate:]):
+    (TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233899 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-17  Sihui Liu  <sihui_liu@apple.com>
+
+            REGRESSION: [macOS Sierra] TestWebKitAPI.WebKit.WebsiteDataStoreCustomPaths is a flaky failure
+            https://bugs.webkit.org/show_bug.cgi?id=187066
+            <rdar://problem/41609065>
+
+            Reviewed by Chris Dumez.
+
+            In r232668 we started to do reload if web process crashes by default. As we killed the web
+            process explicitly in this test, if web page got reloaded, messages would be sent again,
+            and flag set in message handler could keep the test continue to evaluate the expectation
+            without waiting for removeDataOfTypes to finish.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/WebsiteDataStoreCustomPaths.mm:
+            (-[WebsiteDataStoreCustomPathsMessageHandler webViewWebContentProcessDidTerminate:]):
+            (TEST):
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233889. rdar://problem/42343023
+
+    [macOS] TestWebKitAPI.PictureInPicture.WKUIDelegate is timing out
+    https://bugs.webkit.org/show_bug.cgi?id=187730
+    
+    Patch by Aditya Keerthi <akeerthi@apple.com> on 2018-07-17
+    Reviewed by Jer Noble.
+    
+    This regression was introduced by r233865. PIP can now only be initiated from a
+    window that is on screen.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/PictureInPictureDelegate.mm:
+    (TestWebKitAPI::TEST):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233889 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-17  Aditya Keerthi  <akeerthi@apple.com>
+
+            [macOS] TestWebKitAPI.PictureInPicture.WKUIDelegate is timing out
+            https://bugs.webkit.org/show_bug.cgi?id=187730
+
+            Reviewed by Jer Noble.
+
+            This regression was introduced by r233865. PIP can now only be initiated from a
+            window that is on screen.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/PictureInPictureDelegate.mm:
+            (TestWebKitAPI::TEST):
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233888. rdar://problem/42345191
+
+    Add completion handlers to TestRunner functions setStatisticsLastSeen(), setStatisticsPrevalentResource(), setStatisticsVeryPrevalentResource(), setStatisticsHasHadUserInteraction(), and setStatisticsHasHadNonRecentUserInteraction()
+    https://bugs.webkit.org/show_bug.cgi?id=187710
+    <rdar://problem/42252757>
+    
+    Reviewed by Chris Dumez.
+    
+    Source/WebKit:
+    
+    These changes are to back the completion handler functionality of
+    TestRunner functions:
+    - setStatisticsLastSeen(),
+    - setStatisticsPrevalentResource(),
+    - setStatisticsVeryPrevalentResource(),
+    - setStatisticsHasHadUserInteraction(), and
+    - setStatisticsHasHadNonRecentUserInteraction().
+    
+    * UIProcess/API/C/WKWebsiteDataStoreRef.cpp:
+    (WKWebsiteDataStoreSetStatisticsLastSeen):
+    (WKWebsiteDataStoreSetStatisticsPrevalentResource):
+    (WKWebsiteDataStoreSetStatisticsVeryPrevalentResource):
+    (WKWebsiteDataStoreSetStatisticsHasHadUserInteraction):
+    (WKWebsiteDataStoreSetStatisticsHasHadNonRecentUserInteraction):
+    * UIProcess/API/C/WKWebsiteDataStoreRef.h:
+    * UIProcess/WebResourceLoadStatisticsStore.cpp:
+    (WebKit::WebResourceLoadStatisticsStore::logUserInteraction):
+    (WebKit::WebResourceLoadStatisticsStore::logNonRecentUserInteraction):
+    (WebKit::WebResourceLoadStatisticsStore::clearUserInteraction):
+    (WebKit::WebResourceLoadStatisticsStore::setLastSeen):
+    (WebKit::WebResourceLoadStatisticsStore::setPrevalentResource):
+    (WebKit::WebResourceLoadStatisticsStore::setVeryPrevalentResource):
+    (WebKit::WebResourceLoadStatisticsStore::clearPrevalentResource):
+    * UIProcess/WebResourceLoadStatisticsStore.h:
+    
+    Tools:
+    
+    * WebKitTestRunner/InjectedBundle/Bindings/TestRunner.idl:
+    * WebKitTestRunner/InjectedBundle/InjectedBundle.cpp:
+    (WTR::InjectedBundle::didReceiveMessageToPage):
+    * WebKitTestRunner/InjectedBundle/TestRunner.cpp:
+    (WTR::TestRunner::setStatisticsLastSeen):
+    (WTR::TestRunner::statisticsCallDidSetLastSeenCallback):
+    (WTR::TestRunner::setStatisticsPrevalentResource):
+    (WTR::TestRunner::statisticsCallDidSetPrevalentResourceCallback):
+    (WTR::TestRunner::setStatisticsVeryPrevalentResource):
+    (WTR::TestRunner::statisticsCallDidSetVeryPrevalentResourceCallback):
+    (WTR::TestRunner::setStatisticsHasHadUserInteraction):
+    (WTR::TestRunner::setStatisticsHasHadNonRecentUserInteraction):
+    (WTR::TestRunner::statisticsCallDidSetHasHadUserInteractionCallback):
+    * WebKitTestRunner/InjectedBundle/TestRunner.h:
+    * WebKitTestRunner/TestController.cpp:
+    (WTR::TestController::setStatisticsLastSeen):
+    (WTR::TestController::setStatisticsPrevalentResource):
+    (WTR::TestController::setStatisticsVeryPrevalentResource):
+    (WTR::TestController::setStatisticsHasHadUserInteraction):
+    (WTR::TestController::setStatisticsHasHadNonRecentUserInteraction):
+    * WebKitTestRunner/TestInvocation.cpp:
+    (WTR::TestInvocation::didSetLastSeen):
+    (WTR::TestInvocation::didSetPrevalentResource):
+    (WTR::TestInvocation::didSetVeryPrevalentResource):
+    (WTR::TestInvocation::didSetHasHadUserInteraction):
+    (WTR::TestInvocation::didSetHasHadNonRecentUserInteraction):
+    * WebKitTestRunner/TestInvocation.h:
+    
+    LayoutTests:
+    
+    These changes are to update all test cases that make use of
+    TestRunner functions:
+    - setStatisticsLastSeen(),
+    - setStatisticsPrevalentResource(),
+    - setStatisticsVeryPrevalentResource(),
+    - setStatisticsHasHadUserInteraction(), and
+    - setStatisticsHasHadNonRecentUserInteraction().
+    
+    * http/tests/resourceLoadStatistics/add-blocking-to-redirect.html:
+    * http/tests/resourceLoadStatistics/add-partitioning-to-redirect.html:
+    * http/tests/resourceLoadStatistics/classify-as-non-prevalent-based-on-mixed-statistics.html:
+    * http/tests/resourceLoadStatistics/classify-as-non-prevalent-based-on-sub-frame-under-top-frame-origins.html:
+    * http/tests/resourceLoadStatistics/classify-as-non-prevalent-based-on-subresource-under-top-frame-origins.html:
+    * http/tests/resourceLoadStatistics/classify-as-non-prevalent-based-on-subresource-unique-redirects-to.html:
+    * http/tests/resourceLoadStatistics/classify-as-prevalent-based-on-mixed-statistics.html:
+    * http/tests/resourceLoadStatistics/classify-as-prevalent-based-on-sub-frame-under-top-frame-origins.html:
+    * http/tests/resourceLoadStatistics/classify-as-prevalent-based-on-subresource-redirect-collusion.html:
+    * http/tests/resourceLoadStatistics/classify-as-prevalent-based-on-subresource-redirect-to-prevalent.html:
+    * http/tests/resourceLoadStatistics/classify-as-prevalent-based-on-subresource-under-top-frame-origins.html:
+    * http/tests/resourceLoadStatistics/classify-as-prevalent-based-on-subresource-unique-redirects-to.html:
+    * http/tests/resourceLoadStatistics/classify-as-prevalent-based-on-top-frame-redirect-collusion.html:
+    * http/tests/resourceLoadStatistics/classify-as-prevalent-based-on-top-frame-redirect-to-prevalent.html:
+    * http/tests/resourceLoadStatistics/classify-as-prevalent-based-on-top-frame-unique-redirects-to.html:
+    * http/tests/resourceLoadStatistics/classify-as-very-prevalent-based-on-mixed-statistics.html:
+    * http/tests/resourceLoadStatistics/clear-in-memory-and-persistent-store-one-hour.html:
+    * http/tests/resourceLoadStatistics/clear-in-memory-and-persistent-store.html:
+    * http/tests/resourceLoadStatistics/do-not-block-top-level-navigation-redirect.html:
+    * http/tests/resourceLoadStatistics/grandfathering.html:
+    * http/tests/resourceLoadStatistics/non-prevalent-resource-with-user-interaction.html:
+    * http/tests/resourceLoadStatistics/non-prevalent-resource-without-user-interaction.html:
+    * http/tests/resourceLoadStatistics/non-prevalent-resources-can-access-cookies-in-a-third-party-context.html:
+    * http/tests/resourceLoadStatistics/partitioned-and-unpartitioned-cookie-deletion.html:
+    * http/tests/resourceLoadStatistics/partitioned-and-unpartitioned-cookie-with-partitioning-timeout-expected.txt:
+    * http/tests/resourceLoadStatistics/partitioned-and-unpartitioned-cookie-with-partitioning-timeout.html:
+    * http/tests/resourceLoadStatistics/partitioned-cookies-with-and-without-user-interaction.html:
+    * http/tests/resourceLoadStatistics/prevalent-resource-handled-keydown.html:
+    * http/tests/resourceLoadStatistics/prevalent-resource-unhandled-keydown.html:
+    * http/tests/resourceLoadStatistics/prevalent-resource-with-user-interaction-timeout.html:
+    * http/tests/resourceLoadStatistics/prevalent-resource-with-user-interaction.html:
+    * http/tests/resourceLoadStatistics/prevalent-resource-without-user-interaction.html:
+    * http/tests/resourceLoadStatistics/prune-statistics.html:
+    * http/tests/resourceLoadStatistics/remove-blocking-in-redirect.html:
+    * http/tests/resourceLoadStatistics/remove-partitioning-in-redirect.html:
+    * http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-prevalent-subresource-redirects.html:
+    * http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-prevalent-subresource-requests.html:
+    * http/tests/resourceLoadStatistics/telemetry-generation.html:
+    * http/tests/resourceLoadStatistics/third-party-cookie-with-and-without-user-interaction.html:
+    * http/tests/resourceLoadStatistics/user-interaction-only-reported-once-within-short-period-of-time.html:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233888 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-17  John Wilander  <wilander@apple.com>
+
+            Add completion handlers to TestRunner functions setStatisticsLastSeen(), setStatisticsPrevalentResource(), setStatisticsVeryPrevalentResource(), setStatisticsHasHadUserInteraction(), and setStatisticsHasHadNonRecentUserInteraction()
+            https://bugs.webkit.org/show_bug.cgi?id=187710
+            <rdar://problem/42252757>
+
+            Reviewed by Chris Dumez.
+
+            * WebKitTestRunner/InjectedBundle/Bindings/TestRunner.idl:
+            * WebKitTestRunner/InjectedBundle/InjectedBundle.cpp:
+            (WTR::InjectedBundle::didReceiveMessageToPage):
+            * WebKitTestRunner/InjectedBundle/TestRunner.cpp:
+            (WTR::TestRunner::setStatisticsLastSeen):
+            (WTR::TestRunner::statisticsCallDidSetLastSeenCallback):
+            (WTR::TestRunner::setStatisticsPrevalentResource):
+            (WTR::TestRunner::statisticsCallDidSetPrevalentResourceCallback):
+            (WTR::TestRunner::setStatisticsVeryPrevalentResource):
+            (WTR::TestRunner::statisticsCallDidSetVeryPrevalentResourceCallback):
+            (WTR::TestRunner::setStatisticsHasHadUserInteraction):
+            (WTR::TestRunner::setStatisticsHasHadNonRecentUserInteraction):
+            (WTR::TestRunner::statisticsCallDidSetHasHadUserInteractionCallback):
+            * WebKitTestRunner/InjectedBundle/TestRunner.h:
+            * WebKitTestRunner/TestController.cpp:
+            (WTR::TestController::setStatisticsLastSeen):
+            (WTR::TestController::setStatisticsPrevalentResource):
+            (WTR::TestController::setStatisticsVeryPrevalentResource):
+            (WTR::TestController::setStatisticsHasHadUserInteraction):
+            (WTR::TestController::setStatisticsHasHadNonRecentUserInteraction):
+            * WebKitTestRunner/TestInvocation.cpp:
+            (WTR::TestInvocation::didSetLastSeen):
+            (WTR::TestInvocation::didSetPrevalentResource):
+            (WTR::TestInvocation::didSetVeryPrevalentResource):
+            (WTR::TestInvocation::didSetHasHadUserInteraction):
+            (WTR::TestInvocation::didSetHasHadNonRecentUserInteraction):
+            * WebKitTestRunner/TestInvocation.h:
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233878. rdar://problem/42343023
+
+    Fix API Test failures introduced by r233865
+    https://bugs.webkit.org/show_bug.cgi?id=187720
+    
+    Unreviewed APITest fix after r233865.
+    
+    Fullscreen can now only be initiated from a window that is on screen.
+    
+    Patch by Jeremy Jones <jeremyj@apple.com> on 2018-07-16
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/FullscreenDelegate.mm:
+    (TestWebKitAPI::TEST):
+    * TestWebKitAPI/Tests/WebKitCocoa/FullscreenTopContentInset.mm:
+    (TestWebKitAPI::TEST):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233878 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-16  Jeremy Jones  <jeremyj@apple.com>
+
+            Fix API Test failures introduced by r233865
+            https://bugs.webkit.org/show_bug.cgi?id=187720
+
+            Unreviewed APITest fix after r233865.
+
+            Fullscreen can now only be initiated from a window that is on screen.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/FullscreenDelegate.mm:
+            (TestWebKitAPI::TEST):
+            * TestWebKitAPI/Tests/WebKitCocoa/FullscreenTopContentInset.mm:
+            (TestWebKitAPI::TEST):
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233869. rdar://problem/42344023
+
+    Allow removal of white backgrounds
+    https://bugs.webkit.org/show_bug.cgi?id=187574
+    <rdar://problem/41146792>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    Add a drawing mode that turns white backgrounds into transparent
+    regions, such that a hosting app can see through to its window.
+    
+    Test: css3/color-filters/punch-out-white-backgrounds.html
+    
+    * page/Settings.yaml: New Setting.
+    
+    * rendering/InlineFlowBox.cpp: Draw with a destination out blend mode
+    if the background is white and we are punching out backgrounds, which means
+    that it will erase the destination.
+    (WebCore::InlineFlowBox::paintBoxDecorations):
+    * rendering/RenderBox.cpp:
+    (WebCore::RenderBox::paintBackground): Ditto.
+    * rendering/RenderTableCell.cpp:
+    (WebCore::RenderTableCell::paintBackgroundsBehindCell): Ditto.
+    
+    * rendering/RenderBoxModelObject.cpp:
+    (WebCore::RenderBoxModelObject::paintFillLayerExtended): Save and restore
+    the composition mode if necessary.
+    
+    Source/WebKit:
+    
+    Add a new WebPreference for punching out white backgrounds.
+    
+    * Shared/WebPreferences.yaml:
+    * UIProcess/API/C/WKPreferences.cpp:
+    (WKPreferencesSetPunchOutWhiteBackgroundsInDarkMode):
+    (WKPreferencesGetPunchOutWhiteBackgroundsInDarkMode):
+    * UIProcess/API/C/WKPreferencesRefPrivate.h:
+    * UIProcess/API/Cocoa/WKWebView.mm:
+    (-[WKWebView _initializeWithConfiguration:]):
+    * UIProcess/API/Cocoa/WKWebViewConfiguration.mm:
+    (-[WKWebViewConfiguration init]):
+    (-[WKWebViewConfiguration copyWithZone:]):
+    (-[WKWebViewConfiguration _punchOutWhiteBackgroundsInDarkMode]):
+    (-[WKWebViewConfiguration _setPunchOutWhiteBackgroundsInDarkMode:]):
+    * UIProcess/API/Cocoa/WKWebViewConfigurationPrivate.h:
+    
+    Source/WebKitLegacy/mac:
+    
+    Add a new WebPreference for punching out white backgrounds.
+    
+    * WebView/WebPreferenceKeysPrivate.h:
+    * WebView/WebPreferences.mm:
+    (+[WebPreferences initialize]):
+    (-[WebPreferences punchOutWhiteBackgroundsInDarkMode]):
+    (-[WebPreferences setPunchOutWhiteBackgroundsInDarkMode:]):
+    * WebView/WebPreferencesPrivate.h:
+    * WebView/WebView.mm:
+    (-[WebView _preferencesChanged:]):
+    
+    Tools:
+    
+    Add a new menu item for punching out white backgrounds in MiniBrowser.
+    In WebKitTestRunner, expose the new setting and hook that up to
+    drawing a background in the WebView.
+    
+    * MiniBrowser/mac/AppDelegate.m:
+    (defaultConfiguration): Add _punchOutWhiteBackgroundsInDarkMode.
+    
+    * MiniBrowser/mac/SettingsController.h: Ditto.
+    * MiniBrowser/mac/SettingsController.m:
+    (-[SettingsController _populateMenu]):
+    (-[SettingsController validateMenuItem:]):
+    (-[SettingsController togglePunchOutWhiteBackgroundsInDarkMode:]):
+    (-[SettingsController punchOutWhiteBackgroundsInDarkMode]):
+    
+    * MiniBrowser/mac/WK1BrowserWindowController.m:
+    (-[WK1BrowserWindowController didChangeSettings]): Set the new preference.
+    
+    * WebKitTestRunner/PlatformWebView.h: Expose a drawsBackground property.
+    * WebKitTestRunner/gtk/PlatformWebViewGtk.cpp: Null implementation.
+    (WTR::PlatformWebView::drawsBackground const):
+    (WTR::PlatformWebView::setDrawsBackground):
+    * WebKitTestRunner/wpe/PlatformWebViewWPE.cpp: Ditto.
+    (WTR::PlatformWebView::drawsBackground const):
+    (WTR::PlatformWebView::setDrawsBackground):
+    * WebKitTestRunner/ios/PlatformWebViewIOS.mm: Call into the WKWebView and
+    set its SPI.
+    (WTR::PlatformWebView::drawsBackground const):
+    (WTR::PlatformWebView::setDrawsBackground):
+    * WebKitTestRunner/mac/PlatformWebViewMac.mm: Ditto.
+    (WTR::PlatformWebView::drawsBackground const):
+    (WTR::PlatformWebView::setDrawsBackground):
+    
+    * WebKitTestRunner/TestController.cpp: Reset and copy the new preference.
+    (WTR::TestController::resetPreferencesToConsistentValues):
+    (WTR::updateTestOptionsFromTestHeader):
+    * WebKitTestRunner/TestOptions.h:
+    (WTR::TestOptions::hasSameInitializationOptions const):
+    
+    * WebKitTestRunner/cocoa/TestControllerCocoa.mm:
+    (WTR::TestController::platformCreateWebView): If the option for punching
+    out the background was set, tell the WebView to not draw its background.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233869 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-11  Dean Jackson  <dino@apple.com>
+
+            Allow removal of white backgrounds
+            https://bugs.webkit.org/show_bug.cgi?id=187574
+            <rdar://problem/41146792>
+
+            Reviewed by Simon Fraser.
+
+            Add a new menu item for punching out white backgrounds in MiniBrowser.
+            In WebKitTestRunner, expose the new setting and hook that up to
+            drawing a background in the WebView.
+
+            * MiniBrowser/mac/AppDelegate.m:
+            (defaultConfiguration): Add _punchOutWhiteBackgroundsInDarkMode.
+
+            * MiniBrowser/mac/SettingsController.h: Ditto.
+            * MiniBrowser/mac/SettingsController.m:
+            (-[SettingsController _populateMenu]):
+            (-[SettingsController validateMenuItem:]):
+            (-[SettingsController togglePunchOutWhiteBackgroundsInDarkMode:]):
+            (-[SettingsController punchOutWhiteBackgroundsInDarkMode]):
+
+            * MiniBrowser/mac/WK1BrowserWindowController.m:
+            (-[WK1BrowserWindowController didChangeSettings]): Set the new preference.
+
+            * WebKitTestRunner/PlatformWebView.h: Expose a drawsBackground property.
+            * WebKitTestRunner/gtk/PlatformWebViewGtk.cpp: Null implementation.
+            (WTR::PlatformWebView::drawsBackground const):
+            (WTR::PlatformWebView::setDrawsBackground):
+            * WebKitTestRunner/wpe/PlatformWebViewWPE.cpp: Ditto.
+            (WTR::PlatformWebView::drawsBackground const):
+            (WTR::PlatformWebView::setDrawsBackground):
+            * WebKitTestRunner/ios/PlatformWebViewIOS.mm: Call into the WKWebView and
+            set its SPI.
+            (WTR::PlatformWebView::drawsBackground const):
+            (WTR::PlatformWebView::setDrawsBackground):
+            * WebKitTestRunner/mac/PlatformWebViewMac.mm: Ditto.
+            (WTR::PlatformWebView::drawsBackground const):
+            (WTR::PlatformWebView::setDrawsBackground):
+
+            * WebKitTestRunner/TestController.cpp: Reset and copy the new preference.
+            (WTR::TestController::resetPreferencesToConsistentValues):
+            (WTR::updateTestOptionsFromTestHeader):
+            * WebKitTestRunner/TestOptions.h:
+            (WTR::TestOptions::hasSameInitializationOptions const):
+
+            * WebKitTestRunner/cocoa/TestControllerCocoa.mm:
+            (WTR::TestController::platformCreateWebView): If the option for punching
+            out the background was set, tell the WebView to not draw its background.
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233853. rdar://problem/42344991
+
+    IndexedDB: closeAndDeleteDatabasesForOrigins should remove all databases for those origins
+    https://bugs.webkit.org/show_bug.cgi?id=187631
+    <rdar://problem/42164227>
+    
+    Reviewed by Brady Eidson.
+    
+    Source/WebCore:
+    
+    When asked to delete database for an origin, we deleted the databases whose mainFrameOrigin
+    is that origin. Given that the origin may create IndexedDB from subframes, we should delete
+    databases whose openingOrigin is that origin too.
+    
+    Covered by modified API test: WebKit.WebsiteDataStoreCustomPaths.
+    
+    * Modules/indexeddb/server/IDBServer.cpp:
+    (WebCore::IDBServer::IDBServer::performCloseAndDeleteDatabasesForOrigins):
+    
+    Source/WebKit:
+    
+    We need to return all origins, both openingOrigin and mainFrameOrigin, of IndexedDB so users
+    could be better aware of which origins are using databases and decide what they want to
+    remove.
+    
+    * StorageProcess/StorageProcess.cpp:
+    (WebKit::StorageProcess::indexedDatabaseOrigins):
+    * StorageProcess/StorageProcess.h:
+    
+    Tools:
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/WebsiteDataStoreCustomPaths.mm:
+    (TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233853 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-16  Sihui Liu  <sihui_liu@apple.com>
+
+            IndexedDB: closeAndDeleteDatabasesForOrigins should remove all databases for those origins
+            https://bugs.webkit.org/show_bug.cgi?id=187631
+            <rdar://problem/42164227>
+
+            Reviewed by Brady Eidson.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/WebsiteDataStoreCustomPaths.mm:
+            (TEST):
+
 2018-07-15  Carlos Garcia Campos  <cgarcia@igalia.com>
 
         [GLIB] Add API to evaluate code using a given object to store global symbols

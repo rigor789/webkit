@@ -317,6 +317,15 @@ using RenderingContext = Variant<
     RefPtr<CanvasRenderingContext2D>
 >;
 
+class DocumentParserYieldToken {
+public:
+    WEBCORE_EXPORT DocumentParserYieldToken(Document&);
+    WEBCORE_EXPORT ~DocumentParserYieldToken();
+
+private:
+    WeakPtr<Document> m_document;
+};
+
 class Document
     : public ContainerNode
     , public TreeScope
@@ -804,8 +813,6 @@ public:
     // In DOM Level 2, the Document's DOMWindow is called the defaultView.
     WEBCORE_EXPORT WindowProxy* windowProxy() const;
 
-    bool hasBrowsingContext() const { return !!frame(); }
-
     Document& contextDocument() const;
     void setContextDocument(Document& document) { m_contextDocument = makeWeakPtr(document); }
 
@@ -981,6 +988,8 @@ public:
     HTMLScriptElement* currentScript() const { return !m_currentScriptStack.isEmpty() ? m_currentScriptStack.last().get() : nullptr; }
     void pushCurrentScript(HTMLScriptElement*);
     void popCurrentScript();
+
+    bool shouldDeferAsynchronousScriptsUntilParsingFinishes() const;
 
 #if ENABLE(XSLT)
     void scheduleToApplyXSLTransforms();
@@ -1266,6 +1275,13 @@ public:
     void incrementActiveParserCount() { ++m_activeParserCount; }
     void decrementActiveParserCount();
 
+    std::unique_ptr<DocumentParserYieldToken> createParserYieldToken()
+    {
+        return std::make_unique<DocumentParserYieldToken>(*this);
+    }
+
+    bool hasActiveParserYieldToken() const { return m_parserYieldTokenCount; }
+
     DocumentSharedObjectPool* sharedObjectPool() { return m_sharedObjectPool.get(); }
 
     void invalidateMatchedPropertiesCacheAndForceStyleRecalc();
@@ -1460,6 +1476,7 @@ protected:
     virtual Ref<Document> cloneDocumentWithoutChildren() const;
 
 private:
+    friend class DocumentParserYieldToken;
     friend class Node;
     friend class IgnoreDestructiveWriteCountIncrementer;
     friend class IgnoreOpensDuringUnloadCountIncrementer;
@@ -1577,6 +1594,8 @@ private:
 
     Ref<CachedResourceLoader> m_cachedResourceLoader;
     RefPtr<DocumentParser> m_parser;
+
+    unsigned m_parserYieldTokenCount { 0 };
 
     // Document URLs.
     URL m_url; // Document.URL: The URL from which this document was retrieved.

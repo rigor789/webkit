@@ -150,6 +150,7 @@ private:
     [NSObject cancelPreviousPerformRequestsWithTarget:self];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
+    _playbackClient.setParent(nullptr);
     _playbackClient.setInterface(nullptr);
 
     [_target release];
@@ -233,6 +234,10 @@ private:
         return;
 
     _playing = isPlaying;
+
+    if (![self viewIfLoaded])
+        return;
+
     if (!_playing)
         [self showUI];
     else {
@@ -256,6 +261,10 @@ private:
     if (_animating == animating)
         return;
     _animating = animating;
+
+    if (![self viewIfLoaded])
+        return
+
     [self setNeedsStatusBarAppearanceUpdate];
 
     if (_animating)
@@ -456,8 +465,8 @@ private:
 
 - (void)_showPhishingAlert
 {
-    NSString *alertTitle = [NSString stringWithFormat:WEB_UI_STRING("It looks like you are typing on “%@”", "Fullscreen Deceptive Website Warning Sheet Title"), (NSString *)self.location];
-    NSString *alertMessage = WEB_UI_STRING("Typing is not allowed in full screen. This website may be showing a fake keyboard to trick you into disclosing personal or financial information.", "Fullscreen Deceptive Website Warning Sheet Content Text");
+    NSString *alertTitle = WEB_UI_STRING("It looks like you are typing while in full screen", "Fullscreen Deceptive Website Warning Sheet Title");
+    NSString *alertMessage = [NSString stringWithFormat:WEB_UI_STRING("Typing is not allowed in full screen websites. “%@” may be showing a fake keyboard to trick you into disclosing personal or financial information.", "Fullscreen Deceptive Website Warning Sheet Content Text"), (NSString *)self.location];
     UIAlertController* alert = [UIAlertController alertControllerWithTitle:alertTitle message:alertMessage preferredStyle:UIAlertControllerStyleAlert];
 
     if (auto* page = [self._webView _page])

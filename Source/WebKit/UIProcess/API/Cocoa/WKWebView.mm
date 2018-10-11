@@ -154,16 +154,6 @@
 
 #define RELEASE_LOG_IF_ALLOWED(...) RELEASE_LOG_IF(_page && _page->isAlwaysOnLoggingAllowed(), ViewState, __VA_ARGS__)
 
-@interface UIScrollView (UIScrollViewInternal)
-- (void)_adjustForAutomaticKeyboardInfo:(NSDictionary*)info animated:(BOOL)animated lastAdjustment:(CGFloat*)lastAdjustment;
-- (BOOL)_isScrollingToTop;
-- (CGPoint)_animatedTargetOffset;
-@end
-
-@interface UIPeripheralHost(UIKitInternal)
-- (CGFloat)getVerticalOverlapForView:(UIView *)view usingKeyboardInfo:(NSDictionary *)info;
-@end
-
 @interface UIView (UIViewInternal)
 - (UIViewController *)_viewControllerForAncestor;
 @end
@@ -557,6 +547,7 @@ static void validate(WKWebViewConfiguration *configuration)
     pageConfiguration->setDrawsBackground([_configuration _drawsBackground]);
     pageConfiguration->setControlledByAutomation([_configuration _isControlledByAutomation]);
     pageConfiguration->preferenceValues().set(WebKit::WebPreferencesKey::incompleteImageBorderEnabledKey(), WebKit::WebPreferencesStore::Value(!![_configuration _incompleteImageBorderEnabled]));
+    pageConfiguration->preferenceValues().set(WebKit::WebPreferencesKey::shouldDeferAsynchronousScriptsUntilAfterDocumentLoadKey(), WebKit::WebPreferencesStore::Value(!![_configuration _shouldDeferAsynchronousScriptsUntilAfterDocumentLoad]));
 
 #if ENABLE(APPLICATION_MANIFEST)
     pageConfiguration->setApplicationManifest([_configuration _applicationManifest] ? [configuration _applicationManifest]->_applicationManifest.get() : nullptr);
@@ -1668,15 +1659,7 @@ static WebCore::Color scrollViewBackgroundColor(WKWebView *webView)
 {
     RELEASE_LOG_IF_ALLOWED("%p -[WKWebView _processDidExit]", self);
     [self _hidePasswordView];
-    if (!_customContentView && _dynamicViewportUpdateMode != WebKit::DynamicViewportUpdateMode::NotResizing) {
-        NSUInteger indexOfResizeAnimationView = [[_scrollView subviews] indexOfObject:_resizeAnimationView.get()];
-        [_scrollView insertSubview:_contentView.get() atIndex:indexOfResizeAnimationView];
-        [_scrollView insertSubview:[_contentView unscaledView] atIndex:indexOfResizeAnimationView + 1];
-        [_resizeAnimationView removeFromSuperview];
-        _resizeAnimationView = nil;
-
-        _resizeAnimationTransformAdjustments = CATransform3DIdentity;
-    }
+    [self _cancelAnimatedResize];
     [_contentView setFrame:self.bounds];
     [_scrollView setBackgroundColor:[UIColor whiteColor]];
     [_scrollView setContentOffset:[self _initialContentOffsetForScrollView]];
@@ -2899,6 +2882,29 @@ static int32_t activeOrientation(WKWebView *webView)
     return webView->_overridesInterfaceOrientation ? deviceOrientationForUIInterfaceOrientation(webView->_interfaceOrientationOverride) : webView->_page->deviceOrientation();
 }
 
+- (void)_cancelAnimatedResize
+{
+    LOG_WITH_STREAM(VisibleRects, stream << "-[WKWebView " << _page->pageID() << " _cancelAnimatedResize:] " << " _dynamicViewportUpdateMode " << (int)_dynamicViewportUpdateMode);
+    if (_dynamicViewportUpdateMode == WebKit::DynamicViewportUpdateMode::NotResizing)
+        return;
+
+    if (!_customContentView) {
+        if (_resizeAnimationView) {
+            NSUInteger indexOfResizeAnimationView = [[_scrollView subviews] indexOfObject:_resizeAnimationView.get()];
+            [_scrollView insertSubview:_contentView.get() atIndex:indexOfResizeAnimationView];
+            [_scrollView insertSubview:[_contentView unscaledView] atIndex:indexOfResizeAnimationView + 1];
+            [_resizeAnimationView removeFromSuperview];
+            _resizeAnimationView = nil;
+        }
+
+        [_contentView setHidden:NO];
+        _resizeAnimationTransformAdjustments = CATransform3DIdentity;
+    }
+
+    _dynamicViewportUpdateMode = WebKit::DynamicViewportUpdateMode::NotResizing;
+    [self _scheduleVisibleContentRectUpdate];
+}
+
 - (void)_didCompleteAnimatedResize
 {
     if (_dynamicViewportUpdateMode == WebKit::DynamicViewportUpdateMode::NotResizing)
@@ -2909,7 +2915,7 @@ static int32_t activeOrientation(WKWebView *webView)
     if (!_resizeAnimationView) {
         // Paranoia. If _resizeAnimationView is null we'll end up setting a zero scale on the content view.
         RELEASE_LOG_IF_ALLOWED("%p -[WKWebView _didCompleteAnimatedResize:] - _resizeAnimationView is nil", self);
-        _dynamicViewportUpdateMode = WebKit::DynamicViewportUpdateMode::NotResizing;
+        [self _cancelAnimatedResize];
         return;
     }
 
@@ -3174,6 +3180,11 @@ static int32_t activeOrientation(WKWebView *webView)
     id <WKUIDelegatePrivate> uiDelegate = (id <WKUIDelegatePrivate>)[self UIDelegate];
     if ([uiDelegate respondsToSelector:@selector(_webView:didChangeSafeAreaShouldAffectObscuredInsets:)])
         [uiDelegate _webView:self didChangeSafeAreaShouldAffectObscuredInsets:avoidsUnsafeArea];
+}
+
+- (BOOL)_haveSetObscuredInsets
+{
+    return _haveSetObscuredInsets;
 }
 
 #endif // PLATFORM(IOS)
@@ -5302,7 +5313,7 @@ static inline WebKit::FindOptions toFindOptions(_WKFindOptions wkFindOptions)
 
     ASSERT_WITH_MESSAGE(!(_overridesViewLayoutSize && newViewLayoutSize.isEmpty()), "Clients controlling the layout size should maintain a valid layout size to minimize layouts.");
     if (CGRectIsEmpty(newBounds) || newViewLayoutSize.isEmpty() || CGRectIsEmpty(futureUnobscuredRectInSelfCoordinates) || CGRectIsEmpty(contentViewBounds)) {
-        _dynamicViewportUpdateMode = WebKit::DynamicViewportUpdateMode::NotResizing;
+        [self _cancelAnimatedResize];
         [self _frameOrBoundsChanged];
         if (_overridesViewLayoutSize)
             [self _dispatchSetViewLayoutSize:newViewLayoutSize];
@@ -5311,7 +5322,6 @@ static inline WebKit::FindOptions toFindOptions(_WKFindOptions wkFindOptions)
         if (_overridesInterfaceOrientation)
             [self _dispatchSetDeviceOrientation:newOrientation];
 
-        [self _scheduleVisibleContentRectUpdate];
         return;
     }
 
@@ -5320,8 +5330,7 @@ static inline WebKit::FindOptions toFindOptions(_WKFindOptions wkFindOptions)
         && oldMaximumUnobscuredSize == newMaximumUnobscuredSize
         && oldOrientation == newOrientation
         && UIEdgeInsetsEqualToEdgeInsets(oldObscuredInsets, newObscuredInsets)) {
-        _dynamicViewportUpdateMode = WebKit::DynamicViewportUpdateMode::NotResizing;
-        [self _scheduleVisibleContentRectUpdate];
+        [self _cancelAnimatedResize];
         return;
     }
 

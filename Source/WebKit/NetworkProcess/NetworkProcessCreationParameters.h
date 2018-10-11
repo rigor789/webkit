@@ -63,7 +63,7 @@ struct NetworkProcessCreationParameters {
 #if ENABLE(NETWORK_CACHE_SPECULATIVE_REVALIDATION)
     bool shouldEnableNetworkCacheSpeculativeRevalidation { false };
 #endif
-#if PLATFORM(COCOA)
+#if PLATFORM(MAC)
     Vector<uint8_t> uiProcessCookieStorageIdentifier;
 #endif
     Vector<WebCore::Cookie> defaultSessionPendingCookies;
@@ -82,6 +82,7 @@ struct NetworkProcessCreationParameters {
 #if PLATFORM(COCOA)
     String parentProcessName;
     String uiProcessBundleIdentifier;
+    uint32_t uiProcessSDKVersion { 0 };
     String sourceApplicationBundleIdentifier;
     String sourceApplicationSecondaryIdentifier;
 #if PLATFORM(IOS)

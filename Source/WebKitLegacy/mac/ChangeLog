@@ -1,3 +1,337 @@
+2018-07-26  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234272. rdar://problem/42645434
+
+    Unreviewed, rolling out r234181 and r234189.
+    https://bugs.webkit.org/show_bug.cgi?id=188075
+    
+    These are not needed right now (Requested by thorton on
+    #webkit).
+    
+    Reverted changesets:
+    
+    "Enable Web Content Filtering on watchOS"
+    https://bugs.webkit.org/show_bug.cgi?id=187979
+    https://trac.webkit.org/changeset/234181
+    
+    "HAVE(PARENTAL_CONTROLS) should be true on watchOS"
+    https://bugs.webkit.org/show_bug.cgi?id=187985
+    https://trac.webkit.org/changeset/234189
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234272 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-26  Commit Queue  <commit-queue@webkit.org>
+
+            Unreviewed, rolling out r234181 and r234189.
+            https://bugs.webkit.org/show_bug.cgi?id=188075
+
+            These are not needed right now (Requested by thorton on
+            #webkit).
+
+            Reverted changesets:
+
+            "Enable Web Content Filtering on watchOS"
+            https://bugs.webkit.org/show_bug.cgi?id=187979
+            https://trac.webkit.org/changeset/234181
+
+            "HAVE(PARENTAL_CONTROLS) should be true on watchOS"
+            https://bugs.webkit.org/show_bug.cgi?id=187985
+            https://trac.webkit.org/changeset/234189
+
+2018-07-25  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234181. rdar://problem/42604524
+
+    Enable Web Content Filtering on watchOS
+    https://bugs.webkit.org/show_bug.cgi?id=187979
+    <rdar://problem/42559346>
+    
+    Reviewed by Wenson Hsieh.
+    
+    Source/JavaScriptCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore/PAL:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKit:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKitLegacy/mac:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Tools:
+    
+    * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234181 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-24  Tim Horton  <timothy_horton@apple.com>
+
+            Enable Web Content Filtering on watchOS
+            https://bugs.webkit.org/show_bug.cgi?id=187979
+            <rdar://problem/42559346>
+
+            Reviewed by Wenson Hsieh.
+
+            * Configurations/FeatureDefines.xcconfig:
+
+2018-07-25  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234064. rdar://problem/42451634
+
+    Picking a color from the color panel for typing attributes needs to inverse transform through color-filter
+    https://bugs.webkit.org/show_bug.cgi?id=187846
+    
+    Patch by Ryosuke Niwa <rniwa@apple.com> on 2018-07-20
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    This patch refines the color inversion for editing introduced in r234005 so that font panels and WebKit embedders
+    can get and set inverted colors using attributed strings for a selected text in an editable region.
+    
+    More specifically, when font panels or WebKit embedders set a font color or a background color via WebView's
+    _applyStyleToSelection and _applyEditingStyleToSelection, WebKit would automatically invert the color before inserting
+    into DOM so that the color visible to the user matches that's given to WebKit. Conversely,
+    [WebView attributedSubstringFromRange:nsRange] now return the color visible to the user, i.e. the color after
+    the color filter had been applied, so that some WebKit embedders can present the visually identical color to the user.
+    
+    Because DOM never sees the color filter's effect in the computed style, etc... this patch reverts the change made to
+    StyleChange in r234005 to avoid inverting the color passed to execCommand. This makes editing apps which is unaware
+    of the dark mode or -apple-color-filter continue to function (because the color picker implemented in DOM will be
+    applied of the same color filter before being presented to the user).
+    
+    Finally, this patch introduces a testing hook in applyCommandToFrame so that executing foreColor or backColor with
+    the soruce of CommandFromMenuOrKeyBinding would trigger the same code path as the one taken by Objective-C
+    
+    Tests: editing/execCommand/set-backColor-with-color-filter-from-scripts.html
+           editing/execCommand/set-foreColor-with-color-filter-from-scripts.html
+           editing/mac/attributed-string/attribute-string-for-copy-with-color-filter.html
+           editing/style/set-backColor-with-color-filter.html
+           editing/style/set-foreColor-with-color-filter.html
+    
+    * editing/EditingStyle.cpp:
+    (WebCore::EditingStyle::inverseTransformColorIfNeeded): Added.
+    (WebCore::StyleChange::StyleChange): Revert the change made in r234005 since this code is also used by execCommand
+    which is not desirable, and won't work for background color.
+    (WebCore::StyleChange::extractTextStyles): Ditto.
+    * editing/EditingStyle.h:
+    * editing/Editor.cpp:
+    (WebCore::Editor::applyStyle):
+    (WebCore::Editor::applyStyleToSelection): Call EditingStyle::inverseTransformColorIfNeeded when ColorFilterMode is
+    set to InvertColor.
+    * editing/Editor.h:
+    * editing/EditorCommand.cpp:
+    (WebCore::applyCommandToFrame): Added the aforementioned testing hook.
+    * editing/cocoa/HTMLConverter.mm:
+    (WebCore::editingAttributedStringFromRange): Take the color filtr into account. Some WebKit embedders use this
+    function to compute the font color in the selected text. Note that this function is mostly used for input methods
+    so the color doesn't really matter, and its implementation is distinct from that of HTMLConverter.
+    
+    Source/WebKitLegacy/mac:
+    
+    Invert the filtered font and background colors when using font panels, font pasteboard, and other Objective-C APIs.
+    
+    * WebView/WebHTMLView.mm:
+    (-[WebHTMLView _applyStyleToSelection:withUndoAction:]): Share code with _applyEditingStyleToSelection.
+    (-[WebHTMLView _applyEditingStyleToSelection:withUndoAction:]):
+    
+    Tools:
+    
+    Fixed the bug that testRunner.execCommand was using the second argument as the value.
+    
+    The second argument, aShowDefaultUI, should always be ignored in testRunner.execCommand,
+    and the third argument should be used as the value. DumpRenderTree's implementation does this already.
+    
+    * WebKitTestRunner/InjectedBundle/Bindings/TestRunner.idl:
+    * WebKitTestRunner/InjectedBundle/TestRunner.cpp:
+    (WTR::TestRunner::execCommand):
+    * WebKitTestRunner/InjectedBundle/TestRunner.h:
+    
+    LayoutTests:
+    
+    Added tests to make sure foreground or background colors specified in execCommand don't get inverted.
+    
+    Fixed the test which was asserting that textInputController.attributedSubstringFromRange doesn't invert the color
+    since that's exactly what WebKit embedders uses to compute the style for color pickers.
+    
+    Added new tests for copy & paste case using textInputController.legacyAttributedString.
+    
+    * editing/execCommand/set-backColor-with-color-filter-from-scripts-expected.txt: Added.
+    * editing/execCommand/set-backColor-with-color-filter-from-scripts.html: Added.
+    * editing/execCommand/set-foreColor-with-color-filter-from-scripts-expected.txt: Added.
+    * editing/execCommand/set-foreColor-with-color-filter-from-scripts.html: Added.
+    * editing/mac/attributed-string/attrib-string-range-with-color-filter-expected.txt:
+    * editing/mac/attributed-string/attrib-string-range-with-color-filter.html: This test uses attributedSubstringFromRange,
+    which implemented using editingAttributedStringFromRange in WebCore. Since this is exactly what WebKit embedders uses
+    to compute the current style of the selected text, we need to invert the color here. This API's main clinet is input methods
+    so this shouldn't affect other editing operations, in particular, copy and paste, which uses HTMLConverter.
+    * editing/mac/attributed-string/attribute-string-for-copy-with-color-filter-expected.txt: Added.
+    * editing/mac/attributed-string/attribute-string-for-copy-with-color-filter.html: Added. Make sure the attributed string
+    generated for copy & paste does not invert foreground or background colors via textInputController.legacyAttributedString.
+    This is testing HTMLConverter, not editingAttributedStringFromRange, used by WebKit embedders and input methods.
+    * editing/mac/attributed-string/attributed-string-for-typing-with-color-filter-expected.txt:
+    * editing/mac/attributed-string/attributed-string-for-typing-with-color-filter.html: Added background color in the test.
+    * editing/style/set-backColor-with-color-filter-expected.txt: Added.
+    * editing/style/set-backColor-with-color-filter.html: Added.
+    * editing/style/set-foreColor-with-color-filter-expected.txt: Renamed from exec-command-foreColor-with-color-filter-expected.txt.
+    * editing/style/set-foreColor-with-color-filter.html: Renamed from exec-command-foreColor-with-color-filter.html.
+    Updated the test to use testRunner.execCommand which uses CommandFromMenuOrKeyBinding in applyCommandToFrame since we're
+    trying to test the code path taken by WebKit embedders and font panel here.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234064 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-20  Ryosuke Niwa  <rniwa@apple.com>
+
+            Picking a color from the color panel for typing attributes needs to inverse transform through color-filter
+            https://bugs.webkit.org/show_bug.cgi?id=187846
+
+            Reviewed by Simon Fraser.
+
+            Invert the filtered font and background colors when using font panels, font pasteboard, and other Objective-C APIs.
+
+            * WebView/WebHTMLView.mm:
+            (-[WebHTMLView _applyStyleToSelection:withUndoAction:]): Share code with _applyEditingStyleToSelection.
+            (-[WebHTMLView _applyEditingStyleToSelection:withUndoAction:]):
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233869. rdar://problem/42344023
+
+    Allow removal of white backgrounds
+    https://bugs.webkit.org/show_bug.cgi?id=187574
+    <rdar://problem/41146792>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    Add a drawing mode that turns white backgrounds into transparent
+    regions, such that a hosting app can see through to its window.
+    
+    Test: css3/color-filters/punch-out-white-backgrounds.html
+    
+    * page/Settings.yaml: New Setting.
+    
+    * rendering/InlineFlowBox.cpp: Draw with a destination out blend mode
+    if the background is white and we are punching out backgrounds, which means
+    that it will erase the destination.
+    (WebCore::InlineFlowBox::paintBoxDecorations):
+    * rendering/RenderBox.cpp:
+    (WebCore::RenderBox::paintBackground): Ditto.
+    * rendering/RenderTableCell.cpp:
+    (WebCore::RenderTableCell::paintBackgroundsBehindCell): Ditto.
+    
+    * rendering/RenderBoxModelObject.cpp:
+    (WebCore::RenderBoxModelObject::paintFillLayerExtended): Save and restore
+    the composition mode if necessary.
+    
+    Source/WebKit:
+    
+    Add a new WebPreference for punching out white backgrounds.
+    
+    * Shared/WebPreferences.yaml:
+    * UIProcess/API/C/WKPreferences.cpp:
+    (WKPreferencesSetPunchOutWhiteBackgroundsInDarkMode):
+    (WKPreferencesGetPunchOutWhiteBackgroundsInDarkMode):
+    * UIProcess/API/C/WKPreferencesRefPrivate.h:
+    * UIProcess/API/Cocoa/WKWebView.mm:
+    (-[WKWebView _initializeWithConfiguration:]):
+    * UIProcess/API/Cocoa/WKWebViewConfiguration.mm:
+    (-[WKWebViewConfiguration init]):
+    (-[WKWebViewConfiguration copyWithZone:]):
+    (-[WKWebViewConfiguration _punchOutWhiteBackgroundsInDarkMode]):
+    (-[WKWebViewConfiguration _setPunchOutWhiteBackgroundsInDarkMode:]):
+    * UIProcess/API/Cocoa/WKWebViewConfigurationPrivate.h:
+    
+    Source/WebKitLegacy/mac:
+    
+    Add a new WebPreference for punching out white backgrounds.
+    
+    * WebView/WebPreferenceKeysPrivate.h:
+    * WebView/WebPreferences.mm:
+    (+[WebPreferences initialize]):
+    (-[WebPreferences punchOutWhiteBackgroundsInDarkMode]):
+    (-[WebPreferences setPunchOutWhiteBackgroundsInDarkMode:]):
+    * WebView/WebPreferencesPrivate.h:
+    * WebView/WebView.mm:
+    (-[WebView _preferencesChanged:]):
+    
+    Tools:
+    
+    Add a new menu item for punching out white backgrounds in MiniBrowser.
+    In WebKitTestRunner, expose the new setting and hook that up to
+    drawing a background in the WebView.
+    
+    * MiniBrowser/mac/AppDelegate.m:
+    (defaultConfiguration): Add _punchOutWhiteBackgroundsInDarkMode.
+    
+    * MiniBrowser/mac/SettingsController.h: Ditto.
+    * MiniBrowser/mac/SettingsController.m:
+    (-[SettingsController _populateMenu]):
+    (-[SettingsController validateMenuItem:]):
+    (-[SettingsController togglePunchOutWhiteBackgroundsInDarkMode:]):
+    (-[SettingsController punchOutWhiteBackgroundsInDarkMode]):
+    
+    * MiniBrowser/mac/WK1BrowserWindowController.m:
+    (-[WK1BrowserWindowController didChangeSettings]): Set the new preference.
+    
+    * WebKitTestRunner/PlatformWebView.h: Expose a drawsBackground property.
+    * WebKitTestRunner/gtk/PlatformWebViewGtk.cpp: Null implementation.
+    (WTR::PlatformWebView::drawsBackground const):
+    (WTR::PlatformWebView::setDrawsBackground):
+    * WebKitTestRunner/wpe/PlatformWebViewWPE.cpp: Ditto.
+    (WTR::PlatformWebView::drawsBackground const):
+    (WTR::PlatformWebView::setDrawsBackground):
+    * WebKitTestRunner/ios/PlatformWebViewIOS.mm: Call into the WKWebView and
+    set its SPI.
+    (WTR::PlatformWebView::drawsBackground const):
+    (WTR::PlatformWebView::setDrawsBackground):
+    * WebKitTestRunner/mac/PlatformWebViewMac.mm: Ditto.
+    (WTR::PlatformWebView::drawsBackground const):
+    (WTR::PlatformWebView::setDrawsBackground):
+    
+    * WebKitTestRunner/TestController.cpp: Reset and copy the new preference.
+    (WTR::TestController::resetPreferencesToConsistentValues):
+    (WTR::updateTestOptionsFromTestHeader):
+    * WebKitTestRunner/TestOptions.h:
+    (WTR::TestOptions::hasSameInitializationOptions const):
+    
+    * WebKitTestRunner/cocoa/TestControllerCocoa.mm:
+    (WTR::TestController::platformCreateWebView): If the option for punching
+    out the background was set, tell the WebView to not draw its background.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233869 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-11  Dean Jackson  <dino@apple.com>
+
+            Allow removal of white backgrounds
+            https://bugs.webkit.org/show_bug.cgi?id=187574
+            <rdar://problem/41146792>
+
+            Reviewed by Simon Fraser.
+
+            Add a new WebPreference for punching out white backgrounds.
+
+            * WebView/WebPreferenceKeysPrivate.h:
+            * WebView/WebPreferences.mm:
+            (+[WebPreferences initialize]):
+            (-[WebPreferences punchOutWhiteBackgroundsInDarkMode]):
+            (-[WebPreferences setPunchOutWhiteBackgroundsInDarkMode:]):
+            * WebView/WebPreferencesPrivate.h:
+            * WebView/WebView.mm:
+            (-[WebView _preferencesChanged:]):
+
 2018-07-14  Kocsen Chung  <kocsen_chung@apple.com>
 
         Ensure WebKit stack is ad-hoc signed

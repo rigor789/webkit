@@ -33,6 +33,7 @@ perf/accessibility-title-ui-element.html
 # No fullscreen API on iOS
 fullscreen
 http/tests/fullscreen
+compositing/no-compositing-when-fulll-screen-is-present.html
 
 # WebGPU is not enabled on iOS Simulator.
 fast/canvas/webgpu
@@ -155,7 +156,10 @@ http/tests/security/contentSecurityPolicy/block-all-mixed-content/insecure-plugi
 http/tests/security/contentSecurityPolicy/block-all-mixed-content/insecure-plugin-in-main-frame.html
 http/tests/security/contentSecurityPolicy/cross-origin-plugin-document-allowed-in-child-window.html
 http/tests/security/contentSecurityPolicy/plugin-blocked-in-about-blank-window.html
+http/tests/security/contentSecurityPolicy/same-origin-plugin-document-allowed-in-child-window.html
 http/tests/security/contentSecurityPolicy/same-origin-plugin-document-blocked-in-child-window.html
+http/tests/security/contentSecurityPolicy/same-origin-plugin-document-blocked-in-child-window-report.php
+http/tests/security/contentSecurityPolicy/same-origin-plugin-document-with-csp-blocked-in-child-window.html
 
 # Pointer-lock not supported on iOS
 pointer-lock
@@ -3329,3 +3333,13 @@ fast/block/block-only/margin-left-right-sizing-out-of-flow.html [ Failure ]
 fast/block/block-only/margin-left-right-sizing.html [ Failure ]
 fast/block/block-only/margin-sibling-collapse-propagated.html [ Failure ]
 fast/block/block-only/relative-auto-with-parent-offset.html [ Failure ]
+
+# Datalist
+webkit.org/b/186714 fast/forms/datalist/datalist-show-hide.html [ Skip ]
+webkit.org/b/186714 fast/forms/datalist/datalist-textinput-keydown.html [ Skip ]
+
+# We are only accepting GLSL3 for macOS. 
+webkit.org/b/187982 webgl/2.0.0/conformance2/glsl3 [ Skip ]
+
+# Audio session does not have a "none" category on iOS [ Skip ]
+webkit.org/b/188285 platform/mac/media/audio-session-category-video-paused.html [ Skip ]

@@ -1,3 +1,449 @@
+2018-08-07  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r234649. rdar://problem/43009914
+
+    Use a more specific PtrTag for PlatformRegisters PC and LR.
+    https://bugs.webkit.org/show_bug.cgi?id=188366
+    <rdar://problem/42984123>
+    
+    Reviewed by Keith Miller.
+    
+    Also fixed a bug in linkRegister(), which was previously returning the PC instead
+    of LR.  It now returns LR.
+    
+    * runtime/JSCPtrTag.h:
+    * runtime/MachineContext.h:
+    (JSC::MachineContext::instructionPointer):
+    (JSC::MachineContext::linkRegister):
+    * runtime/VMTraps.cpp:
+    (JSC::SignalContext::SignalContext):
+    * tools/SigillCrashAnalyzer.cpp:
+    (JSC::SignalContext::SignalContext):
+    
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234649 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-08-07  Mark Lam  <mark.lam@apple.com>
+
+            Use a more specific PtrTag for PlatformRegisters PC and LR.
+            https://bugs.webkit.org/show_bug.cgi?id=188366
+            <rdar://problem/42984123>
+
+            Reviewed by Keith Miller.
+
+            Also fixed a bug in linkRegister(), which was previously returning the PC instead
+            of LR.  It now returns LR.
+
+            * runtime/JSCPtrTag.h:
+            * runtime/MachineContext.h:
+            (JSC::MachineContext::instructionPointer):
+            (JSC::MachineContext::linkRegister):
+            * runtime/VMTraps.cpp:
+            (JSC::SignalContext::SignalContext):
+            * tools/SigillCrashAnalyzer.cpp:
+            (JSC::SignalContext::SignalContext):
+
+2018-08-02  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234528. rdar://problem/42883788
+
+    Source/JavaScriptCore:
+    Reading instructionPointer from PlatformRegisters may fail when using pointer profiling
+    https://bugs.webkit.org/show_bug.cgi?id=188271
+    <rdar://problem/42850884>
+    
+    Reviewed by Michael Saboff.
+    
+    This patch defends against the instructionPointer containing garbage bits.
+    See radar for details.
+    
+    * runtime/MachineContext.h:
+    (JSC::MachineContext::instructionPointer):
+    * runtime/SamplingProfiler.cpp:
+    (JSC::SamplingProfiler::takeSample):
+    * runtime/VMTraps.cpp:
+    (JSC::SignalContext::SignalContext):
+    (JSC::SignalContext::tryCreate):
+    * tools/CodeProfiling.cpp:
+    (JSC::profilingTimer):
+    * tools/SigillCrashAnalyzer.cpp:
+    (JSC::SignalContext::SignalContext):
+    (JSC::SignalContext::tryCreate):
+    (JSC::SignalContext::dump):
+    (JSC::installCrashHandler):
+    * wasm/WasmFaultSignalHandler.cpp:
+    (JSC::Wasm::trapHandler):
+    
+    Source/WTF:
+    Reading instructionPointer from PlatformRegisters may fail when using pointer tagging
+    https://bugs.webkit.org/show_bug.cgi?id=188271
+    <rdar://problem/42850884>
+    
+    Reviewed by Michael Saboff.
+    
+    * wtf/PtrTag.h:
+    (WTF::isTaggedWith):
+    (WTF::usesPointerTagging):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234528 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-08-02  Saam Barati  <sbarati@apple.com>
+
+            Reading instructionPointer from PlatformRegisters may fail when using pointer profiling
+            https://bugs.webkit.org/show_bug.cgi?id=188271
+            <rdar://problem/42850884>
+
+            Reviewed by Michael Saboff.
+
+            This patch defends against the instructionPointer containing garbage bits.
+            See radar for details.
+
+            * runtime/MachineContext.h:
+            (JSC::MachineContext::instructionPointer):
+            * runtime/SamplingProfiler.cpp:
+            (JSC::SamplingProfiler::takeSample):
+            * runtime/VMTraps.cpp:
+            (JSC::SignalContext::SignalContext):
+            (JSC::SignalContext::tryCreate):
+            * tools/CodeProfiling.cpp:
+            (JSC::profilingTimer):
+            * tools/SigillCrashAnalyzer.cpp:
+            (JSC::SignalContext::SignalContext):
+            (JSC::SignalContext::tryCreate):
+            (JSC::SignalContext::dump):
+            (JSC::installCrashHandler):
+            * wasm/WasmFaultSignalHandler.cpp:
+            (JSC::Wasm::trapHandler):
+
+2018-07-26  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234269. rdar://problem/42650430
+
+    arrayProtoPrivateFuncConcatMemcpy() should handle copying from an Undecided type array.
+    https://bugs.webkit.org/show_bug.cgi?id=188065
+    <rdar://problem/42515726>
+    
+    Reviewed by Saam Barati.
+    
+    JSTests:
+    
+    * stress/regress-188065.js: Added.
+    
+    Source/JavaScriptCore:
+    
+    * runtime/ArrayPrototype.cpp:
+    (JSC::clearElement):
+    (JSC::copyElements):
+    (JSC::arrayProtoPrivateFuncConcatMemcpy):
+    
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234269 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-26  Mark Lam  <mark.lam@apple.com>
+
+            arrayProtoPrivateFuncConcatMemcpy() should handle copying from an Undecided type array.
+            https://bugs.webkit.org/show_bug.cgi?id=188065
+            <rdar://problem/42515726>
+
+            Reviewed by Saam Barati.
+
+            * runtime/ArrayPrototype.cpp:
+            (JSC::clearElement):
+            (JSC::copyElements):
+            (JSC::arrayProtoPrivateFuncConcatMemcpy):
+
+2018-07-26  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234272. rdar://problem/42645434
+
+    Unreviewed, rolling out r234181 and r234189.
+    https://bugs.webkit.org/show_bug.cgi?id=188075
+    
+    These are not needed right now (Requested by thorton on
+    #webkit).
+    
+    Reverted changesets:
+    
+    "Enable Web Content Filtering on watchOS"
+    https://bugs.webkit.org/show_bug.cgi?id=187979
+    https://trac.webkit.org/changeset/234181
+    
+    "HAVE(PARENTAL_CONTROLS) should be true on watchOS"
+    https://bugs.webkit.org/show_bug.cgi?id=187985
+    https://trac.webkit.org/changeset/234189
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234272 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-26  Commit Queue  <commit-queue@webkit.org>
+
+            Unreviewed, rolling out r234181 and r234189.
+            https://bugs.webkit.org/show_bug.cgi?id=188075
+
+            These are not needed right now (Requested by thorton on
+            #webkit).
+
+            Reverted changesets:
+
+            "Enable Web Content Filtering on watchOS"
+            https://bugs.webkit.org/show_bug.cgi?id=187979
+            https://trac.webkit.org/changeset/234181
+
+            "HAVE(PARENTAL_CONTROLS) should be true on watchOS"
+            https://bugs.webkit.org/show_bug.cgi?id=187985
+            https://trac.webkit.org/changeset/234189
+
+2018-07-25  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234181. rdar://problem/42604524
+
+    Enable Web Content Filtering on watchOS
+    https://bugs.webkit.org/show_bug.cgi?id=187979
+    <rdar://problem/42559346>
+    
+    Reviewed by Wenson Hsieh.
+    
+    Source/JavaScriptCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore/PAL:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKit:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKitLegacy/mac:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Tools:
+    
+    * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234181 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-24  Tim Horton  <timothy_horton@apple.com>
+
+            Enable Web Content Filtering on watchOS
+            https://bugs.webkit.org/show_bug.cgi?id=187979
+            <rdar://problem/42559346>
+
+            Reviewed by Wenson Hsieh.
+
+            * Configurations/FeatureDefines.xcconfig:
+
+2018-07-24  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234106. rdar://problem/42545682
+
+    Add some asserts to help diagnose a crash.
+    https://bugs.webkit.org/show_bug.cgi?id=187915
+    <rdar://problem/42508166>
+    
+    Reviewed by Michael Saboff.
+    
+    Add some asserts to verify that an CodeBlock alternative should always have a
+    non-null jitCode.  Also change a RELEASE_ASSERT_NOT_REACHED() in
+    CodeBlock::setOptimizationThresholdBasedOnCompilationResult() to a RELEASE_ASSERT()
+    so that we'll retain the state of the variables that failed the assertion (again
+    to help with diagnosis).
+    
+    * bytecode/CodeBlock.cpp:
+    (JSC::CodeBlock::setAlternative):
+    (JSC::CodeBlock::setOptimizationThresholdBasedOnCompilationResult):
+    * dfg/DFGPlan.cpp:
+    (JSC::DFG::Plan::Plan):
+    
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234106 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-23  Mark Lam  <mark.lam@apple.com>
+
+            Add some asserts to help diagnose a crash.
+            https://bugs.webkit.org/show_bug.cgi?id=187915
+            <rdar://problem/42508166>
+
+            Reviewed by Michael Saboff.
+
+            Add some asserts to verify that an CodeBlock alternative should always have a
+            non-null jitCode.  Also change a RELEASE_ASSERT_NOT_REACHED() in
+            CodeBlock::setOptimizationThresholdBasedOnCompilationResult() to a RELEASE_ASSERT()
+            so that we'll retain the state of the variables that failed the assertion (again
+            to help with diagnosis).
+
+            * bytecode/CodeBlock.cpp:
+            (JSC::CodeBlock::setAlternative):
+            (JSC::CodeBlock::setOptimizationThresholdBasedOnCompilationResult):
+            * dfg/DFGPlan.cpp:
+            (JSC::DFG::Plan::Plan):
+
+2018-07-23  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234075. rdar://problem/42451525
+
+    DFG AbstractInterpreter: CheckArray filters array modes for DirectArguments/ScopedArguments using only NonArray
+    https://bugs.webkit.org/show_bug.cgi?id=187827
+    rdar://problem/42146858
+    
+    Reviewed by Saam Barati.
+    
+    JSTests:
+    
+    New regression tests.
+    
+    * stress/direct-arguments-check-array.js: Added.
+    (setup.f2):
+    (setup):
+    (forOfArray):
+    (forOfArgs):
+    (callEveryOnArgs):
+    * stress/scoped-arguments-check-array.js: Added.
+    (setup.foo):
+    (setup.f2):
+    (setup):
+    (forOfArray):
+    (forOfArgs):
+    (callEveryOnArgs):
+    
+    Source/JavaScriptCore:
+    
+    When filtering array modes for DirectArguments or ScopedArguments, we need to allow for the possibility
+    that they can either be NonArray or NonArrayWithArrayStorage (aka ArrayStorageShape).
+    We can't end up with other shapes, Int32, Double, etc because GenericArguments sets 
+    InterceptsGetOwnPropertySlotByIndexEvenWhenLengthIsNotZero which will cause us to go down a
+    putByIndex() path that doesn't change the shape.
+    
+    * dfg/DFGArrayMode.h:
+    (JSC::DFG::ArrayMode::arrayModesThatPassFiltering const):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234075 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-20  Michael Saboff  <msaboff@apple.com>
+
+            DFG AbstractInterpreter: CheckArray filters array modes for DirectArguments/ScopedArguments using only NonArray
+            https://bugs.webkit.org/show_bug.cgi?id=187827
+            rdar://problem/42146858
+
+            Reviewed by Saam Barati.
+
+            When filtering array modes for DirectArguments or ScopedArguments, we need to allow for the possibility
+            that they can either be NonArray or NonArrayWithArrayStorage (aka ArrayStorageShape).
+            We can't end up with other shapes, Int32, Double, etc because GenericArguments sets
+            InterceptsGetOwnPropertySlotByIndexEvenWhenLengthIsNotZero which will cause us to go down a
+            putByIndex() path that doesn't change the shape.
+
+            * dfg/DFGArrayMode.h:
+            (JSC::DFG::ArrayMode::arrayModesThatPassFiltering const):
+
+2018-07-20  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234022. rdar://problem/42417126
+
+    Conservatively make Object.assign's fast path do a two phase protocol of loading everything then storing everything to try to prevent a crash
+    https://bugs.webkit.org/show_bug.cgi?id=187836
+    <rdar://problem/42409527>
+    
+    Reviewed by Mark Lam.
+    
+    We have crash reports that we're crashing on source->getDirect in Object.assign's
+    fast path. Mark investigated this and determined we end up with a nullptr for
+    butterfly. This is curious, because source's Structure indicated that it has
+    out of line properties. My leading hypothesis for this at the moment is a bit
+    handwavy, but it's essentially:
+    - We end up firing a watchpoint when assigning to the target (this can happen
+    if a watchpoint was set up for storing to that particular field)
+    - When we fire that watchpoint, we end up doing some kind work on the source,
+    perhaps causing it to flattenDictionaryStructure. Therefore, we end up
+    mutating source.
+    
+    I'm not super convinced this is what we're running into, but just by reading
+    the code, I think it needs to be something similar to this. Seeing if this change
+    fixes the crasher will give us good data to determine if something like this is
+    happening or if the bug is something else entirely.
+    
+    * runtime/ObjectConstructor.cpp:
+    (JSC::objectConstructorAssign):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234022 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-19  Saam Barati  <sbarati@apple.com>
+
+            Conservatively make Object.assign's fast path do a two phase protocol of loading everything then storing everything to try to prevent a crash
+            https://bugs.webkit.org/show_bug.cgi?id=187836
+            <rdar://problem/42409527>
+
+            Reviewed by Mark Lam.
+
+            We have crash reports that we're crashing on source->getDirect in Object.assign's
+            fast path. Mark investigated this and determined we end up with a nullptr for
+            butterfly. This is curious, because source's Structure indicated that it has
+            out of line properties. My leading hypothesis for this at the moment is a bit
+            handwavy, but it's essentially:
+            - We end up firing a watchpoint when assigning to the target (this can happen
+            if a watchpoint was set up for storing to that particular field)
+            - When we fire that watchpoint, we end up doing some kind work on the source,
+            perhaps causing it to flattenDictionaryStructure. Therefore, we end up
+            mutating source.
+
+            I'm not super convinced this is what we're running into, but just by reading
+            the code, I think it needs to be something similar to this. Seeing if this change
+            fixes the crasher will give us good data to determine if something like this is
+            happening or if the bug is something else entirely.
+
+            * runtime/ObjectConstructor.cpp:
+            (JSC::objectConstructorAssign):
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233893. rdar://problem/42345044
+
+    CodeBlock::baselineVersion() should account for executables with purged codeBlocks.
+    https://bugs.webkit.org/show_bug.cgi?id=187736
+    <rdar://problem/42114371>
+    
+    Reviewed by Michael Saboff.
+    
+    CodeBlock::baselineVersion() currently checks for a null replacement but does not
+    account for the fact that that the replacement can also be null due to the
+    executable having being purged of its codeBlocks due to a memory event (see
+    ExecutableBase::clearCode()).  This patch adds code to account for this.
+    
+    * bytecode/CodeBlock.cpp:
+    (JSC::CodeBlock::baselineVersion):
+    
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233893 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-17  Mark Lam  <mark.lam@apple.com>
+
+            CodeBlock::baselineVersion() should account for executables with purged codeBlocks.
+            https://bugs.webkit.org/show_bug.cgi?id=187736
+            <rdar://problem/42114371>
+
+            Reviewed by Michael Saboff.
+
+            CodeBlock::baselineVersion() currently checks for a null replacement but does not
+            account for the fact that that the replacement can also be null due to the
+            executable having being purged of its codeBlocks due to a memory event (see
+            ExecutableBase::clearCode()).  This patch adds code to account for this.
+
+            * bytecode/CodeBlock.cpp:
+            (JSC::CodeBlock::baselineVersion):
+
 2018-07-15  Carlos Garcia Campos  <cgarcia@igalia.com>
 
         [GLIB] Add API to evaluate code using a given object to store global symbols

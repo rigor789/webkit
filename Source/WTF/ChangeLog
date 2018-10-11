@@ -1,3 +1,282 @@
+2018-08-02  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234528. rdar://problem/42883788
+
+    Source/JavaScriptCore:
+    Reading instructionPointer from PlatformRegisters may fail when using pointer profiling
+    https://bugs.webkit.org/show_bug.cgi?id=188271
+    <rdar://problem/42850884>
+    
+    Reviewed by Michael Saboff.
+    
+    This patch defends against the instructionPointer containing garbage bits.
+    See radar for details.
+    
+    * runtime/MachineContext.h:
+    (JSC::MachineContext::instructionPointer):
+    * runtime/SamplingProfiler.cpp:
+    (JSC::SamplingProfiler::takeSample):
+    * runtime/VMTraps.cpp:
+    (JSC::SignalContext::SignalContext):
+    (JSC::SignalContext::tryCreate):
+    * tools/CodeProfiling.cpp:
+    (JSC::profilingTimer):
+    * tools/SigillCrashAnalyzer.cpp:
+    (JSC::SignalContext::SignalContext):
+    (JSC::SignalContext::tryCreate):
+    (JSC::SignalContext::dump):
+    (JSC::installCrashHandler):
+    * wasm/WasmFaultSignalHandler.cpp:
+    (JSC::Wasm::trapHandler):
+    
+    Source/WTF:
+    Reading instructionPointer from PlatformRegisters may fail when using pointer tagging
+    https://bugs.webkit.org/show_bug.cgi?id=188271
+    <rdar://problem/42850884>
+    
+    Reviewed by Michael Saboff.
+    
+    * wtf/PtrTag.h:
+    (WTF::isTaggedWith):
+    (WTF::usesPointerTagging):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234528 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-08-02  Saam Barati  <sbarati@apple.com>
+
+            Reading instructionPointer from PlatformRegisters may fail when using pointer tagging
+            https://bugs.webkit.org/show_bug.cgi?id=188271
+            <rdar://problem/42850884>
+
+            Reviewed by Michael Saboff.
+
+            * wtf/PtrTag.h:
+            (WTF::isTaggedWith):
+            (WTF::usesPointerTagging):
+
+2018-07-29  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234330. rdar://problem/42721217
+
+    Be more conservative with compositing layer creation when memory is low
+    https://bugs.webkit.org/show_bug.cgi?id=187866
+    rdar://problem/42366345
+    
+    Reviewed by Zalan Bujtas.
+    
+    Source/WebCore:
+    
+    When process physical footprint is above a fraction of the jetsam limit, be more conservative in making
+    compositing layers. We avoid compositing for these situations:
+    1. Layers with 3D transforms which are affine (like translateZ(0)).
+    2. Layers with will-change
+    3. Layers for canvases (other than WebGL/WebGPU)
+    
+    We reuse some macOS code in MemoryPressureHandler() but choose different thresholds for iOS,
+    falling into "conservative mode" at 50% of jetsam limit, and "strict mode" at 65%.
+    Compositing chooses to be more conservative in either "conservative" or "strict" memory modes.
+    
+    Plumb through a "compositingPolicyOverride" both so that on-device testing isn't
+    flakily falling into a different mode, and so that we can impose the conservative
+    mode for testing.
+    
+    Test: compositing/layer-creation/compositing-policy.html
+    
+    * page/Page.h:
+    (WebCore::Page::compositingPolicyOverride const):
+    (WebCore::Page::setCompositingPolicyOverride):
+    * platform/graphics/transforms/Matrix3DTransformOperation.cpp:
+    (WebCore::Matrix3DTransformOperation::isRepresentableIn2D const):
+    * platform/graphics/transforms/Matrix3DTransformOperation.h:
+    * platform/graphics/transforms/PerspectiveTransformOperation.h:
+    * platform/graphics/transforms/RotateTransformOperation.h:
+    * platform/graphics/transforms/ScaleTransformOperation.h:
+    * platform/graphics/transforms/TransformOperation.h:
+    (WebCore::TransformOperation::isRepresentableIn2D const):
+    * platform/graphics/transforms/TransformOperations.h:
+    (WebCore::TransformOperations::has3DOperation const):
+    (WebCore::TransformOperations::isRepresentableIn2D const):
+    * platform/graphics/transforms/TranslateTransformOperation.h:
+    * rendering/RenderLayerBacking.cpp:
+    (WebCore::RenderLayerBacking::updateGeometry):
+    * rendering/RenderLayerCompositor.cpp:
+    (WebCore::RenderLayerCompositor::cacheAcceleratedCompositingFlags):
+    (WebCore::RenderLayerCompositor::updateCompositingPolicy):
+    (WebCore::RenderLayerCompositor::updateCompositingLayers):
+    (WebCore::RenderLayerCompositor::requiresCompositingForTransform const):
+    (WebCore::RenderLayerCompositor::requiresCompositingForVideo const):
+    (WebCore::RenderLayerCompositor::requiresCompositingForCanvas const):
+    (WebCore::RenderLayerCompositor::requiresCompositingForPlugin const):
+    (WebCore::RenderLayerCompositor::requiresCompositingForWillChange const):
+    (WebCore::RenderLayerCompositor::needsFixedRootBackgroundLayer const):
+    (WebCore::operator<<):
+    * rendering/RenderLayerCompositor.h:
+    * testing/Internals.cpp:
+    (WebCore::Internals::setCompositingPolicyOverride):
+    (WebCore::Internals::compositingPolicyOverride const):
+    * testing/Internals.h:
+    * testing/Internals.idl:
+    
+    Source/WebKit:
+    
+    When process physical footprint is above a fraction of the jetsam limit, be more conservative in making
+    compositing layers. We avoid compositing for these situations:
+    1. Layers with 3D transforms which are affine (like translateZ(0)).
+    2. Layers with will-change
+    3. Layers for canvases (other than WebGL/WebGPU)
+    
+    We reuse some macOS code in MemoryPressureHandler() but choose different thresholds for iOS,
+    falling into "conservative mode" at 50% of jetsam limit, and "strict mode" at 65%.
+    Compositing chooses to be more conservative in either "conservative" or "strict" memory modes.
+    
+    Plumb through a "compositingPolicyOverride" both so that on-device testing isn't
+    flakily falling into a different mode, and so that we can impose the conservative
+    mode for testing.
+    
+    * WebProcess/InjectedBundle/API/c/WKBundlePage.cpp:
+    (WKBundlePageSetCompositingPolicyOverride):
+    * WebProcess/InjectedBundle/API/c/WKBundlePagePrivate.h:
+    
+    Source/WTF:
+    
+    When process physical footprint is above a fraction of the jetsam limit, be more conservative in making
+    compositing layers. We avoid compositing for these situations:
+    1. Layers with 3D transforms which are affine (like translateZ(0)).
+    2. Layers with will-change
+    3. Layers for canvases (other than WebGL/WebGPU)
+    
+    We reuse some macOS code in MemoryPressureHandler() but choose different thresholds for iOS,
+    falling into "conservative mode" at 50% of jetsam limit, and "strict mode" at 65%.
+    Compositing chooses to be more conservative in either "conservative" or "strict" memory modes.
+    
+    Plumb through a "compositingPolicyOverride" both so that on-device testing isn't
+    flakily falling into a different mode, and so that we can impose the conservative
+    mode for testing.
+    
+    * wtf/MemoryPressureHandler.cpp:
+    (WTF::thresholdForPolicy):
+    (WTF::MemoryPressureHandler::currentMemoryUsagePolicy):
+    * wtf/MemoryPressureHandler.h:
+    
+    Tools:
+    
+    When process physical footprint is above a fraction of the jetsam limit, be more conservative in making
+    compositing layers. We avoid compositing for these situations:
+    1. Layers with 3D transforms which are affine (like translateZ(0)).
+    2. Layers with will-change
+    3. Layers for canvases (other than WebGL/WebGPU)
+    
+    We reuse some macOS code in MemoryPressureHandler() but choose different thresholds for iOS,
+    falling into "conservative mode" at 50% of jetsam limit, and "strict mode" at 65%.
+    Compositing chooses to be more conservative in either "conservative" or "strict" memory modes.
+    
+    Plumb through a "compositingPolicyOverride" both so that on-device testing isn't
+    flakily falling into a different mode, and so that we can impose the conservative
+    mode for testing.
+    
+    * WebKitTestRunner/InjectedBundle/InjectedBundlePage.cpp:
+    (WTR::InjectedBundlePage::prepare):
+    
+    LayoutTests:
+    
+    * compositing/layer-creation/compositing-policy-expected.txt: Added.
+    * compositing/layer-creation/compositing-policy.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234330 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-27  Simon Fraser  <simon.fraser@apple.com>
+
+            Be more conservative with compositing layer creation when memory is low
+            https://bugs.webkit.org/show_bug.cgi?id=187866
+            rdar://problem/42366345
+
+            Reviewed by Zalan Bujtas.
+
+            When process physical footprint is above a fraction of the jetsam limit, be more conservative in making
+            compositing layers. We avoid compositing for these situations:
+            1. Layers with 3D transforms which are affine (like translateZ(0)).
+            2. Layers with will-change
+            3. Layers for canvases (other than WebGL/WebGPU)
+
+            We reuse some macOS code in MemoryPressureHandler() but choose different thresholds for iOS,
+            falling into "conservative mode" at 50% of jetsam limit, and "strict mode" at 65%.
+            Compositing chooses to be more conservative in either "conservative" or "strict" memory modes.
+
+            Plumb through a "compositingPolicyOverride" both so that on-device testing isn't
+            flakily falling into a different mode, and so that we can impose the conservative
+            mode for testing.
+
+            * wtf/MemoryPressureHandler.cpp:
+            (WTF::thresholdForPolicy):
+            (WTF::MemoryPressureHandler::currentMemoryUsagePolicy):
+            * wtf/MemoryPressureHandler.h:
+
+2018-07-26  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234272. rdar://problem/42645434
+
+    Unreviewed, rolling out r234181 and r234189.
+    https://bugs.webkit.org/show_bug.cgi?id=188075
+    
+    These are not needed right now (Requested by thorton on
+    #webkit).
+    
+    Reverted changesets:
+    
+    "Enable Web Content Filtering on watchOS"
+    https://bugs.webkit.org/show_bug.cgi?id=187979
+    https://trac.webkit.org/changeset/234181
+    
+    "HAVE(PARENTAL_CONTROLS) should be true on watchOS"
+    https://bugs.webkit.org/show_bug.cgi?id=187985
+    https://trac.webkit.org/changeset/234189
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234272 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-26  Commit Queue  <commit-queue@webkit.org>
+
+            Unreviewed, rolling out r234181 and r234189.
+            https://bugs.webkit.org/show_bug.cgi?id=188075
+
+            These are not needed right now (Requested by thorton on
+            #webkit).
+
+            Reverted changesets:
+
+            "Enable Web Content Filtering on watchOS"
+            https://bugs.webkit.org/show_bug.cgi?id=187979
+            https://trac.webkit.org/changeset/234181
+
+            "HAVE(PARENTAL_CONTROLS) should be true on watchOS"
+            https://bugs.webkit.org/show_bug.cgi?id=187985
+            https://trac.webkit.org/changeset/234189
+
+2018-07-25  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234189. rdar://problem/42604524
+
+    HAVE(PARENTAL_CONTROLS) should be true on watchOS
+    https://bugs.webkit.org/show_bug.cgi?id=187985
+    <rdar://problem/42559346>
+    
+    Reviewed by Andy Estes.
+    
+    * wtf/Platform.h:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234189 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-24  Tim Horton  <timothy_horton@apple.com>
+
+            HAVE(PARENTAL_CONTROLS) should be true on watchOS
+            https://bugs.webkit.org/show_bug.cgi?id=187985
+            <rdar://problem/42559346>
+
+            Reviewed by Andy Estes.
+
+            * wtf/Platform.h:
+
 2018-07-14  Kocsen Chung  <kocsen_chung@apple.com>
 
         Ensure WebKit stack is ad-hoc signed

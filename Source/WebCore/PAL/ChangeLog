@@ -1,3 +1,456 @@
+2018-07-30  Babak Shafiei  <bshafiei@apple.com>
+
+        Revert r233926. rdar://problem/42354941
+
+2018-07-26  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233926. rdar://problem/42354941
+
+    PiP from Element Fullscreen should match AVKit's behavior
+    https://bugs.webkit.org/show_bug.cgi?id=187623
+    Source/WebCore:
+    
+    Reviewed by Jon Lee.
+    
+    PiP behavior should be defined at the WebKit2 level, and not in HTMLMediaElement:
+    
+    * html/HTMLMediaElement.cpp:
+    (WebCore::HTMLMediaElement::enterFullscreen):
+    
+    Add an accessor for pictureInPictureWasStartedWhenEnteringBackground():
+    
+    * platform/cocoa/VideoFullscreenModelVideoElement.mm:
+    (VideoFullscreenInterfaceAVKit::pictureInPictureWasStartedWhenEnteringBackground const):
+    
+    Add VideoFullscreenModelClient virutal methods for PiP change notifications:
+    
+    * platform/cocoa/VideoFullscreenModel.h:
+    (WebCore::VideoFullscreenModelClient::hasVideoChanged):
+    (WebCore::VideoFullscreenModelClient::videoDimensionsChanged):
+    (WebCore::VideoFullscreenModelClient::willEnterPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::didEnterPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::failedToEnterPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::willExitPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::didExitPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::failedToExitPictureInPicture):
+    * platform/cocoa/VideoFullscreenModelVideoElement.h:
+    * platform/cocoa/VideoFullscreenModelVideoElement.mm:
+    (VideoFullscreenModelVideoElement::willEnterPictureInPicture):
+    (VideoFullscreenModelVideoElement::didEnterPictureInPicture):
+    (VideoFullscreenModelVideoElement::failedToEnterPictureInPicture):
+    (VideoFullscreenModelVideoElement::willExitPictureInPicture):
+    (VideoFullscreenModelVideoElement::didExitPictureInPicture):
+    (VideoFullscreenModelVideoElement::failedToExitPictureInPicture):
+    * platform/ios/VideoFullscreenInterfaceAVKit.h:
+    * platform/ios/VideoFullscreenInterfaceAVKit.mm:
+    (-[WebAVPlayerLayer layoutSublayers]):
+    (-[WebAVPlayerLayer resolveBounds]):
+    (-[WebAVPlayerLayer setVideoGravity:]):
+    (VideoFullscreenInterfaceAVKit::setupFullscreen):
+    (VideoFullscreenInterfaceAVKit::presentingViewController):
+    (VideoFullscreenInterfaceAVKit::willStartPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::didStartPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::failedToStartPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::willStopPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::didStopPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::shouldExitFullscreenWithReason):
+    (VideoFullscreenInterfaceAVKit::doSetup):
+    * platform/ios/WebVideoFullscreenControllerAVKit.mm:
+    (VideoFullscreenControllerContext::willEnterPictureInPicture):
+    (VideoFullscreenControllerContext::didEnterPictureInPicture):
+    (VideoFullscreenControllerContext::failedToEnterPictureInPicture):
+    (VideoFullscreenControllerContext::willExitPictureInPicture):
+    (VideoFullscreenControllerContext::didExitPictureInPicture):
+    (VideoFullscreenControllerContext::failedToExitPictureInPicture):
+    * platform/mac/VideoFullscreenInterfaceMac.h:
+    (WebCore::VideoFullscreenInterfaceMac::requestHideAndExitFullscreen): Deleted.
+    * platform/mac/VideoFullscreenInterfaceMac.mm:
+    (-[WebVideoFullscreenInterfaceMacObjC invalidateFullscreenState]):
+    (-[WebVideoFullscreenInterfaceMacObjC exitPIP]):
+    (-[WebVideoFullscreenInterfaceMacObjC exitPIPAnimatingToRect:inWindow:]):
+    (-[WebVideoFullscreenInterfaceMacObjC pipShouldClose:]):
+    (-[WebVideoFullscreenInterfaceMacObjC pipDidClose:]):
+    (WebCore::VideoFullscreenInterfaceMac::enterFullscreen):
+    (WebCore::VideoFullscreenInterfaceMac::exitFullscreen):
+    (WebCore::VideoFullscreenInterfaceMac::exitFullscreenWithoutAnimationToMode):
+    (WebCore::VideoFullscreenInterfaceMac::requestHideAndExitFullscreen):
+    
+    Source/WebCore/PAL:
+    
+    Reviewed by Jon Lee.
+    
+    * pal/spi/mac/PIPSPI.h:
+    
+    Source/WebKit:
+    
+    Reviewed by Jon Lee.
+    
+    * UIProcess/Cocoa/PlaybackSessionManagerProxy.h:
+    (WebKit::PlaybackSessionManagerProxy::controlsManagerContextId const):
+    * UIProcess/Cocoa/VideoFullscreenManagerProxy.h:
+    * UIProcess/Cocoa/VideoFullscreenManagerProxy.mm:
+    (WebKit::VideoFullscreenModelContext::willEnterPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::didEnterPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::failedToEnterPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::willExitPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::didExitPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::failedToExitPictureInPicture):
+    (WebKit::VideoFullscreenManagerProxy::controlsManagerInterface):
+    * UIProcess/ios/fullscreen/WKFullScreenViewController.mm:
+    (WKFullScreenViewControllerVideoFullscreenModelClient::setParent):
+    (WKFullScreenViewControllerVideoFullscreenModelClient::setInterface):
+    (WKFullScreenViewControllerVideoFullscreenModelClient::interface const):
+    (-[WKFullScreenViewController initWithWebView:]):
+    (-[WKFullScreenViewController dealloc]):
+    (-[WKFullScreenViewController videoControlsManagerDidChange]):
+    (-[WKFullScreenViewController ensurePiPAnimator]):
+    (-[WKFullScreenViewController willEnterPictureInPicture]):
+    (-[WKFullScreenViewController didEnterPictureInPicture]):
+    (-[WKFullScreenViewController failedToEnterPictureInPicture]):
+    (-[WKFullScreenViewController loadView]):
+    (-[WKFullScreenViewController viewWillAppear:]):
+    * UIProcess/Cocoa/WebViewImpl.mm:
+    (WebKit::WebViewImpl::videoControlsManagerDidChange):
+    * UIProcess/mac/WKFullScreenWindowController.h:
+    * UIProcess/mac/WKFullScreenWindowController.mm:
+    (WebKit::WKFullScreenWindowControllerVideoFullscreenModelClient::setParent):
+    (WebKit::WKFullScreenWindowControllerVideoFullscreenModelClient::setInterface):
+    (WebKit::WKFullScreenWindowControllerVideoFullscreenModelClient::interface const):
+    (-[WKFullScreenWindowController initWithWindow:webView:page:]):
+    (-[WKFullScreenWindowController dealloc]):
+    (-[WKFullScreenWindowController videoControlsManagerDidChange]):
+    (-[WKFullScreenWindowController willEnterPictureInPicture]):
+    
+    Tools:
+    
+    <rdar://problem/41212379>
+    
+    Reviewed by Jon Lee.
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/ExitFullscreenOnEnterPiP.html: Added.
+    * TestWebKitAPI/Tests/WebKitCocoa/ExitFullscreenOnEnterPiP.mm: Added.
+    (-[ExitFullscreenOnEnterPiPUIDelegate _webView:hasVideoInPictureInPictureDidChange:]):
+    (-[ExitFullscreenOnEnterPiPUIDelegate _webViewDidEnterFullscreen:]):
+    (-[ExitFullscreenOnEnterPiPUIDelegate _webViewDidExitFullscreen:]):
+    (TestWebKitAPI::TEST):
+    
+    LayoutTests:
+    
+    Reviewed by Jon Lee.
+    
+    * TestExpectations:
+    * media/fullscreen-video-going-into-pip-expected.txt: Removed.
+    * media/fullscreen-video-going-into-pip.html: Removed.
+    * media/video-contained-in-fullscreen-element-going-into-pip-expected.txt: Removed.
+    * media/video-contained-in-fullscreen-element-going-into-pip.html: Removed.
+    * platform/mac-wk2/TestExpectations:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233926 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-18  Jer Noble  <jer.noble@apple.com>
+
+            PiP from Element Fullscreen should match AVKit's behavior
+            https://bugs.webkit.org/show_bug.cgi?id=187623
+
+            Reviewed by Jon Lee.
+
+            * pal/spi/mac/PIPSPI.h:
+
+2018-07-26  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234272. rdar://problem/42645434
+
+    Unreviewed, rolling out r234181 and r234189.
+    https://bugs.webkit.org/show_bug.cgi?id=188075
+    
+    These are not needed right now (Requested by thorton on
+    #webkit).
+    
+    Reverted changesets:
+    
+    "Enable Web Content Filtering on watchOS"
+    https://bugs.webkit.org/show_bug.cgi?id=187979
+    https://trac.webkit.org/changeset/234181
+    
+    "HAVE(PARENTAL_CONTROLS) should be true on watchOS"
+    https://bugs.webkit.org/show_bug.cgi?id=187985
+    https://trac.webkit.org/changeset/234189
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234272 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-26  Commit Queue  <commit-queue@webkit.org>
+
+            Unreviewed, rolling out r234181 and r234189.
+            https://bugs.webkit.org/show_bug.cgi?id=188075
+
+            These are not needed right now (Requested by thorton on
+            #webkit).
+
+            Reverted changesets:
+
+            "Enable Web Content Filtering on watchOS"
+            https://bugs.webkit.org/show_bug.cgi?id=187979
+            https://trac.webkit.org/changeset/234181
+
+            "HAVE(PARENTAL_CONTROLS) should be true on watchOS"
+            https://bugs.webkit.org/show_bug.cgi?id=187985
+            https://trac.webkit.org/changeset/234189
+
+2018-07-25  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234181. rdar://problem/42604524
+
+    Enable Web Content Filtering on watchOS
+    https://bugs.webkit.org/show_bug.cgi?id=187979
+    <rdar://problem/42559346>
+    
+    Reviewed by Wenson Hsieh.
+    
+    Source/JavaScriptCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore/PAL:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKit:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKitLegacy/mac:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Tools:
+    
+    * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234181 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-24  Tim Horton  <timothy_horton@apple.com>
+
+            Enable Web Content Filtering on watchOS
+            https://bugs.webkit.org/show_bug.cgi?id=187979
+            <rdar://problem/42559346>
+
+            Reviewed by Wenson Hsieh.
+
+            * Configurations/FeatureDefines.xcconfig:
+
+2018-07-20  Babak Shafiei  <bshafiei@apple.com>
+
+        Revert r233926. rdar://problem/42446531
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233932. rdar://problem/42353789
+
+    The WebContent process does not suspend when MiniBrowser is minimized.
+    https://bugs.webkit.org/show_bug.cgi?id=187708
+    
+    Reviewed by Chris Dumez.
+    
+    Source/WebCore/PAL:
+    
+    Add function for enabling App nap.
+    
+    * pal/spi/cf/CFUtilitiesSPI.h:
+    
+    Source/WebKit:
+    
+    Using the NSRunLoop runloop type prevents the WebContent process from suspending. Instead, use the new
+    _WebKit runloop type. Also do not leak a boost to the WebContent process, since this also prevents the
+    WebContent process from going to sleep. Calling SetApplicationIsDaemon prevents the WebContent process
+    from being assigned the application process priority level. To block WindowServer connections, call
+    CGSSetDenyWindowServerConnections(true) instead. Finally, App nap must be manually enabled, since the
+    WebContent process is no longer a NSApplication.
+    
+    * Configurations/WebContentService.xcconfig:
+    * UIProcess/Launcher/mac/ProcessLauncherMac.mm:
+    (WebKit::shouldLeakBoost):
+    * WebProcess/WebPage/WebPage.cpp:
+    (WebKit::WebPage::updateThrottleState):
+    * WebProcess/cocoa/WebProcessCocoa.mm:
+    (WebKit::WebProcess::platformInitializeProcess):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233932 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-18  Per Arne Vollan  <pvollan@apple.com>
+
+            The WebContent process does not suspend when MiniBrowser is minimized.
+            https://bugs.webkit.org/show_bug.cgi?id=187708
+
+            Reviewed by Chris Dumez.
+
+            Add function for enabling App nap.
+
+            * pal/spi/cf/CFUtilitiesSPI.h:
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233926. rdar://problem/42354941
+
+    PiP from Element Fullscreen should match AVKit's behavior
+    https://bugs.webkit.org/show_bug.cgi?id=187623
+    Source/WebCore:
+    
+    Reviewed by Jon Lee.
+    
+    PiP behavior should be defined at the WebKit2 level, and not in HTMLMediaElement:
+    
+    * html/HTMLMediaElement.cpp:
+    (WebCore::HTMLMediaElement::enterFullscreen):
+    
+    Add an accessor for pictureInPictureWasStartedWhenEnteringBackground():
+    
+    * platform/cocoa/VideoFullscreenModelVideoElement.mm:
+    (VideoFullscreenInterfaceAVKit::pictureInPictureWasStartedWhenEnteringBackground const):
+    
+    Add VideoFullscreenModelClient virutal methods for PiP change notifications:
+    
+    * platform/cocoa/VideoFullscreenModel.h:
+    (WebCore::VideoFullscreenModelClient::hasVideoChanged):
+    (WebCore::VideoFullscreenModelClient::videoDimensionsChanged):
+    (WebCore::VideoFullscreenModelClient::willEnterPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::didEnterPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::failedToEnterPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::willExitPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::didExitPictureInPicture):
+    (WebCore::VideoFullscreenModelClient::failedToExitPictureInPicture):
+    * platform/cocoa/VideoFullscreenModelVideoElement.h:
+    * platform/cocoa/VideoFullscreenModelVideoElement.mm:
+    (VideoFullscreenModelVideoElement::willEnterPictureInPicture):
+    (VideoFullscreenModelVideoElement::didEnterPictureInPicture):
+    (VideoFullscreenModelVideoElement::failedToEnterPictureInPicture):
+    (VideoFullscreenModelVideoElement::willExitPictureInPicture):
+    (VideoFullscreenModelVideoElement::didExitPictureInPicture):
+    (VideoFullscreenModelVideoElement::failedToExitPictureInPicture):
+    * platform/ios/VideoFullscreenInterfaceAVKit.h:
+    * platform/ios/VideoFullscreenInterfaceAVKit.mm:
+    (-[WebAVPlayerLayer layoutSublayers]):
+    (-[WebAVPlayerLayer resolveBounds]):
+    (-[WebAVPlayerLayer setVideoGravity:]):
+    (VideoFullscreenInterfaceAVKit::setupFullscreen):
+    (VideoFullscreenInterfaceAVKit::presentingViewController):
+    (VideoFullscreenInterfaceAVKit::willStartPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::didStartPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::failedToStartPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::willStopPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::didStopPictureInPicture):
+    (VideoFullscreenInterfaceAVKit::shouldExitFullscreenWithReason):
+    (VideoFullscreenInterfaceAVKit::doSetup):
+    * platform/ios/WebVideoFullscreenControllerAVKit.mm:
+    (VideoFullscreenControllerContext::willEnterPictureInPicture):
+    (VideoFullscreenControllerContext::didEnterPictureInPicture):
+    (VideoFullscreenControllerContext::failedToEnterPictureInPicture):
+    (VideoFullscreenControllerContext::willExitPictureInPicture):
+    (VideoFullscreenControllerContext::didExitPictureInPicture):
+    (VideoFullscreenControllerContext::failedToExitPictureInPicture):
+    * platform/mac/VideoFullscreenInterfaceMac.h:
+    (WebCore::VideoFullscreenInterfaceMac::requestHideAndExitFullscreen): Deleted.
+    * platform/mac/VideoFullscreenInterfaceMac.mm:
+    (-[WebVideoFullscreenInterfaceMacObjC invalidateFullscreenState]):
+    (-[WebVideoFullscreenInterfaceMacObjC exitPIP]):
+    (-[WebVideoFullscreenInterfaceMacObjC exitPIPAnimatingToRect:inWindow:]):
+    (-[WebVideoFullscreenInterfaceMacObjC pipShouldClose:]):
+    (-[WebVideoFullscreenInterfaceMacObjC pipDidClose:]):
+    (WebCore::VideoFullscreenInterfaceMac::enterFullscreen):
+    (WebCore::VideoFullscreenInterfaceMac::exitFullscreen):
+    (WebCore::VideoFullscreenInterfaceMac::exitFullscreenWithoutAnimationToMode):
+    (WebCore::VideoFullscreenInterfaceMac::requestHideAndExitFullscreen):
+    
+    Source/WebCore/PAL:
+    
+    Reviewed by Jon Lee.
+    
+    * pal/spi/mac/PIPSPI.h:
+    
+    Source/WebKit:
+    
+    Reviewed by Jon Lee.
+    
+    * UIProcess/Cocoa/PlaybackSessionManagerProxy.h:
+    (WebKit::PlaybackSessionManagerProxy::controlsManagerContextId const):
+    * UIProcess/Cocoa/VideoFullscreenManagerProxy.h:
+    * UIProcess/Cocoa/VideoFullscreenManagerProxy.mm:
+    (WebKit::VideoFullscreenModelContext::willEnterPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::didEnterPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::failedToEnterPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::willExitPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::didExitPictureInPicture):
+    (WebKit::VideoFullscreenModelContext::failedToExitPictureInPicture):
+    (WebKit::VideoFullscreenManagerProxy::controlsManagerInterface):
+    * UIProcess/ios/fullscreen/WKFullScreenViewController.mm:
+    (WKFullScreenViewControllerVideoFullscreenModelClient::setParent):
+    (WKFullScreenViewControllerVideoFullscreenModelClient::setInterface):
+    (WKFullScreenViewControllerVideoFullscreenModelClient::interface const):
+    (-[WKFullScreenViewController initWithWebView:]):
+    (-[WKFullScreenViewController dealloc]):
+    (-[WKFullScreenViewController videoControlsManagerDidChange]):
+    (-[WKFullScreenViewController ensurePiPAnimator]):
+    (-[WKFullScreenViewController willEnterPictureInPicture]):
+    (-[WKFullScreenViewController didEnterPictureInPicture]):
+    (-[WKFullScreenViewController failedToEnterPictureInPicture]):
+    (-[WKFullScreenViewController loadView]):
+    (-[WKFullScreenViewController viewWillAppear:]):
+    * UIProcess/Cocoa/WebViewImpl.mm:
+    (WebKit::WebViewImpl::videoControlsManagerDidChange):
+    * UIProcess/mac/WKFullScreenWindowController.h:
+    * UIProcess/mac/WKFullScreenWindowController.mm:
+    (WebKit::WKFullScreenWindowControllerVideoFullscreenModelClient::setParent):
+    (WebKit::WKFullScreenWindowControllerVideoFullscreenModelClient::setInterface):
+    (WebKit::WKFullScreenWindowControllerVideoFullscreenModelClient::interface const):
+    (-[WKFullScreenWindowController initWithWindow:webView:page:]):
+    (-[WKFullScreenWindowController dealloc]):
+    (-[WKFullScreenWindowController videoControlsManagerDidChange]):
+    (-[WKFullScreenWindowController willEnterPictureInPicture]):
+    
+    Tools:
+    
+    <rdar://problem/41212379>
+    
+    Reviewed by Jon Lee.
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/ExitFullscreenOnEnterPiP.html: Added.
+    * TestWebKitAPI/Tests/WebKitCocoa/ExitFullscreenOnEnterPiP.mm: Added.
+    (-[ExitFullscreenOnEnterPiPUIDelegate _webView:hasVideoInPictureInPictureDidChange:]):
+    (-[ExitFullscreenOnEnterPiPUIDelegate _webViewDidEnterFullscreen:]):
+    (-[ExitFullscreenOnEnterPiPUIDelegate _webViewDidExitFullscreen:]):
+    (TestWebKitAPI::TEST):
+    
+    LayoutTests:
+    
+    Reviewed by Jon Lee.
+    
+    * TestExpectations:
+    * media/fullscreen-video-going-into-pip-expected.txt: Removed.
+    * media/fullscreen-video-going-into-pip.html: Removed.
+    * media/video-contained-in-fullscreen-element-going-into-pip-expected.txt: Removed.
+    * media/video-contained-in-fullscreen-element-going-into-pip.html: Removed.
+    * platform/mac-wk2/TestExpectations:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233926 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-18  Jer Noble  <jer.noble@apple.com>
+
+            PiP from Element Fullscreen should match AVKit's behavior
+            https://bugs.webkit.org/show_bug.cgi?id=187623
+
+            Reviewed by Jon Lee.
+
+            * pal/spi/mac/PIPSPI.h:
+
 2018-07-14  Kocsen Chung  <kocsen_chung@apple.com>
 
         Ensure WebKit stack is ad-hoc signed

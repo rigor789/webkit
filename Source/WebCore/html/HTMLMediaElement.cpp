@@ -678,6 +678,7 @@ HTMLMediaElement::~HTMLMediaElement()
 #endif
 
     m_seekTaskQueue.close();
+    m_resumeTaskQueue.close();
     m_promiseTaskQueue.close();
     m_pauseAfterDetachedTaskQueue.close();
     m_playbackControlsManagerBehaviorRestrictionsQueue.close();
@@ -1298,9 +1299,6 @@ void HTMLMediaElement::prepareForLoad()
     m_loadState = WaitingForSource;
     m_currentSourceNode = nullptr;
 
-    if (!document().hasBrowsingContext())
-        return;
-
     createMediaPlayer();
 
     // 2 - Let pending tasks be a list of all tasks from the media element's media element event task source in one of the task queues.
@@ -1417,6 +1415,7 @@ void HTMLMediaElement::selectMediaResource()
     // playlist that starts in a foreground tab to continue automatically if the tab is subsequently
     // put into the background.
     m_mediaSession->removeBehaviorRestriction(MediaElementSession::RequirePageConsentToLoadMedia);
+
 
     m_resourceSelectionTaskQueue.enqueueTask([this]  {
         // 5. If the media element’s blocked-on-parser flag is false, then populate the list of pending text tracks.
@@ -2894,7 +2893,7 @@ bool HTMLMediaElement::supportsScanning() const
 void HTMLMediaElement::prepareToPlay()
 {
     INFO_LOG(LOGIDENTIFIER);
-    if (m_havePreparedToPlay || !document().hasBrowsingContext())
+    if (m_havePreparedToPlay)
         return;
     m_havePreparedToPlay = true;
     if (m_player)
@@ -3489,11 +3488,6 @@ void HTMLMediaElement::playInternal()
         return;
     }
 
-    if (!document().hasBrowsingContext()) {
-        INFO_LOG(LOGIDENTIFIER, "  returning because there is no browsing context");
-        return;
-    }
-
     if (!m_mediaSession->clientWillBeginPlayback()) {
         ALWAYS_LOG(LOGIDENTIFIER, "  returning because of interruption");
         return;
@@ -3582,11 +3576,6 @@ void HTMLMediaElement::pauseInternal()
 
     if (isSuspended()) {
         ALWAYS_LOG(LOGIDENTIFIER, "  returning because context is suspended");
-        return;
-    }
-
-    if (!document().hasBrowsingContext()) {
-        INFO_LOG(LOGIDENTIFIER, "  returning because there is no browsing context");
         return;
     }
 
@@ -4652,11 +4641,6 @@ void HTMLMediaElement::sourceWasAdded(HTMLSourceElement& source)
         INFO_LOG(LOGIDENTIFIER, "'src' is ", url);
     }
 
-    if (!document().hasBrowsingContext()) {
-        INFO_LOG(LOGIDENTIFIER, "<source> inserted inside a document without a browsing context is not loaded");
-        return;
-    }
-
     // We should only consider a <source> element when there is not src attribute at all.
     if (hasAttributeWithoutSynchronization(srcAttr))
         return;
@@ -5583,6 +5567,7 @@ void HTMLMediaElement::stopWithoutDestroyingMediaPlayer()
 void HTMLMediaElement::contextDestroyed()
 {
     m_seekTaskQueue.close();
+    m_resumeTaskQueue.close();
     m_shadowDOMTaskQueue.close();
     m_promiseTaskQueue.close();
     m_pauseAfterDetachedTaskQueue.close();
@@ -5605,6 +5590,7 @@ void HTMLMediaElement::stop()
     m_asyncEventQueue.close();
     m_promiseTaskQueue.close();
     m_resourceSelectionTaskQueue.close();
+    m_resumeTaskQueue.cancelAllTasks();
 
     // Once an active DOM object has been stopped it can not be restarted, so we can deallocate
     // the media player now. Note that userCancelledLoad will already called clearMediaPlayer
@@ -5619,6 +5605,8 @@ void HTMLMediaElement::suspend(ReasonForSuspension reason)
 {
     INFO_LOG(LOGIDENTIFIER);
     Ref<HTMLMediaElement> protectedThis(*this);
+
+    m_resumeTaskQueue.cancelAllTasks();
 
     switch (reason) {
     case ReasonForSuspension::PageCache:
@@ -5662,13 +5650,13 @@ void HTMLMediaElement::resume()
 
     m_mediaSession->removeBehaviorRestriction(MediaElementSession::RequirePageConsentToResumeMedia);
 
-    if (m_error && m_error->code() == MediaError::MEDIA_ERR_ABORTED) {
+    if (m_error && m_error->code() == MediaError::MEDIA_ERR_ABORTED && !m_resumeTaskQueue.hasPendingTasks()) {
         // Restart the load if it was aborted in the middle by moving the document to the page cache.
         // m_error is only left at MEDIA_ERR_ABORTED when the document becomes inactive (it is set to
         //  MEDIA_ERR_ABORTED while the abortEvent is being sent, but cleared immediately afterwards).
         // This behavior is not specified but it seems like a sensible thing to do.
         // As it is not safe to immedately start loading now, let's schedule a load.
-        prepareForLoad();
+        m_resumeTaskQueue.enqueueTask(std::bind(&HTMLMediaElement::prepareForLoad, this));
     }
 
     updateRenderer();
@@ -5910,6 +5898,11 @@ void HTMLMediaElement::enterFullscreen(VideoFullscreenMode mode)
     if (m_videoFullscreenMode == mode)
         return;
 
+    if (!document().page() || !document().page()->chrome().client().isViewVisible()) {
+        ALWAYS_LOG(LOGIDENTIFIER, "  returning because document is hidden");
+        return;
+    }
+
     m_temporarilyAllowingInlinePlaybackAfterFullscreen = false;
     m_waitingToEnterFullscreen = true;
 
@@ -5936,7 +5929,7 @@ void HTMLMediaElement::enterFullscreen(VideoFullscreenMode mode)
     configureMediaControls();
     if (hasMediaControls())
         mediaControls()->enteredFullscreen();
-    if (document().page() && is<HTMLVideoElement>(*this)) {
+    if (is<HTMLVideoElement>(*this)) {
         HTMLVideoElement& asVideo = downcast<HTMLVideoElement>(*this);
         if (document().page()->chrome().client().supportsVideoFullscreen(m_videoFullscreenMode)) {
             document().page()->chrome().client().enterVideoFullscreenForVideoElement(asVideo, m_videoFullscreenMode, m_videoFullscreenStandby);
@@ -5960,7 +5953,9 @@ void HTMLMediaElement::exitFullscreen()
     if (document().settings().fullScreenEnabled() && document().webkitCurrentFullScreenElement() == this) {
         if (document().webkitIsFullScreen())
             document().webkitCancelFullScreen();
-        return;
+
+        if (m_videoFullscreenMode == VideoFullscreenModeStandard)
+            return;
     }
 #endif
 

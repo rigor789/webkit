@@ -74,6 +74,7 @@ static void initializeNetworkSettings()
 void NetworkProcess::platformInitializeNetworkProcessCocoa(const NetworkProcessCreationParameters& parameters)
 {
     WebCore::setApplicationBundleIdentifier(parameters.uiProcessBundleIdentifier);
+    WebCore::setApplicationSDKVersion(parameters.uiProcessSDKVersion);
 
 #if PLATFORM(IOS)
     SandboxExtension::consumePermanently(parameters.cookieStorageDirectoryExtensionHandle);
@@ -95,7 +96,7 @@ void NetworkProcess::platformInitializeNetworkProcessCocoa(const NetworkProcessC
 
     initializeNetworkSettings();
 
-#if PLATFORM(COCOA)
+#if PLATFORM(MAC)
     setSharedHTTPCookieStorage(parameters.uiProcessCookieStorageIdentifier);
 #endif
 
@@ -172,7 +173,7 @@ void NetworkProcess::clearDiskCache(WallTime modifiedSince, Function<void ()>&& 
     }
 }
 
-#if PLATFORM(COCOA)
+#if PLATFORM(MAC)
 void NetworkProcess::setSharedHTTPCookieStorage(const Vector<uint8_t>& identifier)
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies));
@@ -192,20 +193,24 @@ void NetworkProcess::setStorageAccessAPIEnabled(bool enabled)
 
 void NetworkProcess::syncAllCookies()
 {
+    platformSyncAllCookies([this] {
+        didSyncAllCookies();
+    });
+}
+
+void NetworkProcess::platformSyncAllCookies(CompletionHandler<void()>&& completionHander) {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies));
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     
 #if (PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 101400) || (PLATFORM(IOS) && __IPHONE_OS_VERSION_MIN_REQUIRED >= 120000)
-    RefPtr<CallbackAggregator> callbackAggregator = CallbackAggregator::create([this] {
-        didSyncAllCookies();
-    });
+    RefPtr<CallbackAggregator> callbackAggregator = CallbackAggregator::create(WTFMove(completionHander));
     WebCore::NetworkStorageSession::forEach([&] (auto& networkStorageSession) {
         [networkStorageSession.nsCookieStorage() _saveCookies:[callbackAggregator] { }];
     });
 #else
     _CFHTTPCookieStorageFlushCookieStores();
-    didSyncAllCookies();
+    completionHander();
 #endif
 
 #pragma clang diagnostic pop
@@ -221,7 +226,7 @@ void NetworkProcess::platformPrepareToSuspend()
 void NetworkProcess::platformProcessDidResume()
 {
 #if ENABLE(WIFI_ASSERTIONS)
-    resumeWiFiAssertions();
+    resumeWiFiAssertions(ResumptionReason::ProcessResuming);
 #endif
 }
 
@@ -235,7 +240,7 @@ void NetworkProcess::platformProcessDidTransitionToBackground()
 void NetworkProcess::platformProcessDidTransitionToForeground()
 {
 #if ENABLE(WIFI_ASSERTIONS)
-    resumeWiFiAssertions();
+    resumeWiFiAssertions(ResumptionReason::ProcessForegrounding);
 #endif
 }
 

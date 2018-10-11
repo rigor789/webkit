@@ -1,3 +1,128 @@
+2018-07-31  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r234394. rdar://problem/42802129
+
+    Web Inspector: Dark Mode: Search sidebar panel text field has a white background
+    https://bugs.webkit.org/show_bug.cgi?id=188128
+    <rdar://problem/42678270>
+    
+    Reviewed by Matt Baker.
+    
+    Make the search bar in Search tab match the style of the filter bar.
+    
+    * UserInterface/Views/DarkMode.css:
+    (@media (prefers-dark-interface)):
+    (:matches(.search-bar, .filter-bar) > input[type="search"],):
+    (:matches(.search-bar, .filter-bar) > input[type="search"]::placeholder):
+    (:matches(.search-bar, .filter-bar) > input[type="search"]:focus):
+    (.filter-bar > input[type="search"]): Deleted.
+    (.filter-bar > input[type="search"]::placeholder): Deleted.
+    (.filter-bar > input[type="search"]:focus): Deleted.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@234394 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-30  Nikita Vasilyev  <nvasilyev@apple.com>
+
+            Web Inspector: Dark Mode: Search sidebar panel text field has a white background
+            https://bugs.webkit.org/show_bug.cgi?id=188128
+            <rdar://problem/42678270>
+
+            Reviewed by Matt Baker.
+
+            Make the search bar in Search tab match the style of the filter bar.
+
+            * UserInterface/Views/DarkMode.css:
+            (@media (prefers-dark-interface)):
+            (:matches(.search-bar, .filter-bar) > input[type="search"],):
+            (:matches(.search-bar, .filter-bar) > input[type="search"]::placeholder):
+            (:matches(.search-bar, .filter-bar) > input[type="search"]:focus):
+            (.filter-bar > input[type="search"]): Deleted.
+            (.filter-bar > input[type="search"]::placeholder): Deleted.
+            (.filter-bar > input[type="search"]:focus): Deleted.
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233920. rdar://problem/42349819
+
+    Web Inspector: REGRESSION(r232591): CodeMirrorEditor should not use a RegExp lineSeparator option
+    https://bugs.webkit.org/show_bug.cgi?id=187772
+    <rdar://problem/42331640>
+    
+    Reviewed by Joseph Pecoraro.
+    
+    * UserInterface/Views/CodeMirrorEditor.js:
+    (WI.CodeMirrorEditor.create):
+    (WI.CodeMirrorEditor):
+    CodeMirror should be left to auto-detect line separators. By default
+    it detects \n, \r\n, and \r. By specifying a regular expression we
+    merely cause problems when CodeMirror uses the supplied lineSeparator
+    when joining its array of lines together.
+    
+    * UserInterface/Views/TextEditor.js:
+    (WI.TextEditor.set string.update):
+    (WI.TextEditor.prototype.set string):
+    This assertion was only true when we forced "\n" line endings everywhere.
+    It no longer holds for source text with "\r\n" (Windows-style) line endings.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233920 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-18  Matt Baker  <mattbaker@apple.com>
+
+            Web Inspector: REGRESSION(r232591): CodeMirrorEditor should not use a RegExp lineSeparator option
+            https://bugs.webkit.org/show_bug.cgi?id=187772
+            <rdar://problem/42331640>
+
+            Reviewed by Joseph Pecoraro.
+
+            * UserInterface/Views/CodeMirrorEditor.js:
+            (WI.CodeMirrorEditor.create):
+            (WI.CodeMirrorEditor):
+            CodeMirror should be left to auto-detect line separators. By default
+            it detects \n, \r\n, and \r. By specifying a regular expression we
+            merely cause problems when CodeMirror uses the supplied lineSeparator
+            when joining its array of lines together.
+
+            * UserInterface/Views/TextEditor.js:
+            (WI.TextEditor.set string.update):
+            (WI.TextEditor.prototype.set string):
+            This assertion was only true when we forced "\n" line endings everywhere.
+            It no longer holds for source text with "\r\n" (Windows-style) line endings.
+
+2018-07-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r233861. rdar://problem/42345123
+
+    Web Inspector: Fix execution highlighting after r233820
+    https://bugs.webkit.org/show_bug.cgi?id=187703
+    <rdar://problem/42246167>
+    
+    Reviewed by Joseph Pecoraro.
+    
+    * UserInterface/Views/SourceCodeTextEditor.js:
+    (WI.SourceCodeTextEditor.prototype.textEditorExecutionHighlightRange):
+    * UserInterface/Views/TextEditor.js:
+    (WI.TextEditor.prototype.currentPositionToOriginalPosition):
+    (WI.TextEditor.prototype._updateExecutionRangeHighlight):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@233861 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2018-07-16  Matt Baker  <mattbaker@apple.com>
+
+            Web Inspector: Fix execution highlighting after r233820
+            https://bugs.webkit.org/show_bug.cgi?id=187703
+            <rdar://problem/42246167>
+
+            Reviewed by Joseph Pecoraro.
+
+            * UserInterface/Views/SourceCodeTextEditor.js:
+            (WI.SourceCodeTextEditor.prototype.textEditorExecutionHighlightRange):
+            * UserInterface/Views/TextEditor.js:
+            (WI.TextEditor.prototype.currentPositionToOriginalPosition):
+            (WI.TextEditor.prototype._updateExecutionRangeHighlight):
+
 2018-07-16  Nikita Vasilyev  <nvasilyev@apple.com>
 
         Web Inspector: Dark Mode: Console filter field buttons should be darker

@@ -320,6 +320,9 @@ webkit.org/b/156069 http/tests/download/anchor-download-no-value.html [ Skip ]
 webkit.org/b/156069 imported/w3c/web-platform-tests/html/semantics/text-level-semantics/the-a-element/a-download-click.html [ Skip ]
 webkit.org/b/156069 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-area-element/area-download-click.html [ Skip ]
 
+# Not supported on WK1
+media/no-fullscreen-when-hidden.html [ Skip ]
+
 webkit.org/b/169523 [ Debug ] imported/w3c/web-platform-tests/html/dom/interfaces.worker.html [ Failure ]
 
 imported/w3c/web-platform-tests/html/browsers/history/the-history-interface/history_go_no_argument.html [ Pass Failure ]
@@ -581,4 +584,25 @@ webkit.org/b/187557 [ Debug ] media/media-fragments/TC0089.html [ Pass Failure ]
 webkit.org/b/187557 [ Debug ] media/media-fragments/TC0090.html [ Pass Failure ]
 webkit.org/b/187557 [ Debug ] media/media-fragments/TC0091.html [ Pass Failure ]
 
+# <rdar://problem/42625657>
+[ Mojave+ ] fast/images/animated-gif-paint-after-animation.html [ Skip ]
+[ Mojave+ ] fast/images/async-image-background-image-repeated.html [ Skip ]
+[ Mojave+ ] fast/images/async-image-background-image.html [ Skip ]
+[ Mojave+ ] fast/images/async-image-multiple-clients-repaint.html [ Skip ]
+[ Mojave+ ] fast/images/composited-animated-gif-outside-viewport.html [ Skip ]
+[ Mojave+ ] fast/images/decode-render-animated-image.html [ Skip ]
+[ Mojave+ ] fast/images/decode-render-static-image.html [ Skip ]
+[ Mojave+ ] fast/images/decoding-attribute-async-small-image.html [ Skip ]
+[ Mojave+ ] fast/images/decoding-attribute-dynamic-async-small-image.html [ Skip ]
+[ Mojave+ ] fast/images/sprite-sheet-image-draw.html [ Skip ]
 
+# <rdar://problem/42627562>
+[ Mojave+ ] media/video-restricted-invisible-autoplay-not-allowed-source.html [ Skip ]
+[ Mojave+ ] media/video-restricted-invisible-autoplay-not-allowed.html [ Skip ]
+
+# <rdar://problem/42736213>
+[ Mojave+ ] displaylists/canvas-display-list.html [ Failure ]
+[ Mojave+ ] displaylists/extent-includes-shadow.html [ Failure ]
+[ Mojave+ ] displaylists/extent-includes-transforms.html [ Failure ]
+[ Mojave+ ] displaylists/layer-dispay-list.html [ Failure ]
+[ Mojave+ ] displaylists/replay-skip-clipped-rect.html [ Failure ]

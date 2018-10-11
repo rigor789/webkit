@@ -34,20 +34,25 @@
 #include "ScriptExecutionContext.h"
 #include "TrackEvent.h"
 
-namespace WebCore {
+using namespace WebCore;
 
 TrackListBase::TrackListBase(HTMLMediaElement* element, ScriptExecutionContext* context)
-    : ActiveDOMObject(context)
+    : ContextDestructionObserver(context)
     , m_element(element)
     , m_asyncEventQueue(*this)
 {
-    ASSERT(!context || is<Document>(context));
-    suspendIfNeeded();
+    ASSERT(is<Document>(context));
 }
 
 TrackListBase::~TrackListBase()
 {
     clearElement();
+}
+
+void TrackListBase::contextDestroyed()
+{
+    ContextDestructionObserver::contextDestroyed();
+    m_asyncEventQueue.close();
 }
 
 void TrackListBase::clearElement()
@@ -174,36 +179,5 @@ bool TrackListBase::isAnyTrackEnabled() const
     }
     return false;
 }
-
-bool TrackListBase::canSuspendForDocumentSuspension() const
-{
-    return !m_asyncEventQueue.hasPendingEvents();
-}
-
-void TrackListBase::suspend(ReasonForSuspension reason)
-{
-    switch (reason) {
-    case ReasonForSuspension::PageCache:
-    case ReasonForSuspension::PageWillBeSuspended:
-        m_asyncEventQueue.suspend();
-        break;
-    case ReasonForSuspension::JavaScriptDebuggerPaused:
-    case ReasonForSuspension::WillDeferLoading:
-        // Do nothing, we don't pause media playback in these cases.
-        break;
-    }
-}
-
-void TrackListBase::resume()
-{
-    m_asyncEventQueue.resume();
-}
-
-void TrackListBase::stop()
-{
-    m_asyncEventQueue.close();
-}
-
-} // namespace WebCore
 
 #endif

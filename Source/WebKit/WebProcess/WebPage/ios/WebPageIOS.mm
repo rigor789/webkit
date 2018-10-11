@@ -2465,7 +2465,7 @@ void WebPage::getAssistedNodeInformation(AssistedNodeInformation& information)
 
 void WebPage::autofillLoginCredentials(const String& username, const String& password)
 {
-    if (is<HTMLInputElement>(*m_assistedNode)) {
+    if (is<HTMLInputElement>(m_assistedNode.get())) {
         if (auto autofillElements = AutofillElements::computeAutofillElements(downcast<HTMLInputElement>(*m_assistedNode)))
             autofillElements->autofill(username, password);
     }
@@ -2788,7 +2788,8 @@ void WebPage::applicationDidEnterBackground(bool isSuspendedUnderLock)
     m_isSuspendedUnderLock = isSuspendedUnderLock;
     setLayerTreeStateIsFrozen(true);
 
-    m_page->applicationDidEnterBackground();
+    if (m_page)
+        m_page->applicationDidEnterBackground();
 }
 
 void WebPage::applicationDidFinishSnapshottingAfterEnteringBackground()
@@ -2804,13 +2805,15 @@ void WebPage::applicationWillEnterForeground(bool isSuspendedUnderLock)
 
     [[NSNotificationCenter defaultCenter] postNotificationName:WebUIApplicationWillEnterForegroundNotification object:nil userInfo:@{@"isSuspendedUnderLock": @(isSuspendedUnderLock)}];
 
-    m_page->applicationWillEnterForeground();
+    if (m_page)
+        m_page->applicationWillEnterForeground();
 }
 
 void WebPage::applicationDidBecomeActive()
 {
     [[NSNotificationCenter defaultCenter] postNotificationName:WebUIApplicationDidBecomeActiveNotification object:nil];
-    m_page->applicationDidBecomeActive();
+    if (m_page)
+        m_page->applicationDidBecomeActive();
 }
 
 static inline void adjustVelocityDataForBoundedScale(double& horizontalVelocity, double& verticalVelocity, double& scaleChangeRate, double exposedRectScale, double minimumScale, double maximumScale)

@@ -2686,6 +2686,10 @@ void Document::implicitOpen()
 
     cancelParsing();
     m_parser = createParser();
+
+    if (hasActiveParserYieldToken())
+        m_parser->didBeginYieldingParser();
+
     setParsing(true);
     setReadyState(Loading);
 }
@@ -5189,6 +5193,11 @@ void Document::popCurrentScript()
     m_currentScriptStack.removeLast();
 }
 
+bool Document::shouldDeferAsynchronousScriptsUntilParsingFinishes() const
+{
+    return parsing() && settings().shouldDeferAsynchronousScriptsUntilAfterDocumentLoad();
+}
+
 #if ENABLE(XSLT)
 
 void Document::scheduleToApplyXSLTransforms()
@@ -5425,6 +5434,8 @@ void Document::finishedParsing()
 
     Ref<Document> protectedThis(*this);
 
+    scriptRunner()->documentFinishedParsing();
+
     if (!m_documentTiming.domContentLoadedEventStart)
         m_documentTiming.domContentLoadedEventStart = MonotonicTime::now();
 
@@ -5658,7 +5669,7 @@ void Document::initContentSecurityPolicy()
     if (parentFrame)
         contentSecurityPolicy()->copyUpgradeInsecureRequestStateFrom(*parentFrame->document()->contentSecurityPolicy());
 
-    // 2. Inherit Content Security Policy
+    // 2. Inherit Content Security Policy (without copying Upgrade Insecure Requests state).
     if (!shouldInheritContentSecurityPolicyFromOwner())
         return;
     Frame* ownerFrame = parentFrame;
@@ -5666,7 +5677,12 @@ void Document::initContentSecurityPolicy()
         ownerFrame = m_frame->loader().opener();
     if (!ownerFrame)
         return;
-    contentSecurityPolicy()->copyStateFrom(ownerFrame->document()->contentSecurityPolicy()); // Does not copy Upgrade Insecure Requests state.
+    // FIXME: The CSP 3 spec. implies that only plugin documents delivered with a local scheme (e.g. blob, file, data)
+    // should inherit a policy.
+    if (isPluginDocument() && m_frame->loader().opener())
+        contentSecurityPolicy()->createPolicyForPluginDocumentFrom(*ownerFrame->document()->contentSecurityPolicy());
+    else
+        contentSecurityPolicy()->copyStateFrom(ownerFrame->document()->contentSecurityPolicy());
 }
 
 bool Document::isContextThread() const
@@ -6018,6 +6034,10 @@ void Document::requestFullScreenForElement(Element* element, FullScreenCheckType
         // 1. If any of the following conditions are true, terminate these steps and queue a task to fire
         // an event named fullscreenerror with its bubbles attribute set to true on the context object's 
         // node document:
+
+        // Don't allow fullscreen if document is hidden.
+        if (!page() || !page()->chrome().client().isViewVisible())
+            break;
 
         // The context object is not in a document.
         if (!element->isConnected())
@@ -6895,6 +6915,31 @@ void Document::decrementActiveParserCount()
     // but it seems to cause http/tests/security/feed-urls-from-remote.html
     // to timeout on Mac WK1; see http://webkit.org/b/110554 and http://webkit.org/b/110401.
     frame()->loader().checkLoadComplete();
+}
+
+DocumentParserYieldToken::DocumentParserYieldToken(Document& document)
+    : m_document(makeWeakPtr(document))
+{
+    if (++document.m_parserYieldTokenCount != 1)
+        return;
+
+    document.scriptRunner()->didBeginYieldingParser();
+    if (auto* parser = document.parser())
+        parser->didBeginYieldingParser();
+}
+
+DocumentParserYieldToken::~DocumentParserYieldToken()
+{
+    if (!m_document)
+        return;
+
+    ASSERT(m_document->m_parserYieldTokenCount);
+    if (--m_document->m_parserYieldTokenCount)
+        return;
+
+    m_document->scriptRunner()->didEndYieldingParser();
+    if (auto* parser = m_document->parser())
+        parser->didEndYieldingParser();
 }
 
 static RenderElement* nearestCommonHoverAncestor(RenderElement* obj1, RenderElement* obj2)

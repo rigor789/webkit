@@ -118,6 +118,8 @@
 #include "LegacyTileCache.h"
 #endif
 
+#define RELEASE_LOG_IF_ALLOWED(fmt, ...) RELEASE_LOG_IF(frame().page() && frame().page()->isAlwaysOnLoggingAllowed(), Layout, "%p - FrameView::" fmt, this, ##__VA_ARGS__)
+
 namespace WebCore {
 
 using namespace HTMLNames;
@@ -1386,8 +1388,6 @@ void FrameView::adjustMediaTypeForPrinting(bool printing)
             setMediaType(m_mediaTypeWhenNotPrinting);
         m_mediaTypeWhenNotPrinting = String();
     }
-
-    RenderTheme::singleton().platformColorsDidChange();
 }
 
 bool FrameView::useSlowRepaints(bool considerOverlap) const
@@ -3869,7 +3869,7 @@ void FrameView::updateScrollCorner()
 
 void FrameView::paintScrollCorner(GraphicsContext& context, const IntRect& cornerRect)
 {
-    if (context.updatingControlTints()) {
+    if (context.invalidatingControlTints()) {
         updateScrollCorner();
         return;
     }
@@ -4006,18 +4006,18 @@ void FrameView::updateControlTints()
 
     RenderView* renderView = this->renderView();
     if ((renderView && renderView->theme().supportsControlTints()) || hasCustomScrollbars())
-        paintControlTints();
+        invalidateControlTints();
 
     if (page)
         page->setIsCountingRelevantRepaintedObjects(isCurrentlyCountingRelevantRepaintedObject);
 }
 
-void FrameView::paintControlTints()
+void FrameView::traverseForPaintInvalidation(GraphicsContext::PaintInvalidationReasons paintInvalidationReasons)
 {
     if (needsLayout())
         layoutContext().layout();
 
-    GraphicsContext context(GraphicsContext::NonPaintingReasons::UpdatingControlTints);
+    GraphicsContext context(paintInvalidationReasons);
     if (platformWidget()) {
         // FIXME: consult paintsEntireContents().
         paintContents(context, visibleContentRect(LegacyIOSDocumentVisibleRect));
@@ -4140,8 +4140,10 @@ void FrameView::paintContents(GraphicsContext& context, const IntRect& dirtyRect
         return;
 
     ASSERT(!needsLayout());
-    if (needsLayout())
+    if (needsLayout()) {
+        RELEASE_LOG_IF_ALLOWED("FrameView::paintContents() - not painting because render tree needs layout (is main frame %d)", frame().isMainFrame());
         return;
+    }
 
     PaintingState paintingState;
     willPaintContents(context, dirtyRect, paintingState);
@@ -4486,7 +4488,7 @@ void FrameView::adjustPageHeightDeprecated(float *newBottom, float oldTop, float
 
     }
     // Use a context with painting disabled.
-    GraphicsContext context(GraphicsContext::NonPaintingReasons::NoReasons);
+    GraphicsContext context(GraphicsContext::PaintInvalidationReasons::None);
     renderView->setTruncatedAt(static_cast<int>(floorf(oldBottom)));
     IntRect dirtyRect(0, static_cast<int>(floorf(oldTop)), renderView->layoutOverflowRect().maxX(), static_cast<int>(ceilf(oldBottom - oldTop)));
     renderView->setPrintRect(dirtyRect);
