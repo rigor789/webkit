@@ -32,9 +32,9 @@
 
 #include "InjectedBundle.h"
 #include "InjectedBundlePage.h"
-#include "NotImplemented.h"
 #include <JavaScriptCore/JSStringRef.h>
 #include <JavaScriptCore/OpaqueJSString.h>
+#include <WebCore/NotImplemented.h>
 #if ATK_CHECK_VERSION(2,11,90)
 #include <WebKit/WKBundleFrame.h>
 #endif
@@ -61,11 +61,6 @@ enum RangeLimit {
 enum AtkAttributeType {
     ObjectAttributeType,
     TextAttributeType
-};
-
-enum AttributeDomain {
-    CoreDomain = 0,
-    AtkDomain
 };
 
 enum AttributesIndex {
@@ -96,30 +91,39 @@ enum AttributesIndex {
 };
 
 // Attribute names & Values (keep on sync with enum AttributesIndex).
-const String attributesMap[][2] = {
-    // Attribute names.
-    { "AXInvalid", "invalid" },
-    { "AXARIAColumnCount", "colcount" },
-    { "AXARIAColumnIndex", "colindex" },
-    { "AXARIAColumnSpan", "colspan" },
-    { "AXARIARowCount", "rowcount" },
-    { "AXARIARowIndex", "rowindex" },
-    { "AXARIARowSpan", "rowspan" },
-    { "AXARIAPosInSet", "posinset" },
-    { "AXARIASetSize", "setsize" },
-    { "AXPlaceholderValue", "placeholder-text" } ,
-    { "AXSortDirection", "sort" },
-    { "AXARIACurrent", "current" },
-    { "AXARIALive", "live" },
-    { "AXARIAAtomic", "atomic" },
-    { "AXARIARelevant", "relevant" },
-    { "AXElementBusy", "busy" },
-
-    // Attribute values.
-    { "AXAscendingSortDirection", "ascending" },
-    { "AXDescendingSortDirection", "descending" },
-    { "AXUnknownSortDirection", "unknown" }
+struct Attribute {
+    String coreDomain;
+    String atkDomain;
 };
+using Attributes = std::array<Attribute, NumberOfAttributes>;
+static const Attributes& attributesMap()
+{
+    static NeverDestroyed<Attributes> attributes = Attributes({
+        // Attribute names.
+        Attribute { "AXInvalid", "invalid" },
+        Attribute { "AXARIAColumnCount", "colcount" },
+        Attribute { "AXARIAColumnIndex", "colindex" },
+        Attribute { "AXARIAColumnSpan", "colspan" },
+        Attribute { "AXARIARowCount", "rowcount" },
+        Attribute { "AXARIARowIndex", "rowindex" },
+        Attribute { "AXARIARowSpan", "rowspan" },
+        Attribute { "AXARIAPosInSet", "posinset" },
+        Attribute { "AXARIASetSize", "setsize" },
+        Attribute { "AXPlaceholderValue", "placeholder-text" } ,
+        Attribute { "AXSortDirection", "sort" },
+        Attribute { "AXARIACurrent", "current" },
+        Attribute { "AXARIALive", "live" },
+        Attribute { "AXARIAAtomic", "atomic" },
+        Attribute { "AXARIARelevant", "relevant" },
+        Attribute { "AXElementBusy", "busy" },
+
+        // Attribute values.
+        Attribute { "AXAscendingSortDirection", "ascending" },
+        Attribute { "AXDescendingSortDirection", "descending" },
+        Attribute { "AXUnknownSortDirection", "unknown" },
+    });
+    return attributes.get();
+}
 
 #if ATK_CHECK_VERSION(2, 11, 3)
 const char* landmarkStringBanner = "AXLandmarkBanner";
@@ -145,8 +149,8 @@ String coreAttributeToAtkAttribute(JSStringRef attribute)
 {
     String attributeString = jsStringToWTFString(attribute);
     for (int i = 0; i < NumberOfAttributes; ++i) {
-        if (attributesMap[i][CoreDomain] == attributeString)
-            return attributesMap[i][AtkDomain];
+        if (attributesMap()[i].coreDomain == attributeString)
+            return attributesMap()[i].atkDomain;
     }
 
     return attributeString;
@@ -156,23 +160,23 @@ String atkAttributeValueToCoreAttributeValue(AtkAttributeType type, const String
 {
     if (type == ObjectAttributeType) {
         // We don't expose the "current" attribute if there is no author-provided value.
-        if (id == attributesMap[CurrentNameIndex][AtkDomain] && value.isEmpty())
+        if (id == attributesMap()[CurrentNameIndex].atkDomain && value.isEmpty())
             return "false";
 
         // We need to translate ATK values exposed for 'aria-sort' (e.g. 'ascending')
         // into those expected by the layout tests (e.g. 'AXAscendingSortDirection').
-        if (id == attributesMap[SortNameIndex][AtkDomain] && !value.isEmpty()) {
-            if (value == attributesMap[SortAscendingValueIndex][AtkDomain])
-                return attributesMap[SortAscendingValueIndex][CoreDomain];
-            if (value == attributesMap[SortDescendingValueIndex][AtkDomain])
-                return attributesMap[SortDescendingValueIndex][CoreDomain];
+        if (id == attributesMap()[SortNameIndex].atkDomain && !value.isEmpty()) {
+            if (value == attributesMap()[SortAscendingValueIndex].atkDomain)
+                return attributesMap()[SortAscendingValueIndex].coreDomain;
+            if (value == attributesMap()[SortDescendingValueIndex].atkDomain)
+                return attributesMap()[SortDescendingValueIndex].coreDomain;
 
-            return attributesMap[SortUnknownValueIndex][CoreDomain];
+            return attributesMap()[SortUnknownValueIndex].coreDomain;
         }
     } else if (type == TextAttributeType) {
         // In case of 'aria-invalid' when the attribute empty or has "false" for ATK
         // it should not be mapped at all, but layout tests will expect 'false'.
-        if (id == attributesMap[InvalidNameIndex][AtkDomain] && value.isEmpty())
+        if (id == attributesMap()[InvalidNameIndex].atkDomain && value.isEmpty())
             return "false";
     }
 
@@ -1094,7 +1098,7 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::stringAttributeValue(JSStringRe
 
     // Additional check to make sure that the exposure of the state ATK_STATE_INVALID_ENTRY
     // is consistent with the exposure of aria-invalid as a text attribute, if present.
-    if (atkAttributeName == attributesMap[InvalidNameIndex][AtkDomain]) {
+    if (atkAttributeName == attributesMap()[InvalidNameIndex].atkDomain) {
         bool isInvalidState = checkElementState(m_element.get(), ATK_STATE_INVALID_ENTRY);
         if (attributeValue.isEmpty())
             return JSStringCreateWithUTF8CString(isInvalidState ? "true" : "false");
@@ -1688,7 +1692,7 @@ int AccessibilityUIElement::hierarchicalLevel() const
     return 0;
 }
 
-JSRetainPtr<JSStringRef> AccessibilityUIElement::speak()
+JSRetainPtr<JSStringRef> AccessibilityUIElement::speakAs()
 {
     // FIXME: implement
     return JSStringCreateWithCharacters(0, 0);
@@ -1777,7 +1781,6 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::attributedStringForRange(unsign
     builder.append(attributeSetToString(getAttributeSet(m_element.get(), TextAttributeType), "\n\t\t"));
 
     // The attribute run provides attributes specific to the range of text at the specified offset.
-    AtkAttributeSet* attributeSet;
     AtkText* text = ATK_TEXT(m_element.get());
     gint start = 0, end = 0;
     for (unsigned i = location; i < location + length; i = end) {
@@ -1786,8 +1789,6 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::attributedStringForRange(unsign
         builder.append(String::format("\n\tRange attributes for '%s':\n\t\t", substring.get()));
         builder.append(attributeSetToString(attributeSet, "\n\t\t"));
     }
-
-    atk_attribute_set_free(attributeSet);
 
     return JSStringCreateWithUTF8CString(builder.toString().utf8().data());
 }
@@ -2032,6 +2033,9 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::url()
     AtkHyperlink* hyperlink = atk_hyperlink_impl_get_hyperlink(ATK_HYPERLINK_IMPL(m_element.get()));
     GUniquePtr<char> hyperlinkURI(atk_hyperlink_get_uri(hyperlink, 0));
 
+    if (!hyperlinkURI.get())
+        return JSStringCreateWithUTF8CString("AXURL: (null)");
+
     // Build the result string, stripping the absolute URL paths if present.
     char* localURI = g_strstr_len(hyperlinkURI.get(), -1, "LayoutTests");
     String axURL = String::format("AXURL: %s", localURI ? localURI : hyperlinkURI.get());
@@ -2212,6 +2216,16 @@ RefPtr<AccessibilityTextMarker> AccessibilityUIElement::textMarkerForPoint(int x
 RefPtr<AccessibilityUIElement> AccessibilityUIElement::accessibilityElementForTextMarker(AccessibilityTextMarker* marker)
 {
     // FIXME: implement
+    return nullptr;
+}
+
+JSRetainPtr<JSStringRef> AccessibilityUIElement::attributedStringForTextMarkerRange(AccessibilityTextMarkerRange*)
+{
+    return nullptr;
+}
+
+JSRetainPtr<JSStringRef> AccessibilityUIElement::attributedStringForTextMarkerRangeWithOptions(AccessibilityTextMarkerRange*, bool)
+{
     return nullptr;
 }
 

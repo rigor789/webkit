@@ -244,6 +244,7 @@ CREATE TABLE triggerable_repository_groups (
     repositorygroup_name varchar(256) NOT NULL,
     repositorygroup_description varchar(256),
     repositorygroup_accepts_roots boolean NOT NULL DEFAULT FALSE,
+    repositorygroup_hidden boolean NOT NULL DEFAULT FALSE,
     CONSTRAINT repository_group_name_must_be_unique_for_triggerable UNIQUE(repositorygroup_triggerable, repositorygroup_name));
 
 CREATE TABLE triggerable_repositories (
@@ -278,6 +279,8 @@ CREATE TABLE analysis_test_groups (
     testgroup_author varchar(256),
     testgroup_created_at timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
     testgroup_hidden boolean NOT NULL DEFAULT FALSE,
+    testgroup_needs_notification boolean NOT NULL DEFAULT FALSE,
+    testgroup_notification_sent_at timestamp DEFAULT NULL,
     CONSTRAINT testgroup_name_must_be_unique_for_each_task UNIQUE(testgroup_task, testgroup_name));
 CREATE INDEX testgroup_task_index ON analysis_test_groups(testgroup_task);
 

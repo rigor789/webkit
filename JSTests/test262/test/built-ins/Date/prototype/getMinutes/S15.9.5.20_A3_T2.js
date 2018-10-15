@@ -3,14 +3,14 @@
 
 /*---
 esid: sec-date.prototype.getminutes
-info: >
+info: |
     The Date.prototype.getMinutes property "length" has { ReadOnly, !
     DontDelete, DontEnum } attributes
 es5id: 15.9.5.20_A3_T2
 description: Checking DontDelete attribute
 ---*/
 
-if (delete Date.prototype.getMinutes.length  !== true) {
+if (delete Date.prototype.getMinutes.length !== true) {
   $ERROR('#1: The Date.prototype.getMinutes.length property does not have the attributes DontDelete');
 }
 

@@ -101,6 +101,8 @@ AccessibilityUIElement::~AccessibilityUIElement()
 - (BOOL)accessibilityIsExpanded;
 - (NSUInteger)accessibilityBlockquoteLevel;
 - (NSArray *)accessibilityFindMatchingObjects:(NSDictionary *)parameters;
+- (NSArray *)accessibilitySpeechHint;
+- (BOOL)_accessibilityIsStrongPasswordField;
 
 // TextMarker related
 - (NSArray *)textMarkerRange;
@@ -357,6 +359,11 @@ void AccessibilityUIElement::decreaseTextSelection()
     [m_element accessibilityModifySelection:WebCore::CharacterGranularity increase:NO];    
 }
 
+JSStringRef AccessibilityUIElement::speakAs()
+{
+    return [[[m_element accessibilitySpeechHint] componentsJoinedByString:@", "] createJSStringRef];
+}
+
 JSStringRef AccessibilityUIElement::stringForSelection() 
 { 
     NSString *stringForRange = [m_element selectionRangeString];
@@ -536,6 +543,16 @@ JSStringRef AccessibilityUIElement::stringForTextMarkerRange(AccessibilityTextMa
     return [[m_element stringForTextMarkers:textMarkers] createJSStringRef];
 }
 
+JSStringRef AccessibilityUIElement::attributedStringForTextMarkerRange(AccessibilityTextMarkerRange*)
+{
+    return nullptr;
+}
+
+JSStringRef AccessibilityUIElement::attributedStringForTextMarkerRangeWithOptions(AccessibilityTextMarkerRange*, bool)
+{
+    return nullptr;
+}
+
 bool AccessibilityUIElement::attributedStringForTextMarkerRangeContainsAttribute(JSStringRef, AccessibilityTextMarkerRange*)
 {
     return false;
@@ -699,6 +716,8 @@ bool AccessibilityUIElement::boolAttributeValue(JSStringRef attribute)
 {
     if (JSStringIsEqualToUTF8CString(attribute, "AXHasTouchEventListener"))
         return [m_element _accessibilityHasTouchEventListener];
+    if (JSStringIsEqualToUTF8CString(attribute, "AXIsStrongPasswordField"))
+        return [m_element _accessibilityIsStrongPasswordField];
     return false;
 }
 

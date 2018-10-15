@@ -6,6 +6,7 @@ esid: sec-atomics.wait
 description: >
   Test Atomics.wait on arrays that allow atomic operations,
   in an Agent that is allowed to wait.
+features: [Atomics]
 ---*/
 
 // Let's assume 'wait' is not allowed on the main thread,
@@ -41,17 +42,19 @@ for ( let IdxGen of good_indices ) {
 
 $262.agent.report("done");
 $262.agent.leaving();
-`)
+`);
 
 assert.sameValue(getReport(), "A timed-out");
 assert.sameValue(getReport(), "B not-equal"); // Even with zero timeout
 var r;
-while ((r = getReport()) != "done")
-    assert.sameValue(r, "C not-equal");
+while ((r = getReport()) != "done") {
+  assert.sameValue(r, "C not-equal");
+}
 
 function getReport() {
-    var r;
-    while ((r = $262.agent.getReport()) == null)
-        $262.agent.sleep(100);
-    return r;
+  var r;
+  while ((r = $262.agent.getReport()) == null) {
+    $262.agent.sleep(100);
+  }
+  return r;
 }

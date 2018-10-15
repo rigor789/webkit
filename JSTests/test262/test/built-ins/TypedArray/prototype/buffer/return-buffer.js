@@ -1,10 +1,10 @@
 // Copyright (C) 2016 the V8 project authors. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
-es6id: 22.2.3.1
-description: |
+esid: sec-get-%typedarray%.prototype.buffer
+description: >
   Return buffer from [[ViewedArrayBuffer]] internal slot
-info: >
+info: |
   22.2.3.1 get %TypedArray%.prototype.buffer
 
   ...

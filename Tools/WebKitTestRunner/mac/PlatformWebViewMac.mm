@@ -138,7 +138,7 @@ PlatformWebView::PlatformWebView(WKWebViewConfiguration* configuration, const Te
         [[NSUserDefaults standardUserDefaults] setValue:@YES forKey:@"WebKit2UseRemoteLayerTreeDrawingArea"];
 
     RetainPtr<WKWebViewConfiguration> copiedConfiguration = adoptNS([configuration copy]);
-    WKPreferencesSetThreadedScrollingEnabled((WKPreferencesRef)[copiedConfiguration preferences], m_options.useThreadedScrolling);
+    WKPreferencesSetThreadedScrollingEnabled((__bridge WKPreferencesRef)[copiedConfiguration preferences], m_options.useThreadedScrolling);
 
     NSRect rect = NSMakeRect(0, 0, TestController::viewWidth, TestController::viewHeight);
     m_view = [[TestRunnerWKWebView alloc] initWithFrame:rect configuration:copiedConfiguration.get()];
@@ -149,6 +149,7 @@ PlatformWebView::PlatformWebView(WKWebViewConfiguration* configuration, const Te
     m_window = [[WebKitTestRunnerWindow alloc] initWithContentRect:windowRect styleMask:NSWindowStyleMaskBorderless backing:(NSBackingStoreType)_NSBackingStoreUnbuffered defer:YES];
     m_window.platformWebView = this;
     [m_window setColorSpace:[firstScreen colorSpace]];
+    [m_window setAppearance:[NSAppearance appearanceNamed:NSAppearanceNameAqua]];
     [m_window setCollectionBehavior:NSWindowCollectionBehaviorStationary];
     [[m_window contentView] addSubview:m_view];
     if (m_options.shouldShowWebView)
@@ -269,6 +270,24 @@ void PlatformWebView::removeFromWindow()
 void PlatformWebView::makeWebViewFirstResponder()
 {
     [m_window makeFirstResponder:platformView()];
+}
+
+bool PlatformWebView::drawsBackground() const
+{
+#if WK_API_ENABLED
+    return [m_view _drawsBackground];
+#else
+    return false;
+#endif
+}
+
+void PlatformWebView::setDrawsBackground(bool drawsBackground)
+{
+#if WK_API_ENABLED
+    [m_view _setDrawsBackground:drawsBackground];
+#else
+    UNUSED_PARAM(drawsBackground);
+#endif
 }
 
 RetainPtr<CGImageRef> PlatformWebView::windowSnapshotImage()

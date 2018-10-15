@@ -27,11 +27,23 @@ class BuildbotTriggerable {
         this._logger = logger || {log: () => { }, error: () => { }};
     }
 
+    getBuilderNameToIDMap()
+    {
+        return this._buildbotRemote.getJSON("/api/v2/builders").then((content) => {
+            assert(content.builders instanceof Array);
+
+            const builderNameToIDMap = {};
+            for (const builder of content.builders)
+                builderNameToIDMap[builder.name] = builder.builderid;
+
+            return builderNameToIDMap;
+        });
+    }
+
     initSyncers()
     {
-        return new Promise((resolve, reject) => {
-            this._syncers = BuildbotSyncer._loadConfig(this._buildbotRemote, this._config);
-            setTimeout(resolve, 0);
+        return this.getBuilderNameToIDMap().then((builderNameToIDMap) => {
+            this._syncers = BuildbotSyncer._loadConfig(this._buildbotRemote, this._config, builderNameToIDMap);
         });
     }
 

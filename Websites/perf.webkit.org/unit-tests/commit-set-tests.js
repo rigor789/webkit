@@ -2,19 +2,38 @@
 
 const assert = require('assert');
 require('../tools/js/v3-models.js');
+const BrowserPrivilegedAPI = require('../public/v3/privileged-api.js').PrivilegedAPI;
 const MockModels = require('./resources/mock-v3-models.js').MockModels;
 const MockRemoteAPI = require('../unit-tests/resources/mock-remote-api.js').MockRemoteAPI;
 
 function createPatch()
 {
-    return new UploadedFile(453, {'createdAt': new Date('2017-05-01T19:16:53Z'), 'filename': 'patch.dat', 'extension': '.dat', 'author': 'some user',
+    return UploadedFile.ensureSingleton(453, {'createdAt': new Date('2017-05-01T19:16:53Z'), 'filename': 'patch.dat', 'extension': '.dat', 'author': 'some user',
         size: 534637, sha256: '169463c8125e07c577110fe144ecd63942eb9472d438fc0014f474245e5df8a1'});
+}
+
+function createAnotherPatch()
+{
+    return UploadedFile.ensureSingleton(454, {'createdAt': new Date('2017-05-01T19:16:53Z'), 'filename': 'patch.dat', 'extension': '.dat', 'author': 'some user',
+        size: 534611, sha256: '169463c8125e07c577110fe144ecd63942eb9472d438fc0014f474245e5dfaaa'});
 }
 
 function createRoot()
 {
-    return new UploadedFile(456, {'createdAt': new Date('2017-05-01T21:03:27Z'), 'filename': 'root.dat', 'extension': '.dat', 'author': 'some user',
+    return UploadedFile.ensureSingleton(456, {'createdAt': new Date('2017-05-01T21:03:27Z'), 'filename': 'root.dat', 'extension': '.dat', 'author': 'some user',
         size: 16452234, sha256: '03eed7a8494ab8794c44b7d4308e55448fc56f4d6c175809ba968f78f656d58d'});
+}
+
+function createAnotherRoot()
+{
+    return UploadedFile.ensureSingleton(457, {'createdAt': new Date('2017-05-01T21:03:27Z'), 'filename': 'root.dat', 'extension': '.dat', 'author': 'some user',
+        size: 16452111, sha256: '03eed7a8494ab8794c44b7d4308e55448fc56f4d6c175809ba968f78f656dbbb'});
+}
+
+function createSharedRoot()
+{
+    return UploadedFile.ensureSingleton(458, {'createdAt': new Date('2017-05-01T22:03:27Z'), 'filename': 'root.dat', 'extension': '.dat', 'author': 'some user',
+        size: 16452111, sha256: '03eed7a8494ab8794c44b7d4308e55448fc56f4aac175809ba968f78f656dbbb'});
 }
 
 function customCommitSetWithoutOwnedCommit()
@@ -54,7 +73,7 @@ function customCommitSetWithOwnedRepositoryHasSameNameAsNotOwnedRepository()
 
 function ownerCommit()
 {
-    return new CommitLog(5, {
+    return CommitLog.ensureSingleton(5, {
         repository: MockModels.ownerRepository,
         revision: 'owner-commit-0',
         ownsCommits: true,
@@ -64,7 +83,7 @@ function ownerCommit()
 
 function partialOwnerCommit()
 {
-    return new CommitLog(5, {
+    return CommitLog.ensureSingleton(5, {
         repository: MockModels.ownerRepository,
         revision: 'owner-commit-0',
         ownsCommits: null,
@@ -84,7 +103,7 @@ function ownedCommit()
 
 function webkitCommit()
 {
-    return new CommitLog(2017, {
+    return CommitLog.ensureSingleton(2017, {
         repository: MockModels.webkit,
         revision: 'webkit-commit-0',
         ownsCommits: false,
@@ -92,8 +111,296 @@ function webkitCommit()
     });
 }
 
+function anotherWebKitCommit()
+{
+    return CommitLog.ensureSingleton(2018, {
+        repository: MockModels.webkit,
+        revision: 'webkit-commit-1',
+        ownsCommits: false,
+        time: 1456932773000
+    });
+}
+
+function commitWithSVNRevision()
+{
+    return CommitLog.ensureSingleton(2019, {
+        repository: MockModels.webkit,
+        revision: '12345',
+        ownsCommits: false,
+        time: 1456932773000
+    });
+}
+
+function anotherCommitWithSVNRevision()
+{
+    return CommitLog.ensureSingleton(2020, {
+        repository: MockModels.webkit,
+        revision: '45678',
+        ownsCommits: false,
+        time: 1456932773000
+    });
+}
+
+function commitWithGitRevision()
+{
+    return CommitLog.ensureSingleton(2021, {
+        repository: MockModels.webkitGit,
+        revision: '13a0590d34f26fda3953c42ff833132a1a6f6f5a',
+        ownsCommits: false,
+        time: 1456932773000
+    });
+}
+
+function anotherCommitWithGitRevision()
+{
+    return CommitLog.ensureSingleton(2022, {
+        repository: MockModels.webkitGit,
+        revision: '2f8dd3321d4f51c04f4e2019428ce9ffe97f1ef1',
+        ownsCommits: false,
+        time: 1456932773000
+    });
+}
+
+describe('CommitSet', () => {
+    MockRemoteAPI.inject(null, BrowserPrivilegedAPI);
+    MockModels.inject();
+
+    function oneCommitSet()
+    {
+        return CommitSet.ensureSingleton(1, {
+            revisionItems: [{ commit: webkitCommit(), requiresBuild: false }],
+            customRoots: []
+        });
+    }
+
+    function anotherCommitSet()
+    {
+        return CommitSet.ensureSingleton(2, {
+            revisionItems: [{ commit: webkitCommit(), requiresBuild: false }],
+            customRoots: []
+        });
+    }
+
+    function commitSetWithPatch()
+    {
+        return CommitSet.ensureSingleton(3, {
+            revisionItems: [{ commit: webkitCommit(), requiresBuild: false, patch: createPatch() }],
+            customRoots: []
+        });
+    }
+
+    function commitSetWithAnotherPatch()
+    {
+        return CommitSet.ensureSingleton(4, {
+            revisionItems: [{ commit: webkitCommit(), requiresBuild: false, patch: createAnotherPatch() }],
+            customRoots: []
+        });
+    }
+
+    function commitSetWithRoot()
+    {
+        return CommitSet.ensureSingleton(5, {
+            revisionItems: [{ commit: webkitCommit(), requiresBuild: false }],
+            customRoots: [createRoot()]
+        });
+    }
+
+    function anotherCommitSetWithRoot()
+    {
+        return CommitSet.ensureSingleton(6, {
+            revisionItems: [{ commit: webkitCommit(), requiresBuild: false }],
+            customRoots: [createAnotherRoot()]
+        });
+    }
+
+    function commitSetWithTwoRoots()
+    {
+        return CommitSet.ensureSingleton(7, {
+            revisionItems: [{ commit: webkitCommit(), requiresBuild: false }],
+            customRoots: [createRoot(), createSharedRoot()]
+        });
+    }
+
+    function commitSetWithAnotherWebKitCommit()
+    {
+        return CommitSet.ensureSingleton(8, {
+            revisionItems: [{ commit: anotherWebKitCommit(), requiresBuild: false }],
+            customRoots: []
+        });
+    }
+
+    function commitSetWithAnotherCommitPatchAndRoot()
+    {
+        return CommitSet.ensureSingleton(9, {
+            revisionItems: [{ commit: anotherWebKitCommit(), requiresBuild: true, patch: createPatch()}],
+            customRoots: [createRoot(), createSharedRoot()]
+        });
+    }
+
+    function commitSetWithSVNCommit()
+    {
+        return CommitSet.ensureSingleton(10, {
+            revisionItems: [{ commit: commitWithSVNRevision(), requiresBuild: false }],
+            customRoots: []
+        });
+    }
+
+    function anotherCommitSetWithSVNCommit()
+    {
+        return CommitSet.ensureSingleton(11, {
+            revisionItems: [{ commit: anotherCommitWithSVNRevision(), requiresBuild: false }],
+            customRoots: []
+        });
+    }
+
+    function commitSetWithGitCommit()
+    {
+        return CommitSet.ensureSingleton(12, {
+            revisionItems: [{ commit: commitWithGitRevision(), requiresBuild: false }],
+            customRoots: []
+        });
+    }
+
+    function anotherCommitSetWithGitCommit()
+    {
+        return CommitSet.ensureSingleton(13, {
+            revisionItems: [{ commit: anotherCommitWithGitRevision(), requiresBuild: false }],
+            customRoots: []
+        });
+    }
+
+    function commitSetWithTwoCommits()
+    {
+        return CommitSet.ensureSingleton(14, {
+            revisionItems: [{ commit: commitWithGitRevision(), requiresBuild: false }, { commit: commitWithSVNRevision(), requiresBuild: false }],
+            customRoots: []
+        });
+    }
+
+    function anotherCommitSetWithTwoCommits()
+    {
+        return CommitSet.ensureSingleton(15, {
+            revisionItems: [{ commit: anotherCommitWithGitRevision(), requiresBuild: false }, { commit: anotherCommitWithSVNRevision(), requiresBuild: false }],
+            customRoots: []
+        });
+    }
+
+    function oneMeasurementCommitSet()
+    {
+        return MeasurementCommitSet.ensureSingleton(1, [
+            [2017, 11, 'webkit-commit-0', null, 1456932773000]
+        ]);
+    }
+
+    describe('equals', () => {
+        it('should return false if patches for same repository are different', () => {
+            assert(!commitSetWithPatch().equals(commitSetWithAnotherPatch()));
+            assert(!commitSetWithAnotherPatch().equals(commitSetWithPatch()));
+        });
+
+        it('should return false if patch is only specified in one commit set', () => {
+            assert(!oneCommitSet().equals(commitSetWithPatch()));
+            assert(!commitSetWithPatch().equals(oneCommitSet()));
+        });
+
+        it('should return false if roots for same repository are different', () => {
+            assert(!commitSetWithRoot().equals(anotherCommitSetWithRoot()));
+            assert(!anotherCommitSetWithRoot().equals(commitSetWithRoot()));
+        });
+
+        it('should return false if root is only specified in one commit set', () => {
+            assert(!commitSetWithRoot().equals(oneCommitSet()));
+            assert(!oneCommitSet().equals(commitSetWithRoot()));
+        });
+
+        it('should return true when comparing two identical commit set', () => {
+            assert(oneCommitSet().equals(oneCommitSet()));
+            assert(anotherCommitSet().equals(anotherCommitSet()));
+            assert(commitSetWithPatch().equals(commitSetWithPatch()));
+            assert(commitSetWithAnotherPatch().equals(commitSetWithAnotherPatch()));
+            assert(oneMeasurementCommitSet().equals(oneMeasurementCommitSet()));
+            assert(commitSetWithRoot().equals(commitSetWithRoot()));
+            assert(anotherCommitSetWithRoot().equals(anotherCommitSetWithRoot()));
+        });
+
+        it('should be able to compare between CommitSet and MeasurementCommitSet', () => {
+            assert(oneCommitSet().equals(oneMeasurementCommitSet()));
+            assert(oneMeasurementCommitSet().equals(oneCommitSet()));
+        });
+    });
+
+    describe('containsRootOrPatchOrOwnedCommit', () => {
+        it('should return false if commit does not contain root, patch or owned commit', () => {
+            assert.ok(!oneCommitSet().containsRootOrPatchOrOwnedCommit());
+            assert.ok(!anotherCommitSet().containsRootOrPatchOrOwnedCommit());
+            assert.ok(!commitSetWithAnotherWebKitCommit().containsRootOrPatchOrOwnedCommit());
+            assert.ok(!commitSetWithSVNCommit().containsRootOrPatchOrOwnedCommit());
+            assert.ok(!anotherCommitSetWithSVNCommit().containsRootOrPatchOrOwnedCommit());
+            assert.ok(!commitSetWithGitCommit().containsRootOrPatchOrOwnedCommit());
+            assert.ok(!anotherCommitSetWithGitCommit().containsRootOrPatchOrOwnedCommit());
+            assert.ok(!commitSetWithTwoCommits().containsRootOrPatchOrOwnedCommit());
+            assert.ok(!anotherCommitSetWithTwoCommits().containsRootOrPatchOrOwnedCommit());
+            assert.ok(!oneMeasurementCommitSet().containsRootOrPatchOrOwnedCommit());
+        });
+
+        it('should return true if commit contains root, patch or owned commit', () => {
+            assert.ok(commitSetWithPatch().containsRootOrPatchOrOwnedCommit());
+            assert.ok(commitSetWithAnotherPatch().containsRootOrPatchOrOwnedCommit());
+            assert.ok(commitSetWithRoot().containsRootOrPatchOrOwnedCommit());
+            assert.ok(anotherCommitSetWithRoot().containsRootOrPatchOrOwnedCommit());
+            assert.ok(commitSetWithTwoRoots().containsRootOrPatchOrOwnedCommit());
+            assert.ok(commitSetWithAnotherCommitPatchAndRoot().containsRootOrPatchOrOwnedCommit());
+        });
+    });
+
+    describe('hasSameRepositories', () => {
+        it('should return true if two commit sets have same repositories', () => {
+            assert.ok(oneCommitSet().hasSameRepositories(anotherCommitSet()));
+            assert.ok(commitSetWithGitCommit().hasSameRepositories(anotherCommitSetWithGitCommit()));
+            assert.ok(oneCommitSet().hasSameRepositories(oneCommitSet()));
+        });
+
+        it('should return false if two commit sets have differen repositories', () => {
+            assert.ok(!commitSetWithGitCommit().hasSameRepositories(commitSetWithSVNCommit()));
+            assert.ok(!commitSetWithTwoCommits().hasSameRepositories(commitSetWithGitCommit()));
+        });
+    });
+
+    describe('diff',  () => {
+        it('should describe patch difference', () => {
+            assert.equal(CommitSet.diff(commitSetWithPatch(), commitSetWithAnotherPatch()), 'WebKit: patch.dat - patch.dat (2)');
+        });
+
+        it('should describe root difference', () => {
+            assert.equal(CommitSet.diff(commitSetWithRoot(), anotherCommitSetWithRoot()), 'Roots: root.dat - root.dat (2)');
+            assert.equal(CommitSet.diff(commitSetWithRoot(), commitSetWithTwoRoots()), 'Roots: none - root.dat');
+            assert.equal(CommitSet.diff(commitSetWithTwoRoots(), oneCommitSet()), 'Roots: root.dat, root.dat (2) - none');
+        });
+
+        it('should describe commit difference', () => {
+            assert.equal(CommitSet.diff(oneCommitSet(), commitSetWithAnotherWebKitCommit()), 'WebKit: webkit-commit-0 - webkit-commit-1');
+            assert.equal(CommitSet.diff(commitSetWithSVNCommit(), anotherCommitSetWithSVNCommit()), 'WebKit: r12345-r45678');
+            assert.equal(CommitSet.diff(commitSetWithGitCommit(), anotherCommitSetWithGitCommit()), 'WebKit-Git: 13a0590d..2f8dd332');
+            assert.equal(CommitSet.diff(commitSetWithTwoCommits(), anotherCommitSetWithTwoCommits()), 'WebKit: r12345-r45678 WebKit-Git: 13a0590d..2f8dd332');
+        });
+
+        it('should describe commit root and patch difference', () => {
+            assert.equal(CommitSet.diff(oneCommitSet(), commitSetWithAnotherCommitPatchAndRoot()), 'WebKit: webkit-commit-0 with none - webkit-commit-1 with patch.dat Roots: none - root.dat, root.dat (2)');
+        });
+    });
+
+    describe('revisionSetsFromCommitSets', () => {
+        it('should create revision sets from commit sets', () => {
+            assert.deepEqual(CommitSet.revisionSetsFromCommitSets([oneCommitSet(), commitSetWithRoot(), commitSetWithTwoRoots()]),
+                [{'11': { revision: 'webkit-commit-0', ownerRevision: null, patch: null}},
+                    {'11': { revision: 'webkit-commit-0', ownerRevision: null, patch: null}, customRoots: [456]},
+                    {'11': { revision: 'webkit-commit-0', ownerRevision: null, patch: null}, customRoots: [456, 458]}]);
+        });
+    });
+});
+
 describe('IntermediateCommitSet', () => {
-    MockRemoteAPI.inject();
+    MockRemoteAPI.inject(null, BrowserPrivilegedAPI);
     MockModels.inject();
 
     describe('setCommitForRepository', () => {

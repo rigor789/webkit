@@ -10,9 +10,6 @@ if (isset($_COOKIE["scope"])) {
 ?>
 
 if (cookieVal === "script")
-    document.getElementById("result").innerHTML = "PASSED: Script Cookie is set to 'script'";
+    document.getElementById("result1").innerHTML = "PASSED: Script Cookie is set to 'script'";
 else
-    document.getElementById("result").innerHTML = "FAILED: Script Cookie should be 'script', is set to '" + cookieVal + "'";
-
-if (window.testRunner)
-    testRunner.notifyDone();
+    document.getElementById("result1").innerHTML = "FAILED: Script Cookie should be 'script', is set to '" + cookieVal + "'";

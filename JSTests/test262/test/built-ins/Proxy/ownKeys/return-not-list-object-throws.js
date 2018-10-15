@@ -4,7 +4,7 @@
 esid: sec-proxy-object-internal-methods-and-internal-slots-ownpropertykeys
 description: >
     If return is not a list object, throw a TypeError exception
-info: >
+info: |
     [[OwnPropertyKeys]] ( )
 
     7. Let trapResultArray be ? Call(trap, handler, « target »).
@@ -22,11 +22,11 @@ features: [Symbol]
 
 var target = {};
 var p = new Proxy(target, {
-    ownKeys: function() {
-        return undefined;
-    }
+  ownKeys: function() {
+    return undefined;
+  }
 });
 
 assert.throws(TypeError, function() {
-    Object.keys(p);
+  Object.keys(p);
 });

@@ -63,6 +63,7 @@ private:
     void newSession(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void deleteSession(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void status(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
+    void getTimeouts(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void setTimeouts(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void go(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void getCurrentURL(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
@@ -78,6 +79,9 @@ private:
     void switchToParentFrame(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void getWindowRect(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void setWindowRect(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
+    void maximizeWindow(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
+    void minimizeWindow(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
+    void fullscreenWindow(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void findElement(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void findElements(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void findElementFromElement(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
@@ -86,6 +90,7 @@ private:
     void isElementSelected(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void getElementAttribute(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void getElementProperty(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
+    void getElementCSSValue(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void getElementText(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void getElementTagName(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void getElementRect(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
@@ -101,6 +106,8 @@ private:
     void addCookie(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void deleteCookie(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void deleteAllCookies(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
+    void performActions(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
+    void releaseActions(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void dismissAlert(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void acceptAlert(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
     void getAlertText(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
@@ -109,14 +116,16 @@ private:
     void takeElementScreenshot(RefPtr<JSON::Object>&&, Function<void (CommandResult&&)>&&);
 
     static Capabilities platformCapabilities();
-    RefPtr<JSON::Object> processCapabilities(const JSON::Object&, Function<void (CommandResult&&)>&) const;
+    Vector<Capabilities> processCapabilities(const JSON::Object&, Function<void (CommandResult&&)>&) const;
     RefPtr<JSON::Object> validatedCapabilities(const JSON::Object&) const;
     RefPtr<JSON::Object> mergeCapabilities(const JSON::Object&, const JSON::Object&) const;
-    RefPtr<JSON::Object> matchCapabilities(const JSON::Object&, std::optional<String>&) const;
+    RefPtr<JSON::Object> matchCapabilities(const JSON::Object&) const;
     bool platformValidateCapability(const String&, const RefPtr<JSON::Value>&) const;
-    std::optional<String> platformMatchCapability(const String&, const RefPtr<JSON::Value>&) const;
+    bool platformMatchCapability(const String&, const RefPtr<JSON::Value>&) const;
     void parseCapabilities(const JSON::Object& desiredCapabilities, Capabilities&) const;
     void platformParseCapabilities(const JSON::Object& desiredCapabilities, Capabilities&) const;
+    void connectToBrowser(Vector<Capabilities>&&, Function<void (CommandResult&&)>&&);
+    void createSession(Vector<Capabilities>&&, std::unique_ptr<SessionHost>&&, Function<void (CommandResult&&)>&&);
     bool findSessionOrCompleteWithError(JSON::Object&, Function<void (CommandResult&&)>&);
 
     void handleRequest(HTTPRequestHandler::Request&&, Function<void (HTTPRequestHandler::Response&&)>&& replyHandler) override;

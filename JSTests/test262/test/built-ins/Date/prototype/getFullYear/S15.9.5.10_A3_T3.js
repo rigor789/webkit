@@ -3,7 +3,7 @@
 
 /*---
 esid: sec-date.prototype.getfullyear
-info: >
+info: |
     The Date.prototype.getFullYear property "length" has { ReadOnly,
     DontDelete, DontEnum } attributes
 es5id: 15.9.5.10_A3_T3
@@ -14,8 +14,8 @@ if (Date.prototype.getFullYear.propertyIsEnumerable('length')) {
   $ERROR('#1: The Date.prototype.getFullYear.length property has the attribute DontEnum');
 }
 
-for(var x in Date.prototype.getFullYear) {
-  if(x === "length") {
+for (var x in Date.prototype.getFullYear) {
+  if (x === "length") {
     $ERROR('#2: The Date.prototype.getFullYear.length has the attribute DontEnum');
   }
 }

@@ -7,8 +7,7 @@ TestPage.registerInitializer(() => {
     }
 
     window.findScript = function(regex) {
-        let resources = WI.frameResourceManager.mainFrame.resourceCollection.items;
-        for (let resource of resources) {
+        for (let resource of WI.frameResourceManager.mainFrame.resourceCollection) {
             if (regex.test(resource.url))
                 return resource.scripts[0];
         }
@@ -164,9 +163,9 @@ TestPage.registerInitializer(() => {
         });
     }
 
-    window.addSteppingTestCase = function({name, description, expression, steps, pauseOnAllException}) {
+    window.addSteppingTestCase = function({name, description, expression, steps, pauseOnAllException, setup, teardown}) {
         suite.addTestCase({
-            name, description,
+            name, description, setup, teardown,
             test(resolve, reject) {
                 // Setup.
                 currentSteps = steps;

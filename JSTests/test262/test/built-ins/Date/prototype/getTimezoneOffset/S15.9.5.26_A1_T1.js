@@ -2,7 +2,7 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-info: >
+info: |
     The Date.prototype property "getTimezoneOffset" has { DontEnum }
     attributes
 esid: sec-date.prototype.gettimezoneoffset
@@ -11,7 +11,7 @@ description: Checking absence of ReadOnly attribute
 ---*/
 
 var x = Date.prototype.getTimezoneOffset;
-if(x === 1)
+if (x === 1)
   Date.prototype.getTimezoneOffset = 2;
 else
   Date.prototype.getTimezoneOffset = 1;

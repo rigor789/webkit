@@ -25,8 +25,6 @@
 
 #pragma once
 
-#if USE(NETWORK_SESSION)
-
 #include "DownloadID.h"
 #include "SandboxExtension.h"
 #include <WebCore/Credential.h>
@@ -130,6 +128,8 @@ public:
 
     bool isTopLevelNavigation() const { return m_dataTaskIsForMainFrameNavigation; }
 
+    virtual String description() const;
+
 protected:
     NetworkDataTask(NetworkSession&, NetworkDataTaskClient&, const WebCore::ResourceRequest&, WebCore::StoredCredentialsPolicy, bool shouldClearReferrerOnHTTPSToHTTPRedirect, bool dataTaskIsForMainFrameNavigation);
 
@@ -163,5 +163,3 @@ protected:
 };
 
 } // namespace WebKit
-
-#endif // USE(NETWORK_SESSION)

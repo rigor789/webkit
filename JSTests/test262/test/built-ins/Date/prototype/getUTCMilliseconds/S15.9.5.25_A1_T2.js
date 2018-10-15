@@ -2,7 +2,7 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-info: >
+info: |
     The Date.prototype property "getUTCMilliseconds" has { DontEnum }
     attributes
 esid: sec-date.prototype.getutcmilliseconds
@@ -10,7 +10,7 @@ es5id: 15.9.5.25_A1_T2
 description: Checking absence of DontDelete attribute
 ---*/
 
-if (delete Date.prototype.getUTCMilliseconds  === false) {
+if (delete Date.prototype.getUTCMilliseconds === false) {
   $ERROR('#1: The Date.prototype.getUTCMilliseconds property has not the attributes DontDelete');
 }
 

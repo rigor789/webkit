@@ -1,9 +1,34 @@
-ResultsDashboard = Utilities.createClass(
-    function(options, testData)
+/*
+ * Copyright (C) 2018 Apple Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+ ResultsDashboard = Utilities.createClass(
+    function(version, options, testData)
     {
         this._iterationsSamplers = [];
         this._options = options;
         this._results = null;
+        this._version = version;
         if (testData) {
             this._iterationsSamplers = testData;
             this._processData();
@@ -57,6 +82,7 @@ ResultsDashboard = Utilities.createClass(
             iterationsScores.push(result[Strings.json.score]);
         }, this);
 
+        this._results[Strings.json.version] = this._version;
         this._results[Strings.json.score] = Statistics.sampleMean(iterationsScores.length, iterationsScores.reduce(function(a, b) { return a + b; }));
         this._results[Strings.json.scoreLowerBound] = this._results[Strings.json.results.iterations][0][Strings.json.scoreLowerBound];
         this._results[Strings.json.scoreUpperBound] = this._results[Strings.json.results.iterations][0][Strings.json.scoreUpperBound];
@@ -67,10 +93,6 @@ ResultsDashboard = Utilities.createClass(
         var result = {};
         data[Strings.json.result] = result;
         var samples = data[Strings.json.samples];
-
-        var desiredFrameLength = 1000/60;
-        if (this._options["controller"] == "ramp30")
-            desiredFrameLength = 1000/30;
 
         function findRegression(series, profile) {
             var minIndex = Math.round(.025 * series.length);
@@ -87,7 +109,7 @@ ResultsDashboard = Utilities.createClass(
 
             var complexityIndex = series.fieldMap[Strings.json.complexity];
             var frameLengthIndex = series.fieldMap[Strings.json.frameLength];
-            var regressionOptions = { desiredFrameLength: desiredFrameLength };
+            var regressionOptions = { desiredFrameLength: 1000/60 };
             if (profile)
                 regressionOptions.preferredProfile = profile;
             return {
@@ -102,15 +124,14 @@ ResultsDashboard = Utilities.createClass(
             };
         }
 
-        var complexitySamples;
         // Convert these samples into SampleData objects if needed
-        [Strings.json.complexity, Strings.json.complexityAverage, Strings.json.controller].forEach(function(seriesName) {
+        [Strings.json.complexity, Strings.json.controller].forEach(function(seriesName) {
             var series = samples[seriesName];
             if (series && !(series instanceof SampleData))
                 samples[seriesName] = new SampleData(series.fieldMap, series.data);
         });
 
-        var isRampController = ["ramp", "ramp30"].indexOf(this._options["controller"]) != -1;
+        var isRampController = this._options["controller"] == "ramp";
         var predominantProfile = "";
         if (isRampController) {
             var profiles = {};
@@ -130,27 +151,19 @@ ResultsDashboard = Utilities.createClass(
             }
         }
 
-        [Strings.json.complexity, Strings.json.complexityAverage].forEach(function(seriesName) {
-            if (!(seriesName in samples))
-                return;
-
-            var regression = {};
-            result[seriesName] = regression;
-            var regressionResult = findRegression(samples[seriesName], predominantProfile);
-            if (seriesName == Strings.json.complexity)
-                complexitySamples = regressionResult.samples;
-            var calculation = regressionResult.regression;
-            regression[Strings.json.regressions.segment1] = [
-                [regressionResult.minComplexity, calculation.s1 + calculation.t1 * regressionResult.minComplexity],
-                [calculation.complexity, calculation.s1 + calculation.t1 * calculation.complexity]
-            ];
-            regression[Strings.json.regressions.segment2] = [
-                [calculation.complexity, calculation.s2 + calculation.t2 * calculation.complexity],
-                [regressionResult.maxComplexity, calculation.s2 + calculation.t2 * regressionResult.maxComplexity]
-            ];
-            regression[Strings.json.complexity] = calculation.complexity;
-            regression[Strings.json.measurements.stdev] = Math.sqrt(calculation.error / samples[seriesName].length);
-        });
+        var regressionResult = findRegression(samples[Strings.json.complexity], predominantProfile);
+        var calculation = regressionResult.regression;
+        result[Strings.json.complexity] = {};
+        result[Strings.json.complexity][Strings.json.regressions.segment1] = [
+            [regressionResult.minComplexity, calculation.s1 + calculation.t1 * regressionResult.minComplexity],
+            [calculation.complexity, calculation.s1 + calculation.t1 * calculation.complexity]
+        ];
+        result[Strings.json.complexity][Strings.json.regressions.segment2] = [
+            [calculation.complexity, calculation.s2 + calculation.t2 * calculation.complexity],
+            [regressionResult.maxComplexity, calculation.s2 + calculation.t2 * regressionResult.maxComplexity]
+        ];
+        result[Strings.json.complexity][Strings.json.complexity] = calculation.complexity;
+        result[Strings.json.complexity][Strings.json.measurements.stdev] = Math.sqrt(calculation.error / samples[Strings.json.complexity].length);
 
         if (isRampController) {
             var timeComplexity = new Experiment;
@@ -166,15 +179,15 @@ ResultsDashboard = Utilities.createClass(
             experimentResult[Strings.json.measurements.percent] = timeComplexity.percentage();
 
             const bootstrapIterations = 2500;
-            var bootstrapResult = Regression.bootstrap(complexitySamples.data, bootstrapIterations, function(resampleData) {
-                var complexityIndex = complexitySamples.fieldMap[Strings.json.complexity];
+            var bootstrapResult = Regression.bootstrap(regressionResult.samples.data, bootstrapIterations, function(resampleData) {
+                var complexityIndex = regressionResult.samples.fieldMap[Strings.json.complexity];
                 resampleData.sort(function(a, b) {
                     return a[complexityIndex] - b[complexityIndex];
                 });
 
-                var resample = new SampleData(complexitySamples.fieldMap, resampleData);
-                var regressionResult = findRegression(resample, predominantProfile);
-                return regressionResult.regression.complexity;
+                var resample = new SampleData(regressionResult.samples.fieldMap, resampleData);
+                var bootstrapRegressionResult = findRegression(resample, predominantProfile);
+                return bootstrapRegressionResult.regression.complexity;
             }, .8);
 
             result[Strings.json.complexity][Strings.json.bootstrap] = bootstrapResult;
@@ -237,6 +250,11 @@ ResultsDashboard = Utilities.createClass(
     get options()
     {
         return this._options;
+    },
+
+    get version()
+    {
+        return this._version;
     },
 
     _getResultsProperty: function(property)
@@ -377,7 +395,7 @@ window.benchmarkRunnerClient = {
 
     willStartFirstIteration: function()
     {
-        this.results = new ResultsDashboard(this.options);
+        this.results = new ResultsDashboard(Strings.version, this.options);
     },
 
     didRunSuites: function(suitesSamplers)
@@ -419,6 +437,11 @@ window.sectionsManager =
             history.pushState({section: sectionIdentifier}, document.title);
     },
 
+    setSectionVersion: function(sectionIdentifier, version)
+    {
+        document.querySelector("#" + sectionIdentifier + " .version").textContent = version;
+    },
+
     setSectionScore: function(sectionIdentifier, score, confidence)
     {
         document.querySelector("#" + sectionIdentifier + " .score").textContent = score;
@@ -436,6 +459,10 @@ window.sectionsManager =
 window.benchmarkController = {
     initialize: function()
     {
+        document.title = Strings.text.title.replace("%s", Strings.version);
+        document.querySelectorAll(".version").forEach(function(e) {
+            e.textContent = Strings.version;
+        });
         benchmarkController.addOrientationListenerIfNecessary();
     },
 
@@ -525,6 +552,7 @@ window.benchmarkController = {
         var dashboard = benchmarkRunnerClient.results;
         var score = dashboard.score;
         var confidence = "±" + (Statistics.largestDeviationPercentage(dashboard.scoreLowerBound, score, dashboard.scoreUpperBound) * 100).toFixed(2) + "%";
+        sectionsManager.setSectionVersion("results", dashboard.version);
         sectionsManager.setSectionScore("results", score.toFixed(2), confidence);
         sectionsManager.populateTable("results-header", Headers.testName, dashboard);
         sectionsManager.populateTable("results-score", Headers.score, dashboard);
@@ -573,6 +601,7 @@ window.benchmarkController = {
         data.textContent = "Please wait...";
         setTimeout(function() {
             var output = {
+                version: benchmarkRunnerClient.results.version,
                 options: benchmarkRunnerClient.results.options,
                 data: benchmarkRunnerClient.results.data
             };

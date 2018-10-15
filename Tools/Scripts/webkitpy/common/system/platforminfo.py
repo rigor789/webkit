@@ -31,7 +31,7 @@ import re
 import sys
 
 from webkitpy.common.version import Version
-from webkitpy.common.version_name_map import PUBLIC_TABLE, VersionNameMap
+from webkitpy.common.version_name_map import PUBLIC_TABLE, INTERNAL_TABLE, VersionNameMap
 from webkitpy.common.system.executive import Executive
 
 
@@ -103,10 +103,15 @@ class PlatformInfo(object):
         # Windows-2008ServerR2-6.1.7600
         return self._platform_module.platform()
 
-    def os_version_name(self, table=PUBLIC_TABLE):
+    def os_version_name(self, table=None):
         if not self.os_version:
             return None
-        return VersionNameMap.map(self).to_name(self.os_version, table=table)
+        if table:
+            return VersionNameMap.map(self).to_name(self.os_version, table=table)
+        version_name = VersionNameMap.map(self).to_name(self.os_version, table=PUBLIC_TABLE)
+        if not version_name:
+            version_name = VersionNameMap.map(self).to_name(self.os_version, table=INTERNAL_TABLE)
+        return version_name
 
     def total_bytes_memory(self):
         if self.is_mac():
@@ -141,7 +146,7 @@ class PlatformInfo(object):
     def xcode_sdk_version(self, sdk_name):
         if self.is_mac():
             # Assumes that xcrun does not write to standard output on failure (e.g. SDK does not exist).
-            xcrun_output = self._executive.run_command(['xcrun', '--sdk', sdk_name, '--show-sdk-version'], return_stderr=False, error_handler=Executive.ignore_error).rstrip()
+            xcrun_output = self._executive.run_command(['xcrun', '--sdk', sdk_name, '--show-sdk-version'], return_stderr=False, ignore_errors=True).rstrip()
             if xcrun_output:
                 return Version.from_string(xcrun_output)
         return None

@@ -3,7 +3,7 @@
 /*---
 esid: sec-%typedarray%.prototype.tolocalestring
 description:  Get "length" uses internal ArrayLength
-info: >
+info: |
   22.2.3.28 %TypedArray%.prototype.toLocaleString ([ reserved1 [ , reserved2 ] ])
 
   %TypedArray%.prototype.toLocaleString is a distinct function that implements
@@ -30,7 +30,7 @@ var desc = {
 
 Object.defineProperty(TypedArray.prototype, "length", desc);
 
-testWithTypedArrayConstructors(function(TA) {
+testWithTypedArrayConstructors(function(TA, N) {
   var sample = new TA([42, 43]);
 
   Object.defineProperty(TA.prototype, "length", desc);

@@ -31,8 +31,8 @@
 #import "TestRunner.h"
 
 #import "DefaultPolicyDelegate.h"
-#import "DumpRenderTreeSpellChecker.h"
 #import "EditingDelegate.h"
+#import "LayoutTestSpellChecker.h"
 #import "MockGeolocationProvider.h"
 #import "MockWebNotificationProvider.h"
 #import "PolicyDelegate.h"
@@ -74,9 +74,9 @@
 #import <WebKit/WebStorageManagerPrivate.h>
 #import <WebKit/WebView.h>
 #import <WebKit/WebViewPrivate.h>
-#import <wtf/CurrentTime.h>
 #import <wtf/HashMap.h>
 #import <wtf/RetainPtr.h>
+#import <wtf/WallTime.h>
 
 #if !PLATFORM(IOS)
 #import <wtf/SoftLinking.h>
@@ -212,7 +212,21 @@ void TestRunner::setStorageDatabaseIdleInterval(double interval)
 
 void TestRunner::setSpellCheckerLoggingEnabled(bool enabled)
 {
-    ::setSpellCheckerLoggingEnabled(enabled);
+#if PLATFORM(MAC)
+    [LayoutTestSpellChecker checker].spellCheckerLoggingEnabled = enabled;
+#else
+    UNUSED_PARAM(enabled);
+#endif
+}
+
+void TestRunner::setSpellCheckerResults(JSContextRef context, JSObjectRef results)
+{
+#if PLATFORM(MAC)
+    [[LayoutTestSpellChecker checker] setResultsFromJSObject:results inContext:context];
+#else
+    UNUSED_PARAM(results);
+    UNUSED_PARAM(context);
+#endif
 }
 
 void TestRunner::closeIdleLocalStorageDatabases()
@@ -447,9 +461,9 @@ void TestRunner::setMockGeolocationPosition(double latitude, double longitude, d
     WebGeolocationPosition *position = nil;
     if (!providesAltitude && !providesAltitudeAccuracy && !providesHeading && !providesSpeed) {
         // Test the exposed API.
-        position = [[WebGeolocationPosition alloc] initWithTimestamp:currentTime() latitude:latitude longitude:longitude accuracy:accuracy];
+        position = [[WebGeolocationPosition alloc] initWithTimestamp:WallTime::now().secondsSinceEpoch().seconds() latitude:latitude longitude:longitude accuracy:accuracy];
     } else {
-        WebCore::GeolocationPosition geolocationPosition { currentTime(), latitude, longitude, accuracy };
+        WebCore::GeolocationPosition geolocationPosition { WallTime::now().secondsSinceEpoch().seconds(), latitude, longitude, accuracy };
         if (providesAltitude)
             geolocationPosition.altitude = altitude;
         if (providesAltitudeAccuracy)
@@ -927,8 +941,8 @@ void TestRunner::evaluateScriptInIsolatedWorld(unsigned worldID, JSObjectRef glo
         return nil;
 
     testRunner = runner;
-    data = [[(NSString *)adoptCF(JSStringCopyCFString(kCFAllocatorDefault, dataString)).get() dataUsingEncoding:NSUTF8StringEncoding] retain];
-    baseURL = [[NSURL URLWithString:(NSString *)adoptCF(JSStringCopyCFString(kCFAllocatorDefault, baseURLString)).get()] retain];
+    data = [[(__bridge NSString *)adoptCF(JSStringCopyCFString(kCFAllocatorDefault, dataString)).get() dataUsingEncoding:NSUTF8StringEncoding] retain];
+    baseURL = [[NSURL URLWithString:(__bridge NSString *)adoptCF(JSStringCopyCFString(kCFAllocatorDefault, baseURLString)).get()] retain];
     return self;
 }
 
@@ -1004,33 +1018,32 @@ void TestRunner::apiTestNewWindowDataLoadBaseURL(JSStringRef utf8Data, JSStringR
     }
 #endif
 
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    @autoreleasepool {
+        RetainPtr<CFStringRef> utf8DataCF = adoptCF(JSStringCopyCFString(kCFAllocatorDefault, utf8Data));
+        RetainPtr<CFStringRef> baseURLCF = adoptCF(JSStringCopyCFString(kCFAllocatorDefault, baseURL));
 
-    RetainPtr<CFStringRef> utf8DataCF = adoptCF(JSStringCopyCFString(kCFAllocatorDefault, utf8Data));
-    RetainPtr<CFStringRef> baseURLCF = adoptCF(JSStringCopyCFString(kCFAllocatorDefault, baseURL));
-    
-    WebView *webView = [[WebView alloc] initWithFrame:NSZeroRect frameName:@"" groupName:@""];
+        WebView *webView = [[WebView alloc] initWithFrame:NSZeroRect frameName:@"" groupName:@""];
 
-    bool done = false;
-    APITestDelegate *delegate = [[APITestDelegate alloc] initWithCompletionCondition:&done];
-    [webView setFrameLoadDelegate:delegate];
+        bool done = false;
+        APITestDelegate *delegate = [[APITestDelegate alloc] initWithCompletionCondition:&done];
+        [webView setFrameLoadDelegate:delegate];
 
-    [[webView mainFrame] loadData:[(NSString *)utf8DataCF.get() dataUsingEncoding:NSUTF8StringEncoding] MIMEType:@"text/html" textEncodingName:@"utf-8" baseURL:[NSURL URLWithString:(NSString *)baseURLCF.get()]];
-    
-    while (!done) {
-        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantPast]];
-        [pool release];
-    }
+        [[webView mainFrame] loadData:[(__bridge NSString *)utf8DataCF.get() dataUsingEncoding:NSUTF8StringEncoding] MIMEType:@"text/html" textEncodingName:@"utf-8" baseURL:[NSURL URLWithString:(__bridge NSString *)baseURLCF.get()]];
+
+        while (!done) {
+            @autoreleasepool {
+                [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantPast]];
+            }
+        }
 
 #if PLATFORM(IOS)
-    [(DumpRenderTree *)[UIApplication sharedApplication] _waitForWebThread];
+        [(DumpRenderTree *)[UIApplication sharedApplication] _waitForWebThread];
 #endif
 
-    [webView close];
-    [webView release];
-    [delegate release];
-    [pool release];
+        [webView close];
+        [webView release];
+        [delegate release];
+    }
 }
 
 void TestRunner::apiTestGoToCurrentBackForwardItem()

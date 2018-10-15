@@ -32,12 +32,12 @@ import os
 import platform
 import re
 import shlex
-import subprocess
 import sys
+import subprocess
 import webbrowser
 
-from webkitpy.common.system.executive import Executive
-from webkitpy.common.system.platforminfo import PlatformInfo
+from .executive import Executive
+from .platforminfo import PlatformInfo
 
 
 _log = logging.getLogger(__name__)

@@ -42,6 +42,7 @@
 #import <WebKit/WKWebViewConfigurationPrivate.h>
 #import <WebKit/WKWebViewPrivate.h>
 #import <wtf/RetainPtr.h>
+#import <wtf/Seconds.h>
 #import <wtf/mac/AppKitCompatibilityDeclarations.h>
 
 static bool receivedLoadedMessage;
@@ -121,6 +122,7 @@ TEST(PictureInPicture, WKUIDelegate)
     
     RetainPtr<NSWindow> window = adoptNS([[NSWindow alloc] initWithContentRect:[webView frame] styleMask:NSWindowStyleMaskBorderless backing:NSBackingStoreBuffered defer:NO]);
     [[window contentView] addSubview:webView.get()];
+    [window makeKeyAndOrderFront:nil];
 
     NSURLRequest *request = [NSURLRequest requestWithURL:[[NSBundle mainBundle] URLForResource:@"PictureInPictureDelegate" withExtension:@"html" subdirectory:@"TestWebKitAPI.resources"]];
     
@@ -137,7 +139,7 @@ TEST(PictureInPicture, WKUIDelegate)
     TestWebKitAPI::Util::run(&hasVideoInPictureInPictureCalled);
     ASSERT_TRUE(hasVideoInPictureInPictureValue);
     
-    sleep(1); // Wait for PIPAgent to launch, or it won't call -pipDidClose: callback.
+    sleep(1_s); // Wait for PIPAgent to launch, or it won't call -pipDidClose: callback.
     
     hasVideoInPictureInPictureCalled = false;
     [webView mouseDown:event];
@@ -185,7 +187,7 @@ TEST(PictureInPicture, WKPageUIClient)
     TestWebKitAPI::Util::run(&hasVideoInPictureInPictureCalled);
     ASSERT_TRUE(hasVideoInPictureInPictureValue);
     
-    sleep(1); // Wait for PIPAgent to launch, or it won't call -pipDidClose: callback.
+    sleep(1_s); // Wait for PIPAgent to launch, or it won't call -pipDidClose: callback.
     
     hasVideoInPictureInPictureCalled = false;
     webView.simulateButtonClick(kWKEventMouseButtonLeftButton, 5, 5, 0);

@@ -66,9 +66,7 @@ class WPEPort(Port):
 
     @memoized
     def _driver_class(self):
-        if self._display_server == "wayland":
-            return WaylandDriver
-        return HeadlessDriver
+        return WaylandDriver
 
     def setup_environ_for_server(self, server_name=None):
         environment = super(WPEPort, self).setup_environ_for_server(server_name)
@@ -77,7 +75,16 @@ class WPEPort(Port):
         environment['TEST_RUNNER_INJECTED_BUNDLE_FILENAME'] = self._build_path('lib', 'libTestRunnerInjectedBundle.so')
         environment['TEST_RUNNER_TEST_PLUGIN_PATH'] = self._build_path('lib', 'plugins')
         environment['WEBKIT_EXEC_PATH'] = self._build_path('bin')
+        self._copy_value_from_environ_if_set(environment, 'WEBKIT_OUTPUTDIR')
+        self._copy_value_from_environ_if_set(environment, 'WEBKIT_TOP_LEVEL')
+        self._copy_value_from_environ_if_set(environment, 'USE_PLAYBIN3')
+        self._copy_value_from_environ_if_set(environment, 'GST_DEBUG')
+        self._copy_value_from_environ_if_set(environment, 'GST_DEBUG_DUMP_DOT_DIR')
+        self._copy_value_from_environ_if_set(environment, 'GST_DEBUG_FILE')
         return environment
+
+    def check_sys_deps(self):
+        return super(WPEPort, self).check_sys_deps() and self._driver_class().check_driver(self)
 
     def _generate_all_test_configurations(self):
         configurations = []
@@ -105,5 +112,4 @@ class WPEPort(Port):
         return 2
 
     def _get_crash_log(self, name, pid, stdout, stderr, newer_than, target_host=None):
-        name = "WPEWebProcess" if name == "WebProcess" else name
-        return GDBCrashLogGenerator(name, pid, newer_than, self._filesystem, self._path_to_driver).generate_crash_log(stdout, stderr)
+        return GDBCrashLogGenerator(self._executive, name, pid, newer_than, self._filesystem, self._path_to_driver).generate_crash_log(stdout, stderr)

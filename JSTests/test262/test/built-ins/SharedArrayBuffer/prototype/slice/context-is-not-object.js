@@ -5,9 +5,9 @@
 /*---
 description: >
   Throws a TypeError if `this` is not an Object.
-info: >
+info: |
   SharedArrayBuffer.prototype.slice ( start, end )
-features: [Symbol]
+features: [SharedArrayBuffer, Symbol]
 ---*/
 
 assert.throws(TypeError, function() {

@@ -78,7 +78,7 @@ void JSModuleRecord::visitChildren(JSCell* cell, SlotVisitor& visitor)
     visitor.append(thisObject->m_moduleProgramExecutable);
 }
 
-void JSModuleRecord::link(ExecState* exec, JSValue key, JSValue scriptFetcher)
+void JSModuleRecord::link(ExecState* exec, JSValue scriptFetcher)
 {
     VM& vm = exec->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -91,12 +91,12 @@ void JSModuleRecord::link(ExecState* exec, JSValue key, JSValue scriptFetcher)
         }
         return;
     }
-    instantiateDeclarations(exec, executable, key, scriptFetcher);
+    instantiateDeclarations(exec, executable, scriptFetcher);
     RETURN_IF_EXCEPTION(scope, void());
     m_moduleProgramExecutable.set(vm, this, executable);
 }
 
-void JSModuleRecord::instantiateDeclarations(ExecState* exec, ModuleProgramExecutable* moduleProgramExecutable, JSValue key, JSValue scriptFetcher)
+void JSModuleRecord::instantiateDeclarations(ExecState* exec, ModuleProgramExecutable* moduleProgramExecutable, JSValue scriptFetcher)
 {
     VM& vm = exec->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -143,7 +143,7 @@ void JSModuleRecord::instantiateDeclarations(ExecState* exec, ModuleProgramExecu
         const ImportEntry& importEntry = pair.value;
         AbstractModuleRecord* importedModule = hostResolveImportedModule(exec, importEntry.moduleRequest);
         RETURN_IF_EXCEPTION(scope, void());
-        if (importEntry.isNamespace(vm)) {
+        if (importEntry.type == AbstractModuleRecord::ImportEntryType::Namespace) {
             JSModuleNamespaceObject* namespaceObject = importedModule->getModuleNamespace(exec);
             RETURN_IF_EXCEPTION(scope, void());
             bool putResult = false;
@@ -210,7 +210,7 @@ void JSModuleRecord::instantiateDeclarations(ExecState* exec, ModuleProgramExecu
     }
 
     {
-        JSObject* metaProperties = exec->lexicalGlobalObject()->moduleLoader()->createImportMetaProperties(exec, key, this, scriptFetcher);
+        JSObject* metaProperties = exec->lexicalGlobalObject()->moduleLoader()->createImportMetaProperties(exec, identifierToJSValue(vm, moduleKey()), this, scriptFetcher);
         RETURN_IF_EXCEPTION(scope, void());
         bool putResult = false;
         symbolTablePutTouchWatchpointSet(moduleEnvironment, exec, vm.propertyNames->builtinNames().metaPrivateName(), metaProperties, /* shouldThrowReadOnlyError */ false, /* ignoreReadOnlyErrors */ true, putResult);

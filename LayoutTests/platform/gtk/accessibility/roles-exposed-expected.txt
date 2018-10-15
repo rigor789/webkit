@@ -499,8 +499,14 @@ div[role=article]
 div[role=banner]
       AXRole: AXLandmarkBanner
       
+div[role=blockquote]
+      AXRole: AXBlockquote
+      
 div[role=button]
       AXRole: AXButton
+      
+div[role=caption]
+      AXRole: AXCaption
       
 div[role=checkbox]
       AXRole: AXCheckBox
@@ -649,6 +655,15 @@ div[role=figure]
 div[role=form]
       AXRole: AXLandmarkForm
       
+div[role=graphics-document]
+      AXRole: AXDocument
+      
+div[role=graphics-object]
+      AXRole: AXGroup
+      
+div[role=graphics-symbol]
+      AXRole: AXImage
+      
 div[role=grid]
       AXRole: AXTable
       
@@ -735,6 +750,9 @@ div[role=navigation]
       
 div[role=note]
       AXRole: AXComment
+      
+div[role=paragraph]
+      AXRole: AXParagraph
       
 div[role=presentation]
       AXRole: 

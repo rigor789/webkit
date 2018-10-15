@@ -1,3 +1,0 @@
-
-FAIL Test that transferFromImageBitmap(null) discards the previously transferred image Can't find variable: createImageBitmap
-

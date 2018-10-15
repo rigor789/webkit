@@ -40,6 +40,7 @@
 #import <WebKit/WKWebViewConfigurationPrivate.h>
 #import <WebKit/WebItemProviderPasteboard.h>
 #import <WebKit/_WKProcessPoolConfiguration.h>
+#import <wtf/Seconds.h>
 
 typedef void (^FileLoadCompletionBlock)(NSURL *, BOOL, NSError *);
 typedef void (^DataLoadCompletionBlock)(NSData *, NSError *);
@@ -117,12 +118,15 @@ static void checkSelectionRectsWithLogging(NSArray *expected, NSArray *observed)
     EXPECT_TRUE([expected isEqualToArray:observed]);
 }
 
-static void checkTypeIdentifierPrecedesOtherTypeIdentifier(DataInteractionSimulator *simulator, NSString *firstType, NSString *secondType)
+static void checkRichTextTypePrecedesPlainTextType(DataInteractionSimulator *simulator)
 {
+    // At least one of "com.apple.flat-rtfd" or "public.rtf" is expected to have higher precedence than "public.utf8-plain-text".
     NSArray *registeredTypes = [simulator.sourceItemProviders.firstObject registeredTypeIdentifiers];
-    EXPECT_TRUE([registeredTypes containsObject:firstType]);
-    EXPECT_TRUE([registeredTypes containsObject:secondType]);
-    EXPECT_TRUE([registeredTypes indexOfObject:firstType] < [registeredTypes indexOfObject:secondType]);
+    auto indexOfRTFType = [registeredTypes indexOfObject:(NSString *)kUTTypeRTF];
+    auto indexOfFlatRTFDType = [registeredTypes indexOfObject:(NSString *)kUTTypeFlatRTFD];
+    auto indexOfPlainTextType = [registeredTypes indexOfObject:(NSString *)kUTTypeUTF8PlainText];
+    EXPECT_NE((NSInteger)indexOfPlainTextType, NSNotFound);
+    EXPECT_TRUE((indexOfRTFType != NSNotFound && indexOfRTFType < indexOfPlainTextType) || (indexOfFlatRTFDType != NSNotFound && indexOfFlatRTFDType < indexOfPlainTextType));
 }
 
 static void checkFirstTypeIsPresentAndSecondTypeIsMissing(DataInteractionSimulator *simulator, CFStringRef firstType, CFStringRef secondType)
@@ -349,12 +353,7 @@ TEST(DataInteractionTests, ContentEditableToContentEditable)
     EXPECT_TRUE([observedEventNames containsObject:DataInteractionOverEventName]);
     EXPECT_TRUE([observedEventNames containsObject:DataInteractionPerformOperationEventName]);
     checkSelectionRectsWithLogging(@[ makeCGRectValue(1, 201, 961, 227) ], [dataInteractionSimulator finalSelectionRects]);
-#if __IPHONE_OS_VERSION_MIN_REQUIRED >= 120000
-    NSString *richTextTypeIdentifier = (NSString *)kUTTypeRTF;
-#else
-    NSString *richTextTypeIdentifier = (NSString *)kUTTypeRTFD;
-#endif
-    checkTypeIdentifierPrecedesOtherTypeIdentifier(dataInteractionSimulator.get(), richTextTypeIdentifier, (NSString *)kUTTypeUTF8PlainText);
+    checkRichTextTypePrecedesPlainTextType(dataInteractionSimulator.get());
 }
 
 TEST(DataInteractionTests, ContentEditableToTextarea)
@@ -374,12 +373,7 @@ TEST(DataInteractionTests, ContentEditableToTextarea)
     EXPECT_TRUE([observedEventNames containsObject:DataInteractionOverEventName]);
     EXPECT_TRUE([observedEventNames containsObject:DataInteractionPerformOperationEventName]);
     checkSelectionRectsWithLogging(@[ makeCGRectValue(6, 203, 990, 232) ], [dataInteractionSimulator finalSelectionRects]);
-#if __IPHONE_OS_VERSION_MIN_REQUIRED >= 120000
-    NSString *richTextTypeIdentifier = (NSString *)kUTTypeRTF;
-#else
-    NSString *richTextTypeIdentifier = (NSString *)kUTTypeRTFD;
-#endif
-    checkTypeIdentifierPrecedesOtherTypeIdentifier(dataInteractionSimulator.get(), richTextTypeIdentifier, (NSString *)kUTTypeUTF8PlainText);
+    checkRichTextTypePrecedesPlainTextType(dataInteractionSimulator.get());
 }
 
 TEST(DataInteractionTests, ContentEditableMoveParagraphs)
@@ -656,6 +650,7 @@ TEST(DataInteractionTests, ExternalSourceHTMLToUploadArea)
     auto simulatedHTMLItemProvider = adoptNS([[UIItemProvider alloc] init]);
     NSData *htmlData = [@"<body contenteditable></body>" dataUsingEncoding:NSUTF8StringEncoding];
     [simulatedHTMLItemProvider registerDataRepresentationForTypeIdentifier:(NSString *)kUTTypeHTML withData:htmlData];
+    [simulatedHTMLItemProvider setSuggestedName:@"index.html"];
 
     auto dataInteractionSimulator = adoptNS([[DataInteractionSimulator alloc] initWithWebView:webView.get()]);
     [dataInteractionSimulator setShouldAllowMoveOperation:NO];
@@ -855,11 +850,17 @@ TEST(DataInteractionTests, ExternalSourceMultipleURLsToContentEditable)
     [dataInteractionSimulator setExternalItemProviders:@[ firstItem.get(), secondItem.get(), thirdItem.get() ]];
     [dataInteractionSimulator runFrom:CGPointMake(300, 400) to:CGPointMake(100, 300)];
 
-    NSArray *separatedLinks = [[webView stringByEvaluatingJavaScript:@"editor.textContent"] componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    EXPECT_EQ(3UL, separatedLinks.count);
-    EXPECT_WK_STREQ("https://www.apple.com/iphone/", separatedLinks[0]);
-    EXPECT_WK_STREQ("https://www.apple.com/mac/", separatedLinks[1]);
-    EXPECT_WK_STREQ("https://webkit.org/", separatedLinks[2]);
+    NSArray *droppedURLs = [webView objectByEvaluatingJavaScript:@"Array.from(editor.querySelectorAll('a')).map(a => a.href)"];
+    EXPECT_EQ(3UL, droppedURLs.count);
+    EXPECT_WK_STREQ("https://www.apple.com/iphone/", droppedURLs[0]);
+    EXPECT_WK_STREQ("https://www.apple.com/mac/", droppedURLs[1]);
+    EXPECT_WK_STREQ("https://webkit.org/", droppedURLs[2]);
+
+    NSArray *linksSeparatedByLine = [[webView objectByEvaluatingJavaScript:@"editor.innerText"] componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+    EXPECT_EQ(3UL, linksSeparatedByLine.count);
+    EXPECT_WK_STREQ("https://www.apple.com/iphone/", linksSeparatedByLine[0]);
+    EXPECT_WK_STREQ("https://www.apple.com/mac/", linksSeparatedByLine[1]);
+    EXPECT_WK_STREQ("https://webkit.org/", linksSeparatedByLine[2]);
 }
 
 TEST(DataInteractionTests, RespectsExternalSourceFidelityRankings)
@@ -980,6 +981,7 @@ TEST(DataInteractionTests, ExternalSourceOverrideDropFileUpload)
     auto simulatedHTMLItemProvider = adoptNS([[UIItemProvider alloc] init]);
     NSData *firstHTMLData = [@"<body contenteditable></body>" dataUsingEncoding:NSUTF8StringEncoding];
     [simulatedHTMLItemProvider registerDataRepresentationForTypeIdentifier:(NSString *)kUTTypeHTML withData:firstHTMLData];
+    [simulatedHTMLItemProvider setPreferredPresentationStyle:UIPreferredPresentationStyleAttachment];
 
     auto dataInteractionSimulator = adoptNS([[DataInteractionSimulator alloc] initWithWebView:webView.get()]);
     [dataInteractionSimulator setOverridePerformDropBlock:^NSArray<UIDragItem *> *(id <UIDropSession> session)
@@ -1124,7 +1126,7 @@ TEST(DataInteractionTests, OverrideDataInteractionOperation)
     [dataInteractionSimulator setOverrideDataInteractionOperationBlock:^NSUInteger(NSUInteger operation, id session)
     {
         EXPECT_EQ(0U, operation);
-        return 1;
+        return UIDropOperationCopy;
     }];
     [dataInteractionSimulator setDataInteractionOperationCompletionBlock:^(BOOL handled, NSArray *itemProviders) {
         EXPECT_FALSE(handled);
@@ -1168,7 +1170,7 @@ TEST(DataInteractionTests, InjectedBundleAllowPerformTwoStepDrop)
     [configuration.processPool _setObject:@NO forBundleParameter:@"BundleOverridePerformTwoStepDrop"];
 
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500) configuration:configuration]);
-    [webView loadTestPageNamed:@"autofocus-contenteditable"];
+    [webView synchronouslyLoadTestPageNamed:@"autofocus-contenteditable"];
     [webView stringByEvaluatingJavaScript:@"getSelection().removeAllRanges()"];
 
     auto simulatedItemProvider = adoptNS([[UIItemProvider alloc] init]);
@@ -1348,6 +1350,8 @@ TEST(DataInteractionTests, DoNotCrashWhenSelectionIsClearedInDragStart)
     EXPECT_WK_STREQ("PASS", [webView stringByEvaluatingJavaScript:@"paragraph.textContent"]);
 }
 
+// FIXME: Re-enable this test once we resolve <https://bugs.webkit.org/show_bug.cgi?id=175204>
+#if __IPHONE_OS_VERSION_MAX_ALLOWED <= 110401
 TEST(DataInteractionTests, CustomActionSheetPopover)
 {
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
@@ -1368,6 +1372,7 @@ TEST(DataInteractionTests, CustomActionSheetPopover)
     EXPECT_TRUE(didInvokeCustomActionSheet);
     EXPECT_WK_STREQ("PASS", [webView stringByEvaluatingJavaScript:@"target.textContent"].UTF8String);
 }
+#endif
 
 TEST(DataInteractionTests, UnresponsivePageDoesNotHangUI)
 {
@@ -1399,7 +1404,7 @@ TEST(DataInteractionTests, WebItemProviderPasteboardLoading)
     auto slowItem = adoptNS([[UIItemProvider alloc] init]);
     [slowItem registerDataRepresentationForTypeIdentifier:(NSString *)kUTTypeUTF8PlainText options:nil loadHandler:^NSProgress *(UIItemProviderDataLoadCompletionBlock completionBlock)
     {
-        sleep(2);
+        sleep(2_s);
         completionBlock([slowString dataUsingEncoding:NSUTF8StringEncoding], nil);
         return nil;
     }];
@@ -1465,7 +1470,7 @@ TEST(DataInteractionTests, AdditionalLinkAndImageIntoContentEditable)
         @0.33: [NSValue valueWithCGPoint:CGPointMake(50, 150)],
         @0.66: [NSValue valueWithCGPoint:CGPointMake(50, 250)]
     }];
-    EXPECT_WK_STREQ("ABCD A link", [webView stringByEvaluatingJavaScript:@"editor.textContent"]);
+    EXPECT_WK_STREQ("ABCDA link", [webView stringByEvaluatingJavaScript:@"editor.textContent"]);
     EXPECT_TRUE([webView stringByEvaluatingJavaScript:@"!!editor.querySelector('img')"]);
     EXPECT_WK_STREQ("https://www.apple.com/", [webView stringByEvaluatingJavaScript:@"editor.querySelector('a').href"]);
 }
@@ -1689,6 +1694,51 @@ TEST(DataInteractionTests, DataTransferSetDataCannotWritePlatformTypes)
             @"com.adobe.pdf": @"try and decode me!"
         }
     });
+}
+
+TEST(DataInteractionTests, DataTransferGetDataReadPlainAndRichText)
+{
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
+    [webView synchronouslyLoadTestPageNamed:@"DataTransfer"];
+    auto simulator = adoptNS([[DataInteractionSimulator alloc] initWithWebView:webView.get()]);
+
+    auto itemProvider = adoptNS([[UIItemProvider alloc] init]);
+    NSDictionary *textAttributes = @{ NSFontAttributeName: [UIFont boldSystemFontOfSize:20] };
+    NSAttributedString *richText = [[NSAttributedString alloc] initWithString:@"WebKit" attributes:textAttributes];
+    [itemProvider registerObject:richText visibility:NSItemProviderRepresentationVisibilityAll];
+    [itemProvider registerObject:[NSURL URLWithString:@"https://www.webkit.org/"] visibility:NSItemProviderRepresentationVisibilityAll];
+    [itemProvider registerObject:@"WebKit" visibility:NSItemProviderRepresentationVisibilityAll];
+
+    [simulator setExternalItemProviders:@[ itemProvider.get() ]];
+    [simulator runFrom:CGPointZero to:CGPointMake(50, 100)];
+
+    EXPECT_WK_STREQ("text/html, text/plain, text/uri-list", [webView stringByEvaluatingJavaScript:@"types.textContent"]);
+    EXPECT_WK_STREQ("WebKit", [webView stringByEvaluatingJavaScript:@"textData.textContent"]);
+    EXPECT_WK_STREQ("https://www.webkit.org/", [webView stringByEvaluatingJavaScript:@"urlData.textContent"]);
+    EXPECT_WK_STREQ("WebKit", [webView stringByEvaluatingJavaScript:@"htmlData.textContent"]);
+    EXPECT_WK_STREQ("(STRING, text/html), (STRING, text/plain), (STRING, text/uri-list)", [webView stringByEvaluatingJavaScript:@"items.textContent"]);
+    EXPECT_WK_STREQ("", [webView stringByEvaluatingJavaScript:@"files.textContent"]);
+}
+
+TEST(DataInteractionTests, DataTransferSuppressGetDataDueToPresenceOfTextFile)
+{
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
+    [webView synchronouslyLoadTestPageNamed:@"DataTransfer"];
+    auto simulator = adoptNS([[DataInteractionSimulator alloc] initWithWebView:webView.get()]);
+
+    auto itemProvider = adoptNS([[UIItemProvider alloc] init]);
+    [itemProvider registerObject:@"Hello world" visibility:NSItemProviderRepresentationVisibilityAll];
+    [itemProvider setSuggestedName:@"hello.txt"];
+
+    [simulator setExternalItemProviders:@[ itemProvider.get() ]];
+    [simulator runFrom:CGPointZero to:CGPointMake(50, 100)];
+
+    EXPECT_WK_STREQ("Files", [webView stringByEvaluatingJavaScript:@"types.textContent"]);
+    EXPECT_WK_STREQ("", [webView stringByEvaluatingJavaScript:@"textData.textContent"]);
+    EXPECT_WK_STREQ("", [webView stringByEvaluatingJavaScript:@"urlData.textContent"]);
+    EXPECT_WK_STREQ("", [webView stringByEvaluatingJavaScript:@"htmlData.textContent"]);
+    EXPECT_WK_STREQ("(FILE, text/plain)", [webView stringByEvaluatingJavaScript:@"items.textContent"]);
+    EXPECT_WK_STREQ("('hello.txt', text/plain)", [webView stringByEvaluatingJavaScript:@"files.textContent"]);
 }
 
 TEST(DataInteractionTests, DataTransferGetDataCannotReadPrivateArbitraryTypes)

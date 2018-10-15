@@ -6,7 +6,7 @@
 esid: sec-atomics.add
 description: >
   Atomics.add.length is 3.
-info: >
+info: |
   Atomics.add ( ia, index, val )
 
   17 ECMAScript Standard Built-in Objects:
@@ -21,6 +21,7 @@ info: >
     object has the attributes { [[Writable]]: false, [[Enumerable]]: false,
     [[Configurable]]: true }.
 includes: [propertyHelper.js]
+features: [Atomics]
 ---*/
 
 assert.sameValue(Atomics.add.length, 3);

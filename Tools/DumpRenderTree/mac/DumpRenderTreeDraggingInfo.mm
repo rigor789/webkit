@@ -42,8 +42,6 @@
 - (void)setItem:(id)item;
 @end
 
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 101200
-
 @interface DumpRenderTreeFilePromiseReceiver : NSFilePromiseReceiver {
     RetainPtr<NSArray<NSString *>> _promisedUTIs;
     RetainPtr<NSMutableArray<NSURL *>> _destinationURLs;
@@ -98,7 +96,7 @@
     [super dealloc];
 }
 
-static NSURL *copyFile(NSURL *sourceURL, NSURL *destinationDirectory, NSError *&error)
+static std::pair<NSURL *, NSError *> copyFile(NSURL *sourceURL, NSURL *destinationDirectory)
 {
     // Emulate how CFPasteboard finds unique destination file names by inserting " 2", " 3", and so
     // on between the file name's base and extension until a new file is successfully created in
@@ -107,16 +105,16 @@ static NSURL *copyFile(NSURL *sourceURL, NSURL *destinationDirectory, NSError *&
     NSUInteger number = 2;
     NSString *fileName = sourceURL.lastPathComponent;
     NSURL *destinationURL = [NSURL fileURLWithPath:fileName relativeToURL:destinationDirectory];
+    NSError *error;
     while (![NSFileManager.defaultManager copyItemAtURL:sourceURL toURL:destinationURL error:&error]) {
         if (error.domain != NSCocoaErrorDomain || error.code != NSFileWriteFileExistsError)
-            return nil;
+            return { nil, error };
 
         NSString *newFileName = [NSString stringWithFormat:@"%@ %lu.%@", fileName.stringByDeletingPathExtension, (unsigned long)number++, fileName.pathExtension];
         destinationURL = [NSURL fileURLWithPath:newFileName relativeToURL:destinationDirectory];
-        error = nil;
     }
 
-    return destinationURL;
+    return { destinationURL, nil };
 }
 
 - (void)receivePromisedFilesAtDestination:(NSURL *)destinationDirectory options:(NSDictionary *)options operationQueue:(NSOperationQueue *)operationQueue reader:(void (^)(NSURL *fileURL, NSError * __nullable errorOrNil))reader
@@ -127,8 +125,9 @@ static NSURL *copyFile(NSURL *sourceURL, NSURL *destinationDirectory, NSError *&
     NSArray<NSURL *> *sourceURLs = _draggingSource.promisedFileURLs;
     for (NSURL *sourceURL in sourceURLs) {
         [operationQueue addOperationWithBlock:^{
-            NSError *error = nil;
-            NSURL *destinationURL = copyFile(sourceURL, destinationDirectory, error);
+            NSError *error;
+            NSURL *destinationURL;
+            std::tie(destinationURL, error) = copyFile(sourceURL, destinationDirectory);
             if (destinationURL) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [_destinationURLs addObject:destinationURL];
@@ -141,8 +140,6 @@ static NSURL *copyFile(NSURL *sourceURL, NSURL *destinationDirectory, NSError *&
 }
 
 @end
-
-#endif
 
 @implementation DumpRenderTreeDraggingInfo
 
@@ -246,24 +243,19 @@ static NSURL *copyFile(NSURL *sourceURL, NSURL *destinationDirectory, NSError *&
     // Ignored.
 }
 
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 101200
 static NSMutableArray<NSFilePromiseReceiver *> *allFilePromiseReceivers()
 {
     static NSMutableArray<NSFilePromiseReceiver *> *allReceivers = [[NSMutableArray alloc] init];
     return allReceivers;
 }
-#endif
 
 + (void)clearAllFilePromiseReceivers
 {
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 101200
     [allFilePromiseReceivers() removeAllObjects];
-#endif
 }
 
 - (void)enumerateDraggingItemsWithOptions:(NSEnumerationOptions)enumOptions forView:(NSView *)view classes:(NSArray *)classArray searchOptions:(NSDictionary *)searchOptions usingBlock:(void (^)(NSDraggingItem *draggingItem, NSInteger idx, BOOL *stop))block
 {
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 101200
     assert(!enumOptions);
     assert(!searchOptions.count);
 
@@ -292,7 +284,6 @@ static NSMutableArray<NSFilePromiseReceiver *> *allFilePromiseReceivers()
         if (stop)
             return;
     }
-#endif
 }
 
 -(NSSpringLoadingHighlight)springLoadingHighlight

@@ -6,7 +6,7 @@ es6id: 9.5.13
 esid: sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist
 description: >
     If trap is not set, propagate the call to the target object.
-info: >
+info: |
     [[Call]] (thisArgument, argumentsList)
 
     ...
@@ -25,9 +25,9 @@ info: >
 var calls = 0;
 
 function target(a, b) {
-    assert.sameValue(this, ctx);
-    calls += 1;
-    return a + b;
+  assert.sameValue(this, ctx);
+  calls += 1;
+  return a + b;
 }
 
 var ctx = {};

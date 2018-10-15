@@ -386,6 +386,7 @@ class FunctionDetectionTest(CppStyleTestBase):
         self.assertEqual(function_state.is_pure, function_information['is_pure'])
         self.assertEqual(function_state.is_virtual(), function_information['is_virtual'])
         self.assertEqual(function_state.is_declaration, function_information['is_declaration'])
+        self.assertEqual(function_state.export_macro(), function_information['export_macro'] if 'export_macro' in function_information else None)
         self.assert_positions_equal(function_state.function_name_start_position, function_information['function_name_start_position'])
         self.assert_positions_equal(function_state.parameter_start_position, function_information['parameter_start_position'])
         self.assert_positions_equal(function_state.parameter_end_position, function_information['parameter_end_position'])
@@ -623,6 +624,75 @@ class FunctionDetectionTest(CppStyleTestBase):
              'is_virtual': False,
              'is_pure': False,
              'is_declaration': True})
+
+    def test_webcore_export(self):
+        self.perform_function_detection(
+            ['void theTestFunctionName();'],
+            {'name': 'theTestFunctionName',
+             'modifiers_and_return_type': 'void',
+             'function_name_start_position': (0, 5),
+             'parameter_start_position': (0, 24),
+             'parameter_end_position': (0, 26),
+             'body_start_position': (0, 26),
+             'end_position': (0, 27),
+             'is_final': False,
+             'is_override': False,
+             'is_virtual': False,
+             'is_pure': False,
+             'is_declaration': True,
+             'export_macro': None})
+
+        self.perform_function_detection(
+            ['WEBCORE_EXPORT void theTestFunctionName();'],
+            {'name': 'theTestFunctionName',
+             'modifiers_and_return_type': 'WEBCORE_EXPORT void',
+             'function_name_start_position': (0, 20),
+             'parameter_start_position': (0, 39),
+             'parameter_end_position': (0, 41),
+             'body_start_position': (0, 41),
+             'end_position': (0, 42),
+             'is_final': False,
+             'is_override': False,
+             'is_virtual': False,
+             'is_pure': False,
+             'is_declaration': True,
+             'export_macro': 'WEBCORE_EXPORT'})
+
+        self.perform_function_detection(
+            ['void theTestFunctionName()',
+             '{',
+             '}'],
+            {'name': 'theTestFunctionName',
+             'modifiers_and_return_type': 'void',
+             'function_name_start_position': (0, 5),
+             'parameter_start_position': (0, 24),
+             'parameter_end_position': (0, 26),
+             'body_start_position': (1, 0),
+             'end_position': (2, 1),
+             'is_final': False,
+             'is_override': False,
+             'is_virtual': False,
+             'is_pure': False,
+             'is_declaration': False,
+             'export_macro': None})
+
+        self.perform_function_detection(
+            ['WEBCORE_EXPORT void theTestFunctionName()',
+             '{',
+             '}'],
+            {'name': 'theTestFunctionName',
+             'modifiers_and_return_type': 'WEBCORE_EXPORT void',
+             'function_name_start_position': (0, 20),
+             'parameter_start_position': (0, 39),
+             'parameter_end_position': (0, 41),
+             'body_start_position': (1, 0),
+             'end_position': (2, 1),
+             'is_final': False,
+             'is_override': False,
+             'is_virtual': False,
+             'is_pure': False,
+             'is_declaration': False,
+             'export_macro': 'WEBCORE_EXPORT'})
 
     def test_ignore_macros(self):
         self.perform_function_detection(['void aFunctionName(int); \\'], None)
@@ -1588,6 +1658,15 @@ class CppStyleTest(CppStyleTestBase):
         self.assert_lint('mkstemp(template);', '')
         self.assert_lint('mkostemp(template);', '')
 
+    def test_dispatch_set_target_queue(self):
+        self.assert_lint(
+            '''\
+            globalQueue = dispatch_queue_create("My Serial Queue", DISPATCH_QUEUE_SERIAL);
+            dispatch_set_target_queue(globalQueue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0));''',
+            'Never use dispatch_set_target_queue.  Use dispatch_queue_create_with_target instead.'
+            '  [runtime/dispatch_set_target_queue] [5]')
+        self.assert_lint('globalQueue = dispatch_queue_create_with_target("My Serial Queue", DISPATCH_QUEUE_SERIAL, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0));', '')
+
     # Variable-length arrays are not permitted.
     def test_variable_length_array_detection(self):
         errmsg = ('Do not use variable-length arrays.  Use an appropriately named '
@@ -1924,6 +2003,7 @@ class CppStyleTest(CppStyleTestBase):
         self.assert_lint('dispatch_async(dispatch_get_main_queue(), ^{', '')
         self.assert_lint('[outOfBandTracks.get() addObject:@{', '')
         self.assert_lint('EXPECT_DEBUG_DEATH({', '')
+        self.assert_lint('LOCAL_LOG(R"({ "url": "%{public}s",)", url.string().utf8().data());', '')
 
     def test_spacing_between_braces(self):
         self.assert_lint('    { }', '')
@@ -2812,6 +2892,11 @@ class OrderOfIncludesTest(CppStyleTestBase):
         self.assert_language_rules_check('foo.h',
                                          '#include "bar.h"\n'
                                          '#include "array.lut.h"\n',
+                                         '')
+
+        self.assert_language_rules_check('foo.h',
+                                         '#include <gtest/gtest.h> // NOLINT\n'
+                                         '#include <gtest/gtest-spi.h>\n',
                                          '')
 
     def test_check_alphabetical_include_order_errors_reported_for_both_lines(self):
@@ -4565,6 +4650,10 @@ class WebKitStyleTest(CppStyleTestBase):
             '    Value1,\n'
             '    Value2\n'
             '};', '')
+        self.assert_multi_line_lint(
+            '[delegate setPolicyForURL:^_WKWebsitePolicy(NSURL *url) {\n'
+            '    return _WKWebsitePolicyDoIt;\n'
+            '}];', '', file_name='foo.mm')
 
         # 3. One-line control clauses should not use braces unless
         #    comments are included or a single statement spans multiple
@@ -5432,6 +5521,12 @@ class WebKitStyleTest(CppStyleTestBase):
         self.assert_lint('::ShowWindow(m_overlay);', '')
         self.assert_lint('o = foo(b ? bar() : baz());', '')
         self.assert_lint('MYMACRO(a ? b() : c);', '')
+
+    def test_min_versions_of_wk_api_available(self):
+        self.assert_lint('WK_API_AVAILABLE(macosx(1.2.3), ios(3.4.5))', '')  # version numbers are OK.
+        self.assert_lint('WK_API_AVAILABLE(macosx(WK_MAC_TBA), ios(WK_IOS_TBA))', '')  # WK_MAC_TBA and WK_IOS_TBA are OK.
+        self.assert_lint('WK_API_AVAILABLE(macosx(WK_IOS_TBA), ios(3.4.5))', 'WK_IOS_TBA is neither a version number nor WK_MAC_TBA  [build/wk_api_available] [5]')
+        self.assert_lint('WK_API_AVAILABLE(macosx(1.2.3), ios(WK_MAC_TBA))', 'WK_MAC_TBA is neither a version number nor WK_IOS_TBA  [build/wk_api_available] [5]')
 
     def test_other(self):
         # FIXME: Implement this.

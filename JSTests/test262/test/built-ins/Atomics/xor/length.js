@@ -6,7 +6,7 @@
 esid: sec-atomics.xor
 description: >
   Atomics.xor.length is 3.
-info: >
+info: |
   Atomics.xor ( ia, index, val )
 
   17 ECMAScript Standard Built-in Objects:
@@ -21,6 +21,7 @@ info: >
     object has the attributes { [[Writable]]: false, [[Enumerable]]: false,
     [[Configurable]]: true }.
 includes: [propertyHelper.js]
+features: [Atomics]
 ---*/
 
 assert.sameValue(Atomics.xor.length, 3);

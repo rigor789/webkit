@@ -102,14 +102,18 @@ if (COMPILER_IS_GCC_OR_CLANG)
                                              -Wno-unknown-argument)
     else ()
         WEBKIT_APPEND_GLOBAL_COMPILER_FLAGS(-fno-exceptions)
-        WEBKIT_APPEND_GLOBAL_CXX_FLAGS(-std=c++14
-                                       -fno-rtti)
+        WEBKIT_APPEND_GLOBAL_CXX_FLAGS(-fno-rtti)
 
-        if (UNIX AND NOT DEVELOPER_MODE)
-            # These are used even for ports that use symbol maps so that the
-            # compiler can take visibility into account for code optimization.
-            WEBKIT_APPEND_GLOBAL_COMPILER_FLAGS(-fvisibility=hidden)
-            WEBKIT_APPEND_GLOBAL_CXX_FLAGS(-fvisibility-inlines-hidden)
+        check_cxx_compiler_flag("-std=c++17" CXX_COMPILER_SUPPORTS_CXX17)
+        if (CXX_COMPILER_SUPPORTS_CXX17)
+            WEBKIT_APPEND_GLOBAL_CXX_FLAGS(-std=c++17)
+        else ()
+            check_cxx_compiler_flag("-std=c++1z" CXX_COMPILER_SUPPORTS_CXX1Z)
+            if (CXX_COMPILER_SUPPORTS_CXX1Z)
+                WEBKIT_APPEND_GLOBAL_CXX_FLAGS(-std=c++1z)
+            else ()
+                message(FATAL_ERROR "Compiler with C++17 support is required")
+            endif ()
         endif ()
 
         if (WIN32)
@@ -162,6 +166,21 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND NOT "${LOWERCASE_CMAKE_HOST_SY
     set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "-Wl,--no-keep-memory ${CMAKE_SHARED_LINKER_FLAGS_DEBUG}")
 endif ()
 
+if (COMPILER_IS_GCC_OR_CLANG)
+    # Careful: this needs to be above where ENABLED_COMPILER_SANITIZERS is set.
+    # Also, it's not possible to use the normal prepend/append macros for
+    # -fsanitize=address, because check_cxx_compiler_flag will report it's
+    # unsupported, because it causes the build to fail if not used when linking.
+    option(ENABLE_ADDRESS_SANITIZER "Enable address sanitizer" OFF)
+    if (ENABLE_ADDRESS_SANITIZER)
+        WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS(-fno-omit-frame-pointer
+                                             -fno-optimize-sibling-calls)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+        set(CMAKE_EXE_LINKER_FLAGS "-lpthread ${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+        set(CMAKE_SHARED_LINKER_FLAGS "-lpthread ${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=address")
+    endif ()
+endif ()
 
 if (NOT MSVC)
     string(REGEX MATCHALL "-fsanitize=[^ ]*" ENABLED_COMPILER_SANITIZERS ${CMAKE_CXX_FLAGS})
@@ -210,4 +229,17 @@ if (COMPILER_IS_GCC_OR_CLANG)
    set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES ${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES} ${SYSTEM_INCLUDE_DIRS})
    DETERMINE_GCC_SYSTEM_INCLUDE_DIRS("c++" "${CMAKE_CXX_COMPILER}" "${CMAKE_CXX_FLAGS}" SYSTEM_INCLUDE_DIRS)
    set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES} ${SYSTEM_INCLUDE_DIRS})
+endif ()
+
+if (COMPILER_IS_GCC_OR_CLANG)
+    set(ATOMIC_TEST_SOURCE "
+        #include <atomic>
+        int main() { std::atomic<int64_t> i(0); i++; return 0; }
+    ")
+    check_cxx_source_compiles("${ATOMIC_TEST_SOURCE}" ATOMIC_INT64_IS_BUILTIN)
+    if (NOT ATOMIC_INT64_IS_BUILTIN)
+        set(CMAKE_REQUIRED_LIBRARIES atomic)
+        check_cxx_source_compiles("${ATOMIC_TEST_SOURCE}" ATOMIC_INT64_REQUIRES_LIBATOMIC)
+        unset(CMAKE_REQUIRED_LIBRARIES)
+    endif ()
 endif ()

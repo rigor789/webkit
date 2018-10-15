@@ -2,7 +2,7 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-info: >
+info: |
     The Date.parse property "length" has { ReadOnly, DontDelete, DontEnum }
     attributes
 esid: sec-date.parse
@@ -14,8 +14,8 @@ if (Date.parse.propertyIsEnumerable('length')) {
   $ERROR('#1: The Date.parse.length property has the attribute DontEnum');
 }
 
-for(var x in Date.parse) {
-  if(x === "length") {
+for (var x in Date.parse) {
+  if (x === "length") {
     $ERROR('#2: The Date.parse.length has the attribute DontEnum');
   }
 }

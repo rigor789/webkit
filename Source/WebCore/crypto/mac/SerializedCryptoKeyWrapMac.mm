@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014, 2016 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2018 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,6 +35,7 @@
 #include <wtf/text/Base64.h>
 #include <wtf/text/CString.h>
 #include <wtf/CryptographicUtilities.h>
+#include <wtf/ProcessPrivilege.h>
 #include <wtf/RetainPtr.h>
 
 #if PLATFORM(IOS)
@@ -80,6 +81,8 @@ static NSString* masterKeyAccountNameForCurrentApplication()
 
 static bool createAndStoreMasterKey(Vector<uint8_t>& masterKeyData)
 {
+    RELEASE_ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessCredentials));
+
     masterKeyData.resize(masterKeySizeInBytes);
 #if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
     int rc = SecRandomCopyBytes(kSecRandomDefault, masterKeyData.size(), masterKeyData.data());
@@ -105,7 +108,7 @@ static bool createAndStoreMasterKey(Vector<uint8_t>& masterKeyData)
 
 #if USE(KEYCHAIN_ACCESS_CONTROL_LISTS)
     SecAccessRef accessRef;
-    status = SecAccessCreate((CFStringRef)localizedItemName, nullptr, &accessRef);
+    status = SecAccessCreate((__bridge CFStringRef)localizedItemName, nullptr, &accessRef);
     if (status) {
         WTFLogAlways("Cannot create a security access object for storing WebCrypto master key, error %d", (int)status);
         return false;
@@ -123,7 +126,7 @@ static bool createAndStoreMasterKey(Vector<uint8_t>& masterKeyData)
     }
     RetainPtr<SecTrustedApplicationRef> trustedApp = adoptCF(trustedAppRef);
 
-    status = SecACLSetContents(acl, (CFArrayRef)@[ (id)trustedApp.get() ], (CFStringRef)localizedItemName, kSecKeychainPromptRequirePassphase);
+    status = SecACLSetContents(acl, (__bridge CFArrayRef)@[ (__bridge id)trustedApp.get() ], (__bridge CFStringRef)localizedItemName, kSecKeychainPromptRequirePassphase);
     if (status) {
         WTFLogAlways("Cannot set ACL for WebCrypto master key, error %d", (int)status);
         return false;
@@ -138,7 +141,7 @@ static bool createAndStoreMasterKey(Vector<uint8_t>& masterKeyData)
         (id)kSecClass : (id)kSecClassGenericPassword,
         (id)kSecAttrSynchronizable : @NO,
 #if USE(KEYCHAIN_ACCESS_CONTROL_LISTS)
-        (id)kSecAttrAccess : (id)access.get(),
+        (id)kSecAttrAccess : (__bridge id)access.get(),
 #endif
         (id)kSecAttrComment : webCryptoMasterKeyKeychainComment(),
         (id)kSecAttrLabel : localizedItemName,
@@ -156,6 +159,8 @@ static bool createAndStoreMasterKey(Vector<uint8_t>& masterKeyData)
 
 static bool findMasterKey(Vector<uint8_t>& masterKeyData)
 {
+    RELEASE_ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessCredentials));
+
     NSDictionary *query = @{
         (id)kSecClass : (id)kSecClassGenericPassword,
         (id)kSecAttrAccount : masterKeyAccountNameForCurrentApplication(),
@@ -171,7 +176,7 @@ static bool findMasterKey(Vector<uint8_t>& masterKeyData)
     }
     RetainPtr<CFDataRef> keyData = adoptCF(keyDataRef);
 
-    Vector<uint8_t> base64EncodedMasterKeyData = vectorFromNSData((NSData *)keyData.get());
+    Vector<uint8_t> base64EncodedMasterKeyData = vectorFromNSData((__bridge NSData *)keyData.get());
     return base64Decode((const char*)base64EncodedMasterKeyData.data(), base64EncodedMasterKeyData.size(), masterKeyData);
 }
 
@@ -185,6 +190,8 @@ bool getDefaultWebCryptoMasterKey(Vector<uint8_t>& masterKey)
 
 bool deleteDefaultWebCryptoMasterKey()
 {
+    RELEASE_ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessCredentials));
+
     NSDictionary *query = @{
         (id)kSecClass : (id)kSecClassGenericPassword,
         (id)kSecAttrAccount : masterKeyAccountNameForCurrentApplication(),

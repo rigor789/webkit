@@ -30,7 +30,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#if !OS(DARWIN) && OS(UNIX)
+#if !OS(DARWIN) && !OS(FUCHSIA) && OS(UNIX)
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -47,11 +47,15 @@
 #else
 #include "CommonCryptoSPI.h"
 #endif
+#endif // DARWIN
+
+#if OS(FUCHSIA)
+#include <zircon/syscalls.h>
 #endif
 
 namespace WTF {
 
-#if !OS(DARWIN) && OS(UNIX)
+#if !OS(DARWIN) && !OS(FUCHSIA) && OS(UNIX)
 NEVER_INLINE NO_RETURN_DUE_TO_CRASH static void crashUnableToOpenURandom()
 {
     CRASH();
@@ -63,7 +67,7 @@ NEVER_INLINE NO_RETURN_DUE_TO_CRASH static void crashUnableToReadFromURandom()
 }
 #endif
 
-#if !OS(DARWIN) && !OS(WINDOWS)
+#if !OS(DARWIN) && !OS(FUCHSIA) && !OS(WINDOWS)
 RandomDevice::RandomDevice()
 {
     int ret = 0;
@@ -76,7 +80,7 @@ RandomDevice::RandomDevice()
 }
 #endif
 
-#if !OS(DARWIN) && !OS(WINDOWS)
+#if !OS(DARWIN) && !OS(FUCHSIA) && !OS(WINDOWS)
 RandomDevice::~RandomDevice()
 {
     close(m_fd);
@@ -88,12 +92,14 @@ RandomDevice::~RandomDevice()
 void RandomDevice::cryptographicallyRandomValues(unsigned char* buffer, size_t length)
 {
 #if OS(DARWIN)
-    
+
 #if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
     RELEASE_ASSERT(!SecRandomCopyBytes(kSecRandomDefault, length, buffer));
 #else
     RELEASE_ASSERT(!CCRandomCopyBytes(kCCRandomDefault, buffer, length));
 #endif
+#elif OS(FUCHSIA)
+    zx_cprng_draw(buffer, length);
 
 #elif OS(UNIX)
     ssize_t amountRead = 0;

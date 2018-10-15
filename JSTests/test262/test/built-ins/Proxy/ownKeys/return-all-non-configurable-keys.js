@@ -5,7 +5,7 @@ esid: sec-proxy-object-internal-methods-and-internal-slots-ownpropertykeys
 description: >
     The result List must contain the keys of all non-configurable own properties
     of the target object.
-info: >
+info: |
     [[OwnPropertyKeys]] ( )
 
     ...
@@ -16,21 +16,21 @@ info: >
 ---*/
 
 var target = {
-    foo: 1
+  foo: 1
 };
 
 Object.defineProperty(target, "attr", {
-    configurable: false,
-    enumerable: true,
-    value: true
+  configurable: false,
+  enumerable: true,
+  value: true
 });
 
 var p = new Proxy(target, {
-    ownKeys: function() {
-        return ["foo"];
-    }
+  ownKeys: function() {
+    return ["foo"];
+  }
 });
 
 assert.throws(TypeError, function() {
-    Object.keys(p);
+  Object.keys(p);
 });

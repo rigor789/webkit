@@ -6,41 +6,34 @@ description: finally observably calls .then
 esid: sec-promise.prototype.finally
 features: [Promise.prototype.finally]
 flags: [async]
+includes: [promiseHelper.js]
 ---*/
-
-var initialThenCount = 0;
+var sequence = [];
 var yesValue = {};
 var yes = Promise.resolve(yesValue);
-yes.then = function () {
-  initialThenCount += 1;
+yes.then = function() {
+  sequence.push(1);
   return Promise.prototype.then.apply(this, arguments);
 };
 
-var onFinallyThenCount = 0;
 var noReason = {};
 var no = Promise.reject(noReason);
-no.then = function () {
-  onFinallyThenCount += 1;
+no.then = function() {
+  sequence.push(4);
   return Promise.prototype.then.apply(this, arguments);
 };
 
-var finallyCalled = false;
-var catchCalled = false;
-
-yes.then(function (x) {
+yes.then(function(x) {
+  sequence.push(2);
   assert.sameValue(x, yesValue);
   return x;
-}).finally(function () {
-  finallyCalled = true;
+}).finally(function() {
+  sequence.push(3);
   return no;
-}).catch(function (e) {
-  catchCalled = true;
+}).catch(function(e) {
+  sequence.push(5);
   assert.sameValue(e, noReason);
-}).then(function () {
-  assert.sameValue(finallyCalled, true, 'initial finally was called');
-  assert.sameValue(initialThenCount, 1, 'initial finally invokes .then once');
-
-  assert.sameValue(catchCalled, true, 'catch was called');
-  assert.sameValue(onFinallyThenCount, 1, 'onFinally return promise has .then invoked once');
+}).then(function() {
+  checkSequence(sequence, "All expected callbacks called in correct order");
   $DONE();
 }).catch($ERROR);

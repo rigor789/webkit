@@ -6,7 +6,7 @@
 esid: sec-atomics.wait
 description: >
   Atomics.wait.length is 4.
-info: >
+info: |
   Atomics.wait ( ia, index, expect, timeout )
 
   17 ECMAScript Standard Built-in Objects:
@@ -21,6 +21,7 @@ info: >
     object has the attributes { [[Writable]]: false, [[Enumerable]]: false,
     [[Configurable]]: true }.
 includes: [propertyHelper.js]
+features: [Atomics]
 ---*/
 
 assert.sameValue(Atomics.wait.length, 4);

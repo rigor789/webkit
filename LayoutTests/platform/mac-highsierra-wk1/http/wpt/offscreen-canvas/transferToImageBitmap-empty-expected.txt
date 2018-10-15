@@ -1,3 +1,0 @@
-
-FAIL Test transferToImageBitmap. Can't find variable: OffscreenCanvas
-

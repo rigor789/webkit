@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2015-2018 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -45,10 +45,14 @@ section .body {
     transform: none;
 }
 
-h1 {
-    font-size: 3em;
-    margin: 1.5em 0 .5em;
+header {
+    margin: 3em 0 1em;
     text-align: center;
+}
+
+header h1, header h2 {
+    font-size: 3em;
+    margin: 0;
 }
 
 button {
@@ -84,8 +88,8 @@ button:disabled {
 
 @media screen and (max-device-width: 414px),
     screen and (max-device-height: 414px) and (orientation: landscape) {
-    h1 {
-        font-size: 2.5em;
+    header h1 {
+        font-size: 2em;
     }
 
     section {
@@ -704,6 +708,10 @@ body.showing-test-container.tiles-classic {
     stroke-width: 2px;
 }
 
+#regressions line.association {
+    stroke-width: 1px;
+}
+
 #regressions circle {
     fill: rgba(200, 200, 200, .8);
 }
@@ -755,7 +763,7 @@ body.showing-test-container.tiles-classic {
 }
 
 #complexity-graph .regression polygon {
-    fill: rgba(253, 253, 253, .05);
+    fill: rgba(253, 253, 253, .2);
 }
 
 #complexity-graph .raw.series line {
@@ -769,15 +777,6 @@ body.showing-test-container.tiles-classic {
 
 #complexity-graph .raw.regression polygon {
     stroke: rgba(30, 96%, 86%, .05);
-}
-
-#complexity-graph .average.series circle {
-    fill: hsl(170, 96%, 56%);
-}
-
-#complexity-graph .average.series line {
-    stroke: hsla(170, 96%, 56%, .2);
-    stroke-width: 2px;
 }
 
 #complexity-graph .bootstrap .bar {
@@ -794,5 +793,5 @@ body.showing-test-container.tiles-classic {
 }
 
 #complexity-graph .bootstrap .median polygon {
-    fill: hsla(300, 56%, 66%, .05);
+    fill: hsla(240, 56%, 66%, .4);
 }

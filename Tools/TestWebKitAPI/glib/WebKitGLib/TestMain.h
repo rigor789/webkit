@@ -33,11 +33,7 @@
 #include <wpe/webkit.h>
 #endif
 
-#if PLATFORM(GTK)
-#define TEST_PATH_FORMAT "/webkit2/%s/%s"
-#elif PLATFORM(WPE)
-#define TEST_PATH_FORMAT "/wpe/%s/%s"
-#endif
+#define TEST_PATH_FORMAT "/webkit/%s/%s"
 
 #define MAKE_GLIB_TEST_FIXTURE(ClassName) \
     static void setUp(ClassName* fixture, gconstpointer data) \
@@ -112,11 +108,10 @@ public:
         GUniquePtr<char> diskCacheDirectory(g_build_filename(dataDirectory(), "disk-cache", nullptr));
         GUniquePtr<char> applicationCacheDirectory(g_build_filename(dataDirectory(), "appcache", nullptr));
         GUniquePtr<char> webSQLDirectory(g_build_filename(dataDirectory(), "websql", nullptr));
-        GUniquePtr<char> resourceLoadStatisticsDirectory(g_build_filename(dataDirectory(), "resource-load-statistics", nullptr));
         GRefPtr<WebKitWebsiteDataManager> websiteDataManager = adoptGRef(webkit_website_data_manager_new(
             "local-storage-directory", localStorageDirectory.get(), "indexeddb-directory", indexedDBDirectory.get(),
             "disk-cache-directory", diskCacheDirectory.get(), "offline-application-cache-directory", applicationCacheDirectory.get(),
-            "websql-directory", webSQLDirectory.get(), "resource-load-statistics-directory", resourceLoadStatisticsDirectory.get(), nullptr));
+            "websql-directory", webSQLDirectory.get(), nullptr));
 
         m_webContext = adoptGRef(webkit_web_context_new_with_website_data_manager(websiteDataManager.get()));
         g_signal_connect(m_webContext.get(), "initialize-web-extensions", G_CALLBACK(initializeWebExtensionsCallback), this);
@@ -147,12 +142,9 @@ public:
 #if PLATFORM(WPE)
     static WebKitWebViewBackend* createWebViewBackend()
     {
-        const char* useHeadlessViewBackend = g_getenv("WPE_USE_HEADLESS_VIEW_BACKEND");
-        if (!useHeadlessViewBackend || !strcmp(useHeadlessViewBackend, "0"))
-            return nullptr;
-        auto* headlessBackend = new HeadlessViewBackend;
+        auto* headlessBackend = new WPEToolingBackends::HeadlessViewBackend(800, 600);
         return webkit_web_view_backend_new(headlessBackend->backend(), [](gpointer userData) {
-            delete static_cast<HeadlessViewBackend*>(userData);
+            delete static_cast<WPEToolingBackends::HeadlessViewBackend*>(userData);
         }, headlessBackend);
     }
 #endif

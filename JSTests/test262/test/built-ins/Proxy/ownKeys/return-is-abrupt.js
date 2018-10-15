@@ -4,7 +4,7 @@
 esid: sec-proxy-object-internal-methods-and-internal-slots-ownpropertykeys
 description: >
     Trap returns abrupt.
-info: >
+info: |
     [[OwnPropertyKeys]] ( )
 
     ...
@@ -14,11 +14,11 @@ info: >
 ---*/
 
 var p = new Proxy({}, {
-    ownKeys: function() {
-        throw new Test262Error();
-    }
+  ownKeys: function() {
+    throw new Test262Error();
+  }
 });
 
 assert.throws(Test262Error, function() {
-    Object.keys(p);
+  Object.keys(p);
 });

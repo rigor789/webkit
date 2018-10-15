@@ -294,7 +294,16 @@ void PlatformWebView::changeWindowScaleIfNeeded(float)
     // Retina only surface.
 }
 
-#if !USE(IOSURFACE)
+bool PlatformWebView::drawsBackground() const
+{
+    return false;
+}
+
+void PlatformWebView::setDrawsBackground(bool)
+{
+}
+
+#if !HAVE(IOSURFACE)
 static void releaseDataProviderData(void* info, const void*, size_t)
 {
     CARenderServerDestroyBuffer(static_cast<CARenderServerBufferRef>(info));
@@ -304,7 +313,7 @@ static void releaseDataProviderData(void* info, const void*, size_t)
 RetainPtr<CGImageRef> PlatformWebView::windowSnapshotImage()
 {
     BEGIN_BLOCK_OBJC_EXCEPTIONS;
-#if USE(IOSURFACE)
+#if HAVE(IOSURFACE)
     __block bool isDone = false;
     __block RetainPtr<CGImageRef> result;
     

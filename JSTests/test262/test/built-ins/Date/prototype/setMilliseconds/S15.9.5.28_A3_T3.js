@@ -2,7 +2,7 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-info: >
+info: |
     The Date.prototype.setMilliseconds property "length" has { ReadOnly,
     DontDelete, DontEnum } attributes
 esid: sec-date.prototype.setmilliseconds
@@ -14,8 +14,8 @@ if (Date.prototype.setMilliseconds.propertyIsEnumerable('length')) {
   $ERROR('#1: The Date.prototype.setMilliseconds.length property has the attribute DontEnum');
 }
 
-for(var x in Date.prototype.setMilliseconds) {
-  if(x === "length") {
+for (var x in Date.prototype.setMilliseconds) {
+  if (x === "length") {
     $ERROR('#2: The Date.prototype.setMilliseconds.length has the attribute DontEnum');
   }
 }

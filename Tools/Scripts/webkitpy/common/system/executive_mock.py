@@ -108,6 +108,7 @@ class MockExecutive(object):
                     cwd=None,
                     input=None,
                     error_handler=None,
+                    ignore_errors=False,
                     return_exit_code=False,
                     return_stderr=True,
                     decode_output=False,
@@ -177,6 +178,7 @@ class MockExecutive2(MockExecutive):
         self._stderr = stderr
         self._exit_code = exit_code
         self._exception = exception
+        self._running_pids = {'test-webkitpy': os.getpid()}
         self._run_command_fn = run_command_fn
         self.calls = []
 
@@ -185,12 +187,18 @@ class MockExecutive2(MockExecutive):
                     cwd=None,
                     input=None,
                     error_handler=None,
+                    ignore_errors=False,
                     return_exit_code=False,
                     return_stderr=True,
                     decode_output=False,
                     env=None):
         self.calls.append(args)
         assert(isinstance(args, list) or isinstance(args, tuple))
+
+        if ignore_errors:
+            assert error_handler is None, "don't specify error_handler if ignore_errors is True"
+            error_handler = self.ignore_error
+
         if self._exception:
             raise self._exception  # pylint: disable=E0702
         if self._run_command_fn:

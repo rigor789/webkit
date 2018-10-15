@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Test Cleared Store</title>
-    <script src="../../resources/js-test-pre.js"></script>
+    <script src="/js-test-resources/js-test.js"></script>
 </head>
 <body>
 <script>
@@ -19,9 +19,10 @@
         else
             testPassed("Host is no longer a prevalent resource after the store was cleared.");
 
-        testRunner.statisticsResetToConsistentState();
         internals.setResourceLoadStatisticsEnabled(false);
-        testRunner.notifyDone();
+        testRunner.statisticsResetToConsistentState(function() {
+            testRunner.notifyDone();
+        });
     }
 
     function testStep2() {
@@ -30,17 +31,13 @@
         else
             testFailed("Host did not get classified as prevalent resource.");
 
-        testRunner.clearTestRunnerCallbacks();
-        testRunner.installStatisticsDidScanDataRecordsCallback(completeTest);
-        testRunner.installStatisticsDidModifyDataRecordsCallback(completeTest);
-
-        testRunner.statisticsClearInMemoryAndPersistentStoreModifiedSinceHours(1);
+        testRunner.statisticsClearInMemoryAndPersistentStoreModifiedSinceHours(1, completeTest);
     }
 
     function runTestRunnerTest() {
         testRunner.setStatisticsNotifyPagesWhenDataRecordsWereScanned(true);
 
-        testRunner.setStatisticsPrevalentResource(statisticsUrl, false);
+        testRunner.setStatisticsPrevalentResource(statisticsUrl, false, function() {});
         if (testRunner.isStatisticsPrevalentResource(statisticsUrl))
             testFailed("Host did not get set as non-prevalent resource.");
 
@@ -53,7 +50,6 @@
         testRunner.setStatisticsSubresourceUnderTopFrameOrigin(statisticsUrl, topFrameOrigin3);
 
         testRunner.installStatisticsDidScanDataRecordsCallback(testStep2);
-        testRunner.installStatisticsDidModifyDataRecordsCallback(testStep2);
 
         testRunner.statisticsProcessStatisticsAndDataRecords();
     }

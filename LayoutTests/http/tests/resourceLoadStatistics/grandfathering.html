@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Test for Grandfathering</title>
-    <script src="../../resources/js-test-pre.js"></script>
+    <script src="/js-test-resources/js-test.js"></script>
 </head>
 <body>
 <script>
@@ -18,32 +18,33 @@
     const thirdPartyBaseUrl = thirdPartyOrigin + "/resourceLoadStatistics/resources";
     const subPathToSetThirdPartyCookie = "/set-cookie.php?name=" + thirdPartyCookieName + "&value=" + cookieValue;
 
-    function setEnableFeature(enable) {
-        if (!enable) {
-            testRunner.statisticsResetToConsistentState();
-        }
+    function setEnableFeature(enable, completionHandler) {
         testRunner.setStatisticsNotifyPagesWhenDataRecordsWereScanned(enable);
         internals.setResourceLoadStatisticsEnabled(enable);
         testRunner.setCookieStoragePartitioningEnabled(enable);
+        if (!enable)
+            testRunner.statisticsResetToConsistentState(completionHandler);
+        else
+            completionHandler();
     }
 
     function finishTest() {
-        setEnableFeature(false);
-        testRunner.notifyDone();
+        setEnableFeature(false, function() {
+            testRunner.notifyDone();
+        });
     }
 
     function fireDataModificationHandlerAndContinue() {
-        testRunner.installStatisticsDidModifyDataRecordsCallback(function() {
+        testRunner.installStatisticsDidScanDataRecordsCallback(function() {
             runTest();
         });
         testRunner.statisticsProcessStatisticsAndDataRecords();
     }
 
     function clearInMemoryAndPersistentStoreAndContinue() {
-        testRunner.installStatisticsDidScanDataRecordsCallback(function() {
+        testRunner.statisticsClearInMemoryAndPersistentStore(function() {
             runTest();
         });
-        testRunner.statisticsClearInMemoryAndPersistentStore();
     }
 
     function runTest() {
@@ -67,10 +68,11 @@
             case "#step4":
                 document.location.hash = "step5";
                 // Set localhost as prevalent resource.
-                testRunner.setStatisticsPrevalentResource("http://localhost", true);
-                if (!testRunner.isStatisticsPrevalentResource("http://localhost"))
-                    testFailed("Localhost did not get set as prevalent resource.");
-                runTest();
+                testRunner.setStatisticsPrevalentResource("http://localhost", true, function() {
+                    if (!testRunner.isStatisticsPrevalentResource("http://localhost"))
+                        testFailed("Localhost did not get set as prevalent resource.");
+                    runTest();
+                });
                 break;
             case "#step5":
                 // Set a first-party cookie for 127.0.0.1.
@@ -79,10 +81,11 @@
             case "#step6":
                 document.location.hash = "step7";
                 // Set 127.0.0.1 as prevalent resource
-                testRunner.setStatisticsPrevalentResource("http://127.0.0.1", true);
-                if (!testRunner.isStatisticsPrevalentResource("http://127.0.0.1"))
-                    testFailed("127.0.0.1 did not get set as prevalent resource.");
-                runTest();
+                testRunner.setStatisticsPrevalentResource("http://127.0.0.1", true, function() {
+                    if (!testRunner.isStatisticsPrevalentResource("http://127.0.0.1"))
+                        testFailed("127.0.0.1 did not get set as prevalent resource.");
+                    runTest();
+                });
                 break;
             case "#step7":
                 document.location.hash = "step8";
@@ -99,21 +102,22 @@
                 break;
             default:
                 testFailed("Should not be reached.");
+                finishTest();
         }
     }
 
     if (document.location.hash === "" && window.testRunner && window.internals) {
-        setEnableFeature(true);
+        setEnableFeature(true, function() {
+            testRunner.setStatisticsShouldClassifyResourcesBeforeDataRecordsRemoval(false);
+            testRunner.setStatisticsMinimumTimeBetweenDataRecordsRemoval(0);
 
-        testRunner.setStatisticsShouldClassifyResourcesBeforeDataRecordsRemoval(false);
-        testRunner.setStatisticsMinimumTimeBetweenDataRecordsRemoval(0);
-
-        testRunner.waitUntilDone();
-        testRunner.dumpChildFramesAsText();
-        document.location.hash = "step1";
-    }
-
-    runTest();
+            testRunner.waitUntilDone();
+            testRunner.dumpChildFramesAsText();
+            document.location.hash = "step1";
+            runTest();
+        });
+    } else
+        runTest();
 </script>
 </body>
 </html>

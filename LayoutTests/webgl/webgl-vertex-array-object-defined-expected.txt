@@ -1,1 +1,1 @@
-FAIL
+PASS if WebGLVertexArrayObject is defined.

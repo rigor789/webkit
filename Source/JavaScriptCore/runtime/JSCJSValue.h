@@ -39,6 +39,7 @@
 namespace JSC {
 
 class AssemblyHelpers;
+class JSBigInt;
 class ExecState;
 class JSCell;
 class JSValueSource;
@@ -85,7 +86,7 @@ enum class ConstructType : unsigned;
 struct ConstructData;
 
 typedef int64_t EncodedJSValue;
-    
+
 union EncodedValueDescriptor {
     int64_t asInt64;
 #if USE(JSVALUE32_64)
@@ -93,7 +94,7 @@ union EncodedValueDescriptor {
 #elif USE(JSVALUE64)
     JSCell* ptr;
 #endif
-        
+
 #if CPU(BIG_ENDIAN)
     struct {
         int32_t tag;
@@ -124,7 +125,7 @@ enum WhichValueWord {
 int64_t tryConvertToInt52(double);
 bool isInt52(double);
 
-enum class SourceCodeRepresentation {
+enum class SourceCodeRepresentation : uint8_t {
     Other,
     Integer,
     Double
@@ -161,6 +162,7 @@ public:
     enum { DeletedValueTag = 0xfffffff9 };
 
     enum { LowestTag =  DeletedValueTag };
+
 #endif
 
     static EncodedJSValue encode(JSValue);
@@ -170,6 +172,7 @@ public:
     enum JSUndefinedTag { JSUndefined };
     enum JSTrueTag { JSTrue };
     enum JSFalseTag { JSFalse };
+    enum JSCellTag { JSCellType };
     enum EncodeAsDoubleTag { EncodeAsDouble };
 
     JSValue();
@@ -210,16 +213,15 @@ public:
     double asDouble() const;
     bool asBoolean() const;
     double asNumber() const;
-    
+
     int32_t asInt32ForArithmetic() const; // Boolean becomes an int, but otherwise like asInt32().
 
     // Querying the type.
     bool isEmpty() const;
-    bool isFunction() const;
-    bool isFunction(CallType&, CallData&) const;
-    bool isCallable(CallType&, CallData&) const;
-    bool isConstructor() const;
-    bool isConstructor(ConstructType&, ConstructData&) const;
+    bool isFunction(VM&) const;
+    bool isCallable(VM&, CallType&, CallData&) const;
+    bool isConstructor(VM&) const;
+    bool isConstructor(VM&, ConstructType&, ConstructData&) const;
     bool isUndefined() const;
     bool isNull() const;
     bool isUndefinedOrNull() const;
@@ -234,8 +236,9 @@ public:
     bool isCustomGetterSetter() const;
     bool isObject() const;
     bool inherits(VM&, const ClassInfo*) const;
+    template<typename Target> bool inherits(VM&) const;
     const ClassInfo* classInfoOrNull(VM&) const;
-        
+
     // Extracting the value.
     bool getString(ExecState*, WTF::String&) const;
     WTF::String getString(ExecState*) const; // null string if not a string
@@ -243,7 +246,7 @@ public:
 
     // Extracting integer values.
     bool getUInt32(uint32_t&) const;
-        
+
     // Basic conversions.
     JSValue toPrimitive(ExecState*, PreferredPrimitiveType = NoPreference) const;
     bool getPrimitiveNumber(ExecState*, double& number, JSValue&);
@@ -254,6 +257,8 @@ public:
     // toNumber conversion is expected to be side effect free if an exception has
     // been set in the ExecState already.
     double toNumber(ExecState*) const;
+
+    Variant<JSBigInt*, double> toNumeric(ExecState*) const;
 
     // toNumber conversion if it can be done without side effects.
     std::optional<double> toNumberFromPrimitive() const;
@@ -311,6 +316,7 @@ public:
     JS_EXPORT_PRIVATE bool isValidCallee();
 
     Structure* structureOrNull() const;
+    Structure* structureOrNull(VM&) const;
     JSValue structureOrUndefined() const;
 
     JS_EXPORT_PRIVATE void dump(PrintStream&) const;
@@ -326,7 +332,7 @@ public:
     static constexpr const unsigned numberOfInt52Bits = 52;
     static constexpr const int64_t notInt52 = static_cast<int64_t>(1) << numberOfInt52Bits;
     static constexpr const unsigned int52ShiftAmount = 12;
-    
+
     static ptrdiff_t offsetOfPayload() { return OBJECT_OFFSETOF(JSValue, u.asBits.payload); }
     static ptrdiff_t offsetOfTag() { return OBJECT_OFFSETOF(JSValue, u.asBits.tag); }
 

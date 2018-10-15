@@ -80,7 +80,6 @@ namespace JSC {
         SourceProvider* provider() const { return m_provider.get(); }
 
         void setFirstLine(int firstLine) { m_firstLine = firstLine; }
-
         void startColumn(int startColumn) { m_startColumn = startColumn; }
 
         int startOffset() const { return m_startOffset; }
@@ -90,8 +89,22 @@ namespace JSC {
         void setEndOffset(int endOffset) { m_endOffset = endOffset; }
 
         int length() const { return endOffset() - startOffset(); }
-        
-        SourceCode subExpression(unsigned openBrace, unsigned closeBrace, int firstLine, int startColumn);
+
+        SourceCode subExpression(unsigned openBrace, unsigned closeBrace, int firstLine, int startColumn) const;
+
+        bool operator==(const SourceCode& other) const
+        {
+            return m_firstLine == other.m_firstLine
+                && m_startColumn == other.m_startColumn
+                && m_provider == other.m_provider
+                && m_startOffset == other.m_startOffset
+                && m_endOffset == other.m_endOffset;
+        }
+
+        bool operator!=(const SourceCode& other) const
+        {
+            return !(*this == other);
+        }
 
     private:
         OrdinalNumber m_firstLine;
@@ -103,7 +116,7 @@ namespace JSC {
         return SourceCode(StringSourceProvider::create(source, sourceOrigin, url, startPosition, sourceType), startPosition.m_line.oneBasedInt(), startPosition.m_column.oneBasedInt());
     }
     
-    inline SourceCode SourceCode::subExpression(unsigned openBrace, unsigned closeBrace, int firstLine, int startColumn)
+    inline SourceCode SourceCode::subExpression(unsigned openBrace, unsigned closeBrace, int firstLine, int startColumn) const
     {
         startColumn += 1; // Convert to base 1.
         return SourceCode(RefPtr<SourceProvider> { provider() }, openBrace, closeBrace + 1, firstLine, startColumn);

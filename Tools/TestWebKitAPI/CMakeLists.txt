@@ -151,12 +151,14 @@ set(TestWTF_SOURCES
     ${TESTWEBKITAPI_DIR}/Tests/WTF/ThreadMessages.cpp
     ${TESTWEBKITAPI_DIR}/Tests/WTF/Threading.cpp
     ${TESTWEBKITAPI_DIR}/Tests/WTF/Time.cpp
+    ${TESTWEBKITAPI_DIR}/Tests/WTF/UniqueArray.cpp
     ${TESTWEBKITAPI_DIR}/Tests/WTF/UniqueRef.cpp
     ${TESTWEBKITAPI_DIR}/Tests/WTF/Variant.cpp
     ${TESTWEBKITAPI_DIR}/Tests/WTF/Vector.cpp
     ${TESTWEBKITAPI_DIR}/Tests/WTF/WTFString.cpp
     ${TESTWEBKITAPI_DIR}/Tests/WTF/WeakPtr.cpp
     ${TESTWEBKITAPI_DIR}/Tests/WTF/WorkQueue.cpp
+    ${TESTWEBKITAPI_DIR}/Tests/WTF/WorkerPool.cpp
 )
 
 # FIXME: Tests/WTF/RunLoop.cpp is missing because it doesn't work for Windows.
@@ -169,7 +171,6 @@ include_directories(
     ${CMAKE_BINARY_DIR}
     ${CMAKE_SOURCE_DIR}/Source
     ${JAVASCRIPTCORE_DIR}
-    ${PAL_DIR}
     ${THIRDPARTY_DIR}/gtest/include
     ${WEBKIT_DIR}/Platform/IPC
     ${WEBKIT_DIR}/Shared
@@ -178,6 +179,7 @@ include_directories(
     ${WEBKIT_DIR}/Shared/Plugins
     ${WEBKIT_DIR}/UIProcess
     ${WEBKIT_DIR}/UIProcess/API
+    ${WEBKIT_DIR}/UIProcess/API/C
     ${WEBKIT_DIR}/WebProcess/InjectedBundle
     ${WEBKIT_DIR}/WebProcess/InjectedBundle/API/c
 )

@@ -52,6 +52,7 @@ from webkitpy.common.system.executive import Executive, ScriptError
 from webkitpy.common.system.filesystem_mock import MockFileSystem
 from webkitpy.common.system.outputcapture import OutputCapture
 from webkitpy.common.system.executive_mock import MockExecutive
+from webkitpy.common.version import Version
 from .git import Git, AmbiguousCommitError
 from .detection import detect_scm_system
 from .scm import SCM, CheckoutNeedsUpdate, commit_error_handler, AuthenticationError
@@ -60,7 +61,8 @@ from .svn import SVN
 
 # We cache the mock SVN repo so that we don't create it again for each call to an SVNTest or GitTest test_ method.
 # We store it in a global variable so that we can delete this cached repo on exit(3).
-# FIXME: Remove this once we migrate to Python 2.7. Unittest in Python 2.7 supports module-specific setup and teardown functions.
+# FIXME: Remove this once test-webkitpy supports class and module fixtures (i.e. setUpClass()/setUpModule()
+# are called exactly once per class/module).
 cached_svn_repo_path = None
 
 
@@ -70,7 +72,8 @@ def remove_dir(path):
     shutil.rmtree(path)
 
 
-# FIXME: Remove this once we migrate to Python 2.7. Unittest in Python 2.7 supports module-specific setup and teardown functions.
+# FIXME: Remove this once test-webkitpy supports class and module fixtures (i.e. setUpClass()/setUpModule()
+# are called exactly once per class/module).
 @atexit.register
 def delete_cached_mock_repo_at_exit():
     if cached_svn_repo_path:
@@ -265,12 +268,12 @@ svn: resource out of date; try updating
 """
         command_does_not_exist = ['does_not_exist', 'invalid_option']
         self.assertRaises(OSError, run_command, command_does_not_exist)
-        self.assertRaises(OSError, run_command, command_does_not_exist, error_handler=Executive.ignore_error)
+        self.assertRaises(OSError, run_command, command_does_not_exist, ignore_errors=True)
 
         command_returns_non_zero = ['/bin/sh', '--invalid-option']
         self.assertRaises(ScriptError, run_command, command_returns_non_zero)
         # Check if returns error text:
-        self.assertTrue(run_command(command_returns_non_zero, error_handler=Executive.ignore_error))
+        self.assertTrue(run_command(command_returns_non_zero, ignore_errors=True))
 
         self.assertRaises(CheckoutNeedsUpdate, commit_error_handler, ScriptError(output=git_failure_message))
         self.assertRaises(CheckoutNeedsUpdate, commit_error_handler, ScriptError(output=svn_failure_message))
@@ -953,7 +956,7 @@ END
         self.assertFalse(os.path.exists(self.bogus_dir))
 
     def test_svn_lock(self):
-        if self.scm.svn_version() >= "1.7":
+        if self.scm.svn_version() >= Version(1, 7):
             # the following technique with .svn/lock then svn update doesn't work with subversion client 1.7 or later
             pass
         else:
@@ -1019,6 +1022,26 @@ class GitTest(SCMTest):
 
         patch = scm.create_patch()
         self.assertNotRegexpMatches(patch, r'Subversion Revision:')
+
+    def test_create_patch_with_git_index(self):
+        # First change. Committed.
+        write_into_file_at_path('test_file_commit1', 'first cat')
+        run_command(['git', 'add', 'test_file_commit1'])
+        scm = self.tracking_scm
+        scm.commit_locally_with_message('message')
+
+        # Second change. Staged but not committed.
+        write_into_file_at_path('test_file_commit1', 'second dog')
+        run_command(['git', 'add', 'test_file_commit1'])
+
+        # Third change. Not even staged.
+        write_into_file_at_path('test_file_commit1', 'third unicorn')
+
+        patch = scm.create_patch(None, None, True)
+        self.assertRegexpMatches(patch, r'-first cat')
+        self.assertRegexpMatches(patch, r'\+second dog')
+        self.assertNotRegexpMatches(patch, r'third')
+        self.assertNotRegexpMatches(patch, r'unicorn')
 
     def test_orderfile(self):
         os.mkdir("Tools")
@@ -1140,6 +1163,49 @@ class GitSVNTest(SCMTest):
         value = 'git-config value'
         run_command(['git', 'config', key, value])
         self.assertEqual(self.scm.read_git_config(key), value)
+
+        value = 'true'
+        run_command(['git', 'config', key, value])
+        self.assertEqual(self.scm.read_git_config(key), value)
+
+        value = 'yes'
+        run_command(['git', 'config', key, value])
+        self.assertEqual(self.scm.read_git_config(key), value)
+        self.assertEqual(self.scm.read_git_config(key, bool), 'true')
+
+        value = 'oN'
+        run_command(['git', 'config', key, value])
+        self.assertEqual(self.scm.read_git_config(key), value)
+        self.assertEqual(self.scm.read_git_config(key, bool), 'true')
+
+        value = '1'
+        run_command(['git', 'config', key, value])
+        self.assertEqual(self.scm.read_git_config(key), value)
+        self.assertEqual(self.scm.read_git_config(key, bool), 'true')
+
+        value = 'false'
+        run_command(['git', 'config', key, value])
+        self.assertEqual(self.scm.read_git_config(key), value)
+
+        value = 'no'
+        run_command(['git', 'config', key, value])
+        self.assertEqual(self.scm.read_git_config(key), value)
+        self.assertEqual(self.scm.read_git_config(key, bool), 'false')
+
+        value = 'oFf'
+        run_command(['git', 'config', key, value])
+        self.assertEqual(self.scm.read_git_config(key), value)
+        self.assertEqual(self.scm.read_git_config(key, bool), 'false')
+
+        value = '0'
+        run_command(['git', 'config', key, value])
+        self.assertEqual(self.scm.read_git_config(key), value)
+        self.assertEqual(self.scm.read_git_config(key, bool), 'false')
+
+        value = '1k'
+        run_command(['git', 'config', key, value])
+        self.assertEqual(self.scm.read_git_config(key), value)
+        self.assertEqual(self.scm.read_git_config(key, int), '1024')
 
     def test_local_commits(self):
         test_file = os.path.join(self.git_checkout_path, 'test_file')

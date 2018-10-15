@@ -15,6 +15,7 @@ set(DumpRenderTree_SOURCES
     GCController.cpp
     JavaScriptThreading.cpp
     PixelDumpSupport.cpp
+    TestOptions.cpp
     TestRunner.cpp
     WorkQueue.cpp
     ${WEBKIT_TESTRUNNER_UISCRIPTCONTEXT_DIR}/UIScriptContext.cpp

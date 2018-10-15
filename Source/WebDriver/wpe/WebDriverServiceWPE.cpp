@@ -36,7 +36,7 @@ Capabilities WebDriverService::platformCapabilities()
 {
     Capabilities capabilities;
     capabilities.platformName = String("linux");
-    capabilities.acceptInsecureCerts = false;
+    capabilities.setWindowRect = false;
     return capabilities;
 }
 
@@ -54,12 +54,12 @@ bool WebDriverService::platformValidateCapability(const String& name, const RefP
 
     // If browser options are provided, binary is required.
     String binary;
-    if (!browserOptions->getString(ASCIILiteral("binary"), binary))
+    if (!browserOptions->getString("binary"_s, binary))
         return false;
 
     RefPtr<JSON::Value> browserArgumentsValue;
     RefPtr<JSON::Array> browserArguments;
-    if (browserOptions->getValue(ASCIILiteral("args"), browserArgumentsValue) && !browserArgumentsValue->asArray(browserArguments))
+    if (browserOptions->getValue("args"_s, browserArgumentsValue) && !browserArgumentsValue->asArray(browserArguments))
         return false;
 
     unsigned browserArgumentsLength = browserArguments->length();
@@ -73,29 +73,28 @@ bool WebDriverService::platformValidateCapability(const String& name, const RefP
     return true;
 }
 
-std::optional<String> WebDriverService::platformMatchCapability(const String&, const RefPtr<JSON::Value>&) const
+bool WebDriverService::platformMatchCapability(const String&, const RefPtr<JSON::Value>&) const
 {
-    return std::nullopt;
+    return true;
 }
 
 void WebDriverService::platformParseCapabilities(const JSON::Object& matchedCapabilities, Capabilities& capabilities) const
 {
+    capabilities.browserBinary = String("MiniBrowser");
+    capabilities.browserArguments = Vector<String> { "--automation"_s };
+
     RefPtr<JSON::Object> browserOptions;
-    if (!matchedCapabilities.getObject(ASCIILiteral("wpe:browserOptions"), browserOptions)) {
-        capabilities.browserBinary = String("dyz");
-        capabilities.browserArguments = Vector<String> { ASCIILiteral("--automation") };
+    if (!matchedCapabilities.getObject("wpe:browserOptions"_s, browserOptions))
         return;
-    }
 
     String browserBinary;
-    browserOptions->getString(ASCIILiteral("binary"), browserBinary);
-    ASSERT(!browserBinary.isNull());
-    capabilities.browserBinary = browserBinary;
+    if (browserOptions->getString("binary"_s, browserBinary))
+        capabilities.browserBinary = browserBinary;
 
-    capabilities.browserArguments = Vector<String>();
     RefPtr<JSON::Array> browserArguments;
-    if (browserOptions->getArray(ASCIILiteral("args"), browserArguments)) {
+    if (browserOptions->getArray("args"_s, browserArguments) && browserArguments->length()) {
         unsigned browserArgumentsLength = browserArguments->length();
+        capabilities.browserArguments = Vector<String>();
         capabilities.browserArguments->reserveInitialCapacity(browserArgumentsLength);
         for (unsigned i = 0; i < browserArgumentsLength; ++i) {
             RefPtr<JSON::Value> value = browserArguments->get(i);

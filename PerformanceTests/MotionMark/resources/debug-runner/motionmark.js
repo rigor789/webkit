@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2015-2018 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -134,7 +134,7 @@ Utilities.extendObject(window.benchmarkRunnerClient, {
 
     willStartFirstIteration: function()
     {
-        this.results = new ResultsDashboard(this.options);
+        this.results = new ResultsDashboard(Strings.version, this.options);
         this.progressBar = new ProgressBar(document.getElementById("progress-completed"), this.testsCount);
     },
 
@@ -360,7 +360,7 @@ window.suitesManager =
         var link = Utilities.createElement("span", {}, testElement);
         link.classList.add("link");
         link.textContent = "link";
-        link.suiteName = Utilities.stripNonASCIICharacters(suiteCheckbox.suite.name);
+        link.suiteName = Utilities.stripUnwantedCharactersForURL(suiteCheckbox.suite.name);
         link.testName = test.name;
         link.onclick = function(event) {
             var element = event.target;
@@ -369,7 +369,7 @@ window.suitesManager =
             var options = optionsManager.updateLocalStorageFromUI();
             Utilities.extendObject(options, {
                 "suite-name": element.suiteName,
-                "test-name": Utilities.stripNonASCIICharacters(element.testName)
+                "test-name": Utilities.stripUnwantedCharactersForURL(element.testName)
             });
             var complexity = suitesManager._editElement(element.parentNode).value;
             if (complexity)
@@ -405,7 +405,7 @@ window.suitesManager =
     updateEditsElementsState: function()
     {
         var editsElements = this._editsElements();
-        var showComplexityInputs = ["fixed", "step"].indexOf(optionsManager.valueForOption("controller")) != -1;
+        var showComplexityInputs = optionsManager.valueForOption("controller") == "fixed";
 
         for (var i = 0; i < editsElements.length; ++i) {
             var editElement = editsElements[i];
@@ -481,19 +481,22 @@ window.suitesManager =
 
     suitesFromQueryString: function(suiteName, testName)
     {
+        suiteName = decodeURIComponent(suiteName);
+        testName = decodeURIComponent(testName);
+
         var suites = [];
         var suiteRegExp = new RegExp(suiteName, "i");
         var testRegExp = new RegExp(testName, "i");
 
         for (var i = 0; i < Suites.length; ++i) {
             var suite = Suites[i];
-            if (!Utilities.stripNonASCIICharacters(suite.name).match(suiteRegExp))
+            if (!Utilities.stripUnwantedCharactersForURL(suite.name).match(suiteRegExp))
                 continue;
 
             var test;
             for (var j = 0; j < suite.tests.length; ++j) {
                 suiteTest = suite.tests[j];
-                if (Utilities.stripNonASCIICharacters(suiteTest.name).match(testRegExp)) {
+                if (Utilities.stripUnwantedCharactersForURL(suiteTest.name).match(testRegExp)) {
                     test = suiteTest;
                     break;
                 }
@@ -529,6 +532,11 @@ window.suitesManager =
 Utilities.extendObject(window.benchmarkController, {
     initialize: function()
     {
+        document.title = Strings.text.title.replace("%s", Strings.version);
+        document.querySelectorAll(".version").forEach(function(e) {
+            e.textContent = Strings.version;
+        });
+
         document.forms["benchmark-options"].addEventListener("change", benchmarkController.onBenchmarkOptionsChanged, true);
         document.forms["graph-type"].addEventListener("change", benchmarkController.onGraphTypeChanged, true);
         document.forms["time-graph-options"].addEventListener("change", benchmarkController.onTimeGraphOptionsChanged, true);
@@ -568,7 +576,9 @@ Utilities.extendObject(window.benchmarkController, {
                 var run = JSON.parse(e.target.result);
                 if (run.debugOutput instanceof Array)
                     run = run.debugOutput[0];
-                benchmarkRunnerClient.results = new ResultsDashboard(run.options, run.data);
+                if (!("version" in run))
+                    run.version = "1.0";
+                benchmarkRunnerClient.results = new ResultsDashboard(run.version, run.options, run.data);
                 benchmarkController.showResults();
             };
 
@@ -639,7 +649,7 @@ Utilities.extendObject(window.benchmarkController, {
         }
 
         var dashboard = benchmarkRunnerClient.results;
-        if (["ramp", "ramp30"].indexOf(dashboard.options["controller"]) != -1)
+        if (dashboard.options["controller"] == "ramp")
             Headers.details[3].disabled = true;
         else {
             Headers.details[1].disabled = true;
@@ -654,6 +664,7 @@ Utilities.extendObject(window.benchmarkController, {
         var score = dashboard.score;
         var confidence = ((dashboard.scoreLowerBound / score - 1) * 100).toFixed(2) +
             "% / +" + ((dashboard.scoreUpperBound / score - 1) * 100).toFixed(2) + "%";
+        sectionsManager.setSectionVersion("results", dashboard.version);
         sectionsManager.setSectionScore("results", score.toFixed(2), confidence);
         sectionsManager.populateTable("results-header", Headers.testName, dashboard);
         sectionsManager.populateTable("results-score", Headers.score, dashboard);

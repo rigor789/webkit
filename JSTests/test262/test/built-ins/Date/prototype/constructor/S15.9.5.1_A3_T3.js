@@ -2,7 +2,7 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-info: >
+info: |
     The Date.prototype.constructor property "length" has { ReadOnly,
     DontDelete, DontEnum } attributes
 esid: sec-date.prototype.constructor
@@ -14,8 +14,8 @@ if (Date.prototype.constructor.propertyIsEnumerable('length')) {
   $ERROR('#1: The Date.prototype.constructor.length property has the attribute DontEnum');
 }
 
-for(var x in Date.prototype.constructor) {
-  if(x === "length") {
+for (var x in Date.prototype.constructor) {
+  if (x === "length") {
     $ERROR('#2: The Date.prototype.constructor.length has the attribute DontEnum');
   }
 }

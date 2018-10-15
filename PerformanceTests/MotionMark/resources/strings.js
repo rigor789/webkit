@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2015-2018 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,11 +23,15 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 var Strings = {
+    version: "1.0",
     text: {
         testName: "Test Name",
-        score: "Score"
+        score: "Score",
+        title: "MotionMark %s",
     },
     json: {
+        version: "version",
+
         marks: "marks",
         samplingStartTimeOffset: "Start sampling",
         samplingEndTimeOffset: "End sampling",
@@ -37,7 +41,6 @@ var Strings = {
         controller: "controller",
         time: "time",
         complexity: "complexity",
-        complexityAverage: "complexityAverage",
         frameLength: "frameLength",
         smoothedFrameLength: "smoothedFrameLength",
 
