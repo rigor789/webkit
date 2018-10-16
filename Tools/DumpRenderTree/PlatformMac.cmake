@@ -77,7 +77,6 @@ list(APPEND DumpRenderTree_ObjCpp_SOURCES
     mac/DumpRenderTreeDraggingInfo.mm
     mac/DumpRenderTreeMain.mm
     mac/DumpRenderTreePasteboard.mm
-    mac/DumpRenderTreeSpellChecker.mm
     mac/DumpRenderTreeWindow.mm
     mac/EditingDelegate.mm
     mac/EventSendingController.mm
@@ -93,6 +92,7 @@ list(APPEND DumpRenderTree_ObjCpp_SOURCES
     mac/UIDelegate.mm
     mac/UIScriptControllerMac.mm
     mac/WorkQueueItemMac.mm
+    ../TestRunnerShared/cocoa/LayoutTestSpellChecker.mm
 )
 
 set(DumpRenderTree_SOURCES

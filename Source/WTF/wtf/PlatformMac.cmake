@@ -14,7 +14,7 @@ list(APPEND WTF_PUBLIC_HEADERS
     cf/TypeCastsCF.h
 
     cocoa/Entitlements.h
-    cocoa/MachSendRight.h
+    MachSendRight.h
     cocoa/SoftLinking.h
 
     darwin/WeakLinking.h
@@ -32,6 +32,7 @@ list(APPEND WTF_PUBLIC_HEADERS
     spi/darwin/XPCSPI.h
     spi/darwin/dyldSPI.h
 
+    text/ASCIILiteral.h
     text/cf/TextBreakIteratorCF.h
 )
 
@@ -46,7 +47,7 @@ list(APPEND WTF_SOURCES
 
     cocoa/AutodrainedPool.cpp
     cocoa/CPUTimeCocoa.cpp
-    cocoa/Entitlements.cpp
+    cocoa/Entitlements.mm
     cocoa/MachSendRight.cpp
     cocoa/MemoryFootprintCocoa.cpp
     cocoa/MemoryPressureHandlerCocoa.mm
@@ -64,7 +65,7 @@ list(APPEND WTF_SOURCES
 
     text/cocoa/StringImplCocoa.mm
     text/cocoa/StringViewCocoa.mm
-    text/cocoa/TextBreakIteratorInternalICUMac.mm
+    text/cocoa/TextBreakIteratorInternalICUCocoa.cpp
 )
 
 list(APPEND WTF_PRIVATE_INCLUDE_DIRECTORIES
