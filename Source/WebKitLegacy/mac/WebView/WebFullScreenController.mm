@@ -207,10 +207,7 @@ static NSRect convertRectToScreen(NSWindow *window, NSRect rect)
     RetainPtr<CGImageRef> webViewContents = adoptCF(CGWindowListCreateImage(NSRectToCGRect(webViewFrame), kCGWindowListOptionIncludingWindow, windowID, kCGWindowImageShouldBeOpaque));
     
     // Screen updates to be re-enabled in beganEnterFullScreenWithInitialFrame:finalFrame:
-    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    NSDisableScreenUpdates();
     [[self window] setAutodisplay:NO];
-    ALLOW_DEPRECATED_DECLARATIONS_END
 
     NSResponder *webWindowFirstResponder = [[_webView window] firstResponder];
     [[self window] setFrame:screenFrame display:NO];
@@ -267,10 +264,6 @@ static void setClipRectForWindow(NSWindow *window, NSRect clipRect)
     _isEnteringFullScreen = NO;
     
     if (completed) {
-        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-        // Screen updates to be re-enabled at the end of this block
-        NSDisableScreenUpdates();
-        ALLOW_DEPRECATED_DECLARATIONS_END
         [self _document]->setAnimatingFullScreen(false);
         [self _document]->webkitDidEnterFullScreenForElement(_element.get());
         
@@ -292,9 +285,6 @@ static void setClipRectForWindow(NSWindow *window, NSRect clipRect)
         
         [_backgroundWindow.get() orderOut:self];
         [_backgroundWindow.get() setFrame:NSZeroRect display:YES];
-        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-        NSEnableScreenUpdates();
-        ALLOW_DEPRECATED_DECLARATIONS_END
     } else
         [_scaleAnimation.get() stopAnimation];
 }
@@ -356,10 +346,6 @@ static void setClipRectForWindow(NSWindow *window, NSRect clipRect)
     
     [self _updateMenuAndDockForFullScreen];
 
-    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    // Screen updates to be re-enabled at the end of this function
-    NSDisableScreenUpdates();
-    ALLOW_DEPRECATED_DECLARATIONS_END
 
     [self _document]->setAnimatingFullScreen(false);
     [self _document]->webkitDidExitFullScreenForElement(_element.get());
@@ -385,10 +371,6 @@ static void setClipRectForWindow(NSWindow *window, NSRect clipRect)
     [_backgroundWindow.get() setFrame:NSZeroRect display:YES];
 
     [[_webView window] makeKeyAndOrderFront:self];
-
-    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    NSEnableScreenUpdates();
-    ALLOW_DEPRECATED_DECLARATIONS_END
 }
 
 - (void)performClose:(id)sender
@@ -540,10 +522,6 @@ static NSRect windowFrameFromApparentFrames(NSRect screenFrame, NSRect initialFr
     [[self window] setAutodisplay:YES];
     ALLOW_DEPRECATED_DECLARATIONS_END
     [[self window] displayIfNeeded];
-    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    // Screen updates disabled in enterFullScreen:
-    NSEnableScreenUpdates();
-    ALLOW_DEPRECATED_DECLARATIONS_END
 }
 
 - (void)_startExitFullScreenAnimationWithDuration:(NSTimeInterval)duration
