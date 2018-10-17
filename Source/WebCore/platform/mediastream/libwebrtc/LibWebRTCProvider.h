@@ -31,10 +31,13 @@
 
 #if USE(LIBWEBRTC)
 
+ALLOW_UNUSED_PARAMETERS_BEGIN
+
 #include <webrtc/api/peerconnectioninterface.h>
 #include <webrtc/base/scoped_ref_ptr.h>
 #include <webrtc/media/engine/webrtcvideodecoderfactory.h>
 #include <webrtc/media/engine/webrtcvideoencoderfactory.h>
+ALLOW_UNUSED_PARAMETERS_END
 
 namespace rtc {
 class NetworkManager;

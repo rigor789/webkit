@@ -478,8 +478,7 @@ static NSString *defaultApplicationNameForUserAgent()
     return [urlSchemeHandlers objectForKey:(NSString *)canonicalScheme.value()];
 }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 
 - (_WKWebsiteDataStore *)_websiteDataStore
 {
@@ -491,7 +490,7 @@ static NSString *defaultApplicationNameForUserAgent()
     self.websiteDataStore = websiteDataStore ? websiteDataStore->_dataStore.get() : nullptr;
 }
 
-#pragma clang diagnostic pop
+ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (NSMutableDictionary<NSString *, id <WKURLSchemeHandler>> *)_urlSchemeHandlers
 {

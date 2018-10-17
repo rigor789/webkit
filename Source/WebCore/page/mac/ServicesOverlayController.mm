@@ -136,7 +136,9 @@ void ServicesOverlayController::Highlight::paintContents(const GraphicsLayer*, G
 
     CGContextRef cgContext = graphicsContext.platformContext();
 
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     CGLayerRef highlightLayer = DDHighlightGetLayerWithContext(ddHighlight(), cgContext);
+    ALLOW_DEPRECATED_DECLARATIONS_END
     CGRect highlightBoundingRect = DDHighlightGetBoundingRect(ddHighlight());
     highlightBoundingRect.origin = CGPointZero;
 

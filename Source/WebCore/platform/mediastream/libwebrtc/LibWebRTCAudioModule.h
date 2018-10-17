@@ -28,9 +28,14 @@
 #if USE(LIBWEBRTC)
 
 #include "LibWebRTCMacros.h"
+
+ALLOW_UNUSED_PARAMETERS_BEGIN
+
+#include <webrtc/modules/audio_device/include/audio_device.h>
 #include <webrtc/base/messagehandler.h>
 #include <webrtc/base/thread.h>
-#include <webrtc/modules/audio_device/include/audio_device.h>
+
+ALLOW_UNUSED_PARAMETERS_END
 
 namespace WebCore {
 

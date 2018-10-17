@@ -34,7 +34,13 @@
 
 #include "LibWebRTCMacros.h"
 #include "RealtimeMediaSource.h"
+
+ALLOW_UNUSED_PARAMETERS_BEGIN
+
 #include <webrtc/api/mediastreaminterface.h>
+
+ALLOW_UNUSED_PARAMETERS_END
+
 #include <wtf/RetainPtr.h>
 
 namespace WebCore {

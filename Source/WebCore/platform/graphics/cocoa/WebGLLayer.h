@@ -34,6 +34,8 @@ class GraphicsLayer;
 class GraphicsContext3D;
 }
 
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
+
 #if PLATFORM(MAC)
 @interface WebGLLayer : CALayer
 #else
@@ -64,3 +66,4 @@ class GraphicsContext3D;
 
 @end
 
+ALLOW_DEPRECATED_DECLARATIONS_END

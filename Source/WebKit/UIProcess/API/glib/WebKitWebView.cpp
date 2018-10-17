@@ -2087,8 +2087,7 @@ void webkitWebViewRunAsModal(WebKitWebView* webView)
 
 #if PLATFORM(GTK)
 // This is to suppress warnings about gdk_threads_leave and gdk_threads_enter.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     gdk_threads_leave();
 #endif
 
@@ -2096,7 +2095,7 @@ void webkitWebViewRunAsModal(WebKitWebView* webView)
 
 #if PLATFORM(GTK)
     gdk_threads_enter();
-#pragma GCC diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
 }
 

@@ -3573,7 +3573,6 @@ static RefPtr<CSSValue> consumeHangingPunctuation(CSSParserTokenRange& range)
         return consumeIdent(range);
     
     RefPtr<CSSValueList> list = CSSValueList::createSpaceSeparated();
-    std::bitset<numCSSValueKeywords> seenValues;
 
     bool seenForceEnd = false;
     bool seenAllowEnd = false;

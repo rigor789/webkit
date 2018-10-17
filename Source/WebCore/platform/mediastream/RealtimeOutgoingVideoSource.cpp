@@ -32,13 +32,17 @@
 #if USE(LIBWEBRTC)
 
 #include "Logging.h"
+
+ALLOW_UNUSED_PARAMETERS_BEGIN
+
 #include <webrtc/api/video/i420_buffer.h>
 #include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
 #include <wtf/CurrentTime.h>
 #include <wtf/MainThread.h>
-
 #include <pal/cf/CoreMediaSoftLink.h>
 #include "CoreVideoSoftLink.h"
+
+ALLOW_UNUSED_PARAMETERS_END
 
 namespace WebCore {
 using namespace PAL;
