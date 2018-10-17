@@ -158,7 +158,7 @@ void ModuleAnalyzer::ensureDefaultExportIfNothingExported() {
 
         auto moduleUrl = m_moduleRecord->sourceCode().provider()->url();
         error = ParserError();
-        sourceC = makeSource(WTF::ASCIILiteral("export default undefined;"), SourceOrigin(), WTF::emptyString(), WTF::TextPosition(), SourceProviderSourceType::Module);
+        sourceC = makeSource("export default undefined;"_s, SourceOrigin(), WTF::emptyString(), WTF::TextPosition(), SourceProviderSourceType::Module);
 
         std::unique_ptr<ModuleProgramNode> moduleProgramNode = parse<ModuleProgramNode>(
                                                                                         m_vm, sourceC, Identifier(), JSParserBuiltinMode::NotBuiltin,

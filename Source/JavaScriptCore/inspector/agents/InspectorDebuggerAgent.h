@@ -71,7 +71,6 @@ public:
     void continueToLocation(ErrorString&, const JSON::Object& location) final;
     void searchInContent(ErrorString&, const String& scriptID, const String& query, const bool* optionalCaseSensitive, const bool* optionalIsRegex, RefPtr<JSON::ArrayOf<Protocol::GenericTypes::SearchMatch>>&) final;
     void getScriptSource(ErrorString&, const String& scriptID, String* scriptSource) final;
-    void getFunctionDetails(ErrorString&, const String& functionId, RefPtr<Inspector::Protocol::Debugger::FunctionDetails>&) final;
     virtual void setScriptSource(ErrorString&, const String& scriptID, const String& scriptSource) override;
     void getFunctionDetails(ErrorString&, const String& functionId, RefPtr<Protocol::Debugger::FunctionDetails>&) final;
     void pause(ErrorString&) final;
@@ -149,7 +148,7 @@ private:
     void breakpointActionProbe(JSC::ExecState&, const ScriptBreakpointAction&, unsigned batchId, unsigned sampleId, JSC::JSValue sample) final;
 
     void resolveBreakpoint(const Script&, JSC::Breakpoint&);
-    void setBreakpoint(JSC::Breakpoint&, bool& existing);    
+    void setBreakpoint(JSC::Breakpoint&, bool& existing);
     void didSetBreakpoint(const JSC::Breakpoint&, const String&, const ScriptBreakpoint&);
 
     bool assertPaused(ErrorString&);

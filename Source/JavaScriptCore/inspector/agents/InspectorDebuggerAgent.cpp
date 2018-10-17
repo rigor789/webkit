@@ -683,7 +683,7 @@ void InspectorDebuggerAgent::getScriptSource(ErrorString& error, const String& s
     else
         error = makeString("No script for id: "_s, scriptIDStr);
 }
-    
+
 void InspectorDebuggerAgent::setScriptSource(ErrorString& error, const String& scriptID, const String& scriptSource)
 {
     UNUSED_PARAM(error);
