@@ -55,6 +55,8 @@
 
 #import "DataDetectorsCoreSoftLink.h"
 
+#include "unicode/char16ptr.h"
+
 #if PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 101400
 template <>
 struct WTF::CFTypeTrait<DDResultRef> {
@@ -372,7 +374,7 @@ static void buildQuery(DDScanQueryRef scanQuery, Range* contextRange)
             continue;
         }
         // Test for white space nodes, we're coalescing them.
-        const UniChar* currentCharPtr = iterator.text().upconvertedCharacters();
+        const UniChar* currentCharPtr = toOldUCharPtr(iterator.text().upconvertedCharacters().get());
         
         bool containsOnlyWhiteSpace = true;
         bool hasTab = false;
@@ -411,7 +413,7 @@ static void buildQuery(DDScanQueryRef scanQuery, Range* contextRange)
             continue;
         }
         
-        RetainPtr<CFStringRef> currentText = adoptCF(CFStringCreateWithCharacters(kCFAllocatorDefault, iterator.text().upconvertedCharacters(), iterator.text().length()));
+        RetainPtr<CFStringRef> currentText = adoptCF(CFStringCreateWithCharacters(kCFAllocatorDefault, toOldUCharPtr(iterator.text().upconvertedCharacters()), iterator.text().length()));
         softLink_DataDetectorsCore_DDScanQueryAddTextFragment(scanQuery, currentText.get(), CFRangeMake(0, currentTextLength), (void *)iteratorCount, (DDTextFragmentMode)0, DDTextCoalescingTypeNone);
         fragmentCount++;
     }

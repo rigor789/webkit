@@ -69,6 +69,8 @@
 #import <wtf/BlockObjCExceptions.h>
 #import <wtf/text/TextStream.h>
 
+#include "unicode/char16ptr.h"
+
 using namespace WebCore::HTMLNames;
 using namespace WTF::Unicode;
 
@@ -696,7 +698,7 @@ NSArray *Frame::interpretationsForCurrentRoot() const
 
     NSMutableArray *result = [NSMutableArray array];
     for (auto& interpretation : interpretations)
-        [result addObject:adoptNS([[NSString alloc] initWithCharacters:interpretation.data() length:interpretation.size()]).get()];
+        [result addObject:adoptNS([[NSString alloc] initWithCharacters:toOldUCharPtr(interpretation.data()) length:interpretation.size()]).get()];
 
     return result;
 }

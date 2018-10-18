@@ -29,6 +29,9 @@
 #if ENABLE(SUBTLE_CRYPTO)
 
 #include "CommonCryptoUtilities.h"
+#if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
+#include "Security/SecRandom.h"
+#endif
 
 namespace WebCore {
 

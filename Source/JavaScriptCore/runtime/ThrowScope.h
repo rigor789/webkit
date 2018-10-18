@@ -98,7 +98,7 @@ public:
 
 private:
 #ifndef NDEBUG
-    void simulateThrow();
+    JS_EXPORT_PRIVATE void simulateThrow();
 #endif // NDEBUG
 
 #ifndef NDEBUG

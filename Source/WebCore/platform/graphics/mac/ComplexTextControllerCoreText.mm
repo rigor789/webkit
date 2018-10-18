@@ -32,6 +32,8 @@
 #include <wtf/WeakPtr.h>
 #include <CoreText/CoreText.h>
 
+#include <unicode/char16ptr.h>
+
 namespace WebCore {
 
 ComplexTextController::ComplexTextRun::ComplexTextRun(CTRunRef ctRun, const Font& font, const UChar* characters, unsigned stringLocation, unsigned stringLength, unsigned indexBegin, unsigned indexEnd)

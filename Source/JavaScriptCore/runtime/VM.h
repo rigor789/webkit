@@ -914,7 +914,7 @@ private:
     JS_EXPORT_PRIVATE JSObject* throwException(ExecState*, JSObject*);
 
 #if ENABLE(EXCEPTION_SCOPE_VERIFICATION)
-    void verifyExceptionCheckNeedIsSatisfied(unsigned depth, ExceptionEventLocation&);
+    JS_EXPORT_PRIVATE void verifyExceptionCheckNeedIsSatisfied(unsigned depth, ExceptionEventLocation&);
 #endif
     
     static void primitiveGigacageDisabledCallback(void*);

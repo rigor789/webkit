@@ -59,7 +59,7 @@ BuiltinNames::BuiltinNames(VM* vm, CommonIdentifiers* commonIdentifiers)
     , m_dollarVMPrivateName(Identifier::fromUid(vm, &static_cast<SymbolImpl&>(Symbols::dollarVMPrivateName)))
     , m_polyProtoPrivateName(Identifier::fromUid(vm, &static_cast<SymbolImpl&>(Symbols::polyProtoPrivateName)))
     , m_nsExceptionIdentifier(Identifier::fromString(vm, "$nsException"))
-    , m_nsExceptionIdentifierPrivateName(Identifier::fromUid(PrivateName(PrivateName::Description, ASCIILiteral("PrivateSymbol.$nsException"))))
+    , m_nsExceptionIdentifierPrivateName(Identifier::fromUid(PrivateName(PrivateName::Description, "PrivateSymbol.$nsException"_s)))
 {
     JSC_FOREACH_BUILTIN_FUNCTION_NAME(INITIALIZE_PRIVATE_TO_PUBLIC_ENTRY)
     JSC_COMMON_PRIVATE_IDENTIFIERS_EACH_PROPERTY_NAME(INITIALIZE_PRIVATE_TO_PUBLIC_ENTRY)
