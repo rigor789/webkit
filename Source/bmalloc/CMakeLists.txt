@@ -1,7 +1,7 @@
 set_property(DIRECTORY . PROPERTY FOLDER "bmalloc")
 
 set(bmalloc_INCLUDE_DIRECTORIES
-    "${BMALLOC_DIR}"
+    "${BMALLOC_DIR}/bmalloc"
 )
 
 set(bmalloc_SOURCES

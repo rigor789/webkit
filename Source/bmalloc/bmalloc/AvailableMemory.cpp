@@ -27,7 +27,7 @@
 
 #include "Environment.h"
 #if BPLATFORM(IOS)
-#include "MemoryStatusSPI.h"
+#include "darwin/MemoryStatusSPI.h"
 #endif
 #include "PerProcess.h"
 #include "Scavenger.h"
@@ -126,14 +126,14 @@ MemoryStatus memoryStatus()
 {
     task_vm_info_data_t vmInfo;
     mach_msg_type_number_t vmSize = TASK_VM_INFO_COUNT;
-    
+
     size_t memoryFootprint = 0;
     if (KERN_SUCCESS == task_info(mach_task_self(), TASK_VM_INFO, (task_info_t)(&vmInfo), &vmSize))
         memoryFootprint = static_cast<size_t>(vmInfo.phys_footprint);
 
     double percentInUse = static_cast<double>(memoryFootprint) / static_cast<double>(availableMemory());
     double percentAvailableMemoryInUse = std::min(percentInUse, 1.0);
-    
+
     return MemoryStatus(memoryFootprint, percentAvailableMemoryInUse);
 }
 #endif

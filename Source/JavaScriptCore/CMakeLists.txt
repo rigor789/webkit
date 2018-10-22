@@ -12,6 +12,7 @@ set(JavaScriptCore_INCLUDE_DIRECTORIES
 
 set(JavaScriptCore_PRIVATE_INCLUDE_DIRECTORIES
     "${CMAKE_BINARY_DIR}"
+    "${JAVASCRIPTCORE_DIR}/.."
     "${JAVASCRIPTCORE_DIR}"
     "${JAVASCRIPTCORE_DIR}/API"
     "${JAVASCRIPTCORE_DIR}/assembler"
@@ -1218,17 +1219,23 @@ if (COMPILER_IS_GCC_OR_CLANG)
     set_source_files_properties(builtins/BuiltinNames.cpp PROPERTIES COMPILE_FLAGS -fno-var-tracking-assignments)
 endif ()
 
-WEBKIT_MAKE_FORWARDING_HEADERS(JavaScriptCore
-    FILES ${JavaScriptCore_PUBLIC_FRAMEWORK_HEADERS}
-    FLATTENED
-)
 
-WEBKIT_MAKE_FORWARDING_HEADERS(JavaScriptCore
-    TARGET_NAME JavaScriptCorePrivateForwardingHeaders
-    FILES ${JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS}
-    DERIVED_SOURCE_DIRECTORIES ${DERIVED_SOURCES_DIR}/JavaScriptCore ${DERIVED_SOURCES_DIR}/JavaScriptCore/inspector
-    FLATTENED
-)
+# Revert to old way of creating forwarding headers (copying them breaks #pragma once and causes duplicate definitions)
+WEBKIT_CREATE_FORWARDING_HEADERS(JavaScriptCore
+    DIRECTORIES ${FORWARDING_HEADERS_DIR}/JavaScriptCore
+    FILES ${JavaScriptCore_PUBLIC_FRAMEWORK_HEADERS} ${JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS})
+
+# WEBKIT_MAKE_FORWARDING_HEADERS(JavaScriptCore
+#     FILES ${JavaScriptCore_PUBLIC_FRAMEWORK_HEADERS}
+#     FLATTENED
+# )
+
+# WEBKIT_MAKE_FORWARDING_HEADERS(JavaScriptCore
+#     TARGET_NAME JavaScriptCorePrivateForwardingHeaders
+#     FILES ${JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS}
+#     DERIVED_SOURCE_DIRECTORIES ${DERIVED_SOURCES_DIR}/JavaScriptCore ${DERIVED_SOURCES_DIR}/JavaScriptCore/inspector
+#     FLATTENED
+# )
 
 target_include_directories(LLIntOffsetsExtractor PRIVATE
     ${JavaScriptCore_INCLUDE_DIRECTORIES}

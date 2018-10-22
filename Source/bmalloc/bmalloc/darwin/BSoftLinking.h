@@ -25,7 +25,7 @@
 #ifndef BSoftLinking_h
 #define BSoftLinking_h
 
-#include "bmalloc/BAssert.h"
+#include "BAssert.h"
 #include <dlfcn.h>
 #include <mutex>
 

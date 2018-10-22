@@ -67,5 +67,5 @@ inline bool isUnderMemoryPressure()
     return false;
 #endif
 }
-    
+
 } // namespace bmalloc

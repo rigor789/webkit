@@ -41,7 +41,7 @@ if (ENABLE_WEBCORE)
 endif ()
 
 if (ENABLE_WEBKIT_LEGACY)
-    #add_subdirectory(WebKitLegacy)
+    add_subdirectory(WebKitLegacy)
 endif ()
 
 if (ENABLE_WEBKIT)

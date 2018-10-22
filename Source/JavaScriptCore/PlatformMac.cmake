@@ -1,4 +1,4 @@
-add_definitions(-DSTATICALLY_LINKED_WITH_WTF -D__STDC_WANT_LIB_EXT1__)
+add_definitions(-DSTATICALLY_LINKED_WITH_WTF -D__STDC_WANT_LIB_EXT1__ -DBPLATFORM_IOS=1)
 
 find_library(SECURITY_LIBRARY Security)
 list(APPEND JavaScriptCore_LIBRARIES
@@ -10,6 +10,7 @@ list(APPEND JavaScriptCore_UNIFIED_SOURCE_LIST_FILES
 )
 
 list(APPEND JavaScriptCore_PRIVATE_INCLUDE_DIRECTORIES
+    "${WTF_DIR}/icu"
     ${JAVASCRIPTCORE_DIR}/disassembler/udis86
     ${JAVASCRIPTCORE_DIR}/inspector/cocoa
     ${JAVASCRIPTCORE_DIR}/inspector/remote/cocoa
