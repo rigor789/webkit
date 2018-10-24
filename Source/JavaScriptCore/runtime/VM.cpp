@@ -178,31 +178,31 @@ namespace JSC {
 
 #if CPU(ARM_THUMB2)
 /* Dummy NativeScript types for getting the correct memory sizes */
-class _TNS_FFIFunctionCall { unsigned char bytes[152]; };
-class _TNS_FunctionReferenceInstance { unsigned char bytes[40]; };
-class _TNS_NSErrorWrapperConstructor { unsigned char bytes[36]; };
-class _TNS_ObjCBlockCall { unsigned char bytes[148]; };
-class _TNS_ObjCConstructorCall { unsigned char bytes[152]; };
-class _TNS_ObjCConstructorDerived { unsigned char bytes[80]; };
-class _TNS_ObjCConstructorNative { unsigned char bytes[84]; };
-class _TNS_ObjCMethodCall { unsigned char bytes[160]; };
-class _TNS_PointerConstructor { unsigned char bytes[52]; };
-class _TNS_RecordConstructor { unsigned char bytes[72]; };
-class _TNS_RecordProtoFieldGetter { unsigned char bytes[36]; };
-class _TNS_RecordProtoFieldSetter { unsigned char bytes[36]; };
+struct _TNS_FFIFunctionCall { unsigned char bytes[152]; };
+struct _TNS_FunctionReferenceInstance { unsigned char bytes[40]; };
+struct _TNS_NSErrorWrapperConstructor { unsigned char bytes[36]; };
+struct _TNS_ObjCBlockCall { unsigned char bytes[148]; };
+struct _TNS_ObjCConstructorCall { unsigned char bytes[152]; };
+struct _TNS_ObjCConstructorDerived { unsigned char bytes[80]; };
+struct _TNS_ObjCConstructorNative { unsigned char bytes[84]; };
+struct _TNS_ObjCMethodCall { unsigned char bytes[160]; };
+struct _TNS_PointerConstructor { unsigned char bytes[52]; };
+struct _TNS_RecordConstructor { unsigned char bytes[72]; };
+struct _TNS_RecordProtoFieldGetter { unsigned char bytes[36]; };
+struct _TNS_RecordProtoFieldSetter { unsigned char bytes[36]; };
 #elif CPU(X86_64) || CPU(ARM64)
-class _TNS_FFIFunctionCall { unsigned char bytes[272]; };
-class _TNS_FunctionReferenceInstance { unsigned char bytes[64]; };
-class _TNS_NSErrorWrapperConstructor { unsigned char bytes[56]; };
-class _TNS_ObjCBlockCall { unsigned char bytes[264]; };
-class _TNS_ObjCConstructorCall { unsigned char bytes[272]; };
-class _TNS_ObjCConstructorDerived { unsigned char bytes[136]; };
-class _TNS_ObjCConstructorNative { unsigned char bytes[144]; };
-class _TNS_ObjCMethodCall { unsigned char bytes[288]; };
-class _TNS_PointerConstructor { unsigned char bytes[88]; };
-class _TNS_RecordConstructor { unsigned char bytes[128]; };
-class _TNS_RecordProtoFieldGetter { unsigned char bytes[56]; };
-class _TNS_RecordProtoFieldSetter { unsigned char bytes[56]; };
+struct _TNS_FFIFunctionCall { unsigned char bytes[272]; };
+struct _TNS_FunctionReferenceInstance { unsigned char bytes[64]; };
+struct _TNS_NSErrorWrapperConstructor { unsigned char bytes[56]; };
+struct _TNS_ObjCBlockCall { unsigned char bytes[264]; };
+struct _TNS_ObjCConstructorCall { unsigned char bytes[272]; };
+struct _TNS_ObjCConstructorDerived { unsigned char bytes[136]; };
+struct _TNS_ObjCConstructorNative { unsigned char bytes[144]; };
+struct _TNS_ObjCMethodCall { unsigned char bytes[288]; };
+struct _TNS_PointerConstructor { unsigned char bytes[88]; };
+struct _TNS_RecordConstructor { unsigned char bytes[128]; };
+struct _TNS_RecordProtoFieldGetter { unsigned char bytes[56]; };
+struct _TNS_RecordProtoFieldSetter { unsigned char bytes[56]; };
 #else
 #error Unsupported CPU
 /* Stop in debugger and get sizes with the following LLDB commands:
@@ -338,6 +338,10 @@ VM::VM(VMType vmType, HeapType heapType)
     , intlNumberFormatConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), IntlNumberFormatConstructor)
     , intlPluralRulesConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), IntlPluralRulesConstructor)
 #endif
+    , nativeErrorConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), NativeErrorConstructor)
+    , nativeExecutableSpace ISO_SUBSPACE_INIT(heap, destructibleCellHeapCellType.get(), NativeExecutable)
+    , nativeStdFunctionSpace ISO_SUBSPACE_INIT(heap, cellJSValueOOBHeapCellType.get(), JSNativeStdFunction)
+
     , tnsFFIFunctionCallSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_FFIFunctionCall)
     , tnsFunctionReferenceInstanceSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_FunctionReferenceInstance)
     , tnsNSErrorWrapperConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_NSErrorWrapperConstructor)
@@ -350,10 +354,6 @@ VM::VM(VMType vmType, HeapType heapType)
     , tnsRecordConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_RecordConstructor)
     , tnsRecordProtoFieldGetterSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_RecordProtoFieldGetter)
     , tnsRecordProtoFieldSetterSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_RecordProtoFieldSetter)
-
-    , nativeErrorConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), NativeErrorConstructor)
-    , nativeExecutableSpace ISO_SUBSPACE_INIT(heap, destructibleCellHeapCellType.get(), NativeExecutable)
-    , nativeStdFunctionSpace ISO_SUBSPACE_INIT(heap, cellJSValueOOBHeapCellType.get(), JSNativeStdFunction)
 #if JSC_OBJC_API_ENABLED
     , objCCallbackFunctionSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), ObjCCallbackFunction)
 #endif
