@@ -297,7 +297,7 @@ public:
     {
         m_value.assertIsPoisoned();
         ASSERT_VALID_CODE_POINTER(m_value.unpoisoned());
-        return bitwise_cast<T>(m_value ? m_value.unpoisoned<char*>() - 1 - 1 : nullptr);
+        return bitwise_cast<T>(m_value ? m_value.unpoisoned<char*>() - 1 : nullptr);
     }
 #else
     template<typename T = void*>
