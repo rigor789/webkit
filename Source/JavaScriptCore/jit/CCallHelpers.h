@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #pragma once
@@ -184,7 +184,7 @@ private:
     }
 
 #if CPU(MIPS) || (CPU(ARM) && !CPU(ARM_HARDFP))
-    template<unsigned NumCrossSources, unsigned NumberOfRegisters>
+    template<unsigned long NumCrossSources, unsigned long NumberOfRegisters>
     ALWAYS_INLINE void setupStubCrossArgs(std::array<GPRReg, NumberOfRegisters> destinations, std::array<FPRReg, NumberOfRegisters> sources) {
         for (unsigned i = 0; i < NumCrossSources; i++) {
             GPRReg dest = destinations[i];
@@ -725,7 +725,7 @@ public:
         } else
             swap(destA, destB);
     }
-    
+
     void setupResults(JSValueRegs regs)
     {
 #if USE(JSVALUE64)
@@ -734,7 +734,7 @@ public:
         setupResults(regs.payloadGPR(), regs.tagGPR());
 #endif
     }
-    
+
     void jumpToExceptionHandler(VM& vm)
     {
         // genericUnwind() leaves the handler CallFrame* in vm->callFrameForCatch,
@@ -834,7 +834,7 @@ public:
         // Ready for a jump!
         move(newFramePointer, stackPointerRegister);
     }
-    
+
     // These operations clobber all volatile registers. They assume that there is room on the top of
     // stack to marshall call arguments.
     void logShadowChickenProloguePacket(GPRReg shadowPacket, GPRReg scratch1, GPRReg scope);

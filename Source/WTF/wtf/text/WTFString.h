@@ -568,6 +568,12 @@ inline void String::clearImplIfNotShared()
 
 #ifdef __OBJC__
 
+inline String::String(NSString *nsstring)
+{
+    if (nsstring)
+        m_impl = StringImpl::create(reinterpret_cast<const LChar*>([nsstring cStringUsingEncoding:NSUTF8StringEncoding]));
+}
+
 inline String::operator NSString *() const
 {
     if (!m_impl)

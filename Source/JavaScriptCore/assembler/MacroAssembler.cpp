@@ -59,7 +59,20 @@ static void stdFunctionCallback(Probe::Context& context)
     
 void MacroAssembler::probe(std::function<void(Probe::Context&)> func)
 {
+#if COMPILER(CLANG)
+#if __has_warning("-Waligned-allocation-unavailable")
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Waligned-allocation-unavailable"
+#endif
+#endif
+
     probe(stdFunctionCallback, new std::function<void(Probe::Context&)>(func));
+
+#if COMPILER(CLANG)
+#if __has_warning("-Waligned-allocation-unavailable")
+#pragma clang diagnostic pop
+#endif
+#endif
 }
 #endif // ENABLE(MASM_PROBE)
 

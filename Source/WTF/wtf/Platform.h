@@ -748,8 +748,8 @@
 
 /* Cocoa ports should not use the jit on 32-bit ARM CPUs. */
 #if PLATFORM(COCOA) && (CPU(ARM) || CPU(APPLE_ARMV7K))
-#undef ENABLE_JIT
-#define ENABLE_JIT 0
+// #undef ENABLE_JIT
+// #define ENABLE_JIT 0
 #endif
 
 /* Disable the JIT for 32-bit Windows builds. */
