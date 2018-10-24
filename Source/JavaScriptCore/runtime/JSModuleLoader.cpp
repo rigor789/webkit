@@ -47,6 +47,7 @@
 #include "Parser.h"
 #include "ParserError.h"
 #include "WebAssemblyPrototype.h"
+#include "LiteralParser.h"
 
 namespace JSC {
 
@@ -369,8 +370,36 @@ EncodedJSValue JSC_HOST_CALL moduleLoaderParseModule(ExecState* exec)
 #endif
 
     CodeProfiling profile(sourceCode);
-
+    
     ParserError error;
+    JSValue json;
+    if (moduleKey.impl()->endsWith(".json")) {
+        WTF::String sourceString = sourceCode.view().toString();
+        JSObject* syntaxError = nullptr;
+        if (sourceString.is8Bit()) {
+            LiteralParser<LChar> jsonParser(exec, sourceString.characters8(), sourceString.length(), StrictJSON);
+            json = jsonParser.tryLiteralParse();
+            if (!json) {
+                syntaxError = createSyntaxError(exec, jsonParser.getErrorMessage());
+            }
+        } else {
+            LiteralParser<UChar> jsonParser(exec, sourceString.characters16(), sourceString.length(), StrictJSON);
+            json = jsonParser.tryLiteralParse();
+            if (!json) {
+                syntaxError = createSyntaxError(exec, jsonParser.getErrorMessage());
+            }
+        }
+
+        if (syntaxError) {
+            auto result = deferred->reject(exec, syntaxError);
+            scope.releaseAssertNoException();
+            return JSValue::encode(result);
+        }
+
+        sourceString = "export default undefined;"_s;
+        sourceCode = makeSource(sourceString, SourceOrigin(), WTF::emptyString(), WTF::TextPosition(), SourceProviderSourceType::Module);
+    }
+    
     std::unique_ptr<ModuleProgramNode> moduleProgramNode = parse<ModuleProgramNode>(
         &vm, sourceCode, Identifier(), JSParserBuiltinMode::NotBuiltin,
         JSParserStrictMode::NotStrict, JSParserScriptMode::Module, SourceParseMode::ModuleAnalyzeMode, SuperBinding::NotNeeded, error);
@@ -382,6 +411,10 @@ EncodedJSValue JSC_HOST_CALL moduleLoaderParseModule(ExecState* exec)
     ASSERT(moduleProgramNode);
 
     ModuleAnalyzer moduleAnalyzer(exec, moduleKey, sourceCode, moduleProgramNode->varDeclarations(), moduleProgramNode->lexicalVariables());
+    if (json) {
+        moduleAnalyzer.moduleRecord()->putDirect(exec->vm(), exec->vm().propertyNames->JSON, json);
+    }
+
     if (UNLIKELY(scope.exception()))
         return reject();
 
