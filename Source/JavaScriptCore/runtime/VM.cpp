@@ -6,13 +6,13 @@
  * are met:
  *
  * 1.  Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer. 
+ *     notice, this list of conditions and the following disclaimer.
  * 2.  Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution. 
+ *     documentation and/or other materials provided with the distribution.
  * 3.  Neither the name of Apple Inc. ("Apple") nor the names of
  *     its contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission. 
+ *     from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS "AS IS" AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -176,6 +176,50 @@ using namespace WTF;
 
 namespace JSC {
 
+#if CPU(ARM_THUMB2)
+/* Dummy NativeScript types for getting the correct memory sizes */
+class _TNS_FFIFunctionCall { unsigned char bytes[152]; };
+class _TNS_FunctionReferenceInstance { unsigned char bytes[40]; };
+class _TNS_NSErrorWrapperConstructor { unsigned char bytes[36]; };
+class _TNS_ObjCBlockCall { unsigned char bytes[148]; };
+class _TNS_ObjCConstructorCall { unsigned char bytes[152]; };
+class _TNS_ObjCConstructorDerived { unsigned char bytes[80]; };
+class _TNS_ObjCConstructorNative { unsigned char bytes[84]; };
+class _TNS_ObjCMethodCall { unsigned char bytes[160]; };
+class _TNS_PointerConstructor { unsigned char bytes[52]; };
+class _TNS_RecordConstructor { unsigned char bytes[72]; };
+class _TNS_RecordProtoFieldGetter { unsigned char bytes[36]; };
+class _TNS_RecordProtoFieldSetter { unsigned char bytes[36]; };
+#elif CPU(X86_64) || CPU(ARM64)
+class _TNS_FFIFunctionCall { unsigned char bytes[272]; };
+class _TNS_FunctionReferenceInstance { unsigned char bytes[64]; };
+class _TNS_NSErrorWrapperConstructor { unsigned char bytes[56]; };
+class _TNS_ObjCBlockCall { unsigned char bytes[264]; };
+class _TNS_ObjCConstructorCall { unsigned char bytes[272]; };
+class _TNS_ObjCConstructorDerived { unsigned char bytes[136]; };
+class _TNS_ObjCConstructorNative { unsigned char bytes[144]; };
+class _TNS_ObjCMethodCall { unsigned char bytes[288]; };
+class _TNS_PointerConstructor { unsigned char bytes[88]; };
+class _TNS_RecordConstructor { unsigned char bytes[128]; };
+class _TNS_RecordProtoFieldGetter { unsigned char bytes[56]; };
+class _TNS_RecordProtoFieldSetter { unsigned char bytes[56]; };
+#else
+#error Unsupported CPU
+/* Stop in debugger and get sizes with the following LLDB commands:
+p sizeof(NativeScript::FFIFunctionCall)
+p sizeof(NativeScript::FunctionReferenceInstance)
+p sizeof(NativeScript::NSErrorWrapperConstructor)
+p sizeof(NativeScript::ObjCBlockCall)
+p sizeof(NativeScript::ObjCConstructorCall)
+p sizeof(NativeScript::ObjCConstructorDerived)
+p sizeof(NativeScript::ObjCConstructorNative)
+p sizeof(NativeScript::ObjCMethodCall)
+p sizeof(NativeScript::PointerConstructor)
+p sizeof(NativeScript::RecordConstructor)
+p sizeof(NativeScript::RecordProtoFieldGetter)
+p sizeof(NativeScript::RecordProtoFieldSetter)
+*/
+#endif
 // Note: Platform.h will enforce that ENABLE(ASSEMBLER) is true if either
 // ENABLE(JIT) or ENABLE(YARR_JIT) or both are enabled. The code below
 // just checks for ENABLE(JIT) or ENABLE(YARR_JIT) with this premise in mind.
@@ -294,6 +338,19 @@ VM::VM(VMType vmType, HeapType heapType)
     , intlNumberFormatConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), IntlNumberFormatConstructor)
     , intlPluralRulesConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), IntlPluralRulesConstructor)
 #endif
+    , tnsFFIFunctionCallSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_FFIFunctionCall)
+    , tnsFunctionReferenceInstanceSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_FunctionReferenceInstance)
+    , tnsNSErrorWrapperConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_NSErrorWrapperConstructor)
+    , tnsObjCBlockCallSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_ObjCBlockCall)
+    , tnsObjCConstructorCallSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_ObjCConstructorCall)
+    , tnsObjCConstructorDerivedSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_ObjCConstructorDerived)
+    , tnsObjCConstructorNativeSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_ObjCConstructorNative)
+    , tnsObjCMethodCallSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_ObjCMethodCall)
+    , tnsPointerConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_PointerConstructor)
+    , tnsRecordConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_RecordConstructor)
+    , tnsRecordProtoFieldGetterSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_RecordProtoFieldGetter)
+    , tnsRecordProtoFieldSetterSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_RecordProtoFieldSetter)
+
     , nativeErrorConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), NativeErrorConstructor)
     , nativeExecutableSpace ISO_SUBSPACE_INIT(heap, destructibleCellHeapCellType.get(), NativeExecutable)
     , nativeStdFunctionSpace ISO_SUBSPACE_INIT(heap, cellJSValueOOBHeapCellType.get(), JSNativeStdFunction)
@@ -440,17 +497,17 @@ VM::VM(VMType vmType, HeapType heapType)
 #if ENABLE(FTL_JIT)
     ftlThunks = std::make_unique<FTL::Thunks>();
 #endif // ENABLE(FTL_JIT)
-    
+
 #if ENABLE(JIT)
     initializeHostCallReturnValue(); // This is needed to convince the linker not to drop host call return support.
 #endif
-    
+
     Gigacage::addPrimitiveDisableCallback(primitiveGigacageDisabledCallback, this);
 
     heap.notifyIsSafeToCollect();
-    
+
     LLInt::Data::performAssertions(*this);
-    
+
     if (UNLIKELY(Options::useProfiler())) {
         m_perBytecodeProfiler = std::make_unique<Profiler::Database>(*this);
 
@@ -518,7 +575,7 @@ void waitForVMDestruction()
 VM::~VM()
 {
     auto destructionLocker = holdLock(s_destructionLock.read());
-    
+
     Gigacage::removePrimitiveDisableCallback(primitiveGigacageDisabledCallback, this);
     promiseDeferredTimer->stopRunningTasks();
 #if ENABLE(WEBASSEMBLY)
@@ -539,7 +596,7 @@ VM::~VM()
         m_samplingProfiler->shutdown();
     }
 #endif // ENABLE(SAMPLING_PROFILER)
-    
+
 #if ENABLE(JIT)
     JITWorklist::instance()->completeAllForVM(*this);
 #endif // ENABLE(JIT)
@@ -555,16 +612,16 @@ VM::~VM()
         }
     }
 #endif // ENABLE(DFG_JIT)
-    
+
     waitForAsynchronousDisassembly();
-    
+
     // Clear this first to ensure that nobody tries to remove themselves from it.
     m_perBytecodeProfiler = nullptr;
 
     ASSERT(currentThreadIsHoldingAPILock());
     m_apiLock->willDestroyVM(this);
     heap.lastChanceToFinalize();
-    
+
     delete interpreter;
 #ifndef NDEBUG
     interpreter = reinterpret_cast<Interpreter*>(0xbbadbeef);
@@ -600,14 +657,14 @@ void VM::primitiveGigacageDisabled()
         m_primitiveGigacageEnabled.fireAll(*this, "Primitive gigacage disabled");
         return;
     }
- 
+
     // This is totally racy, and that's OK. The point is, it's up to the user to ensure that they pass the
     // uncaged buffer in a nicely synchronized manner.
     m_needToFirePrimitiveGigacageEnabled = true;
 }
 
 void VM::setLastStackTop(void* lastStackTop)
-{ 
+{
     m_lastStackTop = lastStackTop;
 }
 
@@ -838,12 +895,12 @@ JSValue VM::throwException(ExecState* exec, JSValue thrownValue)
             // Exception::create stores the Exception instance in the passed thrownValue. If we have an Exception instance here we reuse it instead of
             // recreating it. In this way we keep the stack trace at the point where the original exception occured.
             JSValue nsException = thrownValue.getObject()->getDirect(*this, this->propertyNames->builtinNames().nsExceptionIdentifierPrivateName());
-        
+
             if (!nsException.isUndefinedOrNull() && nsException.isCell() && nsException.asCell() != nullptr ) {
                 exception = jsDynamicCast<Exception*>(vm, nsException);
             }
         }
-        
+
         if (!exception) {
             exception = Exception::create(*this, thrownValue);
         }
@@ -995,15 +1052,15 @@ void VM::dumpRegExpTrace()
 {
     // The first RegExp object is ignored.  It is create by the RegExpPrototype ctor and not used.
     RTTraceList::iterator iter = ++m_rtTraceList->begin();
-    
+
     if (iter != m_rtTraceList->end()) {
         dataLogF("\nRegExp Tracing\n");
         dataLogF("Regular Expression                              8 Bit          16 Bit        match()    Matches    Average\n");
         dataLogF(" <Match only / Match>                         JIT Addr      JIT Address       calls      found   String len\n");
         dataLogF("----------------------------------------+----------------+----------------+----------+----------+-----------\n");
-    
+
         unsigned reCount = 0;
-    
+
         for (; iter != m_rtTraceList->end(); ++iter, ++reCount) {
             (*iter)->printTraceData();
             gcUnprotect(*iter);
@@ -1011,7 +1068,7 @@ void VM::dumpRegExpTrace()
 
         dataLogF("%d Regular Expressions\n", reCount);
     }
-    
+
     m_rtTraceList->clear();
 }
 #else
