@@ -176,7 +176,7 @@ using namespace WTF;
 
 namespace JSC {
 
-#if CPU(ARM_THUMB2)
+#if CPU(ARM_THUMB2) || CPU(X86)
 /* Dummy NativeScript types for getting the correct memory sizes */
 struct _TNS_FFIFunctionCall { unsigned char bytes[152]; };
 struct _TNS_FunctionReferenceInstance { unsigned char bytes[40]; };
