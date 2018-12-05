@@ -33,14 +33,6 @@ namespace Inspector {
 
 class FrontendChannel;
 
-#ifndef GOSHKO
-#define GOSHKO
-class Goshko {
-
-};
-
-#endif
-
 class JS_EXPORT_PRIVATE FrontendRouter : public RefCounted<FrontendRouter> {
 public:
     static Ref<FrontendRouter> create();
