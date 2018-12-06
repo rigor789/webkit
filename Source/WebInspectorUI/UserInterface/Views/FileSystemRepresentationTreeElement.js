@@ -4,7 +4,7 @@ WI.FileSystemRepresentationTreeElement = class FileSystemRepresentationTreeEleme
     {
         super("app", "", [], mainFrame);
 
-        this.resources = mainFrame.resourceCollection.items;
+        this.resources = mainFrame.resourceCollection._items;
         this.foldersByPath = new Map;
         this.foldersByPath.set("/app", this);
 
