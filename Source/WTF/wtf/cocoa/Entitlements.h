@@ -23,7 +23,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) && !PLATFORM(IOS)
 
 #include <wtf/spi/darwin/XPCSPI.h>
 

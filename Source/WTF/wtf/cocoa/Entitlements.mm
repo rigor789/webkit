@@ -31,7 +31,7 @@
 #include <wtf/spi/cocoa/SecuritySPI.h>
 
 namespace WTF {
-
+#if !PLATFORM(IOS)
 static bool hasEntitlement(SecTaskRef task, const char* entitlement)
 {
     if (!task)
@@ -56,5 +56,5 @@ bool processHasEntitlement(const char* entitlement)
 {
     return hasEntitlement(adoptCF(SecTaskCreateFromSelf(kCFAllocatorDefault)).get(), entitlement);
 }
-
+#endif
 } // namespace WTF

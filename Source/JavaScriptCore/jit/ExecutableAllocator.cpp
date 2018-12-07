@@ -116,7 +116,7 @@ static uintptr_t startOfFixedWritableMemoryPool;
 
 static bool allowJIT()
 {
-#if PLATFORM(IOS) && (CPU(ARM64) || CPU(ARM))
+#if !PLATFORM(IOS) && PLATFORM(IOS) && (CPU(ARM64) || CPU(ARM))
     return processHasEntitlement("dynamic-codesigning");
 #else
     return true;

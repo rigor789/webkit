@@ -78,13 +78,18 @@ static size_t memorySizeAccordingToKernel()
 #if BPLATFORM(IOS)
 static size_t jetsamLimit()
 {
+    const int DEFAULT_AVAILABLE_MEMORY = 840 * bmalloc::MB;
+#if true
+    return DEFAULT_AVAILABLE_MEMORY;
+#else
     memorystatus_memlimit_properties_t properties;
     pid_t pid = getpid();
     if (memorystatus_control(MEMORYSTATUS_CMD_GET_MEMLIMIT_PROPERTIES, pid, 0, &properties, sizeof(properties)))
-        return 840 * bmalloc::MB;
+        return DEFAULT_AVAILABLE_MEMORY;
     if (properties.memlimit_active < 0)
         return std::numeric_limits<size_t>::max();
     return static_cast<size_t>(properties.memlimit_active) * bmalloc::MB;
+#endif
 }
 #endif
 
