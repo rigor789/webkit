@@ -372,14 +372,15 @@ public:
     IsoSubspace nativeStdFunctionSpace;
 
 	/* Subspaces for NativeScript InternalFunction ancestors */
-    IsoSubspace tnsFFIFunctionCallSpace;
+    IsoSubspace tnsFunctionWrapperSpace;
+    IsoSubspace tnsCFunctionWrapperSpace;
     IsoSubspace tnsFunctionReferenceInstanceSpace;
     IsoSubspace tnsNSErrorWrapperConstructorSpace;
-    IsoSubspace tnsObjCBlockCallSpace;
-    IsoSubspace tnsObjCConstructorCallSpace;
+    IsoSubspace tnsObjCBlockWrapperSpace;
+    IsoSubspace tnsObjCConstructorWrapperSpace;
     IsoSubspace tnsObjCConstructorDerivedSpace;
     IsoSubspace tnsObjCConstructorNativeSpace;
-    IsoSubspace tnsObjCMethodCallSpace;
+    IsoSubspace tnsObjCMethodWrapperSpace;
     IsoSubspace tnsPointerConstructorSpace;
     IsoSubspace tnsRecordConstructorSpace;
     IsoSubspace tnsRecordProtoFieldGetterSpace;
