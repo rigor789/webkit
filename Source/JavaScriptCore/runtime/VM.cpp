@@ -178,27 +178,29 @@ namespace JSC {
 
 #if CPU(ARM_THUMB2) || CPU(X86)
 /* Dummy NativeScript types for getting the correct memory sizes */
-struct _TNS_FFIFunctionCall { unsigned char bytes[152]; };
+struct _TNS_FunctionWrapper { unsigned char bytes[44]; };
+struct _TNS_CFunctionWrapper { unsigned char bytes[44]; };
 struct _TNS_FunctionReferenceInstance { unsigned char bytes[40]; };
 struct _TNS_NSErrorWrapperConstructor { unsigned char bytes[36]; };
-struct _TNS_ObjCBlockCall { unsigned char bytes[148]; };
-struct _TNS_ObjCConstructorCall { unsigned char bytes[152]; };
+struct _TNS_ObjCBlockWrapper { unsigned char bytes[44]; };
+struct _TNS_ObjCConstructorWrapper { unsigned char bytes[44]; };
 struct _TNS_ObjCConstructorDerived { unsigned char bytes[80]; };
 struct _TNS_ObjCConstructorNative { unsigned char bytes[84]; };
-struct _TNS_ObjCMethodCall { unsigned char bytes[160]; };
+struct _TNS_ObjCMethodWrapper { unsigned char bytes[44]; };
 struct _TNS_PointerConstructor { unsigned char bytes[52]; };
 struct _TNS_RecordConstructor { unsigned char bytes[72]; };
 struct _TNS_RecordProtoFieldGetter { unsigned char bytes[36]; };
 struct _TNS_RecordProtoFieldSetter { unsigned char bytes[36]; };
 #elif CPU(X86_64) || CPU(ARM64)
-struct _TNS_FFIFunctionCall { unsigned char bytes[272]; };
+struct _TNS_FunctionWrapper { unsigned char bytes[72]; };
+struct _TNS_CFunctionWrapper { unsigned char bytes[72]; };
 struct _TNS_FunctionReferenceInstance { unsigned char bytes[64]; };
 struct _TNS_NSErrorWrapperConstructor { unsigned char bytes[56]; };
-struct _TNS_ObjCBlockCall { unsigned char bytes[264]; };
-struct _TNS_ObjCConstructorCall { unsigned char bytes[272]; };
+struct _TNS_ObjCBlockWrapper { unsigned char bytes[72]; };
+struct _TNS_ObjCConstructorWrapper { unsigned char bytes[72]; };
 struct _TNS_ObjCConstructorDerived { unsigned char bytes[136]; };
 struct _TNS_ObjCConstructorNative { unsigned char bytes[144]; };
-struct _TNS_ObjCMethodCall { unsigned char bytes[288]; };
+struct _TNS_ObjCMethodWrapper { unsigned char bytes[72]; };
 struct _TNS_PointerConstructor { unsigned char bytes[88]; };
 struct _TNS_RecordConstructor { unsigned char bytes[128]; };
 struct _TNS_RecordProtoFieldGetter { unsigned char bytes[56]; };
@@ -206,14 +208,15 @@ struct _TNS_RecordProtoFieldSetter { unsigned char bytes[56]; };
 #else
 #error Unsupported CPU
 /* Stop in debugger and get sizes with the following LLDB commands:
-p sizeof(NativeScript::FFIFunctionCall)
+p sizeof(NativeScript::FunctionWrapper)
+p sizeof(NativeScript::CFunctionWrapper)
 p sizeof(NativeScript::FunctionReferenceInstance)
 p sizeof(NativeScript::NSErrorWrapperConstructor)
-p sizeof(NativeScript::ObjCBlockCall)
-p sizeof(NativeScript::ObjCConstructorCall)
+p sizeof(NativeScript::ObjCBlockWrapper)
+p sizeof(NativeScript::ObjCConstructorWrapper)
 p sizeof(NativeScript::ObjCConstructorDerived)
 p sizeof(NativeScript::ObjCConstructorNative)
-p sizeof(NativeScript::ObjCMethodCall)
+p sizeof(NativeScript::ObjCMethodWrapper)
 p sizeof(NativeScript::PointerConstructor)
 p sizeof(NativeScript::RecordConstructor)
 p sizeof(NativeScript::RecordProtoFieldGetter)
@@ -342,14 +345,15 @@ VM::VM(VMType vmType, HeapType heapType)
     , nativeExecutableSpace ISO_SUBSPACE_INIT(heap, destructibleCellHeapCellType.get(), NativeExecutable)
     , nativeStdFunctionSpace ISO_SUBSPACE_INIT(heap, cellJSValueOOBHeapCellType.get(), JSNativeStdFunction)
 
-    , tnsFFIFunctionCallSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_FFIFunctionCall)
+    , tnsFunctionWrapperSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_FunctionWrapper)
+    , tnsCFunctionWrapperSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_CFunctionWrapper)
     , tnsFunctionReferenceInstanceSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_FunctionReferenceInstance)
     , tnsNSErrorWrapperConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_NSErrorWrapperConstructor)
-    , tnsObjCBlockCallSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_ObjCBlockCall)
-    , tnsObjCConstructorCallSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_ObjCConstructorCall)
+    , tnsObjCBlockWrapperSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_ObjCBlockWrapper)
+    , tnsObjCConstructorWrapperSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_ObjCConstructorWrapper)
     , tnsObjCConstructorDerivedSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_ObjCConstructorDerived)
     , tnsObjCConstructorNativeSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_ObjCConstructorNative)
-    , tnsObjCMethodCallSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_ObjCMethodCall)
+    , tnsObjCMethodWrapperSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_ObjCMethodWrapper)
     , tnsPointerConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_PointerConstructor)
     , tnsRecordConstructorSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_RecordConstructor)
     , tnsRecordProtoFieldGetterSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_RecordProtoFieldGetter)
