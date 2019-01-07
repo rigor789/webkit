@@ -172,9 +172,9 @@ std::unique_ptr<ConsoleMessage> InspectorConsoleAgent::stopTiming(const String& 
 
     Seconds elapsed = MonotonicTime::now() - startTime;
     String message = title + String::format(": %.3fms", elapsed.milliseconds());
-    std::unique_ptr<ConsoleMessage> consoleMessage = std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, callStack.copyRef());
+    std::unique_ptr<ConsoleMessage> consoleMessage = std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Info, message, callStack.copyRef());
     addMessageToConsole(WTFMove(consoleMessage));
-    return std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, callStack.copyRef());
+    return std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Info, message, callStack.copyRef());
 }
 
 void InspectorConsoleAgent::takeHeapSnapshot(const String& title)
