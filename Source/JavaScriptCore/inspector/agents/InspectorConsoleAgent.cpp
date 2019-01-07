@@ -168,7 +168,7 @@ std::unique_ptr<ConsoleMessage> InspectorConsoleAgent::logTiming(JSC::ExecState*
     MonotonicTime startTime = it->value;
     Seconds elapsed = MonotonicTime::now() - startTime;
     String message = makeString(label, ": ", FormattedNumber::fixedWidth(elapsed.milliseconds(), 3), "ms");
-    return std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, WTFMove(arguments), WTFMove(callStack));
+    return std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Info, message, WTFMove(arguments), WTFMove(callStack));
 }
 
 std::unique_ptr<ConsoleMessage> InspectorConsoleAgent::stopTiming(JSC::ExecState* exec, const String& label)
@@ -193,10 +193,11 @@ std::unique_ptr<ConsoleMessage> InspectorConsoleAgent::stopTiming(JSC::ExecState
     MonotonicTime startTime = it->value;
     Seconds elapsed = MonotonicTime::now() - startTime;
     String message = makeString(label, ": ", FormattedNumber::fixedWidth(elapsed.milliseconds(), 3), "ms");
-    addMessageToConsole(std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, WTFMove(callStack)));
+    addMessageToConsole(std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Info, message, WTFMove(callStack)));
 
     m_times.remove(it);
-    return std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, createScriptCallStackForConsole(exec, 1));
+
+    return std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Info, message, createScriptCallStackForConsole(exec, 1));
 }
 
 void InspectorConsoleAgent::takeHeapSnapshot(const String& title)
@@ -227,7 +228,7 @@ void InspectorConsoleAgent::count(JSC::ExecState* exec, const String& label)
     // FIXME: Web Inspector should have a better UI for counters, but for now we just log an updated counter value.
 
     String message = makeString(label, ": ", result.iterator->value);
-    addMessageToConsole(std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Log, MessageLevel::Debug, message, createScriptCallStackForConsole(exec, 1)));
+    addMessageToConsole(std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Log, MessageLevel::Info, message, createScriptCallStackForConsole(exec, 1)));
 }
 
 void InspectorConsoleAgent::countReset(JSC::ExecState* exec, const String& label)
