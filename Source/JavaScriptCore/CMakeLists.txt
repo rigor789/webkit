@@ -279,7 +279,7 @@ else ()
 endif ()
 
 # LLIntOutput dependencies per architecture
-set(LLIntOutputCurrentStampFileName ${LLIntOutput}-$(PLATFORM_NAME).stamp)
+set(LLIntOutputCurrentStampFileName ${LLIntOutput}-$(PLATFORM_NAME)-$(CONFIGURATION).stamp)
 set(LLIntOutputCurrentStamp ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/${LLIntOutputCurrentStampFileName})
 set(LLIntOutputAllStampsWildcard '${LLIntOutput}-*.stamp')
 
