@@ -156,12 +156,13 @@ void ConsoleClient::printConsoleMessageWithArguments(MessageSource source, Messa
 
     StringBuilder builder;
 
-    if (!lastCaller.sourceURL().isEmpty()) {
-        appendURLAndPosition(builder, lastCaller.sourceURL(), lastCaller.lineNumber(), lastCaller.columnNumber());
-        builder.appendLiteral(": ");
-    }
-
     appendMessagePrefix(builder, source, type, level);
+    if (!lastCaller.sourceURL().isEmpty()) {
+        builder.appendLiteral(" ");
+        appendURLAndPosition(builder, lastCaller.sourceURL(), lastCaller.lineNumber(), lastCaller.columnNumber());
+        builder.appendLiteral(":");
+    }
+    
     for (size_t i = 0; i < arguments->argumentCount(); ++i) {
         builder.append(' ');
         auto* state = arguments->globalState();
