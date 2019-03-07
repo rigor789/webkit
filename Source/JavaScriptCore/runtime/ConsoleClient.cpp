@@ -152,7 +152,7 @@ void ConsoleClient::printConsoleMessageWithArguments(MessageSource source, Messa
     bool isTraceMessage = type == MessageType::Trace;
     size_t stackSize = isTraceMessage ? ScriptCallStack::maxCallStackSizeToCapture : 1;
     Ref<ScriptCallStack> callStack = createScriptCallStackForConsole(exec, stackSize);
-    const ScriptCallFrame& lastCaller = callStack->at(0);
+    const ScriptCallFrame& lastCaller = callStack->size() > 0 ? callStack->at(0) : Inspector::ScriptCallFrame("", "", JSC::noSourceID, 0, 0);
 
     StringBuilder builder;
 
@@ -162,7 +162,7 @@ void ConsoleClient::printConsoleMessageWithArguments(MessageSource source, Messa
         appendURLAndPosition(builder, lastCaller.sourceURL(), lastCaller.lineNumber(), lastCaller.columnNumber());
         builder.appendLiteral(":");
     }
-    
+
     for (size_t i = 0; i < arguments->argumentCount(); ++i) {
         builder.append(' ');
         auto* state = arguments->globalState();
