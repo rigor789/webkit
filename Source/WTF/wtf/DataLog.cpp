@@ -38,6 +38,11 @@
 #include <unistd.h>
 #endif
 
+
+#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
+#define OS_LOG 1
+#endif
+
 #define DATA_LOG_TO_FILE 0
 
 // Set to 1 to use the temp directory from confstr instead of hardcoded directory.
@@ -48,6 +53,41 @@
 // Note that we will append ".<pid>.txt" where <pid> is the PID.
 // This path won't work on Windows, make sure to change to something like C:\\Users\\<more path>\\log.txt.
 #define DATA_LOG_FILENAME "/tmp/WTFLog"
+
+#ifdef OS_LOG
+
+#include <asl.h>
+#include "WTFString.h"
+
+class OsLogPrintStream : public PrintStream {
+public:
+    OsLogPrintStream() { }
+    virtual ~OsLogPrintStream() { }
+    
+    virtual void vprintf(const char* format, va_list list) WTF_ATTRIBUTE_PRINTF(2, 0) {
+        const int bufSize = 100*1024;
+        char buf[bufSize] = { 0 };
+        vsnprintf(buf, bufSize, format, list);
+        char *lastLF = strrchr(buf, '\n');
+        
+        if (lastLF) {
+            *lastLF = 0;
+            asl_log(0, 0, ASL_LEVEL_NOTICE, "%s%s", m_prevLineBuffer.utf8().data(), buf);
+
+            //os_log is available since iOS 10.0 we can switch to it after we've dropped support for iOS 9.x
+            //os_log(OS_LOG_DEFAULT, "%s%s", m_prevLineBuffer.utf8().data(), buf);
+            m_prevLineBuffer.truncate(0);
+        } else {
+            lastLF = buf - 1;
+        }
+        
+        m_prevLineBuffer.append(lastLF + 1);
+    }
+private:
+    WTF::String m_prevLineBuffer;
+};
+
+#endif
 
 namespace WTF {
 
@@ -151,6 +191,14 @@ void setDataFile(const char* path)
             WTFLogAlways("Warning: Could not open DataLog file %s for writing.\n", pathToOpen);
     }
 
+#ifdef OS_LOG
+    if (!file) {
+        static_assert(sizeof(FilePrintStream) >= sizeof(OsLogPrintStream), "OsLogPrintStream won't fit in the alloacted s_fileData buffer");
+        file = reinterpret_cast<FilePrintStream*>(new (s_fileData) OsLogPrintStream());
+    } else {
+        setvbuf(file->file(), 0, _IONBF, 0); // Prefer unbuffered output, so that we get a full log upon crash or deadlock.
+    }
+#else
     if (!file) {
         // Use placement new; this makes it easier to use dataLog() to debug
         // fastMalloc.
@@ -158,11 +206,12 @@ void setDataFile(const char* path)
     }
 
     setvbuf(file->file(), 0, _IONBF, 0); // Prefer unbuffered output, so that we get a full log upon crash or deadlock.
+#endif
 
     if (s_file)
         s_file->flush();
 
-    s_file = new (s_lockedFileData) LockedPrintStream(std::unique_ptr<FilePrintStream>(file));
+    s_file = new (s_lockedFileData) LockedPrintStream(std::unique_ptr<PrintStream>(file));
 }
 
 PrintStream& dataFile()
