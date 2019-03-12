@@ -1016,7 +1016,7 @@ void Heap::sweepSynchronously()
     m_objectSpace.shrink();
     if (Options::logGC()) {
         MonotonicTime after = MonotonicTime::now();
-        dataLog("=> ", capacity() / 1024, "kb, ", (after - before).milliseconds(), "ms");
+        dataLog("=> ", capacity() / 1024, "kb, ", (after - before).milliseconds(), "ms ");
     }
 }
 
