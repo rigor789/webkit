@@ -484,13 +484,12 @@ void InspectorDebuggerAgent::setBreakpointByUrl(ErrorString& errorString, int li
 
         bool existing;
         setBreakpoint(breakpoint, existing);
+        locations->addItem(buildDebuggerLocation(breakpoint));
         if (existing)
             continue;
 
         ScriptBreakpoint scriptBreakpoint(breakpoint.line, breakpoint.column, condition, breakpointActions, autoContinue, ignoreCount);
         didSetBreakpoint(breakpoint, breakpointIdentifier, scriptBreakpoint);
-
-        locations->addItem(buildDebuggerLocation(breakpoint));
     }
 
     *outBreakpointIdentifier = breakpointIdentifier;
