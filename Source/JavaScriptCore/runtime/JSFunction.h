@@ -170,6 +170,7 @@ protected:
     void finishCreation(VM&, NativeExecutable*, int length, const String& name);
     void finishCreation(VM&);
 
+public:
     static bool getOwnPropertySlot(JSObject*, ExecState*, PropertyName, PropertySlot&);
     static void getOwnNonIndexPropertyNames(JSObject*, ExecState*, PropertyNameArray&, EnumerationMode = EnumerationMode());
     static bool defineOwnProperty(JSObject*, ExecState*, PropertyName, const PropertyDescriptor&, bool shouldThrow);

@@ -766,6 +766,16 @@ bool JSObject::putInlineSlow(ExecState* exec, PropertyName propertyName, JSValue
     JSObject* obj = this;
     for (;;) {
         unsigned attributes;
+        auto getOwnPropertySlotPtr = obj->methodTable(vm)->getOwnPropertySlot;
+        if (getOwnPropertySlotPtr != JSObject::getOwnPropertySlot && getOwnPropertySlotPtr != JSFunction::getOwnPropertySlot) {
+            auto scope = DECLARE_CATCH_SCOPE(vm);
+            PropertySlot tempPropSlot(JSValue(obj), PropertySlot::InternalMethodType::GetOwnProperty);
+            // Give the object a chance to lazily define its property
+            getOwnPropertySlotPtr(obj, exec, propertyName, tempPropSlot);
+            if (scope.exception()) {
+                scope.clearException();
+            }
+        }
         PropertyOffset offset = obj->structure(vm)->get(vm, propertyName, attributes);
         if (isValidOffset(offset)) {
             if (attributes & PropertyAttribute::ReadOnly) {
