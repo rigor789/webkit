@@ -149,7 +149,8 @@ void ConsoleClient::printConsoleMessage(MessageSource source, MessageType type, 
 
 void ConsoleClient::printConsoleMessageWithArguments(MessageSource source, MessageType type, MessageLevel level, JSC::ExecState* exec, Ref<ScriptArguments>&& arguments)
 {
-    bool isTraceMessage = type == MessageType::Trace;
+    // The callstack is added to the message itself in {N} for it to appear in the debugger console as well
+    bool isTraceMessage = false;
     size_t stackSize = isTraceMessage ? ScriptCallStack::maxCallStackSizeToCapture : 1;
     Ref<ScriptCallStack> callStack = createScriptCallStackForConsole(exec, stackSize);
     const ScriptCallFrame& lastCaller = callStack->size() > 0 ? callStack->at(0) : Inspector::ScriptCallFrame("", "", JSC::noSourceID, 0, 0);
@@ -173,24 +174,27 @@ void ConsoleClient::printConsoleMessageWithArguments(MessageSource source, Messa
 
     WTFLogAlways("%s", builder.toString().utf8().data());
 
-    if (isTraceMessage) {
-        for (size_t i = 0; i < callStack->size(); ++i) {
-            const ScriptCallFrame& callFrame = callStack->at(i);
-            String functionName = String(callFrame.functionName());
-            if (functionName.isEmpty())
-                functionName = "(unknown)"_s;
+    // The callstack is added to the message itself in {N} code is
+    // intentionally commented in order to create a merge conflict if the
+    // format changes in the future
+    // if (isTraceMessage) {
+    //     for (size_t i = 0; i < callStack->size(); ++i) {
+    //         const ScriptCallFrame& callFrame = callStack->at(i);
+    //         String functionName = String(callFrame.functionName());
+    //         if (functionName.isEmpty())
+    //             functionName = "(unknown)"_s;
 
-            StringBuilder callFrameBuilder;
-            callFrameBuilder.appendNumber(i);
-            callFrameBuilder.appendLiteral(": ");
-            callFrameBuilder.append(functionName);
-            callFrameBuilder.append('(');
-            appendURLAndPosition(callFrameBuilder, callFrame.sourceURL(), callFrame.lineNumber(), callFrame.columnNumber());
-            callFrameBuilder.append(')');
+    //         StringBuilder callFrameBuilder;
+    //         callFrameBuilder.appendNumber(i);
+    //         callFrameBuilder.appendLiteral(": ");
+    //         callFrameBuilder.append(functionName);
+    //         callFrameBuilder.append('(');
+    //         appendURLAndPosition(callFrameBuilder, callFrame.sourceURL(), callFrame.lineNumber(), callFrame.columnNumber());
+    //         callFrameBuilder.append(')');
 
-            WTFLogAlways("%s", callFrameBuilder.toString().utf8().data());
-        }
-    }
+    //         WTFLogAlways("%s", callFrameBuilder.toString().utf8().data());
+    //     }
+    // }
 }
 
 void ConsoleClient::internalMessageWithTypeAndLevel(MessageType type, MessageLevel level, JSC::ExecState* exec, Ref<ScriptArguments>&& arguments, ArgumentRequirement argumentRequirement)
