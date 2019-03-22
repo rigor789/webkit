@@ -463,9 +463,13 @@ JSValue JSInjectedScriptHost::weakMapEntries(ExecState* exec)
         entry->putDirect(vm, Identifier::fromString(exec, "key"), buffer.at(index));
         entry->putDirect(vm, Identifier::fromString(exec, "value"), buffer.at(index + 1));
         array->putDirectIndex(exec, index / 2, entry);
-        RETURN_IF_EXCEPTION(scope, JSValue());
+        RETURN_IF_EXCEPTION(scope, (buffer.overflowCheckNotNeeded(), JSValue()));
     }
 
+    if (UNLIKELY(buffer.hasOverflowed())) {
+        throwOutOfMemoryError(exec, scope);
+        return JSValue();
+    }
     return array;
 }
 
