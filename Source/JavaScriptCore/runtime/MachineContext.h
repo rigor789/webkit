@@ -440,11 +440,11 @@ inline std::optional<MacroAssemblerCodePtr<PlatformRegistersPCPtrTag>> instructi
     void* value = instructionPointerImpl(const_cast<PlatformRegisters&>(regs));
 #endif
     if (!value)
-        return MacroAssemblerCodePtr<PlatformRegistersPCPtrTag>(nullptr);
+        return std::optional<MacroAssemblerCodePtr<PlatformRegistersPCPtrTag>>(nullptr);
     if (!usesPointerTagging())
-        return MacroAssemblerCodePtr<PlatformRegistersPCPtrTag>(value);
+        return std::optional<MacroAssemblerCodePtr<PlatformRegistersPCPtrTag>>(value);
     if (isTaggedWith(value, PlatformRegistersPCPtrTag))
-        return MacroAssemblerCodePtr<PlatformRegistersPCPtrTag>(value);
+        return std::optional<MacroAssemblerCodePtr<PlatformRegistersPCPtrTag>>(value);
     return std::nullopt;
 }
 

@@ -24,7 +24,7 @@
  */
 
 #import <memory>
-#import <objc/Protocol.h>
+//#import <objc/Protocol.h> XCode 10.2
 #import <objc/runtime.h>
 #import <wtf/HashSet.h>
 #import <wtf/SystemFree.h>

@@ -36,6 +36,8 @@
 // Modified to make it compile with exceptions disabled.
 
 #pragma once
+#include <optional>
+#if 0 // XCode 10.2
 
 # include <utility>
 # include <type_traits>
@@ -1051,3 +1053,4 @@ auto valueOrCompute(OptionalType optional, Callback callback) -> typename Option
 } // namespace WTF
 
 using WTF::valueOrCompute;
+#endif // XCode 10.2
