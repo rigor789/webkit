@@ -1,3 +1,11 @@
+2019-04-01  Timothy Hatcher  <timothy@apple.com>
+
+        Unreviewed build fix.
+
+        * crypto/mac/SerializedCryptoKeyWrapMac.mm:
+        (WebCore::createAndStoreMasterKey): Add ALLOW_DEPRECATED_DECLARATIONS_BEGIN/END
+        around SecTrustedApplicationCreateFromPath call.
+
 2019-01-30  Keith Rollin  <krollin@apple.com>
 
         FloatWithRect has invalid and inaccessible default constructor
