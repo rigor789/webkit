@@ -329,7 +329,7 @@ static void updateMenuItemForHistoryItem(HMENU menu, IWebHistoryItem& historyIte
 {
     UINT menuID = IDM_HISTORY_LINK0 + currentHistoryItem;
 
-    MENUITEMINFO menuItemInfo = { 0 };
+    MENUITEMINFO menuItemInfo { };
     menuItemInfo.cbSize = sizeof(MENUITEMINFO);
     menuItemInfo.fMask = MIIM_TYPE;
     menuItemInfo.fType = MFT_STRING;
@@ -430,6 +430,10 @@ void WebKitLegacyBrowserWindow::launchInspector()
     m_inspector->show();
 }
 
+void WebKitLegacyBrowserWindow::openProxySettings()
+{
+}
+
 void WebKitLegacyBrowserWindow::navigateForwardOrBackward(UINT menuID)
 {
     if (!m_webView)
@@ -521,51 +525,11 @@ void WebKitLegacyBrowserWindow::exitProgram()
     ::PostMessage(m_hMainWnd, static_cast<UINT>(WM_COMMAND), MAKELPARAM(IDM_EXIT, 0), 0);
 }
 
-void WebKitLegacyBrowserWindow::setUserAgent(UINT menuID)
+void WebKitLegacyBrowserWindow::setUserAgent(_bstr_t& customUserAgent)
 {
     if (!webView())
         return;
 
-    _bstr_t customUserAgent;
-    switch (menuID) {
-    case IDM_UA_DEFAULT:
-        // Set to null user agent
-        break;
-    case IDM_UA_SAFARI_8_0:
-        customUserAgent = L"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10) AppleWebKit/600.1.25 (KHTML, like Gecko) Version/8.0 Safari/600.1.25";
-        break;
-    case IDM_UA_SAFARI_IOS_8_IPHONE:
-        customUserAgent = L"Mozilla/5.0 (iPhone; CPU OS 8_1 like Mac OS X) AppleWebKit/601.1.4 (KHTML, like Gecko) Version/8.0 Mobile/12B403 Safari/600.1.4";
-        break;
-    case IDM_UA_SAFARI_IOS_8_IPAD:
-        customUserAgent = L"Mozilla/5.0 (iPad; CPU OS 8_1 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) Version/8.0 Mobile/12B403 Safari/600.1.4";
-        break;
-    case IDM_UA_IE_11:
-        customUserAgent = L"Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; rv:11.0) like Gecko";
-        break;
-    case IDM_UA_CHROME_MAC:
-        customUserAgent = L"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.65 Safari/537.31";
-        break;
-    case IDM_UA_CHROME_WIN:
-        customUserAgent = L"Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.64 Safari/537.31";
-        break;
-    case IDM_UA_FIREFOX_MAC:
-        customUserAgent = L"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:20.0) Gecko/20100101 Firefox/20.0";
-        break;
-    case IDM_UA_FIREFOX_WIN:
-        customUserAgent = L"Mozilla/5.0 (Windows NT 6.2; WOW64; rv:20.0) Gecko/20100101 Firefox/20.0";
-        break;
-    case IDM_UA_OTHER:
-    default:
-        ASSERT(0); // We should never hit this case
-        return;
-    }
-
-    setUserAgent(customUserAgent);
-}
-
-void WebKitLegacyBrowserWindow::setUserAgent(_bstr_t& customUserAgent)
-{
     webView()->setCustomUserAgent(customUserAgent.GetBSTR());
 }
 
@@ -648,7 +612,7 @@ static HDC getPrinterDC()
     return pdlg.hDC;
 }
 
-static void initDocStruct(DOCINFO* di, TCHAR* docname)
+static void initDocStruct(DOCINFO* di, const wchar_t* docname)
 {
     memset(di, 0, sizeof(DOCINFO));
     di->cbSize = sizeof(DOCINFO);

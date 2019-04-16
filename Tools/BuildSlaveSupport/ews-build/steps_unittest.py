@@ -25,14 +25,46 @@ import os
 import shutil
 import tempfile
 
+from buildbot.process import remotetransfer
 from buildbot.process.results import Results, SUCCESS, FAILURE, WARNINGS, SKIPPED, EXCEPTION, RETRY
-from buildbot.test.fake.remotecommand import ExpectShell
+from buildbot.test.fake.remotecommand import Expect, ExpectRemoteRef, ExpectShell
 from buildbot.test.util.steps import BuildStepMixin
+from mock import call
 from twisted.internet import error, reactor
 from twisted.python import failure, log
 from twisted.trial import unittest
 
 from steps import *
+
+
+class ExpectMasterShellCommand(object):
+    def __init__(self, command, workdir=None, env=None, usePTY=0):
+        self.args = command
+        self.usePTY = usePTY
+        self.rc = None
+        self.path = None
+        self.logs = []
+
+        if env is not None:
+            self.env = env
+        else:
+            self.env = os.environ
+        if workdir:
+            self.path = os.path.join(os.getcwd(), workdir)
+
+    @classmethod
+    def log(self, name, value):
+        return ('log', name, value)
+
+    def __add__(self, other):
+        if isinstance(other, int):
+            self.rc = other
+        elif isinstance(other, tuple) and other[0] == 'log':
+            self.logs.append((other[1], other[2]))
+        return self
+
+    def __repr__(self):
+        return 'ExpectMasterShellCommand({0})'.format(repr(self.args))
 
 
 class BuildStepMixinAdditions(BuildStepMixin):
@@ -133,6 +165,16 @@ class BuildStepMixinAdditions(BuildStepMixin):
         deferred_result = super(BuildStepMixinAdditions, self).runStep()
         deferred_result.addCallback(check)
         return deferred_result
+
+
+def uploadFileWithContentsOfString(string, timestamp=None):
+    def behavior(command):
+        writer = command.args['writer']
+        writer.remote_write(string + '\n')
+        writer.remote_close()
+        if timestamp:
+            writer.remote_utime(timestamp)
+    return behavior
 
 
 class TestCheckStyle(BuildStepMixinAdditions, unittest.TestCase):
@@ -706,6 +748,499 @@ class TestRunJavaScriptCoreTestsToT(BuildStepMixinAdditions, unittest.TestCase):
         self.setProperty('configuration', 'debug')
         self.expectHidden(True)
         self.expectOutcome(result=SKIPPED, state_string='jscore-tests (skipped)')
+        return self.runStep()
+
+
+class TestRunWebKitTests(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        return self.setUpBuildStep()
+
+    def tearDown(self):
+        return self.tearDownBuildStep()
+
+    def test_success(self):
+        self.setupStep(RunWebKitTests())
+        self.setProperty('fullPlatform', 'ios-simulator')
+        self.setProperty('configuration', 'release')
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/Scripts/run-webkit-tests', '--no-build', '--no-new-test-results', '--no-show-results', '--exit-after-n-failures', '30', '--skip-failing-tests', '--release', '--results-directory', 'layout-test-results', '--debug-rwt-logging'],
+                        )
+            + 0,
+        )
+        self.expectOutcome(result=SUCCESS, state_string='layout-tests')
+        return self.runStep()
+
+    def test_failure(self):
+        self.setupStep(RunWebKitTests())
+        self.setProperty('fullPlatform', 'ios-simulator')
+        self.setProperty('configuration', 'release')
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/Scripts/run-webkit-tests', '--no-build', '--no-new-test-results', '--no-show-results', '--exit-after-n-failures', '30', '--skip-failing-tests', '--release', '--results-directory', 'layout-test-results', '--debug-rwt-logging'],
+                        )
+            + ExpectShell.log('stdio', stdout='9 failures found.')
+            + 2,
+        )
+        self.expectOutcome(result=FAILURE, state_string='layout-tests (failure)')
+        return self.runStep()
+
+
+class TestRunWebKit1Tests(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        return self.setUpBuildStep()
+
+    def tearDown(self):
+        return self.tearDownBuildStep()
+
+    def test_success(self):
+        self.setupStep(RunWebKit1Tests())
+        self.setProperty('fullPlatform', 'ios-11')
+        self.setProperty('configuration', 'debug')
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/Scripts/run-webkit-tests', '--no-build', '--no-new-test-results', '--no-show-results', '--exit-after-n-failures', '30', '--skip-failing-tests', '--debug', '--dump-render-tree', '--results-directory', 'layout-test-results', '--debug-rwt-logging'],
+                        )
+            + 0,
+        )
+        self.expectOutcome(result=SUCCESS, state_string='layout-tests')
+        return self.runStep()
+
+    def test_failure(self):
+        self.setupStep(RunWebKit1Tests())
+        self.setProperty('fullPlatform', 'ios-11')
+        self.setProperty('configuration', 'release')
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/Scripts/run-webkit-tests', '--no-build', '--no-new-test-results', '--no-show-results', '--exit-after-n-failures', '30', '--skip-failing-tests', '--release', '--dump-render-tree', '--results-directory', 'layout-test-results', '--debug-rwt-logging'],
+                        )
+            + ExpectShell.log('stdio', stdout='9 failures found.')
+            + 2,
+        )
+        self.expectOutcome(result=FAILURE, state_string='layout-tests (failure)')
+        return self.runStep()
+
+
+class TestArchiveBuiltProduct(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        return self.setUpBuildStep()
+
+    def tearDown(self):
+        return self.tearDownBuildStep()
+
+    def test_success(self):
+        self.setupStep(ArchiveBuiltProduct())
+        self.setProperty('fullPlatform', 'ios-simulator')
+        self.setProperty('configuration', 'release')
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/BuildSlaveSupport/built-product-archive', '--platform=ios-simulator',  '--release', 'archive'],
+                        )
+            + 0,
+        )
+        self.expectOutcome(result=SUCCESS, state_string='archived built product')
+        return self.runStep()
+
+    def test_failure(self):
+        self.setupStep(ArchiveBuiltProduct())
+        self.setProperty('fullPlatform', 'mac-sierra')
+        self.setProperty('configuration', 'debug')
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/BuildSlaveSupport/built-product-archive', '--platform=mac-sierra',  '--debug', 'archive'],
+                        )
+            + ExpectShell.log('stdio', stdout='Unexpected failure.')
+            + 2,
+        )
+        self.expectOutcome(result=FAILURE, state_string='archived built product (failure)')
+        return self.runStep()
+
+
+class TestUploadBuiltProduct(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        return self.setUpBuildStep()
+
+    def tearDown(self):
+        return self.tearDownBuildStep()
+
+    def test_success(self):
+        self.setupStep(UploadBuiltProduct())
+        self.setProperty('fullPlatform', 'mac-sierra')
+        self.setProperty('configuration', 'release')
+        self.setProperty('architecture', 'x86_64')
+        self.setProperty('ewspatchid', '1234')
+        self.expectHidden(False)
+        self.expectRemoteCommands(
+            Expect('uploadFile', dict(
+                                        workersrc='WebKitBuild/release.zip', workdir='wkdir',
+                                        blocksize=1024 * 256, maxsize=None, keepstamp=False,
+                                        writer=ExpectRemoteRef(remotetransfer.FileWriter),
+                                     ))
+            + Expect.behavior(uploadFileWithContentsOfString('Dummy zip file content.'))
+            + 0,
+        )
+        self.expectUploadedFile('public_html/archives/mac-sierra-x86_64-release/1234.zip')
+
+        self.expectOutcome(result=SUCCESS, state_string='uploading release.zip')
+        return self.runStep()
+
+
+class TestExtractBuiltProduct(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        return self.setUpBuildStep()
+
+    def tearDown(self):
+        return self.tearDownBuildStep()
+
+    def test_success(self):
+        self.setupStep(ExtractBuiltProduct())
+        self.setProperty('fullPlatform', 'ios-simulator')
+        self.setProperty('configuration', 'release')
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/BuildSlaveSupport/built-product-archive', '--platform=ios-simulator',  '--release', 'extract'],
+                        )
+            + 0,
+        )
+        self.expectOutcome(result=SUCCESS, state_string='extracted built product')
+        return self.runStep()
+
+    def test_failure(self):
+        self.setupStep(ExtractBuiltProduct())
+        self.setProperty('fullPlatform', 'mac-sierra')
+        self.setProperty('configuration', 'debug')
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/BuildSlaveSupport/built-product-archive', '--platform=mac-sierra',  '--debug', 'extract'],
+                        )
+            + ExpectShell.log('stdio', stdout='Unexpected failure.')
+            + 2,
+        )
+        self.expectOutcome(result=FAILURE, state_string='extracted built product (failure)')
+        return self.runStep()
+
+
+class TestRunAPITests(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        self.jsonFileName = 'api_test_results.json'
+        return self.setUpBuildStep()
+
+    def tearDown(self):
+        return self.tearDownBuildStep()
+
+    def test_success_mac(self):
+        self.setupStep(RunAPITests())
+        self.setProperty('fullPlatform', 'mac-mojave')
+        self.setProperty('platform', 'mac')
+        self.setProperty('configuration', 'release')
+
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/Scripts/run-api-tests', '--no-build', '--release', '--verbose', '--json-output={0}'.format(self.jsonFileName)],
+                        logfiles={'json': self.jsonFileName},
+                        )
+            + ExpectShell.log('stdio', stdout='''...
+worker/0 TestWTF.WTF_Variant.OperatorAmpersand Passed
+worker/0 TestWTF.WTF_Variant.Ref Passed
+worker/0 TestWTF.WTF_Variant.RefPtr Passed
+worker/0 TestWTF.WTF_Variant.RetainPtr Passed
+worker/0 TestWTF.WTF_Variant.VisitorUsingMakeVisitor Passed
+worker/0 TestWTF.WTF_Variant.VisitorUsingSwitchOn Passed
+Ran 1888 tests of 1888 with 1888 successful
+------------------------------
+All tests successfully passed!
+''')
+            + 0,
+        )
+        self.expectOutcome(result=SUCCESS, state_string='run-api-tests')
+        return self.runStep()
+
+    def test_success_ios_simulator(self):
+        self.setupStep(RunAPITests())
+        self.setProperty('fullPlatform', 'ios-simulator-11')
+        self.setProperty('platform', 'ios')
+        self.setProperty('configuration', 'debug')
+
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/Scripts/run-api-tests', '--no-build', '--debug', '--verbose', '--json-output={0}'.format(self.jsonFileName), '--ios-simulator'],
+                        logfiles={'json': self.jsonFileName},
+                        )
+            + ExpectShell.log('stdio', stdout='''...
+worker/0 TestWTF.WTF_Variant.OperatorAmpersand Passed
+worker/0 TestWTF.WTF_Variant.Ref Passed
+worker/0 TestWTF.WTF_Variant.RefPtr Passed
+worker/0 TestWTF.WTF_Variant.RetainPtr Passed
+worker/0 TestWTF.WTF_Variant.VisitorUsingMakeVisitor Passed
+worker/0 TestWTF.WTF_Variant.VisitorUsingSwitchOn Passed
+Ran 1888 tests of 1888 with 1888 successful
+------------------------------
+All tests successfully passed!
+''')
+            + 0,
+        )
+        self.expectOutcome(result=SUCCESS, state_string='run-api-tests')
+        return self.runStep()
+
+    def test_one_failure(self):
+        self.setupStep(RunAPITests())
+        self.setProperty('fullPlatform', 'mac-mojave')
+        self.setProperty('platform', 'mac')
+        self.setProperty('configuration', 'debug')
+
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/Scripts/run-api-tests', '--no-build', '--debug', '--verbose', '--json-output={0}'.format(self.jsonFileName)],
+                        logfiles={'json': self.jsonFileName},
+                        )
+            + ExpectShell.log('stdio', stdout='''
+worker/0 TestWTF.WTF_Variant.OperatorAmpersand Passed
+worker/0 TestWTF.WTF_Variant.Ref Passed
+worker/0 TestWTF.WTF_Variant.RefPtr Passed
+worker/0 TestWTF.WTF_Variant.RetainPtr Passed
+worker/0 TestWTF.WTF_Variant.VisitorUsingMakeVisitor Passed
+worker/0 TestWTF.WTF_Variant.VisitorUsingSwitchOn Passed
+worker/0 exiting
+Ran 1888 tests of 1888 with 1887 successful
+------------------------------
+Test suite failed
+
+Crashed
+
+    TestWTF.WTF.StringConcatenate_Unsigned
+        **FAIL** WTF.StringConcatenate_Unsigned
+
+        Tools\\TestWebKitAPI\\Tests\\WTF\\StringConcatenate.cpp:84
+        Value of: makeString('hello ', static_cast<unsigned short>(42) , ' world')
+          Actual: hello 42 world
+        Expected: 'hello * world'
+        Which is: 74B00C9C
+
+Testing completed, Exit status: 3
+''')
+            + 1,
+        )
+        self.expectOutcome(result=FAILURE, state_string='1 api test failed or timed out (failure)')
+        return self.runStep()
+
+    def test_multiple_failures_and_timeouts(self):
+        self.setupStep(RunAPITests())
+        self.setProperty('fullPlatform', 'mac-mojave')
+        self.setProperty('platform', 'mac')
+        self.setProperty('configuration', 'debug')
+
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/Scripts/run-api-tests', '--no-build', '--debug', '--verbose', '--json-output={0}'.format(self.jsonFileName)],
+                        logfiles={'json': self.jsonFileName},
+                        )
+            + ExpectShell.log('stdio', stdout='''...
+worker/0 TestWTF.WTF_Variant.OperatorAmpersand Passed
+worker/0 TestWTF.WTF_Variant.Ref Passed
+worker/0 TestWTF.WTF_Variant.RefPtr Passed
+worker/0 TestWTF.WTF_Variant.RetainPtr Passed
+worker/0 TestWTF.WTF_Variant.VisitorUsingMakeVisitor Passed
+worker/0 TestWTF.WTF_Variant.VisitorUsingSwitchOn Passed
+worker/0 exiting
+Ran 1888 tests of 1888 with 1884 successful
+------------------------------
+Test suite failed
+
+Failed
+
+    TestWTF.WTF.StringConcatenate_Unsigned
+        **FAIL** WTF.StringConcatenate_Unsigned
+
+        Tools\\TestWebKitAPI\\Tests\\WTF\\StringConcatenate.cpp:84
+        Value of: makeString('hello ', static_cast<unsigned short>(42) , ' world')
+          Actual: hello 42 world
+        Expected: 'hello * world'
+        Which is: 74B00C9C
+
+    TestWTF.WTF_Expected.Unexpected
+        **FAIL** WTF_Expected.Unexpected
+
+        Tools\TestWebKitAPI\Tests\WTF\Expected.cpp:96
+        Value of: s1
+          Actual: oops
+        Expected: s0
+        Which is: oops
+
+Timeout
+
+    TestWTF.WTF_PoisonedUniquePtrForTriviallyDestructibleArrays.Assignment
+    TestWTF.WTF_Lock.ContendedShortSection
+
+Testing completed, Exit status: 3
+''')
+            + 4,
+        )
+        self.expectOutcome(result=FAILURE, state_string='4 api tests failed or timed out (failure)')
+        return self.runStep()
+
+    def test_unexpecte_failure(self):
+        self.setupStep(RunAPITests())
+        self.setProperty('fullPlatform', 'mac-mojave')
+        self.setProperty('platform', 'mac')
+        self.setProperty('configuration', 'debug')
+
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/Scripts/run-api-tests', '--no-build', '--debug', '--verbose', '--json-output={0}'.format(self.jsonFileName)],
+                        logfiles={'json': self.jsonFileName},
+                        )
+            + ExpectShell.log('stdio', stdout='Unexpected failure. Failed to run api tests.')
+            + 2,
+        )
+        self.expectOutcome(result=FAILURE, state_string='run-api-tests (failure)')
+        return self.runStep()
+
+    def test_no_failures_or_timeouts_with_disabled(self):
+        self.setupStep(RunAPITests())
+        self.setProperty('fullPlatform', 'mac-mojave')
+        self.setProperty('platform', 'mac')
+        self.setProperty('configuration', 'debug')
+
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/Scripts/run-api-tests', '--no-build', '--debug', '--verbose', '--json-output={0}'.format(self.jsonFileName)],
+                        logfiles={'json': self.jsonFileName},
+                        )
+            + ExpectShell.log('stdio', stdout='''...
+worker/0 TestWTF.WTF_Variant.OperatorAmpersand Passed
+worker/0 TestWTF.WTF_Variant.Ref Passed
+worker/0 TestWTF.WTF_Variant.RefPtr Passed
+worker/0 TestWTF.WTF_Variant.RetainPtr Passed
+worker/0 TestWTF.WTF_Variant.VisitorUsingMakeVisitor Passed
+worker/0 TestWTF.WTF_Variant.VisitorUsingSwitchOn Passed
+worker/0 exiting
+Ran 1881 tests of 1888 with 1881 successful
+------------------------------
+All tests successfully passed!
+''')
+            + 0,
+        )
+        self.expectOutcome(result=SUCCESS, state_string='run-api-tests')
+        return self.runStep()
+
+
+class TestArchiveTestResults(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        return self.setUpBuildStep()
+
+    def tearDown(self):
+        return self.tearDownBuildStep()
+
+    def test_success(self):
+        self.setupStep(ArchiveTestResults())
+        self.setProperty('fullPlatform', 'ios-simulator')
+        self.setProperty('platform', 'ios-simulator')
+        self.setProperty('configuration', 'release')
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/BuildSlaveSupport/test-result-archive', '--platform=ios-simulator',  '--release', 'archive'],
+                        )
+            + 0,
+        )
+        self.expectOutcome(result=SUCCESS, state_string='archived test results')
+        return self.runStep()
+
+    def test_failure(self):
+        self.setupStep(ArchiveTestResults())
+        self.setProperty('fullPlatform', 'mac-mojave')
+        self.setProperty('platform', 'mac')
+        self.setProperty('configuration', 'debug')
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['python', 'Tools/BuildSlaveSupport/test-result-archive', '--platform=mac',  '--debug', 'archive'],
+                        )
+            + ExpectShell.log('stdio', stdout='Unexpected failure.')
+            + 2,
+        )
+        self.expectOutcome(result=FAILURE, state_string='archived test results (failure)')
+        return self.runStep()
+
+
+class TestUploadTestResults(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        return self.setUpBuildStep()
+
+    def tearDown(self):
+        return self.tearDownBuildStep()
+
+    def test_success(self):
+        self.setupStep(UploadTestResults())
+        self.setProperty('configuration', 'release')
+        self.setProperty('architecture', 'x86_64')
+        self.setProperty('ewspatchid', '1234')
+        self.setProperty('buildername', 'macOS-Sierra-Release-WK2-Tests-EWS')
+        self.setProperty('buildnumber', '12')
+        self.expectHidden(False)
+        self.expectRemoteCommands(
+            Expect('uploadFile', dict(
+                                        workersrc='layout-test-results.zip', workdir='wkdir',
+                                        blocksize=1024 * 256, maxsize=None, keepstamp=False,
+                                        writer=ExpectRemoteRef(remotetransfer.FileWriter),
+                                     ))
+            + Expect.behavior(uploadFileWithContentsOfString('Dummy zip file content.'))
+            + 0,
+        )
+        self.expectUploadedFile('public_html/results/macOS-Sierra-Release-WK2-Tests-EWS/r1234-12.zip')
+
+        self.expectOutcome(result=SUCCESS, state_string='uploading layout-test-results.zip')
+        return self.runStep()
+
+
+class TestExtractTestResults(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        return self.setUpBuildStep()
+
+    def tearDown(self):
+        return self.tearDownBuildStep()
+
+    def test_success(self):
+        self.setupStep(ExtractTestResults())
+        self.setProperty('configuration', 'release')
+        self.setProperty('ewspatchid', '1234')
+        self.setProperty('buildername', 'macOS-Sierra-Release-WK2-Tests-EWS')
+        self.setProperty('buildnumber', '12')
+        self.expectLocalCommands(
+            ExpectMasterShellCommand(command=['unzip',
+                                              'public_html/results/macOS-Sierra-Release-WK2-Tests-EWS/r1234-12.zip',
+                                              '-d',
+                                              'public_html/results/macOS-Sierra-Release-WK2-Tests-EWS/r1234-12',
+                                             ])
+            + 0,
+        )
+        self.expectOutcome(result=SUCCESS, state_string='uploaded results')
+        self.expectAddedURLs([call('view layout test results', '/results/test/r2468_ab1a28b4feee0d42973c7c05335b35bca927e974 (1)/results.html')])
+        return self.runStep()
+
+    def test_failure(self):
+        self.setupStep(ExtractTestResults())
+        self.setProperty('configuration', 'debug')
+        self.setProperty('ewspatchid', '1234')
+        self.setProperty('buildername', 'macOS-Sierra-Release-WK2-Tests-EWS')
+        self.setProperty('buildnumber', '12')
+        self.expectLocalCommands(
+            ExpectMasterShellCommand(command=['unzip',
+                                              'public_html/results/macOS-Sierra-Release-WK2-Tests-EWS/r1234-12.zip',
+                                              '-d',
+                                              'public_html/results/macOS-Sierra-Release-WK2-Tests-EWS/r1234-12',
+                                             ])
+            + 2,
+        )
+        self.expectOutcome(result=FAILURE, state_string='failed (2) (failure)')
+        self.expectAddedURLs([call('view layout test results', '/results/test/r2468_ab1a28b4feee0d42973c7c05335b35bca927e974 (1)/results.html')])
         return self.runStep()
 
 

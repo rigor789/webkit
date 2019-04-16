@@ -165,7 +165,7 @@ RetainPtr<DDActionContext> DataDetection::detectItemAroundHitTestResult(const Hi
 }
 #endif // PLATFORM(MAC)
 
-#if PLATFORM(IOS)
+#if PLATFORM(IOS_FAMILY)
 
 bool DataDetection::canBePresentedByDataDetectors(const URL& url)
 {
@@ -204,8 +204,7 @@ bool DataDetection::shouldCancelDefaultAction(Element& element)
     NSArray *results = element.document().frame()->dataDetectionResults();
     if (!results)
         return false;
-    Vector<String> resultIndices;
-    resultAttribute.string().split('/', resultIndices);
+    Vector<String> resultIndices = resultAttribute.string().split('/');
     DDResultRef result = [[results objectAtIndex:resultIndices[0].toInt()] coreResult];
     // Handle the case of a signature block, where we need to check the correct subresult.
     for (size_t i = 1; i < resultIndices.size(); i++) {
@@ -432,6 +431,16 @@ static inline CFComparisonResult queryOffsetCompare(DDQueryOffset o1, DDQueryOff
     return kCFCompareEqualTo;
 }
 
+void DataDetection::removeDataDetectedLinksInDocument(Document& document)
+{
+    Vector<Ref<HTMLAnchorElement>> allAnchorElements;
+    for (auto& anchor : descendantsOfType<HTMLAnchorElement>(document))
+        allAnchorElements.append(anchor);
+
+    for (auto& anchor : allAnchorElements)
+        removeResultLinksFromAnchor(anchor.get());
+}
+
 NSArray *DataDetection::detectContentInRange(RefPtr<Range>& contextRange, DataDetectorTypes types, NSDictionary *context)
 {
     RetainPtr<DDScannerRef> scanner = adoptCF(softLink_DataDetectorsCore_DDScannerCreate(DDScannerTypeStandard, 0, nullptr));
@@ -619,7 +628,7 @@ NSArray *DataDetection::detectContentInRange(RefPtr<Range>& contextRange, DataDe
                         auto underlineColor = Color(colorWithOverrideAlpha(textColor.rgb(), overrideAlpha));
 
                         anchorElement->setInlineStyleProperty(CSSPropertyColor, textColor.cssText());
-                        anchorElement->setInlineStyleProperty(CSSPropertyWebkitTextDecorationColor, underlineColor.cssText());
+                        anchorElement->setInlineStyleProperty(CSSPropertyTextDecorationColor, underlineColor.cssText());
                     }
                 }
             } else if (is<StyledElement>(*parentNode)) {
@@ -646,14 +655,20 @@ NSArray *DataDetection::detectContentInRange(RefPtr<Range>& contextRange, DataDe
     if (lastTextNodeToUpdate)
         lastTextNodeToUpdate->setData(lastNodeContent);
     
-    return [get_DataDetectorsCore_DDScannerResultClass() resultsFromCoreResults:scannerResults.get()];
+    return [getDDScannerResultClass() resultsFromCoreResults:scannerResults.get()];
 }
 
 #else
+
 NSArray *DataDetection::detectContentInRange(RefPtr<Range>&, DataDetectorTypes, NSDictionary *)
 {
     return nil;
 }
+
+void DataDetection::removeDataDetectedLinksInDocument(Document&)
+{
+}
+
 #endif
 
 const String& DataDetection::dataDetectorURLProtocol()

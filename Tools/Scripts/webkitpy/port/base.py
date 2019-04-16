@@ -81,7 +81,8 @@ class Port(object):
 
     DEFAULT_ARCHITECTURE = 'x86'
 
-    CUSTOM_DEVICE_CLASSES = []
+    DEFAULT_DEVICE_TYPE = None
+    CUSTOM_DEVICE_TYPES = []
 
     @classmethod
     def determine_full_port_name(cls, host, options, port_name):
@@ -176,9 +177,15 @@ class Port(object):
     def should_retry_crashes(self):
         return False
 
-    def default_child_processes(self):
+    def default_child_processes(self, **kwargs):
         """Return the number of DumpRenderTree instances to use for this port."""
         return self._executive.cpu_count()
+
+    def max_child_processes(self, device_type=None):
+        """Forbid the user from specifying more than this number of child processes"""
+        if device_type:
+            return 0
+        return float('inf')
 
     def worker_startup_delay_secs(self):
         # FIXME: If we start workers up too quickly, DumpRenderTree appears
@@ -240,15 +247,19 @@ class Port(object):
                 return False
         return True
 
-    def check_api_test_build(self):
-        if not self._root_was_set and self.get_option('build') and not self._build_api_tests():
+    def check_api_test_build(self, canonicalized_binaries=None):
+        if not canonicalized_binaries:
+            canonicalized_binaries = self.path_to_api_test_binaries().keys()
+        if not self._root_was_set and self.get_option('build') and not self._build_api_tests(wtf_only=(canonicalized_binaries == ['TestWTF'])):
             return False
         if self.get_option('install') and not self._check_port_build():
             return False
 
-        for binary in self.path_to_api_test_binaries():
-            if not self._filesystem.exists(binary):
-                _log.error('{} was not found at {}'.format(os.path.basename(binary), binary))
+        for binary, path in self.path_to_api_test_binaries().iteritems():
+            if binary not in canonicalized_binaries:
+                continue
+            if not self._filesystem.exists(path):
+                _log.error('{} was not found at {}'.format(os.path.basename(path), path))
                 return False
         return True
 
@@ -397,6 +408,26 @@ class Port(object):
         """Returns a tuple of all of the non-reftest baseline extensions we use. The extensions include the leading '.'."""
         return ('.wav', '.webarchive', '.txt', '.png')
 
+    def _expected_baselines_for_suffixes(self, test_name, suffixes, all_baselines=False):
+        baseline_search_path = self.baseline_search_path() + [self.layout_tests_dir()]
+
+        baselines = []
+        for platform_dir in baseline_search_path:
+            for suffix in suffixes:
+                baseline_filename = self._filesystem.splitext(test_name)[0] + '-expected' + suffix
+                if self._filesystem.exists(self._filesystem.join(platform_dir, baseline_filename)):
+                    baselines.append((platform_dir, baseline_filename))
+
+            if not all_baselines and baselines:
+                return baselines
+
+        if baselines:
+            return baselines
+
+        for suffix in suffixes:
+            baselines.append((None, self._filesystem.splitext(test_name)[0] + '-expected' + suffix))
+        return baselines
+
     def expected_baselines(self, test_name, suffix, all_baselines=False):
         """Given a test name, finds where the baseline results are located.
 
@@ -424,27 +455,7 @@ class Port(object):
         conjunction with the other baseline and filename routines that are
         platform specific.
         """
-        baseline_filename = self._filesystem.splitext(test_name)[0] + '-expected' + suffix
-        baseline_search_path = self.baseline_search_path()
-
-        baselines = []
-        for platform_dir in baseline_search_path:
-            if self._filesystem.exists(self._filesystem.join(platform_dir, baseline_filename)):
-                baselines.append((platform_dir, baseline_filename))
-
-            if not all_baselines and baselines:
-                return baselines
-
-        # If it wasn't found in a platform directory, return the expected
-        # result in the test directory, even if no such file actually exists.
-        platform_dir = self.layout_tests_dir()
-        if self._filesystem.exists(self._filesystem.join(platform_dir, baseline_filename)):
-            baselines.append((platform_dir, baseline_filename))
-
-        if baselines:
-            return baselines
-
-        return [(None, baseline_filename)]
+        return self._expected_baselines_for_suffixes(test_name, [suffix], all_baselines=all_baselines)
 
     def expected_filename(self, test_name, suffix, return_default=True):
         """Given a test name, returns an absolute path to its expected results.
@@ -466,13 +477,9 @@ class Port(object):
         This routine is generic but is implemented here to live alongside
         the other baseline and filename manipulation routines.
         """
-        # FIXME: The [0] here is very mysterious, as is the destructured return.
         platform_dir, baseline_filename = self.expected_baselines(test_name, suffix)[0]
-        if platform_dir:
-            return self._filesystem.join(platform_dir, baseline_filename)
-
-        if return_default:
-            return self._filesystem.join(self.layout_tests_dir(), baseline_filename)
+        if platform_dir or return_default:
+            return self._filesystem.join(platform_dir or self.layout_tests_dir(), baseline_filename)
         return None
 
     def expected_checksum(self, test_name):
@@ -542,17 +549,23 @@ class Port(object):
         if self.get_option('treat_ref_tests_as_pixel_tests'):
             return []
 
-        reftest_list = self._get_reftest_list(test_name)
-        if not reftest_list:
-            reftest_list = []
-            for expectation, prefix in (('==', ''), ('!=', '-mismatch')):
-                for extention in Port._supported_reference_extensions:
-                    path = self.expected_filename(test_name, prefix + extention)
-                    if self._filesystem.exists(path):
-                        reftest_list.append((expectation, path))
-            return reftest_list
+        result = self._get_reftest_list(test_name)
+        if result:
+            return result.get(self._filesystem.join(self.layout_tests_dir(), test_name), [])
 
-        return reftest_list.get(self._filesystem.join(self.layout_tests_dir(), test_name), [])  # pylint: disable=E1103
+        result = []
+        suffixes = []
+        for part1 in ['', '-mismatch']:
+            for part2 in self._supported_reference_extensions:
+                suffixes.append(part1 + part2)
+        for platform_dir, baseline_filename in self._expected_baselines_for_suffixes(test_name, suffixes):
+            if not platform_dir:
+                continue
+            result.append((
+                '!=' if '-mismatch.' in baseline_filename else '==',
+                self._filesystem.join(platform_dir, baseline_filename),
+            ))
+        return result
 
     def potential_test_names_from_expected_file(self, path):
         """Return potential test names if any from a potential expected file path, relative to LayoutTests directory."""
@@ -700,10 +713,10 @@ class Port(object):
 
     def normalize_test_name(self, test_name):
         """Returns a normalized version of the test name or test directory."""
-        if test_name.endswith(os.path.sep):
+        if test_name.endswith(self.TEST_PATH_SEPARATOR):
             return test_name
         if self.test_isdir(test_name):
-            return test_name + os.path.sep
+            return test_name + self.TEST_PATH_SEPARATOR
         return test_name
 
     def driver_cmd_line_for_logging(self):
@@ -830,7 +843,7 @@ class Port(object):
         # Ports that run on windows need to override this method to deal with
         # filenames with backslashes in them.
         if filename.startswith(self.layout_tests_dir()):
-            return self.host.filesystem.relpath(filename, self.layout_tests_dir())
+            return self.host.filesystem.relpath(filename, self.layout_tests_dir()).replace(self.host.filesystem.sep, self.TEST_PATH_SEPARATOR)
         else:
             return self.host.filesystem.abspath(filename)
 
@@ -839,7 +852,7 @@ class Port(object):
         """Returns the full path to the file for a given test name. This is the
         inverse of relative_test_filename() if no target_host is specified."""
         host = target_host or self.host
-        return host.filesystem.join(host.filesystem.map_base_host_path(self.layout_tests_dir()), test_name)
+        return host.filesystem.join(host.filesystem.map_base_host_path(self.layout_tests_dir()), test_name.replace(self.TEST_PATH_SEPARATOR, self.host.filesystem.sep))
 
     def jsc_results_directory(self):
         return self._build_path()
@@ -875,7 +888,7 @@ class Port(object):
     def wpt_manifest_file(self):
         return self._build_path('web-platform-tests-manifest.json')
 
-    def setup_test_run(self, device_class=None):
+    def setup_test_run(self, device_type=None):
         """Perform port-specific work at the beginning of a test run."""
         pass
 
@@ -1261,7 +1274,7 @@ class Port(object):
 
     def _debian_php_version(self):
         prefix = "/usr/lib/apache2/modules/"
-        for version in ("7.0", "7.1", "7.2"):
+        for version in ("7.0", "7.1", "7.2", "7.3"):
             if self._filesystem.exists("%s/libphp%s.so" % (prefix, version)):
                 return "-php%s" % version
         _log.error("No libphp7.x.so found in %s" % prefix)
@@ -1369,16 +1382,10 @@ class Port(object):
         This is likely used only by diff_image()"""
         return self._build_path('ImageDiff')
 
+    API_TEST_BINARY_NAMES = ['TestWTF', 'TestWebKitAPI']
+
     def path_to_api_test_binaries(self):
-        binary_names = ['TestWTF']
-        if self.host.platform.is_win():
-            binary_names += ['TestWebCore', 'TestWebKitLegacy']
-        else:
-            binary_names += ['TestWebKitAPI']
-        binary_paths = [self._build_path(binary_name) for binary_name in binary_names]
-        if self.host.platform.is_win():
-            binary_paths = [os.path.splitext(binary_path)[0] + '.exe' for binary_path in binary_paths]
-        return binary_paths
+        return {binary: self._build_path(binary) for binary in self.API_TEST_BINARY_NAMES}
 
     def _path_to_lighttpd(self):
         """Returns the path to the LigHTTPd binary.
@@ -1505,10 +1512,10 @@ class Port(object):
             return False
         return True
 
-    def _build_api_tests(self):
+    def _build_api_tests(self, wtf_only=False):
         environment = self.host.copy_current_environment().to_dictionary()
         try:
-            self._run_script('build-api-tests', args=self._build_driver_flags(), env=environment)
+            self._run_script('build-api-tests', args=(['--wtf-only'] if wtf_only else []) + self._build_driver_flags(), env=environment)
         except ScriptError as e:
             _log.error(e.message_with_output(output_limit=None))
             return False

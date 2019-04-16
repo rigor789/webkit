@@ -31,7 +31,6 @@ import sys
 import unittest
 
 from webkitpy.common.system.systemhost import SystemHost
-from webkitpy.port.config import Config
 
 # Run just the tests in this file with ./Tools/Scripts/test-webkitpy lldb_webkit_unittest
 
@@ -53,17 +52,14 @@ def destroy_cached_debug_session():
 class LLDBDebugSession(object):
     @classmethod
     def setup(cls):
-        LLDB_WEBKIT_TESTER_NAME = 'lldbWebKitTester'
         BREAK_FOR_TESTING_FUNCTION_NAME = 'breakForTestingSummaryProviders'
 
         cls.sbDebugger = lldb.SBDebugger.Create()
         cls.sbDebugger.SetAsync(False)
 
-        host = SystemHost()
-        config = Config(host.executive, host.filesystem)
-        cls.lldbWebKitTesterExecutable = os.path.join(config.build_directory(config.default_configuration()), LLDB_WEBKIT_TESTER_NAME)
+        cls.lldbWebKitTesterExecutable = str(os.environ['LLDB_WEBKIT_TESTER_EXECUTABLE'])
 
-        cls.sbTarget = cls.sbDebugger.CreateTarget(str(cls.lldbWebKitTesterExecutable))
+        cls.sbTarget = cls.sbDebugger.CreateTarget(cls.lldbWebKitTesterExecutable)
         assert cls.sbTarget
         cls.sbTarget.BreakpointCreateByName(BREAK_FOR_TESTING_FUNCTION_NAME, cls.sbTarget.GetExecutable().GetFilename())
 
@@ -87,6 +83,10 @@ class LLDBDebugSession(object):
 
 
 class TestSummaryProviders(unittest.TestCase):
+    @classmethod
+    def shouldSkip(cls):
+        return not SystemHost().platform.is_mac()
+
     @classmethod
     def setUpClass(cls):
         global cached_debug_session
@@ -143,12 +143,64 @@ class TestSummaryProviders(unittest.TestCase):
 
     def serial_test_WTFVectorProvider_empty_vector(self):
         variable = self._sbFrame.FindVariable('anEmptyVector');
-        self.assertIsNotNone(variable)
         summary = lldb_webkit.WTFVector_SummaryProvider(variable, {})
         self.assertEqual(summary, "{ size = 0, capacity = 0 }")
 
     def serial_test_WTFVectorProvider_vector_size_and_capacity(self):
         variable = self._sbFrame.FindVariable('aVectorWithOneItem');
-        self.assertIsNotNone(variable)
         summary = lldb_webkit.WTFVector_SummaryProvider(variable, {})
         self.assertEqual(summary, "{ size = 1, capacity = 16 }")
+
+    # MARK: WTFHashMap_SummaryProvider and WTFHashSet_SummaryProvider test cases
+
+    def serial_test_WTFHashMap_tablesize_and_size(self):
+        variable = self._sbFrame.FindVariable('hashMapOfInts')
+        summary = lldb_webkit.WTFHashMap_SummaryProvider(variable, {})
+        self.assertEqual(summary, "{ tableSize = 8, keyCount = 2 }")
+
+    def serial_test_WTFHashMap_of_vectors_tablesize_and_size(self):
+        variable = self._sbFrame.FindVariable('hashMapOfVectors')
+        summary = lldb_webkit.WTFHashMap_SummaryProvider(variable, {})
+        self.assertEqual(summary, "{ tableSize = 8, keyCount = 1 }")
+
+    def serial_test_WTFHashSet_tablesize_and_size(self):
+        variable = self._sbFrame.FindVariable('hashSetOfInts')
+        summary = lldb_webkit.WTFHashSet_SummaryProvider(variable, {})
+        self.assertEqual(summary, "{ tableSize = 8, keyCount = 1 }")
+
+    # MARK: WTFOptionSet_SummaryProvider test cases
+
+    def serial_test_WTFOptionSet_SummaryProvider_empty(self):
+        variable = self._sbFrame.FindVariable('exampleFlagsEmpty')
+        summary = lldb_webkit.WTFOptionSet_SummaryProvider(variable, {})
+        self.assertEqual(summary, "{ size = 0 }")
+
+    def serial_test_WTFOptionSet_SummaryProvider_simple(self):
+        variable = self._sbFrame.FindVariable('exampleFlagsSimple')
+        summary = lldb_webkit.WTFOptionSet_SummaryProvider(variable, {})
+        self.assertEqual(summary, "{ size = 3 }")
+
+    # MARK: WTFOptionSetProvider test cases
+
+    def serial_test_WTFOptionSetProvider_empty(self):
+        variable = self._sbFrame.FindVariable('exampleFlagsEmpty')
+        provider = lldb_webkit.WTFOptionSetProvider(variable, {})
+        self.assertEqual(provider.get_child_at_index(0), None)
+
+    def serial_test_WTFOptionSetProvider_simple(self):
+        variable = self._sbFrame.FindVariable('exampleFlagsSimple')
+        provider = lldb_webkit.WTFOptionSetProvider(variable, {})
+        self.assertEqual(provider.get_child_at_index(0).GetName(), 'A')
+        self.assertEqual(provider.get_child_at_index(0).GetValue(), '1')
+        self.assertEqual(provider.get_child_at_index(1).GetName(), 'C')
+        self.assertEqual(provider.get_child_at_index(1).GetValue(), '4')
+        self.assertEqual(provider.get_child_at_index(2).GetName(), 'D')
+        self.assertEqual(provider.get_child_at_index(2).GetValue(), '8')
+
+    def serial_test_WTFOptionSetProvider_aliased_flag(self):
+        variable = self._sbFrame.FindVariable('exampleFlagsAliasedFlag')
+        provider = lldb_webkit.WTFOptionSetProvider(variable, {})
+        self.assertEqual(provider.get_child_at_index(0).GetName(), 'A')
+        self.assertEqual(provider.get_child_at_index(0).GetValue(), '1')
+        self.assertEqual(provider.get_child_at_index(1).GetName(), 'D')
+        self.assertEqual(provider.get_child_at_index(1).GetValue(), '8')

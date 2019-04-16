@@ -45,11 +45,13 @@
 #include <WebKit/WKBundlePrivate.h>
 #include <WebKit/WKBundleScriptWorld.h>
 #include <WebKit/WKData.h>
+#include <WebKit/WKNumber.h>
 #include <WebKit/WKPagePrivate.h>
 #include <WebKit/WKRetainPtr.h>
 #include <WebKit/WKSerializedScriptValue.h>
 #include <WebKit/WebKit2_C.h>
 #include <wtf/HashMap.h>
+#include <wtf/Optional.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/text/CString.h>
 #include <wtf/text/StringBuilder.h>
@@ -93,7 +95,7 @@ TestRunner::TestRunner()
     , m_databaseMaxQuota(-1)
     , m_userStyleSheetEnabled(false)
     , m_userStyleSheetLocation(adoptWK(WKStringCreateWithUTF8CString("")))
-#if PLATFORM(GTK) || PLATFORM(WPE)
+#if !PLATFORM(COCOA)
     , m_waitToDumpWatchdogTimer(RunLoop::main(), this, &TestRunner::waitToDumpWatchdogTimerFired)
 #endif
 {
@@ -126,10 +128,10 @@ void TestRunner::displayAndTrackRepaints()
 bool TestRunner::shouldDumpPixels() const
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("GetDumpPixels"));
-    WKTypeRef result = 0;
-    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), 0, &result);
-    ASSERT(WKGetTypeID(result) == WKBooleanGetTypeID());
-    return WKBooleanGetValue(static_cast<WKBooleanRef>(result));
+    WKTypeRef returnData = nullptr;
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), nullptr, &returnData);
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
 }
 
 void TestRunner::setDumpPixels(bool dumpPixels)
@@ -149,11 +151,10 @@ void TestRunner::dumpAsText(bool dumpPixels)
 WhatToDump TestRunner::whatToDump() const
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("GetWhatToDump"));
-    WKTypeRef result = 0;
-    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), 0, &result);
-    ASSERT(WKGetTypeID(result) == WKUInt64GetTypeID());
-    auto uint64value = WKUInt64GetValue(static_cast<WKUInt64Ref>(result));
-    return static_cast<WhatToDump>(uint64value);
+    WKTypeRef returnData = nullptr;
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), nullptr, &returnData);
+    ASSERT(WKGetTypeID(returnData) == WKUInt64GetTypeID());
+    return static_cast<WhatToDump>(WKUInt64GetValue(adoptWK(static_cast<WKUInt64Ref>(returnData)).get()));
 }
 
 void TestRunner::setWhatToDump(WhatToDump whatToDump)
@@ -185,9 +186,12 @@ void TestRunner::waitUntilDownloadFinished()
 
 void TestRunner::waitUntilDone()
 {
+    auto& injectedBundle = InjectedBundle::singleton();
+    RELEASE_ASSERT(injectedBundle.isTestRunning());
+
     setWaitUntilDone(true);
     // FIXME: Watchdog timer should be moved to UI process in order to take the elapsed time in anotehr process into account.
-    if (InjectedBundle::singleton().useWaitToDumpWatchdogTimer())
+    if (injectedBundle.useWaitToDumpWatchdogTimer())
         initializeWaitToDumpWatchdogTimerIfNeeded();
 }
 
@@ -201,10 +205,10 @@ void TestRunner::setWaitUntilDone(bool value)
 bool TestRunner::shouldWaitUntilDone() const
 {
     WKRetainPtr<WKStringRef> messsageName(AdoptWK, WKStringCreateWithUTF8CString("GetWaitUntilDone"));
-    WKTypeRef result = 0;
-    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messsageName.get(), 0, &result);
-    ASSERT(WKGetTypeID(result) == WKBooleanGetTypeID());
-    return WKBooleanGetValue(static_cast<WKBooleanRef>(result));
+    WKTypeRef returnData = nullptr;
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messsageName.get(), nullptr, &returnData);
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
 }
 
 void TestRunner::waitToDumpWatchdogTimerFired()
@@ -258,10 +262,10 @@ void TestRunner::setShouldDumpFrameLoadCallbacks(bool value)
 bool TestRunner::shouldDumpFrameLoadCallbacks()
 {
     WKRetainPtr<WKStringRef> messsageName(AdoptWK, WKStringCreateWithUTF8CString("GetDumpFrameLoadCallbacks"));
-    WKTypeRef result = 0;
-    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messsageName.get(), 0, &result);
-    ASSERT(WKGetTypeID(result) == WKBooleanGetTypeID());
-    return WKBooleanGetValue(static_cast<WKBooleanRef>(result));
+    WKTypeRef returnData = nullptr;
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messsageName.get(), nullptr, &returnData);
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
 }
 
 unsigned TestRunner::imageCountInGeneralPasteboard() const
@@ -296,26 +300,25 @@ void TestRunner::execCommand(JSStringRef name, JSStringRef showUI, JSStringRef v
     WKBundlePageExecuteEditingCommand(InjectedBundle::singleton().page()->page(), toWK(name).get(), toWK(value).get());
 }
 
-bool TestRunner::findString(JSStringRef target, JSValueRef optionsArrayAsValue)
+static Optional<WKFindOptions> findOptionsFromArray(JSValueRef optionsArrayAsValue)
 {
-    WKFindOptions options = 0;
-
     auto& injectedBundle = InjectedBundle::singleton();
     WKBundleFrameRef mainFrame = WKBundlePageGetMainFrame(injectedBundle.page()->page());
     JSContextRef context = WKBundleFrameGetJavaScriptContext(mainFrame);
-    JSRetainPtr<JSStringRef> lengthPropertyName(Adopt, JSStringCreateWithUTF8CString("length"));
+    auto lengthPropertyName = adopt(JSStringCreateWithUTF8CString("length"));
     JSObjectRef optionsArray = JSValueToObject(context, optionsArrayAsValue, 0);
     JSValueRef lengthValue = JSObjectGetProperty(context, optionsArray, lengthPropertyName.get(), 0);
     if (!JSValueIsNumber(context, lengthValue))
-        return false;
+        return WTF::nullopt;
 
+    WKFindOptions options = 0;
     size_t length = static_cast<size_t>(JSValueToNumber(context, lengthValue, 0));
     for (size_t i = 0; i < length; ++i) {
         JSValueRef value = JSObjectGetPropertyAtIndex(context, optionsArray, i, 0);
         if (!JSValueIsString(context, value))
             continue;
 
-        JSRetainPtr<JSStringRef> optionName(Adopt, JSValueToStringCopy(context, value, 0));
+        auto optionName = adopt(JSValueToStringCopy(context, value, 0));
 
         if (JSStringIsEqualToUTF8CString(optionName.get(), "CaseInsensitive"))
             options |= kWKFindOptionsCaseInsensitive;
@@ -331,8 +334,45 @@ bool TestRunner::findString(JSStringRef target, JSValueRef optionsArrayAsValue)
             // FIXME: No kWKFindOptionsStartInSelection.
         }
     }
+    return options;
+}
 
-    return WKBundlePageFindString(injectedBundle.page()->page(), toWK(target).get(), options);
+bool TestRunner::findString(JSStringRef target, JSValueRef optionsArrayAsValue)
+{
+    if (auto options = findOptionsFromArray(optionsArrayAsValue))
+        return WKBundlePageFindString(InjectedBundle::singleton().page()->page(), toWK(target).get(), *options);
+
+    return false;
+}
+
+void TestRunner::findStringMatchesInPage(JSStringRef target, JSValueRef optionsArrayAsValue)
+{
+    if (auto options = findOptionsFromArray(optionsArrayAsValue))
+        return WKBundlePageFindStringMatches(InjectedBundle::singleton().page()->page(), toWK(target).get(), *options);
+}
+
+void TestRunner::replaceFindMatchesAtIndices(JSValueRef matchIndicesAsValue, JSStringRef replacementText, bool selectionOnly)
+{
+    auto& bundle = InjectedBundle::singleton();
+    auto mainFrame = WKBundlePageGetMainFrame(bundle.page()->page());
+    auto context = WKBundleFrameGetJavaScriptContext(mainFrame);
+    auto lengthPropertyName = adopt(JSStringCreateWithUTF8CString("length"));
+    auto matchIndicesObject = JSValueToObject(context, matchIndicesAsValue, 0);
+    auto lengthValue = JSObjectGetProperty(context, matchIndicesObject, lengthPropertyName.get(), 0);
+    if (!JSValueIsNumber(context, lengthValue))
+        return;
+
+    auto indices = adoptWK(WKMutableArrayCreate());
+    auto length = static_cast<size_t>(JSValueToNumber(context, lengthValue, 0));
+    for (size_t i = 0; i < length; ++i) {
+        auto value = JSObjectGetPropertyAtIndex(context, matchIndicesObject, i, 0);
+        if (!JSValueIsNumber(context, value))
+            continue;
+
+        auto index = adoptWK(WKUInt64Create(std::round(JSValueToNumber(context, value, nullptr))));
+        WKArrayAppendItem(indices.get(), index.get());
+    }
+    WKBundlePageReplaceStringMatches(bundle.page()->page(), indices.get(), toWK(replacementText).get(), selectionOnly);
 }
 
 void TestRunner::clearAllDatabases()
@@ -375,6 +415,13 @@ void TestRunner::disallowIncreaseForApplicationCacheQuota()
     m_disallowIncreaseForApplicationCacheQuota = true;
 }
 
+void TestRunner::setIDBPerOriginQuota(uint64_t quota)
+{
+    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("SetIDBPerOriginQuota"));
+    WKRetainPtr<WKUInt64Ref> messageBody(AdoptWK, WKUInt64Create(quota));
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), messageBody.get(), nullptr);
+}
+
 static inline JSValueRef stringArrayToJS(JSContextRef context, WKArrayRef strings)
 {
     const size_t count = WKArrayGetSize(strings);
@@ -407,15 +454,11 @@ bool TestRunner::isCommandEnabled(JSStringRef name)
     return WKBundlePageIsEditingCommandEnabled(InjectedBundle::singleton().page()->page(), toWK(name).get());
 }
 
-void TestRunner::setCanOpenWindows(bool)
+void TestRunner::setCanOpenWindows()
 {
-    // The test plugins/get-url-with-blank-target.html requires that the embedding client forbid
-    // opening windows (by omitting a call to this function) so as to test that NPN_GetURL()
-    // with a blank target will return an error.
-    //
-    // It is not clear if we should implement this functionality or remove it and plugins/get-url-with-blank-target.html
-    // per the remark in <https://trac.webkit.org/changeset/64504/trunk/LayoutTests/platform/mac-wk2/Skipped>.
-    // For now, just ignore this setting.
+    WKRetainPtr<WKStringRef> messsageName(AdoptWK, WKStringCreateWithUTF8CString("SetCanOpenWindows"));
+    WKRetainPtr<WKBooleanRef> messageBody(AdoptWK, WKBooleanCreate(true));
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messsageName.get(), messageBody.get(), nullptr);
 }
 
 void TestRunner::setXSSAuditorEnabled(bool enabled)
@@ -432,9 +475,16 @@ void TestRunner::setMediaDevicesEnabled(bool enabled)
     WKBundleOverrideBoolPreferenceForTestRunner(injectedBundle.bundle(), injectedBundle.pageGroup(), key.get(), enabled);
 }
 
-void TestRunner::setMDNSICECandidatesEnabled(bool enabled)
+void TestRunner::setWebRTCMDNSICECandidatesEnabled(bool enabled)
 {
-    WKRetainPtr<WKStringRef> key(AdoptWK, WKStringCreateWithUTF8CString("WebKitMDNSICECandidatesEnabled"));
+    WKRetainPtr<WKStringRef> key(AdoptWK, WKStringCreateWithUTF8CString("WebKitWebRTCMDNSICECandidatesEnabled"));
+    auto& injectedBundle = InjectedBundle::singleton();
+    WKBundleOverrideBoolPreferenceForTestRunner(injectedBundle.bundle(), injectedBundle.pageGroup(), key.get(), enabled);
+}
+
+void TestRunner::setWebRTCUnifiedPlanEnabled(bool enabled)
+{
+    WKRetainPtr<WKStringRef> key(AdoptWK, WKStringCreateWithUTF8CString("WebKitWebRTCUnifiedPlanEnabled"));
     auto& injectedBundle = InjectedBundle::singleton();
     WKBundleOverrideBoolPreferenceForTestRunner(injectedBundle.bundle(), injectedBundle.pageGroup(), key.get(), enabled);
 }
@@ -445,9 +495,9 @@ void TestRunner::setCustomUserAgent(JSStringRef userAgent)
     WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), toWK(userAgent).get(), nullptr);
 }
 
-void TestRunner::setWebRTCLegacyAPIEnabled(bool enabled)
+void TestRunner::setWebAPIStatisticsEnabled(bool enabled)
 {
-    WKRetainPtr<WKStringRef> key(AdoptWK, WKStringCreateWithUTF8CString("WebKitWebRTCLegacyAPIEnabled"));
+    WKRetainPtr<WKStringRef> key(AdoptWK, WKStringCreateWithUTF8CString("WebKitWebAPIStatisticsEnabled"));
     auto& injectedBundle = InjectedBundle::singleton();
     WKBundleOverrideBoolPreferenceForTestRunner(injectedBundle.bundle(), injectedBundle.pageGroup(), key.get(), enabled);
 }
@@ -466,9 +516,9 @@ void TestRunner::setWebGL2Enabled(bool enabled)
     WKBundleOverrideBoolPreferenceForTestRunner(injectedBundle.bundle(), injectedBundle.pageGroup(), key.get(), enabled);
 }
 
-void TestRunner::setWebGPUEnabled(bool enabled)
+void TestRunner::setWebMetalEnabled(bool enabled)
 {
-    WKRetainPtr<WKStringRef> key(AdoptWK, WKStringCreateWithUTF8CString("WebKitWebGPUEnabled"));
+    WKRetainPtr<WKStringRef> key(AdoptWK, WKStringCreateWithUTF8CString("WebKitWebMetalEnabled"));
     auto& injectedBundle = InjectedBundle::singleton();
     WKBundleOverrideBoolPreferenceForTestRunner(injectedBundle.bundle(), injectedBundle.pageGroup(), key.get(), enabled);
 }
@@ -606,7 +656,7 @@ unsigned TestRunner::windowCount()
 
 void TestRunner::clearBackForwardList()
 {
-    WKBundleBackForwardListClear(WKBundlePageGetBackForwardList(InjectedBundle::singleton().page()->page()));
+    WKBundleClearHistoryForTesting(InjectedBundle::singleton().page()->page());
 }
 
 // Object Creation
@@ -698,16 +748,16 @@ void TestRunner::setDefersLoading(bool shouldDeferLoading)
 bool TestRunner::didReceiveServerRedirectForProvisionalNavigation() const
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("DidReceiveServerRedirectForProvisionalNavigation"));
-    WKTypeRef returnData = 0;
-
-    WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), 0, &returnData);
-    return WKBooleanGetValue(static_cast<WKBooleanRef>(returnData));
+    WKTypeRef returnData = nullptr;
+    WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), nullptr, &returnData);
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
 }
 
 void TestRunner::clearDidReceiveServerRedirectForProvisionalNavigation()
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("ClearDidReceiveServerRedirectForProvisionalNavigation"));
-    WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), 0, nullptr);
+    WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), nullptr, nullptr);
 }
 
 void TestRunner::setPageVisibility(JSStringRef state)
@@ -736,6 +786,8 @@ enum {
     WillEndSwipeCallbackID,
     DidEndSwipeCallbackID,
     DidRemoveSwipeSnapshotCallbackID,
+    SetStatisticsDebugModeCallbackID,
+    SetStatisticsPrevalentResourceForDebugModeCallbackID,
     SetStatisticsLastSeenCallbackID,
     SetStatisticsPrevalentResourceCallbackID,
     SetStatisticsVeryPrevalentResourceCallbackID,
@@ -745,7 +797,7 @@ enum {
     StatisticsDidRunTelemetryCallbackID,
     StatisticsDidClearThroughWebsiteDataRemovalCallbackID,
     StatisticsDidResetToConsistentStateCallbackID,
-    StatisticsDidSetPartitionOrBlockCookiesForHostCallbackID,
+    StatisticsDidSetBlockCookiesForHostCallbackID,
     AllStorageAccessEntriesCallbackID,
     DidRemoveAllSessionCredentialsCallbackID,
     GetApplicationManifestCallbackID,
@@ -874,12 +926,12 @@ void TestRunner::setAlwaysAcceptCookies(bool accept)
     WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), messageBody.get(), nullptr);
 }
 
-void TestRunner::setCookieStoragePartitioningEnabled(bool enabled)
+void TestRunner::setOnlyAcceptFirstPartyCookies(bool accept)
 {
-    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("SetCookieStoragePartitioningEnabled"));
-
-    WKRetainPtr<WKBooleanRef> messageBody(AdoptWK, WKBooleanCreate(enabled));
-
+    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("SetOnlyAcceptFirstPartyCookies"));
+    
+    WKRetainPtr<WKBooleanRef> messageBody(AdoptWK, WKBooleanCreate(accept));
+    
     WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), messageBody.get(), nullptr);
 }
 
@@ -1041,6 +1093,15 @@ void TestRunner::resetUserMediaPermission()
     InjectedBundle::singleton().resetUserMediaPermission();
 }
 
+bool TestRunner::isDoingMediaCapture() const
+{
+    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("IsDoingMediaCapture"));
+    WKTypeRef returnData = nullptr;
+    WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), nullptr, &returnData);
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
+}
+
 void TestRunner::setUserMediaPersistentPermissionForOrigin(bool permission, JSStringRef origin, JSStringRef parentOrigin)
 {
     WKRetainPtr<WKStringRef> originWK = toWK(origin);
@@ -1159,10 +1220,10 @@ void TestRunner::setAuthenticationPassword(JSStringRef password)
 bool TestRunner::secureEventInputIsEnabled() const
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("SecureEventInputIsEnabled"));
-    WKTypeRef returnData = 0;
-
-    WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), 0, &returnData);
-    return WKBooleanGetValue(static_cast<WKBooleanRef>(returnData));
+    WKTypeRef returnData = nullptr;
+    WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), nullptr, &returnData);
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
 }
 
 void TestRunner::setBlockAllPlugins(bool shouldBlock)
@@ -1240,19 +1301,13 @@ void TestRunner::setShouldDownloadUndisplayableMIMETypes(bool value)
 void TestRunner::terminateNetworkProcess()
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("TerminateNetworkProcess"));
-    WKBundlePagePostMessage(InjectedBundle::singleton().page()->page(), messageName.get(), nullptr);
+    WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), nullptr, nullptr);
 }
 
 void TestRunner::terminateServiceWorkerProcess()
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("TerminateServiceWorkerProcess"));
-    WKBundlePagePostMessage(InjectedBundle::singleton().page()->page(), messageName.get(), nullptr);
-}
-
-void TestRunner::terminateStorageProcess()
-{
-    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("TerminateStorageProcess"));
-    WKBundlePagePostMessage(InjectedBundle::singleton().page()->page(), messageName.get(), nullptr);
+    WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), nullptr, nullptr);
 }
 
 static unsigned nextUIScriptCallbackID()
@@ -1331,6 +1386,35 @@ void TestRunner::callDidRemoveSwipeSnapshotCallback()
     callTestRunnerCallback(DidRemoveSwipeSnapshotCallbackID);
 }
 
+void TestRunner::setStatisticsDebugMode(bool value, JSValueRef completionHandler)
+{
+    cacheTestRunnerCallback(SetStatisticsDebugModeCallbackID, completionHandler);
+
+    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("SetStatisticsDebugMode"));
+    WKRetainPtr<WKBooleanRef> messageBody(AdoptWK, WKBooleanCreate(value));
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), messageBody.get(), nullptr);
+
+}
+
+void TestRunner::statisticsCallDidSetDebugModeCallback()
+{
+    callTestRunnerCallback(SetStatisticsDebugModeCallbackID);
+}
+
+void TestRunner::setStatisticsPrevalentResourceForDebugMode(JSStringRef hostName, JSValueRef completionHandler)
+{
+    cacheTestRunnerCallback(SetStatisticsPrevalentResourceForDebugModeCallbackID, completionHandler);
+    
+    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("SetStatisticsPrevalentResourceForDebugMode"));
+    WKRetainPtr<WKStringRef> messageBody(AdoptWK, WKStringCreateWithJSString(hostName));
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), messageBody.get(), nullptr);
+}
+
+void TestRunner::statisticsCallDidSetPrevalentResourceForDebugModeCallback()
+{
+    callTestRunnerCallback(SetStatisticsPrevalentResourceForDebugModeCallbackID);
+}
+
 void TestRunner::setStatisticsLastSeen(JSStringRef hostName, double seconds, JSValueRef completionHandler)
 {
     cacheTestRunnerCallback(SetStatisticsLastSeenCallbackID, completionHandler);
@@ -1362,7 +1446,6 @@ void TestRunner::statisticsCallDidSetLastSeenCallback()
 {
     callTestRunnerCallback(SetStatisticsLastSeenCallbackID);
 }
-
 
 void TestRunner::setStatisticsPrevalentResource(JSStringRef hostName, bool value, JSValueRef completionHandler)
 {
@@ -1431,23 +1514,58 @@ void TestRunner::statisticsCallDidSetVeryPrevalentResourceCallback()
 {
     callTestRunnerCallback(SetStatisticsVeryPrevalentResourceCallbackID);
 }
+    
+void TestRunner::dumpResourceLoadStatistics()
+{
+    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("dumpResourceLoadStatistics"));
+    WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), nullptr, nullptr);
+}
 
 bool TestRunner::isStatisticsPrevalentResource(JSStringRef hostName)
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("IsStatisticsPrevalentResource"));
     WKRetainPtr<WKStringRef> messageBody(AdoptWK, WKStringCreateWithJSString(hostName));
-    WKTypeRef returnData = 0;
+    WKTypeRef returnData = nullptr;
     WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), messageBody.get(), &returnData);
-    return WKBooleanGetValue(static_cast<WKBooleanRef>(returnData));
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
 }
 
 bool TestRunner::isStatisticsVeryPrevalentResource(JSStringRef hostName)
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("IsStatisticsVeryPrevalentResource"));
     WKRetainPtr<WKStringRef> messageBody(AdoptWK, WKStringCreateWithJSString(hostName));
-    WKTypeRef returnData = 0;
+    WKTypeRef returnData = nullptr;
     WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), messageBody.get(), &returnData);
-    return WKBooleanGetValue(static_cast<WKBooleanRef>(returnData));
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
+}
+
+bool TestRunner::isStatisticsRegisteredAsSubresourceUnder(JSStringRef subresourceHost, JSStringRef topFrameHost)
+{
+    Vector<WKRetainPtr<WKStringRef>> keys;
+    Vector<WKRetainPtr<WKTypeRef>> values;
+    
+    keys.append({ AdoptWK, WKStringCreateWithUTF8CString("SubresourceHost") });
+    values.append({ AdoptWK, WKStringCreateWithJSString(subresourceHost) });
+    
+    keys.append({ AdoptWK, WKStringCreateWithUTF8CString("TopFrameHost") });
+    values.append({ AdoptWK, WKStringCreateWithJSString(topFrameHost) });
+    
+    Vector<WKStringRef> rawKeys(keys.size());
+    Vector<WKTypeRef> rawValues(values.size());
+    
+    for (size_t i = 0; i < keys.size(); ++i) {
+        rawKeys[i] = keys[i].get();
+        rawValues[i] = values[i].get();
+    }
+    
+    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("IsStatisticsRegisteredAsSubresourceUnder"));
+    WKRetainPtr<WKDictionaryRef> messageBody(AdoptWK, WKDictionaryCreate(rawKeys.data(), rawValues.data(), rawKeys.size()));
+    WKTypeRef returnData = nullptr;
+    WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), messageBody.get(), &returnData);
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
 }
 
 bool TestRunner::isStatisticsRegisteredAsSubFrameUnder(JSStringRef subFrameHost, JSStringRef topFrameHost)
@@ -1471,9 +1589,10 @@ bool TestRunner::isStatisticsRegisteredAsSubFrameUnder(JSStringRef subFrameHost,
 
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("IsStatisticsRegisteredAsSubFrameUnder"));
     WKRetainPtr<WKDictionaryRef> messageBody(AdoptWK, WKDictionaryCreate(rawKeys.data(), rawValues.data(), rawKeys.size()));
-    WKTypeRef returnData = 0;
+    WKTypeRef returnData = nullptr;
     WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), messageBody.get(), &returnData);
-    return WKBooleanGetValue(static_cast<WKBooleanRef>(returnData));
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
 }
 
 bool TestRunner::isStatisticsRegisteredAsRedirectingTo(JSStringRef hostRedirectedFrom, JSStringRef hostRedirectedTo)
@@ -1497,9 +1616,10 @@ bool TestRunner::isStatisticsRegisteredAsRedirectingTo(JSStringRef hostRedirecte
     
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("IsStatisticsRegisteredAsRedirectingTo"));
     WKRetainPtr<WKDictionaryRef> messageBody(AdoptWK, WKDictionaryCreate(rawKeys.data(), rawValues.data(), rawKeys.size()));
-    WKTypeRef returnData = 0;
+    WKTypeRef returnData = nullptr;
     WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), messageBody.get(), &returnData);
-    return WKBooleanGetValue(static_cast<WKBooleanRef>(returnData));
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
 }
 
 void TestRunner::setStatisticsHasHadUserInteraction(JSStringRef hostName, bool value, JSValueRef completionHandler)
@@ -1531,15 +1651,6 @@ void TestRunner::setStatisticsHasHadUserInteraction(JSStringRef hostName, bool v
     WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), messageBody.get(), nullptr);
 }
 
-void TestRunner::setStatisticsHasHadNonRecentUserInteraction(JSStringRef hostName, JSValueRef completionHandler)
-{
-    cacheTestRunnerCallback(SetStatisticsHasHadUserInteractionCallbackID, completionHandler);
-
-    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("SetStatisticsHasHadNonRecentUserInteraction"));
-    WKRetainPtr<WKStringRef> messageBody(AdoptWK, WKStringCreateWithJSString(hostName));
-    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), messageBody.get(), nullptr);
-}
-
 void TestRunner::statisticsCallDidSetHasHadUserInteractionCallback()
 {
     callTestRunnerCallback(SetStatisticsHasHadUserInteractionCallbackID);
@@ -1549,9 +1660,10 @@ bool TestRunner::isStatisticsHasHadUserInteraction(JSStringRef hostName)
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("IsStatisticsHasHadUserInteraction"));
     WKRetainPtr<WKStringRef> messageBody(AdoptWK, WKStringCreateWithJSString(hostName));
-    WKTypeRef returnData = 0;
+    WKTypeRef returnData = nullptr;
     WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), messageBody.get(), &returnData);
-    return WKBooleanGetValue(static_cast<WKBooleanRef>(returnData));
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
 }
 
 void TestRunner::setStatisticsGrandfathered(JSStringRef hostName, bool value)
@@ -1585,9 +1697,10 @@ bool TestRunner::isStatisticsGrandfathered(JSStringRef hostName)
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("IsStatisticsGrandfathered"));
     WKRetainPtr<WKStringRef> messageBody(AdoptWK, WKStringCreateWithJSString(hostName));
-    WKTypeRef returnData = 0;
+    WKTypeRef returnData = nullptr;
     WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), messageBody.get(), &returnData);
-    return WKBooleanGetValue(static_cast<WKBooleanRef>(returnData));
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
 }
 
 void TestRunner::setStatisticsSubframeUnderTopFrameOrigin(JSStringRef hostName, JSStringRef topFrameHostName)
@@ -1743,13 +1856,6 @@ void TestRunner::setStatisticsTimeToLiveUserInteraction(double seconds)
     WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), messageBody.get(), nullptr);
 }
 
-void TestRunner::setStatisticsTimeToLiveCookiePartitionFree(double seconds)
-{
-    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("SetStatisticsTimeToLiveCookiePartitionFree"));
-    WKRetainPtr<WKDoubleRef> messageBody(AdoptWK, WKDoubleCreate(seconds));
-    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), messageBody.get(), nullptr);
-}
-
 void TestRunner::installStatisticsDidModifyDataRecordsCallback(JSValueRef callback)
 {
     cacheTestRunnerCallback(StatisticsDidModifyDataRecordsCallbackID, callback);
@@ -1789,8 +1895,8 @@ void TestRunner::statisticsDidRunTelemetryCallback(unsigned totalPrevalentResour
     stringBuilder.appendNumber(top3SubframeUnderTopFrameOrigins);
     stringBuilder.appendLiteral(" }");
     
-    JSValueRef result = JSValueMakeFromJSONString(context, JSStringCreateWithUTF8CString(stringBuilder.toString().utf8().data()));
-    
+    JSValueRef result = JSValueMakeFromJSONString(context, adopt(JSStringCreateWithUTF8CString(stringBuilder.toString().utf8().data())).get());
+
     callTestRunnerCallback(StatisticsDidRunTelemetryCallbackID, 1, &result);
 }
 
@@ -1802,53 +1908,26 @@ void TestRunner::statisticsNotifyObserver()
 void TestRunner::statisticsProcessStatisticsAndDataRecords()
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("StatisticsProcessStatisticsAndDataRecords"));
-    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), 0, nullptr);
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), nullptr, nullptr);
 }
 
-void TestRunner::statisticsUpdateCookiePartitioning(JSValueRef callback)
+void TestRunner::statisticsUpdateCookieBlocking(JSValueRef completionHandler)
 {
-    cacheTestRunnerCallback(StatisticsDidSetPartitionOrBlockCookiesForHostCallbackID, callback);
+    cacheTestRunnerCallback(StatisticsDidSetBlockCookiesForHostCallbackID, completionHandler);
 
-    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("StatisticsUpdateCookiePartitioning"));
-    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), 0, nullptr);
+    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("StatisticsUpdateCookieBlocking"));
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), nullptr, nullptr);
 }
 
-void TestRunner::statisticsSetShouldPartitionCookiesForHost(JSStringRef hostName, bool value, JSValueRef callback)
+void TestRunner::statisticsCallDidSetBlockCookiesForHostCallback()
 {
-    cacheTestRunnerCallback(StatisticsDidSetPartitionOrBlockCookiesForHostCallbackID, callback);
-
-    Vector<WKRetainPtr<WKStringRef>> keys;
-    Vector<WKRetainPtr<WKTypeRef>> values;
-    
-    keys.append({ AdoptWK, WKStringCreateWithUTF8CString("HostName") });
-    values.append({ AdoptWK, WKStringCreateWithJSString(hostName) });
-    
-    keys.append({ AdoptWK, WKStringCreateWithUTF8CString("Value") });
-    values.append({ AdoptWK, WKBooleanCreate(value) });
-    
-    Vector<WKStringRef> rawKeys(keys.size());
-    Vector<WKTypeRef> rawValues(values.size());
-    
-    for (size_t i = 0; i < keys.size(); ++i) {
-        rawKeys[i] = keys[i].get();
-        rawValues[i] = values[i].get();
-    }
-    
-    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("StatisticsSetShouldPartitionCookiesForHost"));
-    WKRetainPtr<WKDictionaryRef> messageBody(AdoptWK, WKDictionaryCreate(rawKeys.data(), rawValues.data(), rawKeys.size()));
-    
-    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), messageBody.get(), nullptr);
-}
-
-void TestRunner::statisticsCallDidSetPartitionOrBlockCookiesForHostCallback()
-{
-    callTestRunnerCallback(StatisticsDidSetPartitionOrBlockCookiesForHostCallbackID);
+    callTestRunnerCallback(StatisticsDidSetBlockCookiesForHostCallbackID);
 }
 
 void TestRunner::statisticsSubmitTelemetry()
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("StatisticsSubmitTelemetry"));
-    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), 0, nullptr);
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), nullptr, nullptr);
 }
 
 void TestRunner::setStatisticsNotifyPagesWhenDataRecordsWereScanned(bool value)
@@ -1905,7 +1984,7 @@ void TestRunner::statisticsClearInMemoryAndPersistentStore(JSValueRef callback)
     cacheTestRunnerCallback(StatisticsDidClearThroughWebsiteDataRemovalCallbackID, callback);
 
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("StatisticsClearInMemoryAndPersistentStore"));
-    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), 0, nullptr);
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), nullptr, nullptr);
 }
 
 void TestRunner::statisticsClearInMemoryAndPersistentStoreModifiedSinceHours(unsigned hours, JSValueRef callback)
@@ -1922,7 +2001,14 @@ void TestRunner::statisticsClearThroughWebsiteDataRemoval(JSValueRef callback)
     cacheTestRunnerCallback(StatisticsDidClearThroughWebsiteDataRemovalCallbackID, callback);
     
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("StatisticsClearThroughWebsiteDataRemoval"));
-    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), 0, nullptr);
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), nullptr, nullptr);
+}
+
+void TestRunner::setStatisticsCacheMaxAgeCap(double seconds)
+{
+    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("SetStatisticsCacheMaxAgeCap"));
+    WKRetainPtr<WKDoubleRef> messageBody(AdoptWK, WKDoubleCreate(seconds));
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), messageBody.get(), nullptr);
 }
 
 void TestRunner::statisticsCallClearThroughWebsiteDataRemovalCallback()
@@ -1935,7 +2021,7 @@ void TestRunner::statisticsResetToConsistentState(JSValueRef completionHandler)
     cacheTestRunnerCallback(StatisticsDidResetToConsistentStateCallbackID, completionHandler);
     
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("StatisticsResetToConsistentState"));
-    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), 0, nullptr);
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), nullptr, nullptr);
 }
 
 void TestRunner::statisticsCallDidResetToConsistentStateCallback()
@@ -1987,7 +2073,7 @@ void TestRunner::getAllStorageAccessEntries(JSValueRef callback)
     cacheTestRunnerCallback(AllStorageAccessEntriesCallbackID, callback);
     
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("GetAllStorageAccessEntries"));
-    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), 0, nullptr);
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), nullptr, nullptr);
 }
 
 void TestRunner::callDidReceiveAllStorageAccessEntriesCallback(Vector<String>& domains)
@@ -2009,7 +2095,7 @@ void TestRunner::callDidReceiveAllStorageAccessEntriesCallback(Vector<String>& d
     }
     stringBuilder.appendLiteral("]");
     
-    JSValueRef result = JSValueMakeFromJSONString(context, JSStringCreateWithUTF8CString(stringBuilder.toString().utf8().data()));
+    JSValueRef result = JSValueMakeFromJSONString(context, adopt(JSStringCreateWithUTF8CString(stringBuilder.toString().utf8().data())).get());
 
     callTestRunnerCallback(AllStorageAccessEntriesCallbackID, 1, &result);
 }
@@ -2219,7 +2305,7 @@ void TestRunner::setOpenPanelFiles(JSValueRef filesValue)
         return;
 
     JSObjectRef files = JSValueToObject(context, filesValue, nullptr);
-    static auto lengthProperty = JSRetainPtr<JSStringRef>(Adopt, JSStringCreateWithUTF8CString("length"));
+    static auto lengthProperty = adopt(JSStringCreateWithUTF8CString("length"));
     JSValueRef filesLengthValue = JSObjectGetProperty(context, files, lengthProperty.get(), nullptr);
     if (!JSValueIsNumber(context, filesLengthValue))
         return;
@@ -2231,7 +2317,7 @@ void TestRunner::setOpenPanelFiles(JSValueRef filesValue)
         if (!JSValueIsString(context, fileValue))
             continue;
 
-        auto file = JSRetainPtr<JSStringRef>(Adopt, JSValueToStringCopy(context, fileValue, nullptr));
+        auto file = adopt(JSValueToStringCopy(context, fileValue, nullptr));
         size_t fileBufferSize = JSStringGetMaximumUTF8CStringSize(file.get()) + 1;
         auto fileBuffer = std::make_unique<char[]>(fileBufferSize);
         JSStringGetUTF8CString(file.get(), fileBuffer.get(), fileBufferSize);
@@ -2275,16 +2361,17 @@ bool TestRunner::hasDOMCache(JSStringRef origin)
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("HasDOMCache"));
     WKRetainPtr<WKStringRef> messageBody(AdoptWK, WKStringCreateWithJSString(origin));
-    WKTypeRef returnData = 0;
+    WKTypeRef returnData = nullptr;
     WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), messageBody.get(), &returnData);
-    return WKBooleanGetValue(static_cast<WKBooleanRef>(returnData));
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
 }
 
 uint64_t TestRunner::domCacheSize(JSStringRef origin)
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("DOMCacheSize"));
     WKRetainPtr<WKStringRef> messageBody(AdoptWK, WKStringCreateWithJSString(origin));
-    WKTypeRef returnData = 0;
+    WKTypeRef returnData = nullptr;
     WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), messageBody.get(), &returnData);
     return WKUInt64GetValue(static_cast<WKUInt64Ref>(returnData));
 }
@@ -2311,8 +2398,291 @@ void TestRunner::injectUserScript(JSStringRef script)
 {
     WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("InjectUserScript"));
     WKRetainPtr<WKStringRef> messageBody(AdoptWK, WKStringCreateWithJSString(script));
-    WKTypeRef returnData = 0;
-    WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), messageBody.get(), &returnData);
+    WKBundlePagePostSynchronousMessageForTesting(InjectedBundle::singleton().page()->page(), messageName.get(), messageBody.get(), nullptr);
+}
+
+void TestRunner::sendDisplayConfigurationChangedMessageForTesting()
+{
+    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("SendDisplayConfigurationChangedMessageForTesting"));
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), nullptr, nullptr);
+}
+
+// WebAuthN
+void TestRunner::setWebAuthenticationMockConfiguration(JSValueRef configurationValue)
+{
+    auto& injectedBundle = InjectedBundle::singleton();
+    WKBundleFrameRef mainFrame = WKBundlePageGetMainFrame(injectedBundle.page()->page());
+    JSContextRef context = WKBundleFrameGetJavaScriptContext(mainFrame);
+    if (!JSValueIsObject(context, configurationValue))
+        return;
+    JSObjectRef configuration = JSValueToObject(context, configurationValue, 0);
+
+    Vector<WKRetainPtr<WKStringRef>> configurationKeys;
+    Vector<WKRetainPtr<WKTypeRef>> configurationValues;
+
+    JSRetainPtr<JSStringRef> silentFailurePropertyName(Adopt, JSStringCreateWithUTF8CString("silentFailure"));
+    JSValueRef silentFailureValue = JSObjectGetProperty(context, configuration, silentFailurePropertyName.get(), 0);
+    if (!JSValueIsUndefined(context, silentFailureValue)) {
+        if (!JSValueIsBoolean(context, silentFailureValue))
+            return;
+        bool silentFailure = JSValueToBoolean(context, silentFailureValue);
+        configurationKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("SilentFailure") });
+        configurationValues.append(adoptWK(WKBooleanCreate(silentFailure)).get());
+    }
+
+    JSRetainPtr<JSStringRef> localPropertyName(Adopt, JSStringCreateWithUTF8CString("local"));
+    JSValueRef localValue = JSObjectGetProperty(context, configuration, localPropertyName.get(), 0);
+    if (!JSValueIsUndefined(context, localValue) && !JSValueIsNull(context, localValue)) {
+        if (!JSValueIsObject(context, localValue))
+            return;
+        JSObjectRef local = JSValueToObject(context, localValue, 0);
+
+        JSRetainPtr<JSStringRef> acceptAuthenticationPropertyName(Adopt, JSStringCreateWithUTF8CString("acceptAuthentication"));
+        JSValueRef acceptAuthenticationValue = JSObjectGetProperty(context, local, acceptAuthenticationPropertyName.get(), 0);
+        if (!JSValueIsBoolean(context, acceptAuthenticationValue))
+            return;
+        bool acceptAuthentication = JSValueToBoolean(context, acceptAuthenticationValue);
+
+        JSRetainPtr<JSStringRef> acceptAttestationPropertyName(Adopt, JSStringCreateWithUTF8CString("acceptAttestation"));
+        JSValueRef acceptAttestationValue = JSObjectGetProperty(context, local, acceptAttestationPropertyName.get(), 0);
+        if (!JSValueIsBoolean(context, acceptAttestationValue))
+            return;
+        bool acceptAttestation = JSValueToBoolean(context, acceptAttestationValue);
+
+        Vector<WKRetainPtr<WKStringRef>> localKeys;
+        Vector<WKRetainPtr<WKTypeRef>> localValues;
+        localKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("AcceptAuthentication") });
+        localValues.append(adoptWK(WKBooleanCreate(acceptAuthentication)).get());
+        localKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("AcceptAttestation") });
+        localValues.append(adoptWK(WKBooleanCreate(acceptAttestation)).get());
+
+        if (acceptAttestation) {
+            JSRetainPtr<JSStringRef> privateKeyBase64PropertyName(Adopt, JSStringCreateWithUTF8CString("privateKeyBase64"));
+            JSValueRef privateKeyBase64Value = JSObjectGetProperty(context, local, privateKeyBase64PropertyName.get(), 0);
+            if (!JSValueIsString(context, privateKeyBase64Value))
+                return;
+
+            JSRetainPtr<JSStringRef> userCertificateBase64PropertyName(Adopt, JSStringCreateWithUTF8CString("userCertificateBase64"));
+            JSValueRef userCertificateBase64Value = JSObjectGetProperty(context, local, userCertificateBase64PropertyName.get(), 0);
+            if (!JSValueIsString(context, userCertificateBase64Value))
+                return;
+
+            JSRetainPtr<JSStringRef> intermediateCACertificateBase64PropertyName(Adopt, JSStringCreateWithUTF8CString("intermediateCACertificateBase64"));
+            JSValueRef intermediateCACertificateBase64Value = JSObjectGetProperty(context, local, intermediateCACertificateBase64PropertyName.get(), 0);
+            if (!JSValueIsString(context, intermediateCACertificateBase64Value))
+            return;
+
+            localKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("PrivateKeyBase64") });
+            localValues.append(toWK(adopt(JSValueToStringCopy(context, privateKeyBase64Value, 0)).get()));
+            localKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("UserCertificateBase64") });
+            localValues.append(toWK(adopt(JSValueToStringCopy(context, userCertificateBase64Value, 0)).get()));
+            localKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("IntermediateCACertificateBase64") });
+            localValues.append(toWK(adopt(JSValueToStringCopy(context, intermediateCACertificateBase64Value, 0)).get()));
+        }
+
+        Vector<WKStringRef> rawLocalKeys;
+        Vector<WKTypeRef> rawLocalValues;
+        rawLocalKeys.resize(localKeys.size());
+        rawLocalValues.resize(localValues.size());
+        for (size_t i = 0; i < localKeys.size(); ++i) {
+            rawLocalKeys[i] = localKeys[i].get();
+            rawLocalValues[i] = localValues[i].get();
+        }
+
+        configurationKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("Local") });
+        configurationValues.append({ AdoptWK, WKDictionaryCreate(rawLocalKeys.data(), rawLocalValues.data(), rawLocalKeys.size()) });
+    }
+
+    JSRetainPtr<JSStringRef> hidPropertyName(Adopt, JSStringCreateWithUTF8CString("hid"));
+    JSValueRef hidValue = JSObjectGetProperty(context, configuration, hidPropertyName.get(), 0);
+    if (!JSValueIsUndefined(context, hidValue) && !JSValueIsNull(context, hidValue)) {
+        if (!JSValueIsObject(context, hidValue))
+            return;
+        JSObjectRef hid = JSValueToObject(context, hidValue, 0);
+
+        JSRetainPtr<JSStringRef> stagePropertyName(Adopt, JSStringCreateWithUTF8CString("stage"));
+        JSValueRef stageValue = JSObjectGetProperty(context, hid, stagePropertyName.get(), 0);
+        if (!JSValueIsString(context, stageValue))
+            return;
+
+        JSRetainPtr<JSStringRef> subStagePropertyName(Adopt, JSStringCreateWithUTF8CString("subStage"));
+        JSValueRef subStageValue = JSObjectGetProperty(context, hid, subStagePropertyName.get(), 0);
+        if (!JSValueIsString(context, subStageValue))
+            return;
+
+        JSRetainPtr<JSStringRef> errorPropertyName(Adopt, JSStringCreateWithUTF8CString("error"));
+        JSValueRef errorValue = JSObjectGetProperty(context, hid, errorPropertyName.get(), 0);
+        if (!JSValueIsString(context, errorValue))
+            return;
+
+        Vector<WKRetainPtr<WKStringRef>> hidKeys;
+        Vector<WKRetainPtr<WKTypeRef>> hidValues;
+        hidKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("Stage") });
+        hidValues.append(toWK(adopt(JSValueToStringCopy(context, stageValue, 0)).get()));
+        hidKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("SubStage") });
+        hidValues.append(toWK(adopt(JSValueToStringCopy(context, subStageValue, 0)).get()));
+        hidKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("Error") });
+        hidValues.append(toWK(adopt(JSValueToStringCopy(context, errorValue, 0)).get()));
+
+        JSRetainPtr<JSStringRef> payloadBase64PropertyName(Adopt, JSStringCreateWithUTF8CString("payloadBase64"));
+        JSValueRef payloadBase64Value = JSObjectGetProperty(context, hid, payloadBase64PropertyName.get(), 0);
+        if (!JSValueIsUndefined(context, payloadBase64Value) && !JSValueIsNull(context, payloadBase64Value)) {
+            if (!JSValueIsArray(context, payloadBase64Value))
+                return;
+
+            JSObjectRef payloadBase64 = JSValueToObject(context, payloadBase64Value, nullptr);
+            static auto lengthProperty = adopt(JSStringCreateWithUTF8CString("length"));
+            JSValueRef payloadBase64LengthValue = JSObjectGetProperty(context, payloadBase64, lengthProperty.get(), nullptr);
+            if (!JSValueIsNumber(context, payloadBase64LengthValue))
+                return;
+
+            auto payloadBase64s = adoptWK(WKMutableArrayCreate());
+            auto payloadBase64Length = static_cast<size_t>(JSValueToNumber(context, payloadBase64LengthValue, nullptr));
+            for (size_t i = 0; i < payloadBase64Length; ++i) {
+                JSValueRef payloadBase64Value = JSObjectGetPropertyAtIndex(context, payloadBase64, i, nullptr);
+                if (!JSValueIsString(context, payloadBase64Value))
+                    continue;
+                WKArrayAppendItem(payloadBase64s.get(), toWK(adopt(JSValueToStringCopy(context, payloadBase64Value, 0)).get()).get());
+            }
+
+            hidKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("PayloadBase64") });
+            hidValues.append(payloadBase64s);
+        }
+
+        JSRetainPtr<JSStringRef> isU2fPropertyName(Adopt, JSStringCreateWithUTF8CString("isU2f"));
+        JSValueRef isU2fValue = JSObjectGetProperty(context, hid, isU2fPropertyName.get(), 0);
+        if (!JSValueIsUndefined(context, isU2fValue) && !JSValueIsNull(context, isU2fValue)) {
+            if (!JSValueIsBoolean(context, isU2fValue))
+                return;
+            bool isU2f = JSValueToBoolean(context, isU2fValue);
+            hidKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("IsU2f") });
+            hidValues.append(adoptWK(WKBooleanCreate(isU2f)).get());
+        }
+
+        JSRetainPtr<JSStringRef> keepAlivePropertyName(Adopt, JSStringCreateWithUTF8CString("keepAlive"));
+        JSValueRef keepAliveValue = JSObjectGetProperty(context, hid, keepAlivePropertyName.get(), 0);
+        if (!JSValueIsUndefined(context, keepAliveValue) && !JSValueIsNull(context, keepAliveValue)) {
+            if (!JSValueIsBoolean(context, keepAliveValue))
+                return;
+            bool keepAlive = JSValueToBoolean(context, keepAliveValue);
+            hidKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("KeepAlive") });
+            hidValues.append(adoptWK(WKBooleanCreate(keepAlive)).get());
+        }
+
+        JSRetainPtr<JSStringRef> fastDataArrivalPropertyName(Adopt, JSStringCreateWithUTF8CString("fastDataArrival"));
+        JSValueRef fastDataArrivalValue = JSObjectGetProperty(context, hid, fastDataArrivalPropertyName.get(), 0);
+        if (!JSValueIsUndefined(context, fastDataArrivalValue) && !JSValueIsNull(context, fastDataArrivalValue)) {
+            if (!JSValueIsBoolean(context, fastDataArrivalValue))
+                return;
+            bool fastDataArrival = JSValueToBoolean(context, fastDataArrivalValue);
+            hidKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("FastDataArrival") });
+            hidValues.append(adoptWK(WKBooleanCreate(fastDataArrival)).get());
+        }
+
+        JSRetainPtr<JSStringRef> continueAfterErrorDataPropertyName(Adopt, JSStringCreateWithUTF8CString("continueAfterErrorData"));
+        JSValueRef continueAfterErrorDataValue = JSObjectGetProperty(context, hid, continueAfterErrorDataPropertyName.get(), 0);
+        if (!JSValueIsUndefined(context, continueAfterErrorDataValue) && !JSValueIsNull(context, continueAfterErrorDataValue)) {
+            if (!JSValueIsBoolean(context, continueAfterErrorDataValue))
+                return;
+            bool continueAfterErrorData = JSValueToBoolean(context, continueAfterErrorDataValue);
+            hidKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("ContinueAfterErrorData") });
+            hidValues.append(adoptWK(WKBooleanCreate(continueAfterErrorData)).get());
+        }
+
+        Vector<WKStringRef> rawHidKeys;
+        Vector<WKTypeRef> rawHidValues;
+        rawHidKeys.resize(hidKeys.size());
+        rawHidValues.resize(hidValues.size());
+        for (size_t i = 0; i < hidKeys.size(); ++i) {
+            rawHidKeys[i] = hidKeys[i].get();
+            rawHidValues[i] = hidValues[i].get();
+        }
+
+        configurationKeys.append({ AdoptWK, WKStringCreateWithUTF8CString("Hid") });
+        configurationValues.append({ AdoptWK, WKDictionaryCreate(rawHidKeys.data(), rawHidValues.data(), rawHidKeys.size()) });
+    }
+
+    Vector<WKStringRef> rawConfigurationKeys;
+    Vector<WKTypeRef> rawConfigurationValues;
+    rawConfigurationKeys.resize(configurationKeys.size());
+    rawConfigurationValues.resize(configurationValues.size());
+    for (size_t i = 0; i < configurationKeys.size(); ++i) {
+        rawConfigurationKeys[i] = configurationKeys[i].get();
+        rawConfigurationValues[i] = configurationValues[i].get();
+    }
+
+    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("SetWebAuthenticationMockConfiguration"));
+    WKRetainPtr<WKDictionaryRef> messageBody(AdoptWK, WKDictionaryCreate(rawConfigurationKeys.data(), rawConfigurationValues.data(), rawConfigurationKeys.size()));
+    
+    WKBundlePostSynchronousMessage(injectedBundle.bundle(), messageName.get(), messageBody.get(), nullptr);
+}
+
+void TestRunner::addTestKeyToKeychain(JSStringRef privateKeyBase64, JSStringRef attrLabel, JSStringRef applicationTagBase64)
+{
+    Vector<WKRetainPtr<WKStringRef>> keys;
+    Vector<WKRetainPtr<WKTypeRef>> values;
+
+    keys.append({ AdoptWK, WKStringCreateWithUTF8CString("PrivateKey") });
+    values.append(toWK(privateKeyBase64));
+
+    keys.append({ AdoptWK, WKStringCreateWithUTF8CString("AttrLabel") });
+    values.append(toWK(attrLabel));
+
+    keys.append({ AdoptWK, WKStringCreateWithUTF8CString("ApplicationTag") });
+    values.append(toWK(applicationTagBase64));
+
+    Vector<WKStringRef> rawKeys;
+    Vector<WKTypeRef> rawValues;
+    rawKeys.resize(keys.size());
+    rawValues.resize(values.size());
+
+    for (size_t i = 0; i < keys.size(); ++i) {
+        rawKeys[i] = keys[i].get();
+        rawValues[i] = values[i].get();
+    }
+
+    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("AddTestKeyToKeychain"));
+    WKRetainPtr<WKDictionaryRef> messageBody(AdoptWK, WKDictionaryCreate(rawKeys.data(), rawValues.data(), rawKeys.size()));
+
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), messageBody.get(), nullptr);
+}
+
+void TestRunner::cleanUpKeychain(JSStringRef attrLabel)
+{
+    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("CleanUpKeychain"));
+    WKRetainPtr<WKStringRef> messageBody(AdoptWK, WKStringCreateWithJSString(attrLabel));
+
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), messageBody.get(), nullptr);
+}
+
+bool TestRunner::keyExistsInKeychain(JSStringRef attrLabel, JSStringRef applicationTagBase64)
+{
+    Vector<WKRetainPtr<WKStringRef>> keys;
+    Vector<WKRetainPtr<WKTypeRef>> values;
+
+    keys.append({ AdoptWK, WKStringCreateWithUTF8CString("AttrLabel") });
+    values.append(toWK(attrLabel));
+
+    keys.append({ AdoptWK, WKStringCreateWithUTF8CString("ApplicationTag") });
+    values.append(toWK(applicationTagBase64));
+
+    Vector<WKStringRef> rawKeys;
+    Vector<WKTypeRef> rawValues;
+    rawKeys.resize(keys.size());
+    rawValues.resize(values.size());
+
+    for (size_t i = 0; i < keys.size(); ++i) {
+        rawKeys[i] = keys[i].get();
+        rawValues[i] = values[i].get();
+    }
+
+    WKRetainPtr<WKStringRef> messageName(AdoptWK, WKStringCreateWithUTF8CString("KeyExistsInKeychain"));
+    WKRetainPtr<WKDictionaryRef> messageBody(AdoptWK, WKDictionaryCreate(rawKeys.data(), rawValues.data(), rawKeys.size()));
+
+    WKTypeRef returnData = nullptr;
+    WKBundlePostSynchronousMessage(InjectedBundle::singleton().bundle(), messageName.get(), messageBody.get(), &returnData);
+    ASSERT(WKGetTypeID(returnData) == WKBooleanGetTypeID());
+    return WKBooleanGetValue(adoptWK(static_cast<WKBooleanRef>(returnData)).get());
 }
 
 } // namespace WTR

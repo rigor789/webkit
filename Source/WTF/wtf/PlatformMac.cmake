@@ -11,10 +11,13 @@ list(APPEND WTF_LIBRARIES
 )
 
 list(APPEND WTF_PUBLIC_HEADERS
+    WeakObjCPtr.h
+
+    cf/CFURLExtras.h
     cf/TypeCastsCF.h
 
     cocoa/Entitlements.h
-    MachSendRight.h
+    cocoa/NSURLExtras.h
     cocoa/SoftLinking.h
 
     darwin/WeakLinking.h
@@ -24,9 +27,9 @@ list(APPEND WTF_PUBLIC_HEADERS
     spi/cf/CFBundleSPI.h
     spi/cf/CFStringSPI.h
 
-    spi/cocoa/FoundationSPI.h
-    spi/cocoa/NSMapTableSPI.h
+    spi/cocoa/CFXPCBridgeSPI.h
     spi/cocoa/SecuritySPI.h
+    spi/cocoa/objcSPI.h
 
     spi/darwin/SandboxSPI.h
     spi/darwin/XPCSPI.h
@@ -42,19 +45,23 @@ list(APPEND WTF_SOURCES
     SchedulePairCF.cpp
     SchedulePairMac.mm
 
+    cf/CFURLExtras.cpp
     cf/LanguageCF.cpp
     cf/RunLoopCF.cpp
+    cf/URLCF.cpp
 
     cocoa/AutodrainedPool.cpp
     cocoa/CPUTimeCocoa.cpp
     cocoa/Entitlements.mm
     cocoa/MachSendRight.cpp
+    cocoa/MainThreadCocoa.mm
     cocoa/MemoryFootprintCocoa.cpp
     cocoa/MemoryPressureHandlerCocoa.mm
+    cocoa/NSURLExtras.mm
+    cocoa/URLCocoa.mm
     cocoa/WorkQueueCocoa.cpp
 
     mac/DeprecatedSymbolsUsedBySafari.mm
-    mac/MainThreadMac.mm
 
     ios/WebCoreThread.cpp
 
@@ -63,15 +70,35 @@ list(APPEND WTF_SOURCES
     text/cf/StringImplCF.cpp
     text/cf/StringViewCF.cpp
 
+    text/cocoa/StringCocoa.mm
     text/cocoa/StringImplCocoa.mm
     text/cocoa/StringViewCocoa.mm
     text/cocoa/TextBreakIteratorInternalICUCocoa.cpp
 )
 
 list(APPEND WTF_PRIVATE_INCLUDE_DIRECTORIES
-    "${WTF_DIR}/icu"
     ${DERIVED_SOURCES_WTF_DIR}
 )
+
+# TODO Check if we need to remove this
+file(COPY mac/MachExceptions.defs DESTINATION ${DERIVED_SOURCES_WTF_DIR})
+file(COPY "${WTF_DIR}/icu/unicode" DESTINATION ${DERIVED_SOURCES_WTF_DIR})
+
+add_custom_command(
+    OUTPUT
+        ${DERIVED_SOURCES_WTF_DIR}/MachExceptionsServer.h
+        ${DERIVED_SOURCES_WTF_DIR}/mach_exc.h
+        ${DERIVED_SOURCES_WTF_DIR}/mach_excServer.c
+        ${DERIVED_SOURCES_WTF_DIR}/mach_excUser.c
+    MAIN_DEPENDENCY mac/MachExceptions.defs
+    WORKING_DIRECTORY ${DERIVED_SOURCES_WTF_DIR}
+    COMMAND mig -sheader MachExceptionsServer.h MachExceptions.defs
+    VERBATIM)
+list(APPEND WTF_SOURCES
+    ${DERIVED_SOURCES_WTF_DIR}/mach_excServer.c
+    ${DERIVED_SOURCES_WTF_DIR}/mach_excUser.c
+)
+# /TODO Check if we need to remove this
 
 WEBKIT_CREATE_FORWARDING_HEADERS(WebKitLegacy DIRECTORIES ${WebKitLegacy_FORWARDING_HEADERS_DIRECTORIES} FILES ${WebKitLegacy_FORWARDING_HEADERS_FILES})
 WEBKIT_CREATE_FORWARDING_HEADERS(WebKit DIRECTORIES ${FORWARDING_HEADERS_DIR}/WebKitLegacy)

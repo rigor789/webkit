@@ -53,26 +53,13 @@ void MacroAssembler::jitAssert(const ScopedLambda<Jump(void)>& functor)
 #if ENABLE(MASM_PROBE)
 static void stdFunctionCallback(Probe::Context& context)
 {
-    auto func = context.arg<const std::function<void(Probe::Context&)>*>();
+    auto func = context.arg<const Function<void(Probe::Context&)>*>();
     (*func)(context);
 }
     
-void MacroAssembler::probe(std::function<void(Probe::Context&)> func)
+void MacroAssembler::probe(Function<void(Probe::Context&)> func)
 {
-#if COMPILER(CLANG)
-#if __has_warning("-Waligned-allocation-unavailable")
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Waligned-allocation-unavailable"
-#endif
-#endif
-
-    probe(stdFunctionCallback, new std::function<void(Probe::Context&)>(func));
-
-#if COMPILER(CLANG)
-#if __has_warning("-Waligned-allocation-unavailable")
-#pragma clang diagnostic pop
-#endif
-#endif
+    probe(stdFunctionCallback, new Function<void(Probe::Context&)>(WTFMove(func)));
 }
 #endif // ENABLE(MASM_PROBE)
 

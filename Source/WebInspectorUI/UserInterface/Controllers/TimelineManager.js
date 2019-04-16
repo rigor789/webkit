@@ -27,6 +27,8 @@
  * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
  */
 
+// FIXME: TimelineManager lacks advanced multi-target support. (Instruments/Profilers per-target)
+
 WI.TimelineManager = class TimelineManager extends WI.Object
 {
     constructor()
@@ -42,9 +44,6 @@ WI.TimelineManager = class TimelineManager extends WI.Object
         WI.memoryManager.addEventListener(WI.MemoryManager.Event.MemoryPressure, this._memoryPressure, this);
 
         this._enabledTimelineTypesSetting = new WI.Setting("enabled-instrument-types", WI.TimelineManager.defaultTimelineTypes());
-        this._updateAutoCaptureInstruments();
-
-        this._persistentNetworkTimeline = new WI.NetworkTimeline;
 
         this._isCapturing = false;
         this._initiatedByBackendStart = false;
@@ -54,6 +53,7 @@ WI.TimelineManager = class TimelineManager extends WI.Object
         this._autoCaptureOnPageLoad = false;
         this._mainResourceForAutoCapturing = null;
         this._shouldSetAutoCapturingMainResource = false;
+        this._transitioningPageTarget = false;
         this._boundStopCapturing = this.stopCapturing.bind(this);
 
         this._webTimelineScriptRecordsExpectingScriptProfilerEvents = null;
@@ -64,6 +64,24 @@ WI.TimelineManager = class TimelineManager extends WI.Object
         this._lastDeadTimeTickle = 0;
 
         this.reset();
+    }
+
+    // Target
+
+    initializeTarget(target)
+    {
+        if (target.TimelineAgent) {
+            this._updateAutoCaptureInstruments([target]);
+
+            // COMPATIBILITY (iOS 9): Timeline.setAutoCaptureEnabled did not exist.
+            if (target.TimelineAgent.setAutoCaptureEnabled)
+                target.TimelineAgent.setAutoCaptureEnabled(this._autoCaptureOnPageLoad);
+        }
+    }
+
+    transitionPageTarget()
+    {
+        this._transitioningPageTarget = true;
     }
 
     // Static
@@ -109,6 +127,11 @@ WI.TimelineManager = class TimelineManager extends WI.Object
         if (WI.HeapAllocationsInstrument.supported())
             types.push(WI.TimelineRecord.Type.HeapAllocations);
 
+        if (WI.MediaInstrument.supported()) {
+            let insertionIndex = types.indexOf(WI.TimelineRecord.Type.Layout) + 1;
+            types.insertAtIndex(WI.TimelineRecord.Type.Media, insertionIndex || types.length);
+        }
+
         return types;
     }
 
@@ -131,11 +154,6 @@ WI.TimelineManager = class TimelineManager extends WI.Object
     {
         console.assert(this._activeRecording || !this._isCapturing);
         return this._activeRecording;
-    }
-
-    get persistentNetworkTimeline()
-    {
-        return this._persistentNetworkTimeline;
     }
 
     get recordings()
@@ -171,7 +189,7 @@ WI.TimelineManager = class TimelineManager extends WI.Object
     {
         this._enabledTimelineTypesSetting.value = x || [];
 
-        this._updateAutoCaptureInstruments();
+        this._updateAutoCaptureInstruments(WI.targets);
     }
 
     isCapturing()
@@ -254,6 +272,9 @@ WI.TimelineManager = class TimelineManager extends WI.Object
 
         this._webTimelineScriptRecordsExpectingScriptProfilerEvents = [];
 
+        WI.DOMNode.addEventListener(WI.DOMNode.Event.DidFireEvent, this._handleDOMNodeDidFireEvent, this);
+        WI.DOMNode.addEventListener(WI.DOMNode.Event.LowPowerChanged, this._handleDOMNodeLowPowerChanged, this);
+
         this.dispatchEventToListeners(WI.TimelineManager.Event.CapturingStarted, {startTime});
     }
 
@@ -263,6 +284,8 @@ WI.TimelineManager = class TimelineManager extends WI.Object
 
         if (!this._isCapturing)
             return;
+
+        WI.DOMNode.removeEventListener(null, null, this);
 
         if (this._stopCapturingTimeout) {
             clearTimeout(this._stopCapturingTimeout);
@@ -381,11 +404,11 @@ WI.TimelineManager = class TimelineManager extends WI.Object
         // Called from WI.PageObserver.
 
         console.assert(this._activeRecording);
-        console.assert(isNaN(WI.frameResourceManager.mainFrame.domContentReadyEventTimestamp));
+        console.assert(isNaN(WI.networkManager.mainFrame.domContentReadyEventTimestamp));
 
         let computedTimestamp = this.activeRecording.computeElapsedTime(timestamp);
 
-        WI.frameResourceManager.mainFrame.markDOMContentReadyEvent(computedTimestamp);
+        WI.networkManager.mainFrame.markDOMContentReadyEvent(computedTimestamp);
 
         let eventMarker = new WI.TimelineMarker(computedTimestamp, WI.TimelineMarker.Type.DOMContentEvent);
         this._activeRecording.addEventMarker(eventMarker);
@@ -396,11 +419,11 @@ WI.TimelineManager = class TimelineManager extends WI.Object
         // Called from WI.PageObserver.
 
         console.assert(this._activeRecording);
-        console.assert(isNaN(WI.frameResourceManager.mainFrame.loadEventTimestamp));
+        console.assert(isNaN(WI.networkManager.mainFrame.loadEventTimestamp));
 
         let computedTimestamp = this.activeRecording.computeElapsedTime(timestamp);
 
-        WI.frameResourceManager.mainFrame.markLoadEvent(computedTimestamp);
+        WI.networkManager.mainFrame.markLoadEvent(computedTimestamp);
 
         let eventMarker = new WI.TimelineMarker(computedTimestamp, WI.TimelineMarker.Type.LoadEvent);
         this._activeRecording.addEventMarker(eventMarker);
@@ -509,7 +532,7 @@ WI.TimelineManager = class TimelineManager extends WI.Object
 
         case TimelineAgent.EventType.EvaluateScript:
             if (!sourceCodeLocation) {
-                var mainFrame = WI.frameResourceManager.mainFrame;
+                var mainFrame = WI.networkManager.mainFrame;
                 var scriptResource = mainFrame.url === recordPayload.data.url ? mainFrame.mainResource : mainFrame.resourceForURL(recordPayload.data.url, true);
                 if (scriptResource) {
                     // The lineNumber is 1-based, but we expect 0-based.
@@ -526,6 +549,12 @@ WI.TimelineManager = class TimelineManager extends WI.Object
             switch (parentRecordPayload && parentRecordPayload.type) {
             case TimelineAgent.EventType.TimerFire:
                 record = new WI.ScriptTimelineRecord(WI.ScriptTimelineRecord.EventType.TimerFired, startTime, endTime, callFrames, sourceCodeLocation, parentRecordPayload.data.timerId, profileData);
+                break;
+            case TimelineAgent.EventType.ObserverCallback:
+                record = new WI.ScriptTimelineRecord(WI.ScriptTimelineRecord.EventType.ObserverCallback, startTime, endTime, callFrames, sourceCodeLocation, parentRecordPayload.data.type, profileData);
+                break;
+            case TimelineAgent.EventType.FireAnimationFrame:
+                record = new WI.ScriptTimelineRecord(WI.ScriptTimelineRecord.EventType.AnimationFrameFired, startTime, endTime, callFrames, sourceCodeLocation, parentRecordPayload.data.id, profileData);
                 break;
             default:
                 record = new WI.ScriptTimelineRecord(WI.ScriptTimelineRecord.EventType.ScriptEvaluated, startTime, endTime, callFrames, sourceCodeLocation, null, profileData);
@@ -547,7 +576,8 @@ WI.TimelineManager = class TimelineManager extends WI.Object
         case TimelineAgent.EventType.TimerFire:
         case TimelineAgent.EventType.EventDispatch:
         case TimelineAgent.EventType.FireAnimationFrame:
-            // These are handled when the parent of FunctionCall or EvaluateScript.
+        case TimelineAgent.EventType.ObserverCallback:
+            // These are handled when we see the child FunctionCall or EvaluateScript.
             break;
 
         case TimelineAgent.EventType.FunctionCall:
@@ -559,7 +589,7 @@ WI.TimelineManager = class TimelineManager extends WI.Object
             }
 
             if (!sourceCodeLocation) {
-                var mainFrame = WI.frameResourceManager.mainFrame;
+                var mainFrame = WI.networkManager.mainFrame;
                 var scriptResource = mainFrame.url === recordPayload.data.scriptName ? mainFrame.mainResource : mainFrame.resourceForURL(recordPayload.data.scriptName, true);
                 if (scriptResource) {
                     // The lineNumber is 1-based, but we expect 0-based.
@@ -579,6 +609,9 @@ WI.TimelineManager = class TimelineManager extends WI.Object
                 break;
             case TimelineAgent.EventType.EventDispatch:
                 record = new WI.ScriptTimelineRecord(WI.ScriptTimelineRecord.EventType.EventDispatched, startTime, endTime, callFrames, sourceCodeLocation, parentRecordPayload.data.type, profileData);
+                break;
+            case TimelineAgent.EventType.ObserverCallback:
+                record = new WI.ScriptTimelineRecord(WI.ScriptTimelineRecord.EventType.ObserverCallback, startTime, endTime, callFrames, sourceCodeLocation, parentRecordPayload.data.type, profileData);
                 break;
             case TimelineAgent.EventType.FireAnimationFrame:
                 record = new WI.ScriptTimelineRecord(WI.ScriptTimelineRecord.EventType.AnimationFrameFired, startTime, endTime, callFrames, sourceCodeLocation, parentRecordPayload.data.id, profileData);
@@ -603,7 +636,7 @@ WI.TimelineManager = class TimelineManager extends WI.Object
 
         case TimelineAgent.EventType.ProbeSample:
             // Pass the startTime as the endTime since this record type has no duration.
-            sourceCodeLocation = WI.probeManager.probeForIdentifier(recordPayload.data.probeId).breakpoint.sourceCodeLocation;
+            sourceCodeLocation = WI.debuggerManager.probeForIdentifier(recordPayload.data.probeId).breakpoint.sourceCodeLocation;
             return new WI.ScriptTimelineRecord(WI.ScriptTimelineRecord.EventType.ProbeSampleRecorded, startTime, startTime, callFrames, sourceCodeLocation, recordPayload.data.probeId);
 
         case TimelineAgent.EventType.TimerInstall:
@@ -708,7 +741,7 @@ WI.TimelineManager = class TimelineManager extends WI.Object
         this._activeRecording.addRecord(record);
 
         // Only worry about dead time after the load event.
-        if (WI.frameResourceManager.mainFrame && isNaN(WI.frameResourceManager.mainFrame.loadEventTimestamp))
+        if (WI.networkManager.mainFrame && isNaN(WI.networkManager.mainFrame.loadEventTimestamp))
             this._resetAutoRecordingDeadTimeTimeout();
     }
 
@@ -722,6 +755,8 @@ WI.TimelineManager = class TimelineManager extends WI.Object
 
         // COMPATIBILITY (iOS 9): Timeline.setAutoCaptureEnabled did not exist.
         // Perform auto capture in the frontend.
+        if (!window.TimelineAgent)
+            return false;
         if (!TimelineAgent.setAutoCaptureEnabled)
             return this._legacyAttemptStartAutoCapturingForFrame(frame);
 
@@ -820,19 +855,22 @@ WI.TimelineManager = class TimelineManager extends WI.Object
 
     _mainResourceDidChange(event)
     {
-        let frame = event.target;
-        if (frame.isMainFrame() && WI.settings.clearNetworkOnNavigate.value)
-            this._persistentNetworkTimeline.reset();
-
-        let mainResource = frame.mainResource;
-        let record = new WI.ResourceTimelineRecord(mainResource);
-        if (!isNaN(record.startTime))
-            this._persistentNetworkTimeline.addRecord(record);
-
         // Ignore resource events when there isn't a main frame yet. Those events are triggered by
         // loading the cached resources when the inspector opens, and they do not have timing information.
-        if (!WI.frameResourceManager.mainFrame)
+        if (!WI.networkManager.mainFrame)
             return;
+
+        let frame = event.target;
+
+        // When performing a page transition start a recording once the main resource changes.
+        // We start a legacy capture because the backend wasn't available to automatically
+        // initiate the capture, so the frontend must start the capture.
+        if (this._transitioningPageTarget) {
+            this._transitioningPageTarget = false;
+            if (this._autoCaptureOnPageLoad)
+                this._legacyAttemptStartAutoCapturingForFrame(frame);
+            return;
+        }
 
         if (this._attemptAutoCapturingForFrame(frame))
             return;
@@ -840,27 +878,25 @@ WI.TimelineManager = class TimelineManager extends WI.Object
         if (!this._isCapturing)
             return;
 
+        let mainResource = frame.mainResource;
         if (mainResource === this._mainResourceForAutoCapturing)
             return;
 
-        this._addRecord(record);
+        this._addRecord(new WI.ResourceTimelineRecord(mainResource));
     }
 
     _resourceWasAdded(event)
     {
-        var record = new WI.ResourceTimelineRecord(event.data.resource);
-        if (!isNaN(record.startTime))
-            this._persistentNetworkTimeline.addRecord(record);
 
         // Ignore resource events when there isn't a main frame yet. Those events are triggered by
         // loading the cached resources when the inspector opens, and they do not have timing information.
-        if (!WI.frameResourceManager.mainFrame)
+        if (!WI.networkManager.mainFrame)
             return;
 
         if (!this._isCapturing)
             return;
 
-        this._addRecord(record);
+        this._addRecord(new WI.ResourceTimelineRecord(event.data.resource));
     }
 
     _garbageCollected(event)
@@ -1061,37 +1097,63 @@ WI.TimelineManager = class TimelineManager extends WI.Object
         // FIXME: <https://webkit.org/b/152904> Web Inspector: Timeline UI should keep up with processing all incoming records
     }
 
-    _updateAutoCaptureInstruments()
+    _updateAutoCaptureInstruments(targets)
     {
-        if (!window.TimelineAgent)
-            return;
-
-        if (!TimelineAgent.setInstruments)
-            return;
-
-        let instrumentSet = new Set;
         let enabledTimelineTypes = this._enabledTimelineTypesSetting.value;
 
-        for (let timelineType of enabledTimelineTypes) {
-            switch (timelineType) {
-            case WI.TimelineRecord.Type.Script:
-                instrumentSet.add(TimelineAgent.Instrument.ScriptProfiler);
-                break;
-            case WI.TimelineRecord.Type.HeapAllocations:
-                instrumentSet.add(TimelineAgent.Instrument.Heap);
-                break;
-            case WI.TimelineRecord.Type.Network:
-            case WI.TimelineRecord.Type.RenderingFrame:
-            case WI.TimelineRecord.Type.Layout:
-                instrumentSet.add(TimelineAgent.Instrument.Timeline);
-                break;
-            case WI.TimelineRecord.Type.Memory:
-                instrumentSet.add(TimelineAgent.Instrument.Memory);
-                break;
-            }
-        }
+        for (let target of targets) {
+            if (!target.TimelineAgent)
+                continue;
+            if (!target.TimelineAgent.setInstruments)
+                continue;
 
-        TimelineAgent.setInstruments([...instrumentSet]);
+            let instrumentSet = new Set;
+            for (let timelineType of enabledTimelineTypes) {
+                switch (timelineType) {
+                case WI.TimelineRecord.Type.Script:
+                    instrumentSet.add(target.TimelineAgent.Instrument.ScriptProfiler);
+                    break;
+                case WI.TimelineRecord.Type.HeapAllocations:
+                    instrumentSet.add(target.TimelineAgent.Instrument.Heap);
+                    break;
+                case WI.TimelineRecord.Type.Network:
+                case WI.TimelineRecord.Type.RenderingFrame:
+                case WI.TimelineRecord.Type.Layout:
+                case WI.TimelineRecord.Type.Media:
+                    instrumentSet.add(target.TimelineAgent.Instrument.Timeline);
+                    break;
+                case WI.TimelineRecord.Type.Memory:
+                    instrumentSet.add(target.TimelineAgent.Instrument.Memory);
+                    break;
+                }
+            }
+
+            target.TimelineAgent.setInstruments(Array.from(instrumentSet));
+        }
+    }
+
+    _handleDOMNodeDidFireEvent(event)
+    {
+        console.assert(this._isCapturing);
+
+        let {domEvent} = event.data;
+
+        this._addRecord(new WI.MediaTimelineRecord(WI.MediaTimelineRecord.EventType.DOMEvent, domEvent.timestamp, {
+            domNode: event.target,
+            domEvent,
+        }));
+    }
+
+    _handleDOMNodeLowPowerChanged(event)
+    {
+        console.assert(this._isCapturing);
+
+        let {timestamp, isLowPower} = event.data;
+
+        this._addRecord(new WI.MediaTimelineRecord(WI.MediaTimelineRecord.EventType.LowPower, timestamp, {
+            domNode: event.target,
+            isLowPower,
+        }));
     }
 };
 

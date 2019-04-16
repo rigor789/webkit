@@ -25,7 +25,7 @@
  */
 
 #include "config.h"
-#include "RandomDevice.h"
+#include <wtf/RandomDevice.h>
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -45,7 +45,8 @@
 #if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
 #include <Security/SecRandom.h>
 #else
-#include "CommonCryptoSPI.h"
+#include <CommonCrypto/CommonCryptoError.h>
+#include <CommonCrypto/CommonRandom.h>
 #endif
 #endif // DARWIN
 

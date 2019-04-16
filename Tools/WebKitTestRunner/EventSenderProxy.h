@@ -24,8 +24,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef EventSenderProxy_h
-#define EventSenderProxy_h
+#pragma once
 
 #include <wtf/Deque.h>
 #include <wtf/HashMap.h>
@@ -141,11 +140,13 @@ private:
 #elif PLATFORM(WPE)
     struct wpe_view_backend* m_viewBackend;
     uint32_t m_buttonState;
+    uint32_t m_mouseButtonsCurrentlyDown { 0 };
     Vector<struct wpe_input_touch_event_raw> m_touchEvents;
     HashSet<unsigned, DefaultHash<unsigned>::Hash, WTF::UnsignedWithZeroKeyHashTraits<unsigned>> m_updatedTouchEvents;
+#elif PLATFORM(WIN)
+    uint32_t m_buttonState;
+    uint32_t m_mouseButtonsCurrentlyDown { 0 };
 #endif
 };
 
 } // namespace WTR
-
-#endif // EventSenderProxy_h

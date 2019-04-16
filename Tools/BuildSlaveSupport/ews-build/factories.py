@@ -21,16 +21,23 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from buildbot.process import factory
+from buildbot.process import factory, properties
+from buildbot.steps import trigger
 
 from steps import *
 
+Property = properties.Property
+
 
 class Factory(factory.BuildFactory):
-    def __init__(self, platform, configuration=None, architectures=None, buildOnly=True, additionalArguments=None, **kwargs):
+    def __init__(self, platform, configuration=None, architectures=None, buildOnly=True, additionalArguments=None, checkRelevance=False, **kwargs):
         factory.BuildFactory.__init__(self)
         self.addStep(ConfigureBuild(platform, configuration, architectures, buildOnly, additionalArguments))
+        if checkRelevance:
+            self.addStep(CheckPatchRelevance())
+        self.addStep(ValidatePatch())
         self.addStep(CheckOutSource())
+        self.addStep(ApplyPatch())
 
 
 class StyleFactory(Factory):
@@ -41,7 +48,7 @@ class StyleFactory(Factory):
 
 class BindingsFactory(Factory):
     def __init__(self, platform, configuration=None, architectures=None, additionalArguments=None, **kwargs):
-        Factory.__init__(self, platform, configuration, architectures, False, additionalArguments)
+        Factory.__init__(self, platform, configuration, architectures, False, additionalArguments, checkRelevance=True)
         self.addStep(RunBindingsTests())
 
 
@@ -53,23 +60,53 @@ class WebKitPerlFactory(Factory):
 
 class WebKitPyFactory(Factory):
     def __init__(self, platform, configuration=None, architectures=None, additionalArguments=None, **kwargs):
-        Factory.__init__(self, platform, configuration, architectures, False, additionalArguments)
+        Factory.__init__(self, platform, configuration, architectures, False, additionalArguments, checkRelevance=True)
         self.addStep(RunWebKitPyTests())
 
 
 class BuildFactory(Factory):
-    def __init__(self, platform, configuration=None, architectures=None, additionalArguments=None, **kwargs):
+    def __init__(self, platform, configuration=None, architectures=None, additionalArguments=None, triggers=None, **kwargs):
         Factory.__init__(self, platform, configuration, architectures, False, additionalArguments)
         self.addStep(KillOldProcesses())
         self.addStep(CleanBuild())
         self.addStep(CompileWebKit())
         self.addStep(UnApplyPatchIfRequired())
         self.addStep(CompileWebKitToT())
+        if triggers:
+            self.addStep(ArchiveBuiltProduct())
+            self.addStep(UploadBuiltProduct())
+            self.addStep(trigger.Trigger(schedulerNames=triggers, set_properties=self.propertiesToPassToTriggers() or {}))
+
+    def propertiesToPassToTriggers(self):
+        return {
+            "ewspatchid": Property("ewspatchid"),
+            "configuration": Property("configuration"),
+            "platform": Property("platform"),
+            "fullPlatform": Property("fullPlatform"),
+            "architecture": Property("architecture"),
+        }
+
+
+class TestFactory(Factory):
+    LayoutTestClass = None
+    APITestClass = None
+
+    def getProduct(self):
+        self.addStep(DownloadBuiltProduct())
+        self.addStep(ExtractBuiltProduct())
+
+    def __init__(self, platform, configuration=None, architectures=None, additionalArguments=None, **kwargs):
+        Factory.__init__(self, platform, configuration, architectures, False, additionalArguments)
+        self.getProduct()
+        if self.LayoutTestClass:
+            self.addStep(self.LayoutTestClass())
+        if self.APITestClass:
+            self.addStep(self.APITestClass())
 
 
 class JSCTestsFactory(Factory):
     def __init__(self, platform, configuration='release', architectures=None, additionalArguments=None, **kwargs):
-        Factory.__init__(self, platform, configuration, architectures, False, additionalArguments)
+        Factory.__init__(self, platform, configuration, architectures, False, additionalArguments, checkRelevance=True)
         self.addStep(CompileJSCOnly())
         self.addStep(UnApplyPatchIfRequired())
         self.addStep(CompileJSCOnlyToT())
@@ -79,24 +116,32 @@ class JSCTestsFactory(Factory):
         self.addStep(RunJavaScriptCoreTestsToT())
 
 
+class APITestsFactory(TestFactory):
+    APITestClass = RunAPITests
+
+
 class GTKFactory(Factory):
     pass
 
 
-class iOSFactory(BuildFactory):
+class iOSBuildFactory(BuildFactory):
     pass
 
 
-class iOSSimulatorFactory(BuildFactory):
+class iOSTestsFactory(TestFactory):
+    LayoutTestClass = RunWebKitTests
+
+
+class macOSBuildFactory(BuildFactory):
     pass
 
 
-class MacWK1Factory(BuildFactory):
-    pass
+class macOSWK1Factory(TestFactory):
+    LayoutTestClass = RunWebKit1Tests
 
 
-class MacWK2Factory(BuildFactory):
-    pass
+class macOSWK2Factory(TestFactory):
+    LayoutTestClass = RunWebKitTests
 
 
 class WindowsFactory(Factory):

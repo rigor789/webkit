@@ -31,7 +31,7 @@
  */
 
 #include "config.h"
-#include "Collator.h"
+#include <wtf/unicode/Collator.h>
 #include <wtf/text/StringView.h>
 
 #if UCONFIG_NO_COLLATION

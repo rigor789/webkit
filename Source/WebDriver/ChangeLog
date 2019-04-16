@@ -1,3 +1,256 @@
+2019-01-04  Carlos Garcia Campos  <cgarcia@igalia.com>
+
+        WebDriver: element click command should handle user prompts
+        https://bugs.webkit.org/show_bug.cgi?id=193139
+
+        Reviewed by Michael Catanzaro.
+
+        * Session.cpp:
+        (WebDriver::Session::elementClick): Handle user prompts.
+
+2019-01-04  Carlos Garcia Campos  <cgarcia@igalia.com>
+
+        [GLIB] WebDriver: browser close not correctly detected on session close in some cases
+        https://bugs.webkit.org/show_bug.cgi?id=193104
+
+        Reviewed by Michael Catanzaro.
+
+        This happens when the dbus connection is closed right before the response to SendMessageToBackend message is
+        going to be sent. In that case, g_dbus_connection_call async ready handler generates an error before the close
+        signal is emitted. Then, the close commands try to handle the error checking if SessionHost::isConnected(), but
+        it still returns true, because the browser is still alive, but the dbus connection has been closed.
+
+        * glib/SessionHostGlib.cpp:
+        (WebDriver::SessionHost::isConnected const): Session is connected when launching or when dbus connection hasn't
+        been closed.
+
+2018-12-21  Carlos Garcia Campos  <cgarcia@igalia.com>
+
+        [GLIB] WebDriver: dbusConnectionClosedCallback can be called after SessionHost has been deleted
+        https://bugs.webkit.org/show_bug.cgi?id=192976
+
+        Reviewed by Alejandro G. Castro.
+
+        Disconnect DBus connection signals using SessionHost as user data in SessionHost destructor.
+
+        * glib/SessionHostGlib.cpp:
+        (WebDriver::SessionHost::~SessionHost):
+
+2018-12-20  Chris Dumez  <cdumez@apple.com>
+
+        Use Optional::valueOr() instead of Optional::value_or()
+        https://bugs.webkit.org/show_bug.cgi?id=192933
+
+        Reviewed by Geoffrey Garen.
+
+        * Session.cpp:
+        (WebDriver::Session::handleUnexpectedAlertOpen):
+        (WebDriver::Session::computeElementLayout):
+        (WebDriver::Session::selectOptionElement):
+        (WebDriver::builtAutomationCookie):
+        (WebDriver::Session::takeScreenshot):
+        * WebDriverService.cpp:
+        (WebDriver::WebDriverService::sendResponse const):
+        (WebDriver::WebDriverService::createSession):
+
+2018-12-20  Carlos Garcia Campos  <cgarcia@igalia.com>
+
+        WebDriver: Session::findElements should handle user prompts
+        https://bugs.webkit.org/show_bug.cgi?id=192928
+
+        Reviewed by Michael Catanzaro.
+
+        All user prompt tests for commands using Session::findElements are failing because of this.
+
+        * Session.cpp:
+        (WebDriver::Session::findElements):
+
+2018-12-20  Carlos Garcia Campos  <cgarcia@igalia.com>
+
+        [GTK] WebDriver: tests in imported/w3c/webdriver/tests/element_clear/user_prompts.py are failing
+        https://bugs.webkit.org/show_bug.cgi?id=192927
+
+        Reviewed by Michael Catanzaro.
+
+        Handle user prompts in element clear command.
+
+        * Session.cpp:
+        (WebDriver::Session::elementClear):
+
+2018-12-19  Chris Dumez  <cdumez@apple.com>
+
+        wtf/Optional.h: move-constructor and move-assignment operator should disengage the value being moved from
+        https://bugs.webkit.org/show_bug.cgi?id=192728
+        <rdar://problem/46746779>
+
+        Reviewed by Geoff Garen.
+
+        * :
+
+2018-11-29  Tomas Popela  <tpopela@redhat.com>
+
+        [WebDriver] Fix clang warnings in Session.cpp
+        https://bugs.webkit.org/show_bug.cgi?id=192077
+
+        Reviewed by Carlos Garcia Campos.
+
+        * Session.cpp:
+        (WebDriver::Session::dismissAndNotifyAlert):
+        (WebDriver::Session::acceptAndNotifyAlert):
+        (WebDriver::Session::reportUnexpectedAlertOpen):
+        (WebDriver::Session::getCurrentURL):
+        (WebDriver::Session::getTitle):
+        (WebDriver::Session::getWindowHandle):
+        (WebDriver::Session::getWindowHandles):
+        (WebDriver::Session::getToplevelBrowsingContextRect):
+        (WebDriver::Session::computeElementLayout):
+        (WebDriver::Session::isElementSelected):
+        (WebDriver::Session::getElementText):
+        (WebDriver::Session::getElementTagName):
+        (WebDriver::Session::getElementRect):
+        (WebDriver::Session::isElementEnabled):
+        (WebDriver::Session::isElementDisplayed):
+        (WebDriver::Session::getElementAttribute):
+        (WebDriver::Session::getElementProperty):
+        (WebDriver::Session::getElementCSSValue):
+        (WebDriver::Session::selectOptionElement):
+        (WebDriver::Session::elementClick):
+        (WebDriver::Session::elementClear):
+        (WebDriver::Session::handleScriptResult):
+        (WebDriver::Session::performMouseInteraction):
+        (WebDriver::Session::performKeyboardInteractions):
+        (WebDriver::Session::getAllCookies):
+        (WebDriver::Session::getNamedCookie):
+        (WebDriver::Session::addCookie):
+        (WebDriver::Session::deleteCookie):
+        (WebDriver::Session::deleteAllCookies):
+        (WebDriver::Session::performActions):
+        (WebDriver::Session::releaseActions):
+        (WebDriver::Session::dismissAlert):
+        (WebDriver::Session::acceptAlert):
+        (WebDriver::Session::getAlertText):
+        (WebDriver::Session::sendAlertText):
+        (WebDriver::Session::takeScreenshot):
+        * WebDriverService.cpp:
+        (WebDriver::WebDriverService::deleteSession):
+
+2018-11-02  Zan Dobersek  <zdobersek@igalia.com>
+
+        [WPE] WebDriver: support validating and parsing the 'certificates' capability
+        https://bugs.webkit.org/show_bug.cgi?id=191014
+
+        Reviewed by Michael Catanzaro.
+
+        Adopt the same approach as in the GTK's WebDriverService implementation
+        for validating and parsing the 'certificates' WebDriver capability.
+
+        * wpe/WebDriverServiceWPE.cpp:
+        (WebDriver::WebDriverService::platformValidateCapability const):
+        (WebDriver::WebDriverService::platformParseCapabilities const):
+
+2018-08-13  Carlos Garcia Campos  <cgarcia@igalia.com>
+
+        WebDriver: do not try to set the caret when focusing non text element in send keys command
+        https://bugs.webkit.org/show_bug.cgi?id=188515
+
+        Reviewed by Brian Burg.
+
+        It causes a type error exception.
+
+        * Session.cpp:
+        (WebDriver::Session::elementSendKeys):
+
+2018-08-13  Carlos Garcia Campos  <cgarcia@igalia.com>
+
+        WebDriver: include all capabilities in the new session response
+        https://bugs.webkit.org/show_bug.cgi?id=188511
+
+        Reviewed by Brian Burg.
+
+        As expected by the tests, using the default values when the capability is not provided by the user.
+
+        * WebDriverService.cpp:
+        (WebDriver::WebDriverService::createSession):
+
+2018-08-13  Carlos Garcia Campos  <cgarcia@igalia.com>
+
+        WebDriver: several element_send_keys tests are failing since added
+        https://bugs.webkit.org/show_bug.cgi?id=181644
+
+        Reviewed by Michael Catanzaro.
+
+        This is because we are implementing an old version of the spec that received a "value" parameter to send keys
+        command, instead of the "text" one.
+
+        14.3 Element Send Keys
+        https://w3c.github.io/webdriver/#element-send-keys
+
+        * Session.cpp:
+        (WebDriver::Session::virtualKeyForKey): Receive a single character instead of a sequence.
+        (WebDriver::Session::elementSendKeys): It now receives a String and passes every character to virtualKeyForKey.
+        (WebDriver::Session::performActions): Pass first character of sequence to virtualKeyForKey.
+        * Session.h:
+        * WebDriverService.cpp:
+        (WebDriver::WebDriverService::elementSendKeys): Get text as a String, instead of value as an array.
+
+2018-08-12  Carlos Garcia Campos  <cgarcia@igalia.com>
+
+        WebDriver: do not handle prompts that appear while running scripts
+        https://bugs.webkit.org/show_bug.cgi?id=188468
+
+        Reviewed by Žan Doberšek.
+
+        This changed in the spec, we should just finish the script without handling the alert at all.
+        https://github.com/w3c/webdriver/commit/afb578090bc95718debeab6a6821da8d12b952c8
+
+        "If at any point during the algorithm a user prompt appears, abort all subsequent substeps of this algorithm,
+        and return success with data null."
+        https://w3c.github.io/webdriver/#dfn-execute-a-function-body
+
+        * Session.cpp:
+        (WebDriver::Session::executeScript):
+
+2018-08-10  Carlos Garcia Campos  <cgarcia@igalia.com>
+
+        [GTK][WPE] WebDriver: do not use default browser arguments when browser binary has been provided
+        https://bugs.webkit.org/show_bug.cgi?id=188465
+
+        Reviewed by Žan Doberšek.
+
+        We only want to use --automation when no options or no browser binary is provided, because we fallback to
+        MiniBrowser and we know it needs --automation flag.
+
+        * glib/SessionHostGlib.cpp:
+        (WebDriver::SessionHost::launchBrowser): Handle the case of browser arguments being std::nullopt.
+        * gtk/WebDriverServiceGtk.cpp:
+        (WebDriver::WebDriverService::platformParseCapabilities const): Initialize browser arguments to std:nullopt if
+        browser binary was provided.
+        * wpe/WebDriverServiceWPE.cpp:
+        (WebDriver::WebDriverService::platformParseCapabilities const): Ditto.
+
+2018-08-03  Ms2ger  <Ms2ger@igalia.com>
+
+        Fix invalid optional access in WebDriver Session::createTopLevelBrowsingContext.
+        https://bugs.webkit.org/show_bug.cgi?id=188304
+
+        Reviewed by Brian Burg.
+
+        * Session.cpp:
+        (WebDriver::Session::createTopLevelBrowsingContext): remove incorrect value() call.
+
+2018-07-26  Ross Kirsling  <ross.kirsling@sony.com>
+
+        String(View) should have a splitAllowingEmptyEntries function instead of a flag parameter
+        https://bugs.webkit.org/show_bug.cgi?id=187963
+
+        Reviewed by Alex Christensen.
+
+        * WebDriverService.cpp:
+        (WebDriver::WebDriverService::findCommand):
+        * glib/WebDriverServiceGLib.cpp:
+        (WebDriver::parseVersion):
+        Update split/splitAllowingEmptyEntries usage.
+
 2018-07-05  Carlos Garcia Campos  <cgarcia@igalia.com>
 
         [GTK][WPE] Add --host option to WebDriver process

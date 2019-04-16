@@ -377,7 +377,7 @@ function testCues(index, expected)
             var test = expected.tests[j];
             var propertyString = "cues[" + i + "]." + test.property;
             var propertyValue = eval(propertyString);
-            if (test["precision"])
+            if (test["precision"] && typeof(propertyValue) == 'number')
                 propertyValue = propertyValue.toFixed(test["precision"]);
             reportExpected(test.values[i] == propertyValue, propertyString, "==", test.values[i], propertyValue)
         }
@@ -486,4 +486,10 @@ function shouldReject(promise) {
 function handlePromise(promise) {
     function handle() { }
     return promise.then(handle, handle);
+}
+
+function checkMediaCapabilitiesInfo(info, expectedSupported, expectedSmooth, expectedPowerEfficient) {
+    logResult(info.supported == expectedSupported, "info.supported == " + expectedSupported);
+    logResult(info.smooth == expectedSmooth, "info.smooth == " + expectedSmooth);
+    logResult(info.powerEfficient == expectedPowerEfficient, "info.powerEfficient == " + expectedPowerEfficient);
 }

@@ -26,7 +26,7 @@
 #include "config.h"
 #include "SerializedCryptoKeyWrap.h"
 
-#if ENABLE(SUBTLE_CRYPTO)
+#if ENABLE(WEB_CRYPTO)
 
 #include "CommonCryptoUtilities.h"
 #include "LocalizedStrings.h"
@@ -38,7 +38,7 @@
 #include <wtf/ProcessPrivilege.h>
 #include <wtf/RetainPtr.h>
 
-#if PLATFORM(IOS)
+#if PLATFORM(IOS_FAMILY)
 #define USE_KEYCHAIN_ACCESS_CONTROL_LISTS 0
 #else
 #define USE_KEYCHAIN_ACCESS_CONTROL_LISTS 1
@@ -69,7 +69,7 @@ inline Vector<uint8_t> vectorFromNSData(NSData* data)
 
 static NSString* masterKeyAccountNameForCurrentApplication()
 {
-#if PLATFORM(IOS)
+#if PLATFORM(IOS_FAMILY)
     NSString *bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier];
 #else
     NSString *bundleIdentifier = [[NSRunningApplication currentApplication] bundleIdentifier];
@@ -85,14 +85,14 @@ static bool createAndStoreMasterKey(Vector<uint8_t>& masterKeyData)
 
     masterKeyData.resize(masterKeySizeInBytes);
 #if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
-    int rc = SecRandomCopyBytes(kSecRandomDefault, masterKeyData.size(), masterKeyData.data());
+    auto rc = SecRandomCopyBytes(kSecRandomDefault, masterKeyData.size(), masterKeyData.data());
 #else
-    int rc = CCRandomCopyBytes(kCCRandomDefault, masterKeyData.data(), masterKeyData.size());
+    auto rc = CCRandomGenerateBytes(masterKeyData.data(), masterKeyData.size());
 #endif
 
     RELEASE_ASSERT(rc == kCCSuccess);
 
-#if PLATFORM(IOS)
+#if PLATFORM(IOS_FAMILY)
     NSBundle *mainBundle = [NSBundle mainBundle];
     NSString *applicationName = [mainBundle objectForInfoDictionaryKey:@"CFBundleDisplayName"];
     if (!applicationName)
@@ -210,9 +210,9 @@ bool wrapSerializedCryptoKey(const Vector<uint8_t>& masterKey, const Vector<uint
 {
     Vector<uint8_t> kek(16);
 #if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
-    int rc = SecRandomCopyBytes(kSecRandomDefault, kek.size(), kek.data());
+    auto rc = SecRandomCopyBytes(kSecRandomDefault, kek.size(), kek.data());
 #else
-    int rc = CCRandomCopyBytes(kCCRandomDefault, kek.data(), kek.size());
+    auto rc = CCRandomGenerateBytes(kek.data(), kek.size());
 #endif
 
     RELEASE_ASSERT(rc == kCCSuccess);
@@ -230,15 +230,14 @@ bool wrapSerializedCryptoKey(const Vector<uint8_t>& masterKey, const Vector<uint
     size_t tagLength = 16;
     uint8_t tag[tagLength];
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     status = CCCryptorGCM(kCCEncrypt, kCCAlgorithmAES128, kek.data(), kek.size(),
         nullptr, 0, // iv
         nullptr, 0, // auth data
         key.data(), key.size(),
         encryptedKey.data(),
         tag, &tagLength);
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
 
     if (status != kCCSuccess)
         return false;
@@ -299,15 +298,14 @@ bool unwrapSerializedCryptoKey(const Vector<uint8_t>& masterKey, const Vector<ui
     uint8_t actualTag[tagLength];
 
     key.resize(encryptedKey.size());
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     status = CCCryptorGCM(kCCDecrypt, kCCAlgorithmAES128, kek.data(), kek.size(),
         nullptr, 0, // iv
         nullptr, 0, // auth data
         encryptedKey.data(), encryptedKey.size(),
         key.data(),
         actualTag, &tagLength);
-#pragma clang diagnostic pop
+    ALLOW_DEPRECATED_DECLARATIONS_END
 
     if (status != kCCSuccess)
         return false;
@@ -321,4 +319,4 @@ bool unwrapSerializedCryptoKey(const Vector<uint8_t>& masterKey, const Vector<ui
 
 }
 
-#endif // ENABLE(SUBTLE_CRYPTO)
+#endif // ENABLE(WEB_CRYPTO)

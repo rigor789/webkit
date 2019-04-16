@@ -26,7 +26,7 @@
 #include "config.h"
 #include "CryptoKey.h"
 
-#if ENABLE(SUBTLE_CRYPTO)
+#if ENABLE(WEB_CRYPTO)
 
 #include "CommonCryptoUtilities.h"
 #if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
@@ -39,9 +39,9 @@ Vector<uint8_t> CryptoKey::randomData(size_t size)
 {
     Vector<uint8_t> result(size);
 #if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
-    int rc = SecRandomCopyBytes(kSecRandomDefault, result.size(), result.data());
+    auto rc = SecRandomCopyBytes(kSecRandomDefault, result.size(), result.data());
 #else
-    int rc = CCRandomCopyBytes(kCCRandomDefault, result.data(), result.size());
+    auto rc = CCRandomGenerateBytes(result.data(), result.size());
 #endif
     RELEASE_ASSERT(rc == kCCSuccess);
     return result;
@@ -49,4 +49,4 @@ Vector<uint8_t> CryptoKey::randomData(size_t size)
 
 } // namespace WebCore
 
-#endif // ENABLE(SUBTLE_CRYPTO)
+#endif // ENABLE(WEB_CRYPTO)

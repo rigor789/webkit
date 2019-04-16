@@ -607,116 +607,208 @@ static void testJSCGlobalObject()
     g_assert_true(window2.get() == globalObject.get());
 }
 
+typedef struct {
+    const char* name;
+    bool wasDeleted;
+} Module;
+
+static JSCClassVTable moduleVTable = {
+    // get_property
+    [](JSCClass* jscClass, JSCContext* context, gpointer instance, const char* name) -> JSCValue* {
+        auto* checker = static_cast<LeakChecker*>(g_object_get_data(G_OBJECT(jscClass), "leak-checker"));
+        checker->watch(context);
+
+        if (g_strcmp0(name, "name"))
+            return nullptr;
+
+        auto* module = static_cast<Module*>(instance);
+        auto* returnValue = jsc_value_new_string(context, module->name);
+        checker->watch(returnValue);
+        return returnValue;
+    },
+    // set_property
+    nullptr,
+    // has_property
+    nullptr,
+    // delete_property
+    nullptr,
+    // enumerate_properties
+    nullptr,
+    // padding
+    nullptr, nullptr, nullptr, nullptr
+};
+
 static void testJSCEvaluateInObject()
+{
+    Module moduleObject = { "ModuleWithClass", false };
+    {
+        LeakChecker checker;
+        GRefPtr<JSCContext> context = adoptGRef(jsc_context_new());
+        checker.watch(context.get());
+        ExceptionHandler exceptionHandler(context.get());
+
+        GRefPtr<JSCValue> result = adoptGRef(jsc_context_evaluate(context.get(), "g = 54; function foo() { return 42; }", -1));
+        checker.watch(result.get());
+
+        GRefPtr<JSCValue> globalObject = adoptGRef(jsc_context_get_global_object(context.get()));
+        checker.watch(globalObject.get());
+
+        GRefPtr<JSCValue> rootFoo = adoptGRef(jsc_value_object_get_property(globalObject.get(), "foo"));
+        checker.watch(rootFoo.get());
+        g_assert(jsc_value_is_function(rootFoo.get()));
+        result = adoptGRef(jsc_value_function_call(rootFoo.get(), G_TYPE_NONE));
+        checker.watch(result.get());
+        g_assert_true(jsc_value_is_number(result.get()));
+        g_assert_cmpint(jsc_value_to_int32(result.get()), ==, 42);
+        GRefPtr<JSCValue> value = adoptGRef(jsc_context_evaluate(context.get(), "foo()", -1));
+        checker.watch(value.get());
+        g_assert_true(value.get() == result.get());
+
+        GRefPtr<JSCValue> module;
+        result = adoptGRef(jsc_context_evaluate_in_object(context.get(), "function bar() { return g; }", -1, nullptr, nullptr, nullptr, 1, &module.outPtr()));
+        checker.watch(result.get());
+        checker.watch(module.get());
+        g_assert_true(JSC_IS_VALUE(module.get()));
+        g_assert_true(jsc_value_is_object(module.get()));
+        GUniquePtr<char> valueString(jsc_value_to_string(module.get()));
+        g_assert_cmpstr(valueString.get(), ==, "[object GlobalObject]");
+        jsc_context_set_value(context.get(), "module", module.get());
+
+        GRefPtr<JSCValue> bar = adoptGRef(jsc_value_object_get_property(module.get(), "bar"));
+        checker.watch(bar.get());
+        g_assert_true(jsc_value_is_function(bar.get()));
+        result = adoptGRef(jsc_value_function_call(bar.get(), G_TYPE_NONE));
+        checker.watch(result.get());
+        g_assert_true(jsc_value_is_number(result.get()));
+        g_assert_cmpint(jsc_value_to_int32(result.get()), ==, 54);
+        value = adoptGRef(jsc_context_evaluate(context.get(), "module.bar()", -1));
+        checker.watch(value.get());
+        g_assert_true(value.get() == result.get());
+
+        bar = adoptGRef(jsc_context_get_value(context.get(), "bar"));
+        checker.watch(bar.get());
+        g_assert_true(jsc_value_is_undefined(bar.get()));
+
+        JSCClass* jscClass = jsc_context_register_class(context.get(), "Module", nullptr, &moduleVTable, [](gpointer module) {
+            static_cast<Module*>(module)->wasDeleted = true;
+        });
+        checker.watch(jscClass);
+        g_object_set_data(G_OBJECT(jscClass), "leak-checker", &checker);
+        GRefPtr<JSCValue> moduleWithClass;
+        result = adoptGRef(jsc_context_evaluate_in_object(context.get(), "function baz() { return foo(); }", -1, &moduleObject, jscClass, nullptr, 1, &moduleWithClass.outPtr()));
+        checker.watch(result.get());
+        checker.watch(moduleWithClass.get());
+        g_assert_true(JSC_IS_VALUE(moduleWithClass.get()));
+        g_assert_true(jsc_value_is_object(moduleWithClass.get()));
+        valueString.reset(jsc_value_to_string(moduleWithClass.get()));
+        g_assert_cmpstr(valueString.get(), ==, "[object Module]");
+        jsc_context_set_value(context.get(), "moduleWithClass", moduleWithClass.get());
+
+        GRefPtr<JSCValue> name = adoptGRef(jsc_value_object_get_property(moduleWithClass.get(), "name"));
+        checker.watch(name.get());
+        g_assert_true(jsc_value_is_string(name.get()));
+        valueString.reset(jsc_value_to_string(name.get()));
+        g_assert_cmpstr(valueString.get(), ==, "ModuleWithClass");
+
+        GRefPtr<JSCValue> baz = adoptGRef(jsc_value_object_get_property(moduleWithClass.get(), "baz"));
+        checker.watch(baz.get());
+        g_assert_true(jsc_value_is_function(baz.get()));
+        result = adoptGRef(jsc_value_function_call(baz.get(), G_TYPE_NONE));
+        checker.watch(result.get());
+        g_assert_true(jsc_value_is_number(result.get()));
+        g_assert_cmpint(jsc_value_to_int32(result.get()), ==, 42);
+        value = adoptGRef(jsc_context_evaluate(context.get(), "moduleWithClass.baz()", -1));
+        checker.watch(value.get());
+        g_assert_true(value.get() == result.get());
+
+        bar = adoptGRef(jsc_value_object_get_property(moduleWithClass.get(), "bar"));
+        checker.watch(bar.get());
+        g_assert_true(jsc_value_is_undefined(bar.get()));
+
+        baz = adoptGRef(jsc_value_object_get_property(module.get(), "baz"));
+        checker.watch(baz.get());
+        g_assert_true(jsc_value_is_undefined(baz.get()));
+
+        baz = adoptGRef(jsc_context_get_value(context.get(), "baz"));
+        checker.watch(baz.get());
+        g_assert_true(jsc_value_is_undefined(baz.get()));
+
+        GRefPtr<JSCValue> jsNamespace = adoptGRef(jsc_value_new_object(context.get(), nullptr, nullptr));
+        checker.watch(jsNamespace.get());
+        jsc_context_set_value(context.get(), "wk", jsNamespace.get());
+
+        GRefPtr<JSCValue> moduleInWk;
+        result = adoptGRef(jsc_context_evaluate_in_object(context.get(), "function bar() { return g; }", -1, nullptr, nullptr, nullptr, 1, &moduleInWk.outPtr()));
+        checker.watch(result.get());
+        checker.watch(moduleInWk.get());
+        g_assert_true(JSC_IS_VALUE(moduleInWk.get()));
+        g_assert_true(jsc_value_is_object(moduleInWk.get()));
+        jsc_value_object_set_property(jsNamespace.get(), "moduleInWk", moduleInWk.get());
+
+        bar = adoptGRef(jsc_value_object_get_property(moduleInWk.get(), "bar"));
+        checker.watch(bar.get());
+        g_assert_true(jsc_value_is_function(bar.get()));
+        result = adoptGRef(jsc_value_function_call(bar.get(), G_TYPE_NONE));
+        checker.watch(result.get());
+        g_assert_true(jsc_value_is_number(result.get()));
+        g_assert_cmpint(jsc_value_to_int32(result.get()), ==, 54);
+        value = adoptGRef(jsc_context_evaluate(context.get(), "wk.moduleInWk.bar()", -1));
+        checker.watch(value.get());
+        g_assert_true(value.get() == result.get());
+
+        moduleInWk = adoptGRef(jsc_context_get_value(context.get(), "moduleInWk"));
+        checker.watch(moduleInWk.get());
+        g_assert_true(jsc_value_is_undefined(moduleInWk.get()));
+    }
+    g_assert_true(moduleObject.wasDeleted);
+}
+
+static void testJSCCheckSyntax()
 {
     LeakChecker checker;
     GRefPtr<JSCContext> context = adoptGRef(jsc_context_new());
     checker.watch(context.get());
     ExceptionHandler exceptionHandler(context.get());
 
-    GRefPtr<JSCValue> result = adoptGRef(jsc_context_evaluate(context.get(), "g = 54; function foo() { return 42; }", -1));
-    checker.watch(result.get());
+    GRefPtr<JSCException> exception;
+    g_assert_cmpuint(jsc_context_check_syntax(context.get(), "f = 42", -1, JSC_CHECK_SYNTAX_MODE_SCRIPT, nullptr, 0, &exception.outPtr()), ==, JSC_CHECK_SYNTAX_RESULT_SUCCESS);
+    g_assert_null(exception.get());
 
+    g_assert_cmpuint(jsc_context_check_syntax(context.get(), "f = 42; b =", -1, JSC_CHECK_SYNTAX_MODE_SCRIPT, nullptr, 0, &exception.outPtr()), ==, JSC_CHECK_SYNTAX_RESULT_RECOVERABLE_ERROR);
+    checker.watch(exception.get());
+    g_assert_true(JSC_IS_EXCEPTION(exception.get()));
+    g_assert_cmpstr(jsc_exception_get_name(exception.get()), ==, "SyntaxError");
+    g_assert_cmpstr(jsc_exception_get_message(exception.get()), ==, "Unexpected end of script");
+    g_assert_cmpuint(jsc_exception_get_line_number(exception.get()), ==, 1);
+    g_assert_null(jsc_exception_get_source_uri(exception.get()));
+    g_assert_null(jsc_exception_get_backtrace_string(exception.get()));
     GRefPtr<JSCValue> globalObject = adoptGRef(jsc_context_get_global_object(context.get()));
     checker.watch(globalObject.get());
+    g_assert_false(jsc_value_object_has_property(globalObject.get(), "f"));
+    exception = nullptr;
 
-    GRefPtr<JSCValue> rootFoo = adoptGRef(jsc_value_object_get_property(globalObject.get(), "foo"));
-    checker.watch(rootFoo.get());
-    g_assert(jsc_value_is_function(rootFoo.get()));
-    result = adoptGRef(jsc_value_function_call(rootFoo.get(), G_TYPE_NONE));
-    checker.watch(result.get());
-    g_assert_true(jsc_value_is_number(result.get()));
-    g_assert_cmpint(jsc_value_to_int32(result.get()), ==, 42);
-    GRefPtr<JSCValue> value = adoptGRef(jsc_context_evaluate(context.get(), "foo()", -1));
+    // Only syntax errors are checked.
+    bool didThrow = false;
+    g_assert_throw_begin(exceptionHandler, didThrow);
+    GRefPtr<JSCValue> value = adoptGRef(jsc_context_evaluate(context.get(), "f", -1));
     checker.watch(value.get());
-    g_assert_true(value.get() == result.get());
+    g_assert_true(jsc_value_is_undefined(value.get()));
+    g_assert_did_throw(exceptionHandler, didThrow);
+    g_assert_cmpuint(jsc_context_check_syntax(context.get(), "f", -1, JSC_CHECK_SYNTAX_MODE_SCRIPT, nullptr, 0, &exception.outPtr()), ==, JSC_CHECK_SYNTAX_RESULT_SUCCESS);
+    g_assert_null(exception.get());
 
-    GRefPtr<JSCValue> module;
-    result = adoptGRef(jsc_context_evaluate_in_object(context.get(), "function bar() { return g; }", -1, nullptr, nullptr, 1, &module.outPtr()));
-    checker.watch(result.get());
-    checker.watch(module.get());
-    g_assert_true(JSC_IS_VALUE(module.get()));
-    g_assert_true(jsc_value_is_object(module.get()));
-    GUniquePtr<char> valueString(jsc_value_to_string(module.get()));
-    g_assert_cmpstr(valueString.get(), ==, "[object GlobalObject]");
-    jsc_context_set_value(context.get(), "module", module.get());
+    g_assert_cmpuint(jsc_context_check_syntax(context.get(), "f ==== 42", -1, JSC_CHECK_SYNTAX_MODE_SCRIPT, "file:///foo/script.js", 2, &exception.outPtr()), ==, JSC_CHECK_SYNTAX_RESULT_IRRECOVERABLE_ERROR);
+    checker.watch(exception.get());
+    g_assert_true(JSC_IS_EXCEPTION(exception.get()));
+    g_assert_cmpstr(jsc_exception_get_name(exception.get()), ==, "SyntaxError");
+    g_assert_cmpstr(jsc_exception_get_message(exception.get()), ==, "Unexpected token '='");
+    g_assert_cmpstr(jsc_exception_get_source_uri(exception.get()), ==, "file:///foo/script.js");
 
-    GRefPtr<JSCValue> bar = adoptGRef(jsc_value_object_get_property(module.get(), "bar"));
-    checker.watch(bar.get());
-    g_assert_true(jsc_value_is_function(bar.get()));
-    result = adoptGRef(jsc_value_function_call(bar.get(), G_TYPE_NONE));
-    checker.watch(result.get());
-    g_assert_true(jsc_value_is_number(result.get()));
-    g_assert_cmpint(jsc_value_to_int32(result.get()), ==, 54);
-    value = adoptGRef(jsc_context_evaluate(context.get(), "module.bar()", -1));
-    checker.watch(value.get());
-    g_assert_true(value.get() == result.get());
+    g_assert_cmpuint(jsc_context_check_syntax(context.get(), "f := 42", -1, JSC_CHECK_SYNTAX_MODE_SCRIPT, nullptr, 0, nullptr), ==, JSC_CHECK_SYNTAX_RESULT_IRRECOVERABLE_ERROR);
+    g_assert_cmpuint(jsc_context_check_syntax(context.get(), "f '42;", -1, JSC_CHECK_SYNTAX_MODE_SCRIPT, nullptr, 0, nullptr), ==, JSC_CHECK_SYNTAX_RESULT_UNTERMINATED_LITERAL_ERROR);
 
-    bar = adoptGRef(jsc_context_get_value(context.get(), "bar"));
-    checker.watch(bar.get());
-    g_assert_true(jsc_value_is_undefined(bar.get()));
-
-    JSCClass* jscClass = jsc_context_register_class(context.get(), "Module", nullptr, nullptr, nullptr);
-    checker.watch(jscClass);
-    GRefPtr<JSCValue> moduleWithClass;
-    result = adoptGRef(jsc_context_evaluate_in_object(context.get(), "function baz() { return foo(); }", -1, jscClass, nullptr, 1, &moduleWithClass.outPtr()));
-    checker.watch(result.get());
-    checker.watch(moduleWithClass.get());
-    g_assert_true(JSC_IS_VALUE(moduleWithClass.get()));
-    g_assert_true(jsc_value_is_object(moduleWithClass.get()));
-    valueString.reset(jsc_value_to_string(moduleWithClass.get()));
-    g_assert_cmpstr(valueString.get(), ==, "[object Module]");
-    jsc_context_set_value(context.get(), "moduleWithClass", moduleWithClass.get());
-
-    GRefPtr<JSCValue> baz = adoptGRef(jsc_value_object_get_property(moduleWithClass.get(), "baz"));
-    checker.watch(baz.get());
-    g_assert_true(jsc_value_is_function(baz.get()));
-    result = adoptGRef(jsc_value_function_call(baz.get(), G_TYPE_NONE));
-    checker.watch(result.get());
-    g_assert_true(jsc_value_is_number(result.get()));
-    g_assert_cmpint(jsc_value_to_int32(result.get()), ==, 42);
-    value = adoptGRef(jsc_context_evaluate(context.get(), "moduleWithClass.baz()", -1));
-    checker.watch(value.get());
-    g_assert_true(value.get() == result.get());
-
-    bar = adoptGRef(jsc_value_object_get_property(moduleWithClass.get(), "bar"));
-    checker.watch(bar.get());
-    g_assert_true(jsc_value_is_undefined(bar.get()));
-
-    baz = adoptGRef(jsc_value_object_get_property(module.get(), "baz"));
-    checker.watch(baz.get());
-    g_assert_true(jsc_value_is_undefined(baz.get()));
-
-    baz = adoptGRef(jsc_context_get_value(context.get(), "baz"));
-    checker.watch(baz.get());
-    g_assert_true(jsc_value_is_undefined(baz.get()));
-
-    GRefPtr<JSCValue> jsNamespace = adoptGRef(jsc_value_new_object(context.get(), nullptr, nullptr));
-    checker.watch(jsNamespace.get());
-    jsc_context_set_value(context.get(), "wk", jsNamespace.get());
-
-    GRefPtr<JSCValue> moduleInWk;
-    result = adoptGRef(jsc_context_evaluate_in_object(context.get(), "function bar() { return g; }", -1, nullptr, nullptr, 1, &moduleInWk.outPtr()));
-    checker.watch(result.get());
-    checker.watch(moduleInWk.get());
-    g_assert_true(JSC_IS_VALUE(moduleInWk.get()));
-    g_assert_true(jsc_value_is_object(moduleInWk.get()));
-    jsc_value_object_set_property(jsNamespace.get(), "moduleInWk", moduleInWk.get());
-
-    bar = adoptGRef(jsc_value_object_get_property(moduleInWk.get(), "bar"));
-    checker.watch(bar.get());
-    g_assert_true(jsc_value_is_function(bar.get()));
-    result = adoptGRef(jsc_value_function_call(bar.get(), G_TYPE_NONE));
-    checker.watch(result.get());
-    g_assert_true(jsc_value_is_number(result.get()));
-    g_assert_cmpint(jsc_value_to_int32(result.get()), ==, 54);
-    value = adoptGRef(jsc_context_evaluate(context.get(), "wk.moduleInWk.bar()", -1));
-    checker.watch(value.get());
-    g_assert_true(value.get() == result.get());
-
-    moduleInWk = adoptGRef(jsc_context_get_value(context.get(), "moduleInWk"));
-    checker.watch(moduleInWk.get());
-    g_assert_true(jsc_value_is_undefined(moduleInWk.get()));
+    g_assert_cmpuint(jsc_context_check_syntax(context.get(), "import foo from '/foo.js'", -1, JSC_CHECK_SYNTAX_MODE_SCRIPT, nullptr, 0, nullptr), ==, JSC_CHECK_SYNTAX_RESULT_IRRECOVERABLE_ERROR);
+    g_assert_cmpuint(jsc_context_check_syntax(context.get(), "import foo from '/foo.js'", -1, JSC_CHECK_SYNTAX_MODE_MODULE, nullptr, 0, nullptr), ==, JSC_CHECK_SYNTAX_RESULT_SUCCESS);
 }
 
 static int foo(int n)
@@ -2398,6 +2490,21 @@ static void createError()
     jsc_context_throw(jsc_context_get_current(), "API exception");
 }
 
+static void createCustomError()
+{
+    jsc_context_throw_with_name(jsc_context_get_current(), "CustomAPIError", "API custom exception");
+}
+
+static void createFormattedError(const char* details)
+{
+    jsc_context_throw_printf(jsc_context_get_current(), "API exception: %s", details);
+}
+
+static void createCustomFormattedError(const char* details)
+{
+    jsc_context_throw_with_name_printf(jsc_context_get_current(), "CustomFormattedAPIError", "API custom exception: %s", details);
+}
+
 static void testJSCExceptions()
 {
     {
@@ -2413,9 +2520,16 @@ static void testJSCExceptions()
         auto* exception = jsc_context_get_exception(context.get());
         g_assert_true(JSC_IS_EXCEPTION(exception));
         checker.watch(exception);
+        g_assert_cmpstr(jsc_exception_get_name(exception), ==, "ReferenceError");
         g_assert_cmpstr(jsc_exception_get_message(exception), ==, "Can't find variable: foo");
         g_assert_cmpuint(jsc_exception_get_line_number(exception), ==, 1);
-        g_assert_false(jsc_exception_get_source_uri(exception));
+        g_assert_cmpuint(jsc_exception_get_column_number(exception), ==, 4);
+        g_assert_null(jsc_exception_get_source_uri(exception));
+        g_assert_cmpstr(jsc_exception_get_backtrace_string(exception), ==, "global code");
+        GUniquePtr<char> errorString(jsc_exception_to_string(exception));
+        g_assert_cmpstr(errorString.get(), ==, "ReferenceError: Can't find variable: foo");
+        GUniquePtr<char> reportString(jsc_exception_report(exception));
+        g_assert_cmpstr(reportString.get(), ==, ":1:4 ReferenceError: Can't find variable: foo\n  global code\n");
 
         jsc_context_clear_exception(context.get());
         g_assert_null(jsc_context_get_exception(context.get()));
@@ -2435,6 +2549,7 @@ static void testJSCExceptions()
         g_assert_true(JSC_IS_EXCEPTION(exception));
         checker.watch(exception);
         g_assert_cmpuint(jsc_exception_get_line_number(exception), ==, 2);
+        g_assert_cmpuint(jsc_exception_get_column_number(exception), ==, 4);
 
         jsc_context_clear_exception(context.get());
         g_assert_null(jsc_context_get_exception(context.get()));
@@ -2446,15 +2561,34 @@ static void testJSCExceptions()
         checker.watch(context.get());
         g_assert_false(jsc_context_get_exception(context.get()));
 
-        GRefPtr<JSCValue> result = adoptGRef(jsc_context_evaluate_with_source_uri(context.get(), "foo", -1, "file:///foo/script.js", 3));
+        GRefPtr<JSCValue> result = adoptGRef(jsc_context_evaluate_with_source_uri(context.get(),
+            "let a = 25;\n"
+            "function foo() {\n"
+            "    let b = baz();\n"
+            "    return b;\n"
+            "}\n"
+            "function bar() {\n"
+            "    let c = 75;\n"
+            "    return foo();\n"
+            "}\n"
+            "let d = bar();\n",
+            -1, "file:///foo/script.js", 1));
         checker.watch(result.get());
 
         g_assert_true(jsc_value_is_undefined(result.get()));
         auto* exception = jsc_context_get_exception(context.get());
         g_assert_true(JSC_IS_EXCEPTION(exception));
         checker.watch(exception);
+        g_assert_cmpstr(jsc_exception_get_name(exception), ==, "ReferenceError");
+        g_assert_cmpstr(jsc_exception_get_message(exception), ==, "Can't find variable: baz");
         g_assert_cmpstr(jsc_exception_get_source_uri(exception), ==, "file:///foo/script.js");
         g_assert_cmpuint(jsc_exception_get_line_number(exception), ==, 3);
+        g_assert_cmpuint(jsc_exception_get_column_number(exception), ==, 16);
+        g_assert_cmpstr(jsc_exception_get_backtrace_string(exception), ==, "foo@file:///foo/script.js:3:16\nbar@file:///foo/script.js:8:15\nglobal code@file:///foo/script.js:10:12");
+        GUniquePtr<char> errorString(jsc_exception_to_string(exception));
+        g_assert_cmpstr(errorString.get(), ==, "ReferenceError: Can't find variable: baz");
+        GUniquePtr<char> reportString(jsc_exception_report(exception));
+        g_assert_cmpstr(reportString.get(), ==, "file:///foo/script.js:3:16 ReferenceError: Can't find variable: baz\n  foo@file:///foo/script.js:3:16\n  bar@file:///foo/script.js:8:15\n  global code@file:///foo/script.js:10:12\n");
 
         jsc_context_clear_exception(context.get());
         g_assert_null(jsc_context_get_exception(context.get()));
@@ -2483,9 +2617,133 @@ static void testJSCExceptions()
         auto* exception = jsc_context_get_exception(context.get());
         g_assert_true(JSC_IS_EXCEPTION(exception));
         checker.watch(exception);
+        g_assert_cmpstr(jsc_exception_get_name(exception), ==, "Error");
         g_assert_cmpstr(jsc_exception_get_message(exception), ==, "API exception");
         g_assert_cmpuint(jsc_exception_get_line_number(exception), ==, 1);
-        g_assert_false(jsc_exception_get_source_uri(exception));
+        g_assert_cmpuint(jsc_exception_get_column_number(exception), ==, 24);
+        g_assert_null(jsc_exception_get_source_uri(exception));
+        g_assert_cmpstr(jsc_exception_get_backtrace_string(exception), ==, "createError@[native code]\nglobal code");
+        GUniquePtr<char> errorString(jsc_exception_to_string(exception));
+        g_assert_cmpstr(errorString.get(), ==, "Error: API exception");
+        GUniquePtr<char> reportString(jsc_exception_report(exception));
+        g_assert_cmpstr(reportString.get(), ==, ":1:24 Error: API exception\n  createError@[native code]\n  global code\n");
+
+        jsc_context_clear_exception(context.get());
+        g_assert_null(jsc_context_get_exception(context.get()));
+    }
+
+    {
+        LeakChecker checker;
+        GRefPtr<JSCContext> context = adoptGRef(jsc_context_new());
+        checker.watch(context.get());
+        g_assert_false(jsc_context_get_exception(context.get()));
+
+        GRefPtr<JSCValue> function = adoptGRef(jsc_value_new_function(context.get(), "createCustomError", G_CALLBACK(createCustomError), nullptr, nullptr, G_TYPE_NONE, 0, G_TYPE_NONE));
+        checker.watch(function.get());
+        jsc_context_set_value(context.get(), "createCustomError", function.get());
+
+        GRefPtr<JSCValue> result = adoptGRef(jsc_context_evaluate(context.get(), "var result; createCustomError(); result = 'No exception';", -1));
+        checker.watch(result.get());
+        g_assert_true(jsc_value_is_undefined(result.get()));
+        auto* exception = jsc_context_get_exception(context.get());
+        g_assert_true(JSC_IS_EXCEPTION(exception));
+        checker.watch(exception);
+        g_assert_cmpstr(jsc_exception_get_name(exception), ==, "CustomAPIError");
+        g_assert_cmpstr(jsc_exception_get_message(exception), ==, "API custom exception");
+        g_assert_cmpuint(jsc_exception_get_line_number(exception), ==, 1);
+        g_assert_cmpuint(jsc_exception_get_column_number(exception), ==, 30);
+        g_assert_null(jsc_exception_get_source_uri(exception));
+        g_assert_cmpstr(jsc_exception_get_backtrace_string(exception), ==, "createCustomError@[native code]\nglobal code");
+        GUniquePtr<char> errorString(jsc_exception_to_string(exception));
+        g_assert_cmpstr(errorString.get(), ==, "CustomAPIError: API custom exception");
+        GUniquePtr<char> reportString(jsc_exception_report(exception));
+        g_assert_cmpstr(reportString.get(), ==, ":1:30 CustomAPIError: API custom exception\n  createCustomError@[native code]\n  global code\n");
+
+        jsc_context_clear_exception(context.get());
+        g_assert_null(jsc_context_get_exception(context.get()));
+    }
+
+    {
+        LeakChecker checker;
+        GRefPtr<JSCContext> context = adoptGRef(jsc_context_new());
+        checker.watch(context.get());
+        g_assert_false(jsc_context_get_exception(context.get()));
+
+        GRefPtr<JSCValue> function = adoptGRef(jsc_value_new_function(context.get(), "createFormattedError", G_CALLBACK(createFormattedError), nullptr, nullptr, G_TYPE_NONE, 1, G_TYPE_STRING));
+        checker.watch(function.get());
+        jsc_context_set_value(context.get(), "createFormattedError", function.get());
+
+        GRefPtr<JSCValue> result = adoptGRef(jsc_context_evaluate(context.get(), "var result; createFormattedError('error details'); result = 'No exception';", -1));
+        checker.watch(result.get());
+        g_assert_true(jsc_value_is_undefined(result.get()));
+        auto* exception = jsc_context_get_exception(context.get());
+        g_assert_true(JSC_IS_EXCEPTION(exception));
+        checker.watch(exception);
+        g_assert_cmpstr(jsc_exception_get_name(exception), ==, "Error");
+        g_assert_cmpstr(jsc_exception_get_message(exception), ==, "API exception: error details");
+        g_assert_cmpuint(jsc_exception_get_line_number(exception), ==, 1);
+        g_assert_cmpuint(jsc_exception_get_column_number(exception), ==, 33);
+        g_assert_null(jsc_exception_get_source_uri(exception));
+        g_assert_cmpstr(jsc_exception_get_backtrace_string(exception), ==, "createFormattedError@[native code]\nglobal code");
+        GUniquePtr<char> errorString(jsc_exception_to_string(exception));
+        g_assert_cmpstr(errorString.get(), ==, "Error: API exception: error details");
+        GUniquePtr<char> reportString(jsc_exception_report(exception));
+        g_assert_cmpstr(reportString.get(), ==, ":1:33 Error: API exception: error details\n  createFormattedError@[native code]\n  global code\n");
+
+        jsc_context_clear_exception(context.get());
+        g_assert_null(jsc_context_get_exception(context.get()));
+    }
+
+    {
+        LeakChecker checker;
+        GRefPtr<JSCContext> context = adoptGRef(jsc_context_new());
+        checker.watch(context.get());
+        g_assert_false(jsc_context_get_exception(context.get()));
+
+        GRefPtr<JSCValue> function = adoptGRef(jsc_value_new_function(context.get(), "createCustomFormattedError", G_CALLBACK(createCustomFormattedError), nullptr, nullptr, G_TYPE_NONE, 1, G_TYPE_STRING));
+        checker.watch(function.get());
+        jsc_context_set_value(context.get(), "createCustomFormattedError", function.get());
+
+        GRefPtr<JSCValue> result = adoptGRef(jsc_context_evaluate(context.get(), "var result; createCustomFormattedError('error details'); result = 'No exception';", -1));
+        checker.watch(result.get());
+        g_assert_true(jsc_value_is_undefined(result.get()));
+        auto* exception = jsc_context_get_exception(context.get());
+        g_assert_true(JSC_IS_EXCEPTION(exception));
+        checker.watch(exception);
+        g_assert_cmpstr(jsc_exception_get_name(exception), ==, "CustomFormattedAPIError");
+        g_assert_cmpstr(jsc_exception_get_message(exception), ==, "API custom exception: error details");
+        g_assert_cmpuint(jsc_exception_get_line_number(exception), ==, 1);
+        g_assert_cmpuint(jsc_exception_get_column_number(exception), ==, 39);
+        g_assert_null(jsc_exception_get_source_uri(exception));
+        g_assert_cmpstr(jsc_exception_get_backtrace_string(exception), ==, "createCustomFormattedError@[native code]\nglobal code");
+        GUniquePtr<char> errorString(jsc_exception_to_string(exception));
+        g_assert_cmpstr(errorString.get(), ==, "CustomFormattedAPIError: API custom exception: error details");
+        GUniquePtr<char> reportString(jsc_exception_report(exception));
+        g_assert_cmpstr(reportString.get(), ==, ":1:39 CustomFormattedAPIError: API custom exception: error details\n  createCustomFormattedError@[native code]\n  global code\n");
+
+        jsc_context_clear_exception(context.get());
+        g_assert_null(jsc_context_get_exception(context.get()));
+    }
+
+    {
+        LeakChecker checker;
+        GRefPtr<JSCContext> context = adoptGRef(jsc_context_new());
+        checker.watch(context.get());
+        g_assert_false(jsc_context_get_exception(context.get()));
+
+        GRefPtr<JSCValue> result = adoptGRef(jsc_context_evaluate_with_source_uri(context.get(), "foo", -1, "file:///foo/script.js", 3));
+        checker.watch(result.get());
+
+        g_assert_true(jsc_value_is_undefined(result.get()));
+        auto* exception = jsc_context_get_exception(context.get());
+        g_assert_true(JSC_IS_EXCEPTION(exception));
+        checker.watch(exception);
+        g_assert_cmpstr(jsc_exception_get_source_uri(exception), ==, "file:///foo/script.js");
+        g_assert_cmpuint(jsc_exception_get_line_number(exception), ==, 3);
+        g_assert_cmpuint(jsc_exception_get_column_number(exception), ==, 4);
+        g_assert_cmpstr(jsc_exception_get_backtrace_string(exception), ==, "global code@file:///foo/script.js:3:4");
+        GUniquePtr<char> reportString(jsc_exception_report(exception));
+        g_assert_cmpstr(reportString.get(), ==, "file:///foo/script.js:3:4 ReferenceError: Can't find variable: foo\n  global code@file:///foo/script.js:3:4\n");
 
         jsc_context_clear_exception(context.get());
         g_assert_null(jsc_context_get_exception(context.get()));
@@ -2520,9 +2778,13 @@ static void testJSCExceptions()
         g_assert_false(jsc_context_get_exception(context.get()));
         g_assert_true(JSC_IS_EXCEPTION(test.exception.get()));
         checker.watch(test.exception.get());
+        g_assert_cmpstr(jsc_exception_get_name(test.exception.get()), ==, "ReferenceError");
         g_assert_cmpstr(jsc_exception_get_message(test.exception.get()), ==, "Can't find variable: foo");
         g_assert_cmpuint(jsc_exception_get_line_number(test.exception.get()), ==, 1);
+        g_assert_cmpuint(jsc_exception_get_column_number(test.exception.get()), ==, 4);
         g_assert_false(jsc_exception_get_source_uri(test.exception.get()));
+        GUniquePtr<char> errorString(jsc_exception_to_string(test.exception.get()));
+        g_assert_cmpstr(errorString.get(), ==, "ReferenceError: Can't find variable: foo");
 
         g_assert_false(test.wasDeleted);
         jsc_context_pop_exception_handler(context.get());
@@ -2998,6 +3260,7 @@ int main(int argc, char** argv)
     g_test_add_func("/jsc/types", testJSCTypes);
     g_test_add_func("/jsc/global-object", testJSCGlobalObject);
     g_test_add_func("/jsc/evaluate-in-object", testJSCEvaluateInObject);
+    g_test_add_func("/jsc/check-syntax", testJSCCheckSyntax);
     g_test_add_func("/jsc/function", testJSCFunction);
     g_test_add_func("/jsc/object", testJSCObject);
     g_test_add_func("/jsc/class", testJSCClass);

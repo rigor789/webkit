@@ -27,6 +27,7 @@ from webkitpy.common.system.outputcapture import OutputCapture
 from webkitpy.common.version import Version
 from webkitpy.tool.mocktool import MockOptions
 from webkitpy.common.system.executive_mock import MockExecutive2, ScriptError
+from webkitpy.xcode.device_type import DeviceType
 
 
 class IOSSimulatorTest(ios_testcase.IOSTest):
@@ -52,15 +53,15 @@ class IOSSimulatorTest(ios_testcase.IOSTest):
         self.assertEqual('ios-simulator', self.make_port().operating_system())
 
     def test_32bit(self):
-        port = self.make_port(options=MockOptions(architecture='x86'))
+        port = self.make_port(options=MockOptions(architecture='i386'))
 
         def run_script(script, args=None, env=None):
             self.args = args
 
         port._run_script = run_script
-        self.assertEqual(port.architecture(), 'x86')
+        self.assertEqual(port.architecture(), 'i386')
         port._build_driver()
-        self.assertEqual(self.args, ['ARCHS=i386', '--sdk', 'iphonesimulator'])
+        self.assertEqual(self.args, ['--sdk', 'iphonesimulator', 'ARCHS=i386'])
 
     def test_64bit(self):
         # Apple Mac port is 64-bit by default
@@ -72,7 +73,7 @@ class IOSSimulatorTest(ios_testcase.IOSTest):
 
         port._run_script = run_script
         port._build_driver()
-        self.assertEqual(self.args, ['--sdk', 'iphonesimulator'])
+        self.assertEqual(self.args, ['--sdk', 'iphonesimulator', 'ARCHS=x86_64'])
 
     def test_sdk_name(self):
         port = self.make_port()
@@ -115,3 +116,7 @@ class IOSSimulatorTest(ios_testcase.IOSTest):
         self.assertEqual(search_path[5], '/mock-checkout/LayoutTests/platform/ios-wk2')
         self.assertEqual(search_path[6], '/mock-checkout/LayoutTests/platform/ios')
         self.assertEqual(search_path[7], '/mock-checkout/LayoutTests/platform/wk2')
+
+    def test_max_child_processes(self):
+        port = self.make_port()
+        self.assertEqual(port.max_child_processes(DeviceType.from_string('Apple Watch')), 0)

@@ -25,38 +25,17 @@
 
 #include "config.h"
 
-#if WK_API_ENABLED && PLATFORM(IOS)
+#if WK_API_ENABLED && PLATFORM(IOS_FAMILY)
 
+#import "ClassMethodSwizzler.h"
 #import "PlatformUtilities.h"
+#import "TestInputDelegate.h"
 #import "TestWKWebView.h"
 #import "UIKitSPI.h"
 #import <WebKit/WKWebViewPrivate.h>
-#import <WebKit/_WKFocusedElementInfo.h>
-#import <WebKit/_WKInputDelegate.h>
 #import <wtf/BlockPtr.h>
 
 typedef UIView <UITextInputTraits_Private_Proposed_SPI_34583628> AutofillInputView;
-
-@interface TestInputDelegate : NSObject <_WKInputDelegate>
-@property (nonatomic) BOOL inputSessionRequiresUserInteraction;
-@end
-
-@implementation TestInputDelegate
-
-- (instancetype)init
-{
-    if (self = [super init])
-        _inputSessionRequiresUserInteraction = NO;
-
-    return self;
-}
-
-- (BOOL)_webView:(WKWebView *)webView focusShouldStartInputSession:(id <_WKFocusedElementInfo>)info
-{
-    return !self.inputSessionRequiresUserInteraction || info.userInitiated;
-}
-
-@end
 
 @interface AutofillTestView : TestWKWebView
 @end
@@ -71,6 +50,9 @@ typedef UIView <UITextInputTraits_Private_Proposed_SPI_34583628> AutofillInputVi
         return nil;
 
     _testDelegate = adoptNS([[TestInputDelegate alloc] init]);
+    [_testDelegate setFocusStartsInputSessionPolicyHandler:[] (WKWebView *, id <_WKFocusedElementInfo>) -> _WKFocusStartsInputSessionPolicy {
+        return _WKFocusStartsInputSessionPolicyAllow;
+    }];
     self._inputDelegate = _testDelegate.get();
     return self;
 }
@@ -183,10 +165,19 @@ TEST(WKWebViewAutofillTests, AccountCreationPage)
     EXPECT_FALSE([webView textInputHasAutofillContext]);
 }
 
+static BOOL overrideIsInHardwareKeyboardMode()
+{
+    return NO;
+}
+
 TEST(WKWebViewAutofillTests, AutofillRequiresInputSession)
 {
+    ClassMethodSwizzler swizzler([UIKeyboard class], @selector(isInHardwareKeyboardMode), reinterpret_cast<IMP>(overrideIsInHardwareKeyboardMode));
+
     auto webView = adoptNS([[AutofillTestView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
-    [(TestInputDelegate *)[webView _inputDelegate] setInputSessionRequiresUserInteraction:YES];
+    [(TestInputDelegate *)[webView _inputDelegate] setFocusStartsInputSessionPolicyHandler:[] (WKWebView *, id <_WKFocusedElementInfo>) -> _WKFocusStartsInputSessionPolicy {
+        return _WKFocusStartsInputSessionPolicyAuto;
+    }];
     [webView synchronouslyLoadHTMLString:@"<input id='user' type='email'><input id='password' type='password'>"];
     [webView stringByEvaluatingJavaScript:@"user.focus()"];
 
@@ -195,4 +186,4 @@ TEST(WKWebViewAutofillTests, AutofillRequiresInputSession)
 
 } // namespace TestWebKitAPI
 
-#endif // WK_API_ENABLED && PLATFORM(IOS)
+#endif // WK_API_ENABLED && PLATFORM(IOS_FAMILY)

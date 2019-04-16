@@ -30,6 +30,10 @@
 #pragma once
 
 #include <Block.h>
+#include <utility>
+#include <wtf/Assertions.h>
+#include <wtf/StdLibExtras.h>
+
 #if CPU(ARM64E)
 #include <WebKitAdditions/BlockQualifiers.h>
 #else
@@ -37,9 +41,6 @@
 #define WTF_DISPOSE_FUNCTION_POINTER_QUALIFIER
 #define WTF_INVOKE_FUNCTION_POINTER_QUALIFIER
 #endif
-#include <utility>
-#import <objc/runtime.h>
-#include <wtf/Assertions.h>
 
 namespace WTF {
 
@@ -190,6 +191,24 @@ template<typename R, typename... Args>
 inline BlockPtr<R (Args...)> makeBlockPtr(R (^block)(Args...))
 {
     return BlockPtr<R (Args...)>(block);
+}
+
+template<typename F, typename Class, typename R, typename... Args>
+inline auto makeBlockPtr(F&& function, R (Class::*)(Args...) const)
+{
+    return BlockPtr<R (Args...)>::fromCallable(std::forward<F>(function));
+}
+
+template<typename F, typename Class, typename R, typename... Args>
+inline auto makeBlockPtr(F&& function, R (Class::*)(Args...))
+{
+    return BlockPtr<R (Args...)>::fromCallable(std::forward<F>(function));
+}
+
+template<typename F>
+inline auto makeBlockPtr(F&& function)
+{
+    return makeBlockPtr(std::forward<F>(function), &F::operator());
 }
 
 }

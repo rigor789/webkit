@@ -27,6 +27,7 @@
 #include "config.h"
 #include "WebInspectorProxy.h"
 
+#include "APINavigation.h"
 #include "APIProcessPoolConfiguration.h"
 #include "WebAutomationSession.h"
 #include "WebFrameProxy.h"
@@ -35,11 +36,14 @@
 #include "WebInspectorProxyMessages.h"
 #include "WebInspectorUIMessages.h"
 #include "WebPageGroup.h"
+#include "WebPageInspectorController.h"
 #include "WebPageProxy.h"
 #include "WebPreferences.h"
 #include "WebProcessPool.h"
 #include "WebProcessProxy.h"
+#include <WebCore/CertificateInfo.h>
 #include <WebCore/NotImplemented.h>
+#include <WebCore/TextEncoding.h>
 #include <wtf/SetForScope.h>
 
 #if ENABLE(INSPECTOR_SERVER)
@@ -50,9 +54,8 @@
 #include "WebInspectorProxyClient.h"
 #endif
 
-using namespace WebCore;
-
 namespace WebKit {
+using namespace WebCore;
 
 const unsigned WebInspectorProxy::minimumWindowWidth = 500;
 const unsigned WebInspectorProxy::minimumWindowHeight = 400;
@@ -90,13 +93,21 @@ void WebInspectorProxy::invalidate()
     if (m_remoteInspectionPageId)
         WebInspectorServer::singleton().unregisterPage(m_remoteInspectionPageId);
 #endif
-
-    m_inspectedPage->process().removeMessageReceiver(Messages::WebInspectorProxy::messageReceiverName(), m_inspectedPage->pageID());
+    if (m_inspectedPage)
+        m_inspectedPage->process().removeMessageReceiver(Messages::WebInspectorProxy::messageReceiverName(), m_inspectedPage->pageID());
 
     closeFrontendPageAndWindow();
     platformInvalidate();
 
     m_inspectedPage = nullptr;
+}
+
+void WebInspectorProxy::sendMessageToFrontend(const String& message)
+{
+    if (!m_inspectorPage)
+        return;
+
+    m_inspectorPage->process().send(Messages::WebInspectorUI::SendMessageToFrontend(message), m_inspectorPage->pageID());
 }
 
 // Public APIs
@@ -166,6 +177,43 @@ void WebInspectorProxy::closeForCrash()
     close();
 
     platformDidCloseForCrash();
+}
+
+void WebInspectorProxy::reopen()
+{
+    if (!m_inspectedPage)
+        return;
+
+    close();
+    show();
+}
+
+void WebInspectorProxy::reset()
+{
+    if (m_inspectedPage) {
+        m_inspectedPage->process().removeMessageReceiver(Messages::WebInspectorProxy::messageReceiverName(), m_inspectedPage->pageID());
+        m_inspectedPage = nullptr;
+    }
+}
+
+void WebInspectorProxy::updateForNewPageProcess(WebPageProxy* inspectedPage)
+{
+    ASSERT(!m_inspectedPage);
+    ASSERT(inspectedPage);
+
+    m_inspectedPage = inspectedPage;
+    m_inspectedPage->process().addMessageReceiver(Messages::WebInspectorProxy::messageReceiverName(), m_inspectedPage->pageID(), *this);
+
+    if (m_inspectorPage)
+        m_inspectorPage->process().send(Messages::WebInspectorUI::UpdateConnection(), m_inspectorPage->pageID());
+}
+
+void WebInspectorProxy::setFrontendConnection(IPC::Attachment connectionIdentifier)
+{
+    if (!m_inspectedPage)
+        return;
+
+    m_inspectedPage->process().send(Messages::WebInspector::SetFrontendConnection(connectionIdentifier), m_inspectedPage->pageID());
 }
 
 void WebInspectorProxy::showConsole()
@@ -345,7 +393,7 @@ void WebInspectorProxy::createFrontendPage()
     trackInspectorPage(m_inspectorPage);
 
     m_inspectorPage->process().addMessageReceiver(Messages::WebInspectorProxy::messageReceiverName(), m_inspectedPage->pageID(), *this);
-    m_inspectorPage->process().assumeReadAccessToBaseURL(WebInspectorProxy::inspectorBaseURL());
+    m_inspectorPage->process().assumeReadAccessToBaseURL(*m_inspectorPage, WebInspectorProxy::inspectorBaseURL());
 }
 
 #if ENABLE(INSPECTOR_SERVER)
@@ -372,10 +420,15 @@ void WebInspectorProxy::dispatchMessageFromRemoteFrontend(const String& message)
 #endif
 
 // Called by WebInspectorProxy messages
-void WebInspectorProxy::createInspectorPage(IPC::Attachment connectionIdentifier, bool canAttach, bool underTest)
+void WebInspectorProxy::openLocalInspectorFrontend(bool canAttach, bool underTest)
 {
     if (!m_inspectedPage)
         return;
+
+    if (m_inspectedPage->inspectorController().hasLocalFrontend()) {
+        show();
+        return;
+    }
 
     m_underTest = underTest;
     createFrontendPage();
@@ -384,9 +437,11 @@ void WebInspectorProxy::createInspectorPage(IPC::Attachment connectionIdentifier
     if (!m_inspectorPage)
         return;
 
-    m_connectionIdentifier = WTFMove(connectionIdentifier);
+    m_inspectorPage->process().send(Messages::WebInspectorUI::EstablishConnection(m_inspectedPage->pageID(), m_underTest, inspectionLevel()), m_inspectorPage->pageID());
 
-    m_inspectorPage->process().send(Messages::WebInspectorUI::EstablishConnection(m_connectionIdentifier, m_inspectedPage->pageID(), m_underTest, inspectionLevel()), m_inspectorPage->pageID());
+    ASSERT(!m_isActiveFrontend);
+    m_isActiveFrontend = true;
+    m_inspectedPage->inspectorController().connectFrontend(*this);
 
     if (!m_underTest) {
         m_canAttach = platformCanAttach(canAttach);
@@ -458,6 +513,11 @@ void WebInspectorProxy::closeFrontendPageAndWindow()
     m_inspectorPage->process().send(Messages::WebInspectorUI::SetIsVisible(m_isVisible), m_inspectorPage->pageID());
     m_inspectorPage->process().removeMessageReceiver(Messages::WebInspectorProxy::messageReceiverName(), m_inspectedPage->pageID());
 
+    if (m_isActiveFrontend) {
+        m_isActiveFrontend = false;
+        m_inspectedPage->inspectorController().disconnectFrontend(*this);
+    }
+
     if (m_isAttached)
         platformDetach();
 
@@ -468,13 +528,22 @@ void WebInspectorProxy::closeFrontendPageAndWindow()
     m_canAttach = false;
     m_underTest = false;
 
-    m_connectionIdentifier = IPC::Attachment();
-
     platformCloseFrontendPageAndWindow();
+}
+
+void WebInspectorProxy::sendMessageToBackend(const String& message)
+{
+    if (!m_inspectedPage)
+        return;
+
+    m_inspectedPage->inspectorController().dispatchMessageFromFrontend(message);
 }
 
 void WebInspectorProxy::frontendLoaded()
 {
+    if (!m_inspectedPage)
+        return;
+
     if (auto* automationSession = m_inspectedPage->process().processPool().automationSession())
         automationSession->inspectorFrontendLoaded(*m_inspectedPage);
 }
@@ -513,6 +582,11 @@ void WebInspectorProxy::attachAvailabilityChanged(bool available)
 void WebInspectorProxy::inspectedURLChanged(const String& urlString)
 {
     platformInspectedURLChanged(urlString);
+}
+
+void WebInspectorProxy::showCertificate(const CertificateInfo& certificateInfo)
+{
+    platformShowCertificate(certificateInfo);
 }
 
 void WebInspectorProxy::elementSelectionChanged(bool active)
@@ -557,7 +631,7 @@ void WebInspectorProxy::sendMessageToRemoteFrontend(const String& message)
 
 // Unsupported configurations can use the stubs provided here.
 
-#if PLATFORM(IOS) || (PLATFORM(MAC) && !WK_API_ENABLED)
+#if PLATFORM(IOS_FAMILY) || (PLATFORM(MAC) && !WK_API_ENABLED)
 
 WebPageProxy* WebInspectorProxy::platformCreateFrontendPage()
 {
@@ -607,6 +681,11 @@ bool WebInspectorProxy::platformIsFront()
 }
 
 void WebInspectorProxy::platformInspectedURLChanged(const String&)
+{
+    notImplemented();
+}
+
+void WebInspectorProxy::platformShowCertificate(const CertificateInfo&)
 {
     notImplemented();
 }
@@ -681,6 +760,6 @@ void WebInspectorProxy::platformAttachAvailabilityChanged(bool)
     notImplemented();
 }
 
-#endif // PLATFORM(IOS) || (PLATFORM(MAC) && !WK_API_ENABLED)
+#endif // PLATFORM(IOS_FAMILY) || (PLATFORM(MAC) && !WK_API_ENABLED)
 
 } // namespace WebKit

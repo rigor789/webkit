@@ -15,12 +15,23 @@
         return navigator.mediaDevices.enumerateDevices()
             .then((devices) => {
                 devices.forEach((device) => {
+                    assert_true(device.deviceId.length == 0 , "device.deviceId is empty before permission to capture");
+                });
+            });
+    }, "Device IDs should be empty initially");
+    
+    promise_test((test) => {
+        return navigator.mediaDevices.getUserMedia({ audio:true, video:true })
+            .then((stream) => {
+                return navigator.mediaDevices.enumerateDevices();
+            }).then(devices => {
+                devices.forEach((device) => {
                     let kind = device.kind == "audioinput" ? "audio" : "video";
                     deviceIds.push({ type: kind, id : device.deviceId});
                 });
             });
     }, "Collect device IDs");
-    
+
     let constraints = { };
 
     promise_test((test) => {
@@ -58,6 +69,15 @@
             })
 
     }, "Pass device IDs as optional constraints");
+
+    promise_test(async (test) => {
+        await navigator.mediaDevices.getUserMedia({ audio: {deviceId: {exact: ""}}});
+        await navigator.mediaDevices.getUserMedia({ video: {deviceId: {exact: [""]}}});
+        await navigator.mediaDevices.getUserMedia({ audio: {deviceId: {exact: undefined}}});
+
+        await navigator.mediaDevices.getUserMedia({ audio: {deviceId: {exact: null}}}).then(assert_unreached, () => { });
+        await navigator.mediaDevices.getUserMedia({ audio: {deviceId: {exact: "test"}}}).then(assert_unreached, () => { });
+    }, "Exact device IDs with special values: empty string, null, undefined");
 
     </script>
 </head>

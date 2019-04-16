@@ -41,15 +41,15 @@ public:
     VM& vm() const { return m_vm; }
     JSGlobalObject* globalObject() const { return m_globalObject; }
 
-    Vector<std::function<void()>>& didPopListeners() {
+    Vector<Function<void ()>>& didPopListeners() {
       return this->m_didPopListeners;
     }
-    void addDidPopListener(std::function<void ()>);
+    void addDidPopListener(Function<void ()>&&);
 
 private:
     VM& m_vm;
     JSGlobalObject* m_globalObject;
-    Vector<std::function<void ()>> m_didPopListeners;
+    Vector<Function<void ()>> m_didPopListeners;
 };
 
 } // namespace JSC

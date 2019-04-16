@@ -45,9 +45,9 @@
 #endif
 namespace WebCore {
 
-Crypto::Crypto(ScriptExecutionContext& context)
-    : ContextDestructionObserver(&context)
-#if ENABLE(SUBTLE_CRYPTO)
+Crypto::Crypto(ScriptExecutionContext* context)
+    : ContextDestructionObserver(context)
+#if ENABLE(WEB_CRYPTO)
     , m_subtle(SubtleCrypto::create(context))
 #endif
 {
@@ -64,10 +64,10 @@ ExceptionOr<void> Crypto::getRandomValues(ArrayBufferView& array)
 #if OS(DARWIN)
     
 #if !USE(APPLE_INTERNAL_SDK)
-    int rc = SecRandomCopyBytes(kSecRandomDefault, array.byteLength(), reinterpret_cast<uint8_t*>(array.baseAddress()));
+    auto rc = SecRandomCopyBytes(kSecRandomDefault, array.byteLength(), reinterpret_cast<uint8_t*>(array.baseAddress()));
     RELEASE_ASSERT(rc == errSecSuccess);
 #else
-    int rc = CCRandomCopyBytes(kCCRandomDefault, array.baseAddress(), array.byteLength());
+    auto rc = CCRandomGenerateBytes(array.baseAddress(), array.byteLength());
     RELEASE_ASSERT(rc == kCCSuccess);
 #endif
     
@@ -77,7 +77,7 @@ ExceptionOr<void> Crypto::getRandomValues(ArrayBufferView& array)
     return { };
 }
 
-#if ENABLE(SUBTLE_CRYPTO)
+#if ENABLE(WEB_CRYPTO)
 
 SubtleCrypto& Crypto::subtle()
 {

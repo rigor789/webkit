@@ -1,0 +1,11 @@
+Testing that changes to "style" attribute made from page's JavaScript are ignored when there's a pending change made via Web Inspector.
+
+
+== Running test suite: ModifyCSSProperty
+-- Running test case: ModifyCSSPropertyRace.ChangeInlineStyle
+PASS: Height should be greater than 42px.
+PASS: Height should be greater than 42px.
+PASS: Height should be 10px.
+PASS: CSSStyleDeclaration text should update.
+PASS: Height should be greater or equal 10px.
+

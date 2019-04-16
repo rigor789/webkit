@@ -42,43 +42,43 @@ class JSObject;
 class ThrowScope : public ExceptionScope {
 public:
     ALWAYS_INLINE ThrowScope(VM& vm, ExceptionEventLocation location)
-		: ExceptionScope(vm, location)
-	{
+        : ExceptionScope(vm, location)
+    {
 #ifndef NDEBUG
-		m_vm.verifyExceptionCheckNeedIsSatisfied(m_recursionDepth, m_location);
+        m_vm.verifyExceptionCheckNeedIsSatisfied(m_recursionDepth, m_location);
 #endif // NDEBUG
-	}
+    }
 
 #ifndef NDEBUG
-	ALWAYS_INLINE ~ThrowScope()
-	{
-		RELEASE_ASSERT(m_vm.m_topExceptionScope);
+    ALWAYS_INLINE ~ThrowScope()
+    {
+        RELEASE_ASSERT(m_vm.m_topExceptionScope);
 
-		if (!m_isReleased)
-			m_vm.verifyExceptionCheckNeedIsSatisfied(m_recursionDepth, m_location);
-		else {
-			// If we released the scope, that means we're letting our callers do the
-			// exception check. However, because our caller may be a LLInt or JIT
-			// function (which always checks for exceptions but won't clear the
-			// m_needExceptionCheck bit), we should clear m_needExceptionCheck here
-			// and let code below decide if we need to simulate a re-throw.
-			m_vm.m_needExceptionCheck = false;
-		}
+        if (!m_isReleased)
+            m_vm.verifyExceptionCheckNeedIsSatisfied(m_recursionDepth, m_location);
+        else {
+            // If we released the scope, that means we're letting our callers do the
+            // exception check. However, because our caller may be a LLInt or JIT
+            // function (which always checks for exceptions but won't clear the
+            // m_needExceptionCheck bit), we should clear m_needExceptionCheck here
+            // and let code below decide if we need to simulate a re-throw.
+            m_vm.m_needExceptionCheck = false;
+        }
 
-		bool willBeHandleByLLIntOrJIT = false;
-		void* previousScope = m_previousScope;
-		void* topEntryFrame = m_vm.topEntryFrame;
+        bool willBeHandleByLLIntOrJIT = false;
+        void* previousScopeStackPosition = m_previousScope ? m_previousScope->stackPosition() : nullptr;
+        void* topEntryFrame = m_vm.topEntryFrame;
 
-		// If the topEntryFrame was pushed on the stack after the previousScope was instantiated,
-		// then this throwScope will be returning to LLINT or JIT code that always do an exception
-		// check. In that case, skip the simulated throw because the LLInt and JIT will be
-		// checking for the exception their own way instead of calling ThrowScope::exception().
-		if (topEntryFrame && previousScope > topEntryFrame)
-			willBeHandleByLLIntOrJIT = true;
+        // If the topEntryFrame was pushed on the stack after the previousScope was instantiated,
+        // then this throwScope will be returning to LLINT or JIT code that always do an exception
+        // check. In that case, skip the simulated throw because the LLInt and JIT will be
+        // checking for the exception their own way instead of calling ThrowScope::exception().
+        if (topEntryFrame && previousScopeStackPosition > topEntryFrame)
+            willBeHandleByLLIntOrJIT = true;
 
-		if (!willBeHandleByLLIntOrJIT)
-			simulateThrow();
-	}
+        if (!willBeHandleByLLIntOrJIT)
+            simulateThrow();
+    }
 #endif // NDEBUG
 
     ThrowScope(const ThrowScope&) = delete;
@@ -107,7 +107,7 @@ private:
 };
 
 #define DECLARE_THROW_SCOPE(vm__) \
-    JSC::ThrowScope((vm__), JSC::ExceptionEventLocation(__FUNCTION__, __FILE__, __LINE__))
+    JSC::ThrowScope((vm__), JSC::ExceptionEventLocation(EXCEPTION_SCOPE_POSITION_FOR_ASAN, __FUNCTION__, __FILE__, __LINE__))
 
 #define throwScopePrintIfNeedCheck(scope__) \
     scope__.printIfNeedCheck(__FUNCTION__, __FILE__, __LINE__)

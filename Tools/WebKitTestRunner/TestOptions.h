@@ -23,10 +23,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TestOptions_h
-#define TestOptions_h
+#pragma once
 
+#include <wtf/HashMap.h>
 #include <wtf/Vector.h>
+#include <wtf/text/StringHash.h>
 #include <wtf/text/WTFString.h>
 
 namespace WTR {
@@ -50,22 +51,29 @@ struct TestOptions {
     bool enableModernMediaControls { true };
     bool enablePointerLock { false };
     bool enableWebAuthentication { true };
+    bool enableWebAuthenticationLocalAuthenticator { true };
     bool enableIsSecureContextAttribute { true };
     bool enableInspectorAdditions { false };
     bool shouldShowTouches { false };
     bool dumpJSConsoleLogInStdErr { false };
     bool allowCrossOriginSubresourcesToAskForCredentials { false };
-    bool enableWebAnimationsCSSIntegration { false };
-    bool enableProcessSwapOnNavigation { false };
+    bool enableProcessSwapOnNavigation { true };
     bool enableProcessSwapOnWindowOpen { false };
     bool enableColorFilter { false };
     bool punchOutWhiteBackgroundsInDarkMode { false };
     bool runSingly { false };
+    bool checkForWorldLeaks { false };
+    bool shouldIgnoreMetaViewport { false };
+    bool shouldShowSpellCheckingDots { false };
+    bool enableEditableImages { false };
+    bool editable { false };
 
     float deviceScaleFactor { 1 };
     Vector<String> overrideLanguages;
     std::string applicationManifest;
     std::string jscOptions;
+    HashMap<String, bool> experimentalFeatures;
+    HashMap<String, bool> internalDebugFeatures;
 
     TestOptions(const std::string& pathOrURL);
 
@@ -87,18 +95,29 @@ struct TestOptions {
             || enableModernMediaControls != options.enableModernMediaControls
             || enablePointerLock != options.enablePointerLock
             || enableWebAuthentication != options.enableWebAuthentication
+            || enableWebAuthenticationLocalAuthenticator != options.enableWebAuthenticationLocalAuthenticator
             || enableIsSecureContextAttribute != options.enableIsSecureContextAttribute
             || enableInspectorAdditions != options.enableInspectorAdditions
             || dumpJSConsoleLogInStdErr != options.dumpJSConsoleLogInStdErr
             || applicationManifest != options.applicationManifest
             || allowCrossOriginSubresourcesToAskForCredentials != options.allowCrossOriginSubresourcesToAskForCredentials
-            || enableWebAnimationsCSSIntegration != options.enableWebAnimationsCSSIntegration
             || enableProcessSwapOnNavigation != options.enableProcessSwapOnNavigation
             || enableProcessSwapOnWindowOpen != options.enableProcessSwapOnWindowOpen
             || enableColorFilter != options.enableColorFilter
             || punchOutWhiteBackgroundsInDarkMode != options.punchOutWhiteBackgroundsInDarkMode
             || jscOptions != options.jscOptions
-            || runSingly != options.runSingly)
+            || runSingly != options.runSingly
+            || checkForWorldLeaks != options.checkForWorldLeaks
+            || shouldShowSpellCheckingDots != options.shouldShowSpellCheckingDots
+            || shouldIgnoreMetaViewport != options.shouldIgnoreMetaViewport
+            || enableEditableImages != options.enableEditableImages
+            || editable != options.editable)
+            return false;
+
+        if (experimentalFeatures != options.experimentalFeatures)
+            return false;
+
+        if (internalDebugFeatures != options.internalDebugFeatures)
             return false;
 
         return true;
@@ -111,5 +130,3 @@ struct TestOptions {
 };
 
 }
-
-#endif // TestOptions_h

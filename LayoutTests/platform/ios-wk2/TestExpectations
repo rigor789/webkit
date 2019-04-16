@@ -13,6 +13,10 @@ fast/viewport/ios [ Pass ]
 fast/visual-viewport/ios/ [ Pass ]
 scrollingcoordinator/ios [ Pass ]
 tiled-drawing/ios [ Pass ]
+fast/web-share [ Pass ]
+editing/find [ Pass ]
+editing/input/ios [ Pass ]
+
 editing/selection/character-granularity-rect.html [ Failure ]
 
 accessibility/smart-invert.html [ Pass ]
@@ -39,31 +43,18 @@ webkit.org/b/175611 imported/w3c/web-platform-tests/payment-request/allowpayment
 webkit.org/b/175611 imported/w3c/web-platform-tests/payment-request/allowpaymentrequest/setting-allowpaymentrequest.https.sub.html [ Skip ]
 
 # skip in favor of tests in http/tests/paymentrequest
+imported/w3c/web-platform-tests/payment-request/payment-request-abort-method.https.html [ WontFix ]
 imported/w3c/web-platform-tests/payment-request/payment-request-show-method.https.html [ WontFix ]
 imported/w3c/web-platform-tests/payment-request/rejects_if_not_active.https.html [ WontFix ]
-
- # skip manual payment-request tests
-imported/w3c/web-platform-tests/payment-request/algorithms-manual.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/change-shipping-option-manual.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/payment-response/complete-method-manual.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/payment-response/methodName-attribute-manual.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/payment-response/payerEmail-attribute-manual.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/payment-response/payerName-attribute-manual.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/payment-response/payerPhone-attribute-manual.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/payment-response/requestId-attribute-manual.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/payment-response/shippingAddress-attribute-manual.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/payment-response/shippingOption-attribute-manual.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/PaymentAddress/attributes-and-toJSON-method-manual.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/shipping-address-changed-manual.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/updateWith-method-pmi-handling-manual.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/user-abort-algorithm-manual.https.html [ Skip ]
-imported/w3c/web-platform-tests/payment-request/user-accepts-payment-request-algo-manual.https.html [ Skip ]
 
 webkit.org/b/170713 imported/w3c/web-platform-tests/css/css-ui/text-overflow-022.html [ ImageOnlyFailure ]
 
 http/tests/security/contentSecurityPolicy/manifest-src-allowed.html [ Pass ]
 http/tests/security/contentSecurityPolicy/manifest-src-blocked.html [ Pass ]
 applicationmanifest/ [ Pass ]
+
+# Skipped because of <rdar://problem/45388584>.
+http/tests/webAPIStatistics [ Skip ]
 
 #//////////////////////////////////////////////////////////////////////////////////////////
 # End platform-specific directories.
@@ -117,7 +108,6 @@ svg/animations/animate-color-fill-currentColor.html
 svg/animations/animate-color-fill-from-by.html
 svg/animations/animate-color-rgba-calcMode-discrete.html
 svg/animations/animate-color-transparent.html
-svg/animations/animate-css-xml-attributeType.html
 svg/animations/animate-currentColor.html
 svg/animations/animate-dynamic-update-attributeName.html
 svg/animations/animate-end-attribute.html
@@ -279,7 +269,6 @@ imported/mozilla/svg/text/text-shadow.svg [ ImageOnlyFailure ]
 svg/animations/mozilla/animateMotion-mpath-targetChange-1.svg [ ImageOnlyFailure ]
 svg/custom/focus-event-handling-keyboard.xhtml [ Failure ]
 svg/custom/focus-event-handling.xhtml [ Failure ]
-svg/custom/invisible-text-after-scrolling.xhtml [ Failure ]
 svg/custom/non-scaling-stroke-update.svg [ ImageOnlyFailure ]
 svg/custom/svg-fonts-fallback.xhtml [ Failure ]
 svg/filters/feTurbulence_bad_seeds.html [ ImageOnlyFailure ]
@@ -414,7 +403,6 @@ fast/selectors/querySelector-window-inactive.html [ Failure ]
 fast/spatial-navigation/snav-only-clipped-overflow-content.html [ Failure ]
 fast/spatial-navigation/snav-z-index.html [ Failure ]
 fast/text/offsetForPosition-cluster-at-zero.html [ Failure ]
-fast/dom/adopt-node-crash-2.html [ Failure ]
 fast/dom/Window/window-focus-self.html [ Failure ]
 fast/dom/Window/window-lookup-precedence.html [ Failure ]
 fast/dom/Window/window-onFocus.html [ Failure ]
@@ -460,9 +448,6 @@ fast/ruby/rubyDOM-insert-text3.html [ Failure ]
 fast/ruby/rubyDOM-remove-rt1.html [ Failure ]
 fast/ruby/rubyDOM-remove-rt2.html [ Failure ]
 fast/ruby/rubyDOM-remove-text1.html [ Failure ]
-fast/table/border-collapsing/004-vertical.html [ Failure ]
-fast/table/border-collapsing/004.html [ Failure ]
-fast/table/rowindex.html [ Failure ]
 fast/text/basic/generic-family-reset.html [ Failure ]
 fast/text/international/002.html [ Failure ]
 fast/text/international/003.html [ Failure ]
@@ -588,11 +573,6 @@ fast/loader/local-CSS-from-local.html [ Failure ]
 fast/loader/local-JavaScript-from-local.html [ Failure ]
 fast/loader/local-image-from-local.html [ Failure ]
 fast/dom/frame-loading-via-document-write.html # Timeout
-
-# HTML table tests that fail:
-tables/mozilla/bugs/bug149275-1.html [ Failure ]
-tables/mozilla/bugs/bug30559.html [ Failure ]
-tables/mozilla_expected_failures/bugs/bug8499.html [ Failure ]
 
 # Loader tests that fail:
 loader/go-back-to-different-window-size.html [ Failure ]
@@ -757,44 +737,6 @@ platform/ios/ios/fast/coordinates/touch-event.html
 # Flaky tests:
 fast/dom/inline-event-attributes-release.html [ Failure Pass ]
 fast/parser/parser-yield-timing.html [ Failure Pass ]
-fast/table/024.html [ Failure ImageOnlyFailure Pass ]
-fast/table/031.html [ Failure ImageOnlyFailure Pass ]
-fast/table/032.html [ Failure ImageOnlyFailure Pass ]
-fast/table/align-right-within-left-aligned-div.html [ Failure ImageOnlyFailure Pass ]
-fast/table/auto-100-percent-width.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/bug14274.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/cached-cell-append.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/cached-cell-remove.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/cached-change-cell-border-color.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/cached-change-cell-border-width.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/cached-change-cell-sl-border-color.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/cached-change-col-border-color.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/cached-change-col-border-width.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/cached-change-colgroup-border-color.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/cached-change-colgroup-border-width.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/cached-change-row-border-color.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/cached-change-table-border-color.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/cached-change-table-border-width.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/cached-change-tbody-border-color.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/collapsed-borders-adjoining-sections-vertical-rl.html [ Failure ImageOnlyFailure Pass ]
-fast/table/border-collapsing/collapsed-borders-painted-once-on-inner-cells.html [ Failure ImageOnlyFailure Pass ]
-fast/table/colspan-with-all-percent-cells.html [ Failure ImageOnlyFailure Pass ]
-fast/table/css-table-width-with-border-padding.html [ Failure Pass ]
-fast/table/div-as-col-span.html [ Failure ImageOnlyFailure Pass ]
-fast/table/giantCellspacing.html [ Failure ImageOnlyFailure Pass ]
-fast/table/percent-widths-stretch-vertical.html [ Failure ImageOnlyFailure Pass ]
-fast/table/simple_paint.html [ Failure ImageOnlyFailure Pass ]
-fast/table/table-anonymous-cell-bug.html [ Failure ImageOnlyFailure Pass ]
-fast/table/table-anonymous-row-bug.html [ Failure ImageOnlyFailure Pass ]
-fast/table/table-anonymous-section-bug.html [ Failure ImageOnlyFailure Pass ]
-fast/table/table-cell-split.html [ Failure ImageOnlyFailure Pass ]
-fast/table/table-in-table-percent-width-quirks-mode.html [ Failure ImageOnlyFailure Pass ]
-fast/table/table-in-table-percent-width.html [ Failure ImageOnlyFailure Pass ]
-fast/table/table-insert-before-non-anonymous-block.html [ Failure ImageOnlyFailure Pass ]
-fast/table/table-row-split.html [ Failure ImageOnlyFailure Pass ]
-fast/table/table-section-split-with-after-content.html [ Failure ImageOnlyFailure Pass ]
-fast/table/table-section-split.html [ Failure ImageOnlyFailure Pass ]
-fast/table/vertical-align-baseline-readjust.html [ Failure ImageOnlyFailure Pass ]
 fast/text/align-center-rtl-spill.html [ Failure Pass ]
 fast/text/atsui-kerning-and-ligatures.html [ Failure Pass ]
 fast/text/atsui-multiple-renderers.html [ Failure Pass ]
@@ -890,34 +832,6 @@ imported/w3c/canvas/2d.gradient.interpolate.colouralpha.html [ Failure Pass ]
 imported/w3c/canvas/2d.line.cap.round.html [ Failure Pass ]
 imported/w3c/canvas/2d.line.join.parallel.html [ Failure Pass ]
 imported/w3c/canvas/2d.strokeRect.zero.5.html [ Failure Pass ]
-svg/as-border-image/svg-as-border-image-2.html [ Failure Pass ]
-svg/as-border-image/svg-as-border-image.html [ Failure Pass ]
-svg/as-image/animated-svg-as-image-no-fixed-intrinsic-size.html [ Failure Pass ]
-svg/as-image/animated-svg-as-image-same-image.html [ Failure Pass ]
-svg/as-image/animated-svg-as-image.html [ Failure Pass ]
-svg/as-image/animated-svg-repaints-completely-in-hidpi.html [ Failure Pass ]
-svg/as-image/image-preserveAspectRatio-all.svg [ Failure ImageOnlyFailure Pass ]
-svg/as-image/image-respects-deviceScaleFactor.html [ Failure Pass ]
-svg/as-image/image-respects-pageScaleFactor.html [ Failure Pass ]
-svg/as-image/img-preserveAspectRatio-support-1.html [ Failure Pass ]
-svg/as-image/img-preserveAspectRatio-support-2.html [ Failure Pass ]
-svg/as-image/img-relative-width.html [ ImageOnlyFailure Pass ]
-svg/as-image/same-image-two-instances.html [ Failure Pass ]
-svg/as-image/svg-as-image.html [ Failure ImageOnlyFailure Pass ]
-svg/as-image/svg-as-relative-image-with-explicit-size.html [ Failure Pass ]
-svg/as-image/svg-as-relative-image.html [ Failure Pass ]
-svg/as-image/svg-image-change-content-size.xhtml [ Failure Pass ]
-svg/as-image/svg-image-leak-loader.html [ Failure Pass ]
-svg/as-image/svg-non-integer-scaled-image.html [ Failure ImageOnlyFailure Pass ]
-svg/filters/filter-empty-g.svg [ Failure ImageOnlyFailure Pass ]
-svg/hixie/painting/001.xml [ Failure ImageOnlyFailure Pass ]
-svg/transforms/animated-path-inside-transformed-html.xhtml [ Failure Pass ]
-svg/transforms/svg-css-transforms-clip-path.xhtml [ Failure Pass ]
-svg/transforms/svg-css-transforms.xhtml [ Failure Pass ]
-svg/transforms/text-with-pattern-inside-transformed-html.xhtml [ Failure ImageOnlyFailure Pass ]
-tables/mozilla_expected_failures/bugs/bug128876.html [ Failure ImageOnlyFailure Pass ]
-tables/mozilla_expected_failures/bugs/bug178855.xml [ Failure ImageOnlyFailure Pass ]
-tables/mozilla_expected_failures/bugs/bug3517.html [ Failure ImageOnlyFailure Pass ]
 transitions/svg-text-shadow-transition.html [ Failure Pass ]
 legacy-animation-engine/transitions/svg-text-shadow-transition.html [ Failure Pass ]
 
@@ -950,9 +864,6 @@ http/tests/canvas/philip/tests/security.drawImage.canvas.html
 http/tests/canvas/philip/tests/security.drawImage.image.html
 http/tests/cookies/double-quoted-value-with-semi-colon.html
 storage/domstorage/sessionstorage/window-open.html
-svg/webarchive/svg-cursor-subresources.svg
-svg/webarchive/svg-feimage-subresources.svg
-svg/webarchive/svg-script-subresouces.svg
 transitions/cubic-bezier-overflow-transform.html
 legacy-animation-engine/transitions/cubic-bezier-overflow-transform.html
 transitions/default-timing-function.html
@@ -997,6 +908,8 @@ editing/selection/select-out-of-floated-non-editable-09.html [ Skip ]
 editing/selection/select-out-of-floated-non-editable-10.html [ Skip ]
 editing/selection/select-out-of-floated-non-editable-11.html [ Skip ]
 editing/selection/select-out-of-floated-non-editable-12.html [ Skip ]
+
+webkit.org/b/192088 media/no-fullscreen-when-hidden.html [ Failure Pass ]
 
 # Flaky as of 06/08/2015
 fast/loader/fragment-navigation-base-blank.html [ Failure Pass ]
@@ -1099,6 +1012,7 @@ fast/loader/location-hash-user-gesture.html [ Skip ]
 imported/blink/editing/selection/selectstart-event-crash.html [ Skip ]
 fast/dom/Window/post-message-user-action.html [ Skip ]
 fast/images/image-usemap-parsing.html [ Skip ]
+fast/shadow-dom/fullscreen-in-shadow-full-screen-ancestor.html [ Skip ]
 fast/shadow-dom/fullscreen-in-shadow-fullscreenElement.html [ Skip ]
 fast/shadow-dom/fullscreen-in-shadow-webkitCurrentFullScreenElement.html [ Skip ]
 fast/shadow-dom/fullscreen-in-slot-fullscreenElement.html [ Skip ]
@@ -1150,12 +1064,19 @@ webkit.org/b/155947 [ Debug ] fast/loader/scroll-position-restored-on-back.html 
 webkit.org/b/155948 transitions/cancel-transition.html [ Pass Failure ]
 webkit.org/b/155948 legacy-animation-engine/transitions/cancel-transition.html [ Pass Failure ]
 
+webkit.org/b/189686 webgl/2.0.0/conformance2/textures/misc/copy-texture-image-luma-format.html [ Skip ]
+webkit.org/b/189686 webgl/2.0.0/conformance/textures/misc/tex-image-and-sub-image-2d-with-array-buffer-view.html [ Skip ]
+
+
 # <a download> does not work on iOS.
 webkit.org/b/156067 fast/dom/HTMLAnchorElement/anchor-download-unset.html [ Skip ]
 webkit.org/b/156067 fast/dom/HTMLAnchorElement/anchor-download.html [ Skip ]
 webkit.org/b/156067 fast/dom/HTMLAnchorElement/anchor-file-blob-convert-to-download.html [ Skip ]
 webkit.org/b/156067 fast/dom/HTMLAnchorElement/anchor-file-blob-convert-to-download-async-delegate.html [ Skip ]
 webkit.org/b/156067 fast/dom/HTMLAnchorElement/anchor-file-blob-download.html [ Skip ]
+webkit.org/b/156067 fast/dom/HTMLAnchorElement/anchor-file-blob-download-blank-base-target-popup-not-allowed.html [ Skip ]
+webkit.org/b/156067 fast/dom/HTMLAnchorElement/anchor-file-blob-download-blank-target.html [ Skip ]
+webkit.org/b/156067 fast/dom/HTMLAnchorElement/anchor-file-blob-download-blank-target-popup-not-allowed.html [ Skip ]
 webkit.org/b/156067 fast/dom/HTMLAnchorElement/anchor-file-blob-download-includes-backslash.html [ Skip ]
 webkit.org/b/156067 fast/dom/HTMLAnchorElement/anchor-file-blob-download-includes-doublequote.html [ Skip ]
 webkit.org/b/156067 fast/dom/HTMLAnchorElement/anchor-file-blob-download-includes-slashes.html [ Skip ]
@@ -1176,6 +1097,7 @@ webkit.org/b/156067 http/tests/security/anchor-download-allow-data.html [ Skip ]
 webkit.org/b/156067 http/tests/security/anchor-download-allow-sameorigin.html [ Skip ]
 webkit.org/b/156067 http/tests/security/anchor-download-block-crossorigin.html [ Skip ]
 webkit.org/b/156067 http/tests/download/anchor-download-no-value.html [ Skip ]
+webkit.org/b/156067 http/tests/download/convert-cached-load-to-download.html [ Skip ]
 
 webkit.org/b/149087 http/tests/cache/disk-cache/disk-cache-vary.html [ Pass Timeout ]
 webkit.org/b/149087 http/tests/cache/disk-cache/disk-cache-vary-no-body.html [ Pass Timeout ]
@@ -1206,6 +1128,10 @@ svg/animations/animate-linear-discrete-additive-b.svg [ ImageOnlyFailure ]
 svg/animations/animate-linear-discrete-additive-c.svg [ ImageOnlyFailure ]
 svg/animations/animate-linear-discrete-additive.svg [ ImageOnlyFailure ]
 svg/animations/mozilla/animateMotion-mpath-pathLength-1.svg [ ImageOnlyFailure ]
+
+webkit.org/b/192045 css3/filters/blur-filter-page-scroll-parents.html
+webkit.org/b/192045 css3/filters/blur-filter-page-scroll-self.html
+webkit.org/b/192045 css3/filters/blur-filter-page-scroll.html
 
 webkit.org/b/159379 fast/history/page-cache-webdatabase-pending-transaction.html [ Pass Failure ]
 
@@ -1258,6 +1184,8 @@ webkit.org/b/165165 [ Release ] http/tests/security/contentSecurityPolicy/1.1/sc
 
 webkit.org/b/165344 [ Release ] http/tests/security/module-incorrect-mime-types.html [ Pass Timeout ]
 
+webkit.org/b/162685 [ Release ] http/tests/cache/disk-cache/disk-cache-204-status-code.html [ Pass Failure ]
+
 # Hover test does not apply
 fast/css/deferred-parsing/hover-test.html [ Skip ]
 
@@ -1298,7 +1226,7 @@ webkit.org/b/171638 [ Release ] http/tests/xmlhttprequest/methods.html [ Pass Ti
 
 webkit.org/b/171830 [ Debug ] http/tests/websocket/tests/hybi/workers/close.html [ Pass Failure ]
 
-webkit.org/b/169637 imported/w3c/web-platform-tests/XMLHttpRequest/timeout-multiple-fetches.html [ Pass Failure ]
+webkit.org/b/169637 imported/w3c/web-platform-tests/xhr/timeout-multiple-fetches.html [ Pass Failure ]
 
 webkit.org/b/171886 imported/w3c/web-platform-tests/streams/readable-byte-streams/general.html [ Pass Failure ]
 
@@ -1318,13 +1246,11 @@ webkit.org/b/171985 [ Release ] workers/bomb.html [ Pass Timeout ]
 webkit.org/b/175939 [ Debug ] editing/execCommand/forward-delete-read-write-canvas.html [ Skip ]
 
 # <rdar://problem/32826391>
-imported/w3c/web-platform-tests/XMLHttpRequest/setrequestheader-content-type.htm [ Failure ]
+imported/w3c/web-platform-tests/xhr/setrequestheader-content-type.htm [ Failure ]
 
 webkit.org/b/176240 http/tests/websocket/tests/hybi/handshake-ok-with-legacy-websocket-response-headers.html [ Pass Failure ]
 
 webkit.org/b/173608 webrtc/video-replace-muted-track.html [ Skip ]
-
-webkit.org/b/177501 webrtc/video-mute.html [ Pass Timeout ]
 
 webkit.org/b/187388 animations/needs-layout.html [ Pass ImageOnlyFailure ]
 webkit.org/b/172397 legacy-animation-engine/animations/needs-layout.html [ Pass ImageOnlyFailure ]
@@ -1337,21 +1263,78 @@ webkit.org/b/181167 imported/w3c/web-platform-tests/service-workers/service-work
 
 webkit.org/b/181392 imported/w3c/web-platform-tests/service-workers/service-worker/fetch-waits-for-activate.https.html [ Pass Failure ]
 
-webkit.org/b/172879 webrtc/video-unmute.html [ Skip ]
-
-webkit.org/b/181957 [ Release ] http/tests/misc/resource-timing-resolution.html [ Pass Failure ]
-
 webkit.org/b/181821 fast/visual-viewport/ios/caret-after-focus-in-fixed.html [ Pass Failure ]
 
 webkit.org/b/182144 [ Debug ] webgl/1.0.3/conformance/rendering/many-draw-calls.html [ Skip ]
-
-webkit.org/b/182849 imported/w3c/web-platform-tests/XMLHttpRequest/event-upload-progress-crossorigin.htm [ Pass Failure ]
-
-# This is marked as Pass to see if additional logging can reveal the cause of the flakiness.
-webkit.org/b/183714 [ Debug ] http/tests/storageAccess/grant-storage-access-under-opener.html [ Pass ]
 
 webkit.org/b/183860 http/wpt/service-workers/third-party-registration.html [ Pass Timeout ]
 
 webkit.org/b/184245 http/tests/workers/service/service-worker-cache-api.https.html [ Pass Failure ]
 
 webkit.org/b/184783 compositing/ios/overflow-scroll-touch-tiles.html [ Pass Failure ]
+
+webkit.org/b/179853 [ Debug ] imported/blink/fast/text/international-iteration-simple-text.html [ Pass Failure ]
+
+# skip manual payment-request tests
+imported/w3c/web-platform-tests/payment-request/PaymentRequestUpdateEvent/updateWith-call-immediate-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/PaymentRequestUpdateEvent/updateWith-duplicate-shipping-options-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/PaymentRequestUpdateEvent/updateWith-incremental-update-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/PaymentRequestUpdateEvent/updateWith-method-abort-update-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/PaymentRequestUpdateEvent/updateWith-state-checks-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/PaymentValidationErrors/retry-shows-error-member-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/PaymentValidationErrors/retry-shows-payer-member-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/PaymentValidationErrors/retry-shows-shippingAddress-member-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/algorithms-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/change-shipping-option-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/change-shipping-option-select-last-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/payment-response/complete-method-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/payment-response/methodName-attribute-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/payment-response/onpayerdetailchange-attribute-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/payment-response/payerEmail-attribute-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/payment-response/payerName-attribute-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/payment-response/payerPhone-attribute-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/payment-response/rejects_if_not_active-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/payment-response/requestId-attribute-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/payment-response/retry-method-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/payment-response/shippingAddress-attribute-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/payment-response/shippingOption-attribute-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/PaymentAddress/attributes-and-toJSON-method-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/shipping-address-changed-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/show-method-optional-promise-rejects-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/show-method-optional-promise-resolves-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/show-method-postmessage-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/updateWith-method-pmi-handling-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/user-abort-algorithm-manual.https.html [ Skip ]
+imported/w3c/web-platform-tests/payment-request/user-accepts-payment-request-algo-manual.https.html [ Skip ]
+
+webkit.org/b/189087 svg/animations/animate-end-attribute-numeric-precision.html [ Pass Failure ]
+
+webkit.org/b/190847 [ Debug ] imported/w3c/web-platform-tests/service-workers/service-worker/unregister-then-register-new-script.https.html [ Pass Failure ] 
+
+webkit.org/b/190848 imported/w3c/web-platform-tests/service-workers/service-worker/navigation-redirect-to-http.https.html [ Pass Failure ] 
+
+webkit.org/b/190850 [ Debug ] platform/ios/ios/plugin/youtube-flash-plugin-iframe-no-height-or-width.html [ Pass Failure ] 
+
+webkit.org/b/189641 [ Debug ] webgl/2.0.0/conformance/attribs/gl-vertexattribpointer.html [ Slow ]
+
+# Skip WebAuthN tests for hid authenticators
+http/wpt/webauthn/ctap-hid-failure.https.html [ Skip ]
+http/wpt/webauthn/ctap-hid-success.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-create-failure-hid-silent.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-create-failure-hid.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-create-success-hid.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-get-failure-hid-silent.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-get-failure-hid.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-get-success-hid.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-create-failure-u2f-silent.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-create-failure-u2f.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-create-success-u2f.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-get-failure-u2f-silent.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-get-failure-u2f.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-get-success-u2f.https.html [ Skip ]
+
+# FIXME: Unskip these tests once we have the fix for <rdar://problem/44930119>.
+fast/forms/auto-fill-button/caps-lock-indicator-should-be-visible-after-hiding-auto-fill-strong-password-button.html [ Skip ]
+fast/forms/auto-fill-button/caps-lock-indicator-should-not-be-visible-when-auto-fill-strong-password-button-is-visible.html [ Skip ]
+fast/forms/password-scrolled-after-caps-lock-toggled.html [ Skip ]
+fast/repaint/placeholder-after-caps-lock-hidden.html [ Skip ]

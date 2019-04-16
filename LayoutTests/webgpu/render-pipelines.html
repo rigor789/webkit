@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<script src="../resources/js-test-pre.js"></script>
+<script src="js/basic-webgpu-functions.js"></script>
+<script>
+if (window.testRunner)
+    window.testRunner.dumpAsText();
+
+function checkBadRenderPipeline(descriptor, testSubjectName) {
+    let pipeline = defaultDevice.createRenderPipeline(descriptor);
+
+    if (pipeline)
+        testFailed(`WebGPURenderPipeline was created with an invalid ${testSubjectName}!`);
+    else
+        testPassed(`WebGPURenderPipeline with invalid ${testSubjectName} was not created.`);
+}
+
+function setUpBadPipelines() {
+    checkBadRenderPipeline({}, "WebGPURenderPipelineDescriptor");
+
+    let noModuleVertexDescriptor = {
+        entryPoint: "vertex_main"
+    }
+    let noModulePipelineDescriptor = {
+        vertexStage: noModuleVertexDescriptor, 
+        fragmentStage: fragmentStageDescriptor,
+        primitiveTopology: "triangleList"
+    }
+    checkBadRenderPipeline(noModulePipelineDescriptor, "shader module");
+
+    // A (Metal) renderpipeline must have a vertex function.
+    let noVertexPipelineDescriptor = {
+        fragmentStage: fragmentStageDescriptor,
+        primitiveTopology: "triangleList"
+    }
+    checkBadRenderPipeline(noVertexPipelineDescriptor, "vertex shader stage")
+
+    let badEntryPointDescriptor = { 
+        module: shaderModule,
+        entryPoint: "Vertex_Main" 
+    };
+    let badEntryPointPipelineDescsriptor = {
+        vertexStage: badEntryPointDescriptor, 
+        fragmentStage: fragmentStageDescriptor,
+        primitiveTopology: "triangleList"
+    }
+    checkBadRenderPipeline(badEntryPointPipelineDescsriptor, "vertex shader entry point");
+}
+
+runWebGPUTests([setUpPipeline, setUpBadPipelines]);
+
+successfullyParsed = true;
+</script>
+<script src="../resources/js-test-post.js"></script>
+</html>

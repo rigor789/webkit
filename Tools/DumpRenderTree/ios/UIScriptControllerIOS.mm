@@ -26,7 +26,7 @@
 #import "config.h"
 #import "UIScriptController.h"
 
-#if PLATFORM(IOS)
+#if PLATFORM(IOS_FAMILY)
 
 #import "DumpRenderTreeBrowserView.h"
 #import "UIScriptContext.h"
@@ -80,6 +80,18 @@ void UIScriptController::zoomToScale(double scale, JSValueRef callback)
             protectedThis->context()->asyncTaskComplete(callbackID);
         }];
     });
+}
+
+void UIScriptController::resignFirstResponder()
+{
+}
+
+void UIScriptController::setViewScale(double)
+{
+}
+
+void UIScriptController::setMinimumEffectiveWidth(double)
+{
 }
 
 void UIScriptController::simulateAccessibilitySettingsChangeNotification(JSValueRef)
@@ -143,15 +155,7 @@ void UIScriptController::typeCharacterUsingHardwareKeyboard(JSStringRef characte
 {
 }
 
-void UIScriptController::selectTextCandidateAtIndex(long, JSValueRef)
-{
-}
-
-void UIScriptController::keyDownUsingHardwareKeyboard(JSStringRef character, JSValueRef callback)
-{
-}
-
-void UIScriptController::keyUpUsingHardwareKeyboard(JSStringRef character, JSValueRef callback)
+void UIScriptController::keyDown(JSStringRef, JSValueRef)
 {
 }
 
@@ -160,6 +164,10 @@ void UIScriptController::dismissFormAccessoryView()
 }
 
 void UIScriptController::setTimePickerValue(long, long)
+{
+}
+
+void UIScriptController::setShareSheetCompletesImmediatelyWithResolution(bool)
 {
 }
 
@@ -230,6 +238,11 @@ void UIScriptController::applyAutocorrection(JSStringRef, JSStringRef, JSValueRe
 {
 }
 
+bool UIScriptController::isShowingKeyboard() const
+{
+    return false;
+}
+
 double UIScriptController::minimumZoomScale() const
 {
     return gWebScrollView.minimumZoomScale;
@@ -240,12 +253,12 @@ double UIScriptController::maximumZoomScale() const
     return gWebScrollView.maximumZoomScale;
 }
 
-std::optional<bool> UIScriptController::stableStateOverride() const
+Optional<bool> UIScriptController::stableStateOverride() const
 {
-    return std::nullopt;
+    return WTF::nullopt;
 }
 
-void UIScriptController::setStableStateOverride(std::optional<bool>)
+void UIScriptController::setStableStateOverride(Optional<bool>)
 {
 }
 
@@ -296,7 +309,7 @@ void UIScriptController::platformClearAllCallbacks()
 {
 }
 
-JSObjectRef UIScriptController::selectionRangeViewRects() const
+JSObjectRef UIScriptController::textSelectionRangeRects() const
 {
     return nullptr;
 }
@@ -366,6 +379,67 @@ void UIScriptController::completeBackSwipe(JSValueRef callback)
 {
 }
 
+JSObjectRef UIScriptController::selectionStartGrabberViewRect() const
+{
+    return nullptr;
 }
 
-#endif // PLATFORM(IOS)
+JSObjectRef UIScriptController::selectionEndGrabberViewRect() const
+{
+    return nullptr;
+}
+
+JSObjectRef UIScriptController::selectionCaretViewRect() const
+{
+    return nullptr;
+}
+
+JSObjectRef UIScriptController::selectionRangeViewRects() const
+{
+    return nullptr;
+}
+
+bool UIScriptController::isShowingDataListSuggestions() const
+{
+    return false;
+}
+
+JSObjectRef UIScriptController::calendarType() const
+{
+    return nullptr;
+}
+
+void UIScriptController::setDefaultCalendarType(JSStringRef calendarIdentifier)
+{
+}
+
+void UIScriptController::overridePreference(JSStringRef, JSStringRef)
+{
+}
+
+void UIScriptController::drawSquareInEditableImage()
+{
+}
+
+long UIScriptController::numberOfStrokesInEditableImage()
+{
+    return 0;
+}
+
+void UIScriptController::toggleCapsLock(JSValueRef callback)
+{
+    doAsyncTask(callback);
+}
+
+JSObjectRef UIScriptController::attachmentInfo(JSStringRef)
+{
+    return nullptr;
+}
+
+void UIScriptController::setKeyboardInputModeIdentifier(JSStringRef)
+{
+}
+
+}
+
+#endif // PLATFORM(IOS_FAMILY)

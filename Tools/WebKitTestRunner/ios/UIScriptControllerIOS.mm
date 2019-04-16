@@ -26,14 +26,15 @@
 #import "config.h"
 #import "UIScriptController.h"
 
-#if PLATFORM(IOS)
+#if PLATFORM(IOS_FAMILY)
 
 #import "HIDEventGenerator.h"
+#import "PencilKitTestSPI.h"
 #import "PlatformWebView.h"
 #import "StringFunctions.h"
 #import "TestController.h"
 #import "TestRunnerWKWebView.h"
-#import "UIKitTestSPI.h"
+#import "UIKitSPI.h"
 #import "UIScriptContext.h"
 #import <JavaScriptCore/JavaScriptCore.h>
 #import <JavaScriptCore/OpaqueJSString.h>
@@ -41,6 +42,14 @@
 #import <WebCore/FloatRect.h>
 #import <WebKit/WKWebViewPrivate.h>
 #import <WebKit/WebKit.h>
+#import <wtf/SoftLinking.h>
+
+SOFT_LINK_FRAMEWORK(UIKit)
+SOFT_LINK_CLASS(UIKit, UIPhysicalKeyboardEvent)
+
+@interface UIPhysicalKeyboardEvent (UIPhysicalKeyboardEventHack)
+@property (nonatomic, assign) NSInteger _modifierFlags;
+@end
 
 namespace WTR {
 
@@ -58,17 +67,6 @@ void UIScriptController::checkForOutstandingCallbacks()
 {
     if (![[HIDEventGenerator sharedHIDEventGenerator] checkForOutstandingCallbacks])
         [NSException raise:@"WebKitTestRunnerTestProblem" format:@"The test completed before all synthesized events had been handled. Perhaps you're calling notifyDone() too early?"];
-}
-
-void UIScriptController::doAsyncTask(JSValueRef callback)
-{
-    unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
-
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (!m_context)
-            return;
-        m_context->asyncTaskComplete(callbackID);
-    });
 }
 
 void UIScriptController::doAfterPresentationUpdate(JSValueRef callback)
@@ -350,73 +348,91 @@ void UIScriptController::typeCharacterUsingHardwareKeyboard(JSStringRef characte
     }];
 }
 
-void UIScriptController::keyDownUsingHardwareKeyboard(JSStringRef character, JSValueRef callback)
+static unsigned arrayLength(JSContextRef context, JSObjectRef array)
 {
-    unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
-
-    // Assumes that the keyboard is already shown.
-    [[HIDEventGenerator sharedHIDEventGenerator] keyDown:toWTFString(toWK(character)) completionBlock:^{
-        if (!m_context)
-            return;
-        m_context->asyncTaskComplete(callbackID);
-    }];
+    auto lengthString = adopt(JSStringCreateWithUTF8CString("length"));
+    if (auto lengthValue = JSObjectGetProperty(context, array, lengthString.get(), nullptr))
+        return static_cast<unsigned>(JSValueToNumber(context, lengthValue, nullptr));
+    return 0;
 }
 
-void UIScriptController::keyUpUsingHardwareKeyboard(JSStringRef character, JSValueRef callback)
+static UIKeyModifierFlags parseModifier(JSStringRef modifier)
 {
-    unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
-
-    // Assumes that the keyboard is already shown.
-    [[HIDEventGenerator sharedHIDEventGenerator] keyUp:toWTFString(toWK(character)) completionBlock:^{
-        if (!m_context)
-            return;
-        m_context->asyncTaskComplete(callbackID);
-    }];
+    if (JSStringIsEqualToUTF8CString(modifier, "altKey"))
+        return UIKeyModifierAlternate;
+    if (JSStringIsEqualToUTF8CString(modifier, "capsLockKey"))
+        return UIKeyModifierAlphaShift;
+    if (JSStringIsEqualToUTF8CString(modifier, "ctrlKey"))
+        return UIKeyModifierControl;
+    if (JSStringIsEqualToUTF8CString(modifier, "metaKey"))
+        return UIKeyModifierCommand;
+    if (JSStringIsEqualToUTF8CString(modifier, "shiftKey"))
+        return UIKeyModifierShift;
+    return 0;
 }
 
-void UIScriptController::selectTextCandidateAtIndex(long index, JSValueRef callback)
+static UIKeyModifierFlags parseModifierArray(JSContextRef context, JSValueRef arrayValue)
 {
-#if USE(APPLE_INTERNAL_SDK)
-    static const float textPredictionsPollingInterval = 0.1;
-    unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
-    waitForTextPredictionsViewAndSelectCandidateAtIndex(index, callbackID, textPredictionsPollingInterval);
-#else
-    // FIXME: This is a no-op on non-internal builds due to UIKeyboardPredictionView being unavailable. Ideally, there should be a better way to
-    // retrieve information and interact with the predictive text view that will be compatible with OpenSource.
-    UNUSED_PARAM(index);
-    UNUSED_PARAM(callback);
-#endif
-}
+    if (!arrayValue)
+        return 0;
 
-void UIScriptController::waitForTextPredictionsViewAndSelectCandidateAtIndex(long index, unsigned callbackID, float interval)
-{
-    id UIKeyboardPredictionViewClass = NSClassFromString(@"UIKeyboardPredictionView");
-    if (!UIKeyboardPredictionViewClass)
-        return;
-
-#if USE(APPLE_INTERNAL_SDK)
-    UIKeyboardPredictionView *predictionView = (UIKeyboardPredictionView *)[UIKeyboardPredictionViewClass activeInstance];
-    if (![predictionView hasPredictions]) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, interval * NSEC_PER_SEC), dispatch_get_main_queue(), ^() {
-            waitForTextPredictionsViewAndSelectCandidateAtIndex(index, callbackID, interval);
-        });
-        return;
+    // The value may either be a string with a single modifier or an array of modifiers.
+    if (JSValueIsString(context, arrayValue)) {
+        auto string = adopt(JSValueToStringCopy(context, arrayValue, nullptr));
+        return parseModifier(string.get());
     }
 
-    PlatformWKView webView = TestController::singleton().mainWebView()->platformView();
-    CGRect predictionViewFrame = [predictionView frame];
-    // This assumes there are 3 predicted text cells of equal width, which is the case on iOS.
-    float offsetX = (index * 2 + 1) * CGRectGetWidth(predictionViewFrame) / 6;
-    float offsetY = CGRectGetHeight(webView.window.frame) - CGRectGetHeight([[predictionView superview] frame]) + CGRectGetHeight(predictionViewFrame) / 2;
-    [[HIDEventGenerator sharedHIDEventGenerator] tap:CGPointMake(offsetX, offsetY) completionBlock:^{
-        if (m_context)
-            m_context->asyncTaskComplete(callbackID);
-    }];
-#else
-    UNUSED_PARAM(index);
-    UNUSED_PARAM(callbackID);
-    UNUSED_PARAM(interval);
-#endif
+    if (!JSValueIsObject(context, arrayValue))
+        return 0;
+    JSObjectRef array = const_cast<JSObjectRef>(arrayValue);
+    unsigned length = arrayLength(context, array);
+    UIKeyModifierFlags modifiers = 0;
+    for (unsigned i = 0; i < length; ++i) {
+        JSValueRef exception = nullptr;
+        JSValueRef value = JSObjectGetPropertyAtIndex(context, array, i, &exception);
+        if (exception)
+            continue;
+        auto string = adopt(JSValueToStringCopy(context, value, &exception));
+        if (exception)
+            continue;
+        modifiers |= parseModifier(string.get());
+    }
+    return modifiers;
+}
+
+static UIPhysicalKeyboardEvent *createUIPhysicalKeyboardEvent(NSString *hidInputString, NSString *uiEventInputString, UIKeyModifierFlags modifierFlags, UIKeyboardInputFlags inputFlags, bool isKeyDown)
+{
+    auto* keyboardEvent = [getUIPhysicalKeyboardEventClass() _eventWithInput:uiEventInputString inputFlags:inputFlags];
+    keyboardEvent._modifierFlags = modifierFlags;
+    auto hidEvent = createHIDKeyEvent(hidInputString, keyboardEvent.timestamp, isKeyDown);
+    [keyboardEvent _setHIDEvent:hidEvent.get() keyboard:nullptr];
+    return keyboardEvent;
+}
+
+void UIScriptController::keyDown(JSStringRef character, JSValueRef modifierArray)
+{
+    // Character can be either a single Unicode code point or the name of a special key (e.g. "downArrow").
+    // createHIDKeyEvent() knows how to map these special keys to the appropriate keycode.
+    //
+    // FIXME: The UIEvent input string for special keys (e.g. "downArrow") should either be a UIKeyInput*
+    // string constant or an ASCII control character. In practice the input string for a special key is
+    // ambiguious (e.g. F5 and F6 have the same string - the ASCII DLE character) and hence it is effectively
+    // ignored in favor of key identification by keycode. So, we just take the empty string as the input string
+    // for a special key.
+    String inputString = toWTFString(toWK(character));
+    String uiEventInputString = inputString.length() > 1 ? emptyString() : inputString;
+    auto modifierFlags = parseModifierArray(m_context->jsContext(), modifierArray);
+    UIKeyboardInputFlags inputFlags = static_cast<UIKeyboardInputFlags>(0);
+
+    // Note that UIKit will call -release on the passed UIPhysicalKeyboardEvent.
+
+    // Key down
+    auto* keyboardEvent = createUIPhysicalKeyboardEvent(inputString, uiEventInputString, modifierFlags, inputFlags, true /* isKeyDown */);
+    [[UIApplication sharedApplication] handleKeyUIEvent:keyboardEvent];
+
+    // Key up
+    keyboardEvent = createUIPhysicalKeyboardEvent(inputString, uiEventInputString, modifierFlags, inputFlags, false /* isKeyDown */);
+    [[UIApplication sharedApplication] handleKeyUIEvent:keyboardEvent];
 }
 
 void UIScriptController::dismissFormAccessoryView()
@@ -453,13 +469,6 @@ void UIScriptController::setTimePickerValue(long hour, long minute)
 {
     TestRunnerWKWebView *webView = TestController::singleton().mainWebView()->platformView();
     [webView setTimePickerValueToHour:hour minute:minute];
-}
-    
-JSObjectRef UIScriptController::contentsOfUserInterfaceItem(JSStringRef interfaceItem) const
-{
-    TestRunnerWKWebView *webView = TestController::singleton().mainWebView()->platformView();
-    NSDictionary *contentDictionary = [webView _contentsOfUserInterfaceItem:toWTFString(toWK(interfaceItem))];
-    return JSValueToObject(m_context->jsContext(), [JSValue valueWithObject:contentDictionary inContext:[JSContext contextWithJSGlobalContextRef:m_context->jsContext()]].JSValueRef, nullptr);
 }
 
 static CGPoint contentOffsetBoundedInValidRange(UIScrollView *scrollView, CGPoint contentOffset)
@@ -508,6 +517,11 @@ void UIScriptController::keyboardAccessoryBarPrevious()
     [webView keyboardAccessoryBarPrevious];
 }
 
+bool UIScriptController::isShowingKeyboard() const
+{
+    return TestController::singleton().mainWebView()->platformView().showingKeyboard;
+}
+
 void UIScriptController::applyAutocorrection(JSStringRef newString, JSStringRef oldString, JSValueRef callback)
 {
     unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
@@ -536,16 +550,16 @@ double UIScriptController::maximumZoomScale() const
     return webView.scrollView.maximumZoomScale;
 }
 
-std::optional<bool> UIScriptController::stableStateOverride() const
+Optional<bool> UIScriptController::stableStateOverride() const
 {
     TestRunnerWKWebView *webView = TestController::singleton().mainWebView()->platformView();
     if (webView._stableStateOverride)
         return webView._stableStateOverride.boolValue;
 
-    return std::nullopt;
+    return WTF::nullopt;
 }
 
-void UIScriptController::setStableStateOverride(std::optional<bool> overrideValue)
+void UIScriptController::setStableStateOverride(Optional<bool> overrideValue)
 {
     TestRunnerWKWebView *webView = TestController::singleton().mainWebView()->platformView();
     if (overrideValue)
@@ -564,19 +578,65 @@ JSObjectRef UIScriptController::contentVisibleRect() const
     return m_context->objectFromRect(rect);
 }
 
-JSObjectRef UIScriptController::selectionRangeViewRects() const
+JSObjectRef UIScriptController::textSelectionRangeRects() const
 {
-    NSMutableArray *selectionRects = [[NSMutableArray alloc] init];
+    auto selectionRects = adoptNS([[NSMutableArray alloc] init]);
     NSArray *rects = TestController::singleton().mainWebView()->platformView()._uiTextSelectionRects;
     for (NSValue *rect in rects)
-        [selectionRects addObject:toNSDictionary([rect CGRectValue])];
+        [selectionRects addObject:toNSDictionary(rect.CGRectValue)];
 
-    return JSValueToObject(m_context->jsContext(), [JSValue valueWithObject:selectionRects inContext:[JSContext contextWithJSGlobalContextRef:m_context->jsContext()]].JSValueRef, nullptr);
+    return JSValueToObject(m_context->jsContext(), [JSValue valueWithObject:selectionRects.get() inContext:[JSContext contextWithJSGlobalContextRef:m_context->jsContext()]].JSValueRef, nullptr);
 }
 
 JSObjectRef UIScriptController::textSelectionCaretRect() const
 {
     return JSValueToObject(m_context->jsContext(), [JSValue valueWithObject:toNSDictionary(TestController::singleton().mainWebView()->platformView()._uiTextCaretRect) inContext:[JSContext contextWithJSGlobalContextRef:m_context->jsContext()]].JSValueRef, nullptr);
+}
+
+JSObjectRef UIScriptController::selectionStartGrabberViewRect() const
+{
+    WKWebView *webView = TestController::singleton().mainWebView()->platformView();
+    UIView *contentView = [webView valueForKeyPath:@"_currentContentView"];
+    UIView *selectionRangeView = [contentView valueForKeyPath:@"interactionAssistant.selectionView.rangeView"];
+    auto frameInContentCoordinates = [selectionRangeView convertRect:[[selectionRangeView valueForKeyPath:@"startGrabber"] frame] toView:contentView];
+    frameInContentCoordinates = CGRectIntersection(contentView.bounds, frameInContentCoordinates);
+    auto jsContext = m_context->jsContext();
+    return JSValueToObject(jsContext, [JSValue valueWithObject:toNSDictionary(frameInContentCoordinates) inContext:[JSContext contextWithJSGlobalContextRef:jsContext]].JSValueRef, nullptr);
+}
+
+JSObjectRef UIScriptController::selectionEndGrabberViewRect() const
+{
+    WKWebView *webView = TestController::singleton().mainWebView()->platformView();
+    UIView *contentView = [webView valueForKeyPath:@"_currentContentView"];
+    UIView *selectionRangeView = [contentView valueForKeyPath:@"interactionAssistant.selectionView.rangeView"];
+    auto frameInContentCoordinates = [selectionRangeView convertRect:[[selectionRangeView valueForKeyPath:@"endGrabber"] frame] toView:contentView];
+    frameInContentCoordinates = CGRectIntersection(contentView.bounds, frameInContentCoordinates);
+    auto jsContext = m_context->jsContext();
+    return JSValueToObject(jsContext, [JSValue valueWithObject:toNSDictionary(frameInContentCoordinates) inContext:[JSContext contextWithJSGlobalContextRef:jsContext]].JSValueRef, nullptr);
+}
+
+JSObjectRef UIScriptController::selectionCaretViewRect() const
+{
+    WKWebView *webView = TestController::singleton().mainWebView()->platformView();
+    UIView *contentView = [webView valueForKeyPath:@"_currentContentView"];
+    UIView *caretView = [contentView valueForKeyPath:@"interactionAssistant.selectionView.caretView"];
+    auto rectInContentViewCoordinates = CGRectIntersection([caretView convertRect:caretView.bounds toView:contentView], contentView.bounds);
+    return JSValueToObject(m_context->jsContext(), [JSValue valueWithObject:toNSDictionary(rectInContentViewCoordinates) inContext:[JSContext contextWithJSGlobalContextRef:m_context->jsContext()]].JSValueRef, nullptr);
+}
+
+JSObjectRef UIScriptController::selectionRangeViewRects() const
+{
+    WKWebView *webView = TestController::singleton().mainWebView()->platformView();
+    UIView *contentView = [webView valueForKeyPath:@"_currentContentView"];
+    UIView *rangeView = [contentView valueForKeyPath:@"interactionAssistant.selectionView.rangeView"];
+    auto rectsAsDictionaries = adoptNS([[NSMutableArray alloc] init]);
+    NSArray *textRectInfoArray = [rangeView valueForKeyPath:@"rects"];
+    for (id textRectInfo in textRectInfoArray) {
+        NSValue *rectValue = [textRectInfo valueForKeyPath:@"rect"];
+        auto rangeRectInContentViewCoordinates = [rangeView convertRect:rectValue.CGRectValue toView:contentView];
+        [rectsAsDictionaries addObject:toNSDictionary(CGRectIntersection(rangeRectInContentViewCoordinates, contentView.bounds))];
+    }
+    return JSValueToObject(m_context->jsContext(), [JSValue valueWithObject:rectsAsDictionaries.get() inContext:[JSContext contextWithJSGlobalContextRef:m_context->jsContext()]].JSValueRef, nullptr);
 }
 
 JSObjectRef UIScriptController::inputViewBounds() const
@@ -649,22 +709,6 @@ void UIScriptController::simulateRotationLikeSafari(DeviceOrientation* orientati
     };
     
     [[UIDevice currentDevice] setOrientation:toUIDeviceOrientation(orientation) animated:YES];
-}
-
-void UIScriptController::findString(JSStringRef string, unsigned long options, unsigned long maxCount)
-{
-    TestRunnerWKWebView *webView = TestController::singleton().mainWebView()->platformView();
-    [webView _findString:toWTFString(toWK(string)) options:options maxCount:maxCount];
-}
-
-void UIScriptController::removeViewFromWindow(JSValueRef callback)
-{
-    TestController::singleton().mainWebView()->removeFromWindow();
-}
-
-void UIScriptController::addViewToWindow(JSValueRef callback)
-{
-    TestController::singleton().mainWebView()->addToWindow();
 }
 
 void UIScriptController::platformSetDidStartFormControlInteractionCallback()
@@ -798,6 +842,123 @@ void UIScriptController::completeBackSwipe(JSValueRef callback)
     m_context->asyncTaskComplete(callbackID);
 }
 
+static BOOL forEachViewInHierarchy(UIView *view, void(^mapFunction)(UIView *subview, BOOL *stop))
+{
+    BOOL stop = NO;
+    mapFunction(view, &stop);
+    if (stop)
+        return YES;
+
+    for (UIView *subview in view.subviews) {
+        stop = forEachViewInHierarchy(subview, mapFunction);
+        if (stop)
+            break;
+    }
+    return stop;
 }
 
-#endif // PLATFORM(IOS)
+bool UIScriptController::isShowingDataListSuggestions() const
+{
+    Class remoteKeyboardWindowClass = NSClassFromString(@"UIRemoteKeyboardWindow");
+    Class suggestionsPickerViewClass = NSClassFromString(@"WKDataListSuggestionsPickerView");
+    UIWindow *remoteInputHostingWindow = nil;
+    for (UIWindow *window in UIApplication.sharedApplication.windows) {
+        if ([window isKindOfClass:remoteKeyboardWindowClass])
+            remoteInputHostingWindow = window;
+    }
+
+    if (!remoteInputHostingWindow)
+        return false;
+
+    __block bool foundDataListSuggestionsPickerView = false;
+    forEachViewInHierarchy(remoteInputHostingWindow, ^(UIView *subview, BOOL *stop) {
+        if (![subview isKindOfClass:suggestionsPickerViewClass])
+            return;
+
+        foundDataListSuggestionsPickerView = true;
+        *stop = YES;
+    });
+    return foundDataListSuggestionsPickerView;
+}
+
+#if HAVE(PENCILKIT)
+static PKCanvasView *findEditableImageCanvas()
+{
+    TestRunnerWKWebView *webView = TestController::singleton().mainWebView()->platformView();
+    Class pkCanvasViewClass = NSClassFromString(@"PKCanvasView");
+    __block PKCanvasView *canvasView = nil;
+    forEachViewInHierarchy(webView.window, ^(UIView *subview, BOOL *stop) {
+        if (![subview isKindOfClass:pkCanvasViewClass])
+            return;
+
+        canvasView = (PKCanvasView *)subview;
+        *stop = YES;
+    });
+    return canvasView;
+}
+#endif
+
+void UIScriptController::drawSquareInEditableImage()
+{
+#if HAVE(PENCILKIT)
+    Class pkDrawingClass = NSClassFromString(@"PKDrawing");
+    Class pkInkClass = NSClassFromString(@"PKInk");
+    Class pkStrokeClass = NSClassFromString(@"PKStroke");
+
+    PKCanvasView *canvasView = findEditableImageCanvas();
+    RetainPtr<PKDrawing> drawing = canvasView.drawing ?: adoptNS([[pkDrawingClass alloc] init]);
+    RetainPtr<CGPathRef> path = adoptCF(CGPathCreateWithRect(CGRectMake(0, 0, 50, 50), NULL));
+    RetainPtr<PKInk> ink = [pkInkClass inkWithType:0 color:UIColor.greenColor weight:100.0];
+    RetainPtr<PKStroke> stroke = adoptNS([[pkStrokeClass alloc] _initWithPath:path.get() ink:ink.get() inputScale:1]);
+    [drawing _addStroke:stroke.get()];
+
+    [canvasView setDrawing:drawing.get()];
+#endif
+}
+
+long UIScriptController::numberOfStrokesInEditableImage()
+{
+#if HAVE(PENCILKIT)
+    PKCanvasView *canvasView = findEditableImageCanvas();
+    return canvasView.drawing._allStrokes.count;
+#else
+    return 0;
+#endif
+}
+
+void UIScriptController::setKeyboardInputModeIdentifier(JSStringRef identifier)
+{
+    TestController::singleton().setKeyboardInputModeIdentifier(toWTFString(toWK(identifier)));
+}
+
+void UIScriptController::toggleCapsLock(JSValueRef callback)
+{
+    m_capsLockOn = !m_capsLockOn;
+    auto *keyboardEvent = createUIPhysicalKeyboardEvent(@"capsLock", [NSString string], m_capsLockOn ? UIKeyModifierAlphaShift : 0,
+        kUIKeyboardInputModifierFlagsChanged, m_capsLockOn);
+    [[UIApplication sharedApplication] handleKeyUIEvent:keyboardEvent];
+    doAsyncTask(callback);
+}
+
+JSObjectRef UIScriptController::attachmentInfo(JSStringRef jsAttachmentIdentifier)
+{
+    TestRunnerWKWebView *webView = TestController::singleton().mainWebView()->platformView();
+
+    auto attachmentIdentifier = toWTFString(toWK(jsAttachmentIdentifier));
+    _WKAttachment *attachment = [webView _attachmentForIdentifier:attachmentIdentifier];
+    _WKAttachmentInfo *attachmentInfo = attachment.info;
+
+    NSDictionary *attachmentInfoDictionary = @{
+        @"id": attachmentIdentifier,
+        @"name": attachmentInfo.name,
+        @"contentType": attachmentInfo.contentType,
+        @"filePath": attachmentInfo.filePath,
+        @"size": @(attachmentInfo.data.length),
+    };
+
+    return JSValueToObject(m_context->jsContext(), [JSValue valueWithObject:attachmentInfoDictionary inContext:[JSContext contextWithJSGlobalContextRef:m_context->jsContext()]].JSValueRef, nullptr);
+}
+
+}
+
+#endif // PLATFORM(IOS_FAMILY)

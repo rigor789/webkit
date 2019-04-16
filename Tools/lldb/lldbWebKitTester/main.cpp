@@ -25,6 +25,10 @@
 
 #include "DumpClassLayoutTesting.h"
 #include <stdio.h>
+#include <wtf/HashMap.h>
+#include <wtf/HashSet.h>
+#include <wtf/OptionSet.h>
+#include <wtf/Vector.h>
 #include <wtf/text/StringBuilder.h>
 #include <wtf/text/WTFString.h>
 
@@ -41,6 +45,14 @@ static String utf16String(const char16_t (&string)[length])
     return builder.toString();
 }
 
+enum class ExampleFlags {
+    A = 1 << 0,
+    B = 1 << 1,
+    C = 1 << 2,
+    D = 1 << 3,
+    AAlias = A,
+};
+
 static void testSummaryProviders()
 {
     String aNullString { "" };
@@ -55,11 +67,24 @@ static void testSummaryProviders()
     String a16BitString = utf16String(u"\u1680Cappuccino\u1680");
     StringImpl* a16BitStringImpl = a16BitString.impl();
 
-
     Vector<int> anEmptyVector;
     Vector<int> aVectorWithOneItem;
     aVectorWithOneItem.reserveCapacity(16);
     aVectorWithOneItem.append(1);
+
+    HashMap<unsigned, int> hashMapOfInts;
+    hashMapOfInts.add(12, 23);
+    hashMapOfInts.add(34, 45);
+
+    HashSet<unsigned> hashSetOfInts;
+    hashSetOfInts.add(42);
+
+    HashMap<unsigned, Vector<int>> hashMapOfVectors;
+    hashMapOfVectors.add(1, Vector<int>({2, 3}));
+
+    OptionSet<ExampleFlags> exampleFlagsEmpty;
+    OptionSet<ExampleFlags> exampleFlagsSimple { ExampleFlags::A, ExampleFlags::D, ExampleFlags::C };
+    OptionSet<ExampleFlags> exampleFlagsAliasedFlag { ExampleFlags::AAlias, ExampleFlags::D };
 
     breakForTestingSummaryProviders();
 }
