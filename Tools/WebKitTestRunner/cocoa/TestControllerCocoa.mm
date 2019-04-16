@@ -32,6 +32,7 @@
 #import "TestInvocation.h"
 #import "TestRunnerWKWebView.h"
 #import <Foundation/Foundation.h>
+#import <Security/SecItem.h>
 #import <WebKit/WKContextConfigurationRef.h>
 #import <WebKit/WKCookieManager.h>
 #import <WebKit/WKPreferencesRefPrivate.h>
@@ -65,13 +66,9 @@ void initializeWebViewConfiguration(const char* libraryPath, WKStringRef injecte
     globalWebViewConfiguration._allowUniversalAccessFromFileURLs = YES;
     globalWebViewConfiguration._applePayEnabled = YES;
 
-#if (PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 101300) || PLATFORM(IOS)
-    WKCookieManagerSetCookieStoragePartitioningEnabled(WKContextGetCookieManager(context), true);
     WKCookieManagerSetStorageAccessAPIEnabled(WKContextGetCookieManager(context), true);
-#endif
 
     WKWebsiteDataStore* poolWebsiteDataStore = (__bridge WKWebsiteDataStore *)WKContextGetWebsiteDataStore((__bridge WKContextRef)globalWebViewConfiguration.processPool);
-    [poolWebsiteDataStore _setCacheStoragePerOriginQuota: 400 * 1024];
     if (libraryPath) {
         String cacheStorageDirectory = String(libraryPath) + '/' + "CacheStorage";
         [poolWebsiteDataStore _setCacheStorageDirectory: cacheStorageDirectory];
@@ -83,7 +80,7 @@ void initializeWebViewConfiguration(const char* libraryPath, WKStringRef injecte
     [globalWebViewConfiguration.websiteDataStore _setResourceLoadStatisticsEnabled:YES];
     [globalWebViewConfiguration.websiteDataStore _resourceLoadStatisticsSetShouldSubmitTelemetry:NO];
 
-#if PLATFORM(IOS)
+#if PLATFORM(IOS_FAMILY)
     globalWebViewConfiguration.allowsInlineMediaPlayback = YES;
     globalWebViewConfiguration._inlineMediaPlaybackRequiresPlaysInlineAttribute = NO;
     globalWebViewConfiguration._invisibleAutoplayNotPermitted = NO;
@@ -144,7 +141,7 @@ void TestController::platformCreateWebView(WKPageConfigurationRef, const TestOpt
 #if WK_API_ENABLED
     RetainPtr<WKWebViewConfiguration> copiedConfiguration = adoptNS([globalWebViewConfiguration copy]);
 
-#if PLATFORM(IOS)
+#if PLATFORM(IOS_FAMILY)
     if (options.useDataDetection)
         [copiedConfiguration setDataDetectorTypes:WKDataDetectorTypeAll];
     if (options.ignoresViewportScaleLimits)
@@ -156,10 +153,13 @@ void TestController::platformCreateWebView(WKPageConfigurationRef, const TestOpt
 #endif
 
     if (options.enableAttachmentElement)
-        [copiedConfiguration _setAttachmentElementEnabled: YES];
+        [copiedConfiguration _setAttachmentElementEnabled:YES];
 
     if (options.enableColorFilter)
-        [copiedConfiguration _setColorFilterEnabled: YES];
+        [copiedConfiguration _setColorFilterEnabled:YES];
+
+    if (options.enableEditableImages)
+        [copiedConfiguration _setEditableImagesEnabled:YES];
 
     if (options.applicationManifest.length()) {
         auto manifestPath = [NSString stringWithUTF8String:options.applicationManifest.c_str()];
@@ -171,6 +171,9 @@ void TestController::platformCreateWebView(WKPageConfigurationRef, const TestOpt
 
     if (options.punchOutWhiteBackgroundsInDarkMode)
         m_mainWebView->setDrawsBackground(false);
+
+    if (options.editable)
+        m_mainWebView->setEditable(true);
 #else
     m_mainWebView = std::make_unique<PlatformWebView>(globalWebViewConfiguration, options);
 #endif
@@ -197,15 +200,32 @@ WKContextRef TestController::platformAdjustContext(WKContextRef context, WKConte
 #endif
 }
 
-void TestController::platformRunUntil(bool& done, double timeout)
+void TestController::platformRunUntil(bool& done, WTF::Seconds timeout)
 {
-    NSDate *endDate = (timeout > 0) ? [NSDate dateWithTimeIntervalSinceNow:timeout] : [NSDate distantFuture];
+    NSDate *endDate = (timeout > 0_s) ? [NSDate dateWithTimeIntervalSinceNow:timeout.seconds()] : [NSDate distantFuture];
 
     while (!done && [endDate compare:[NSDate date]] == NSOrderedDescending)
         [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:endDate];
 }
 
-void TestController::cocoaResetStateToConsistentValues()
+static NSCalendar *swizzledCalendar()
+{
+    return [NSCalendar calendarWithIdentifier:TestController::singleton().getOverriddenCalendarIdentifier().get()];
+}
+    
+RetainPtr<NSString> TestController::getOverriddenCalendarIdentifier() const
+{
+    return m_overriddenCalendarIdentifier;
+}
+
+void TestController::setDefaultCalendarType(NSString *identifier)
+{
+    m_overriddenCalendarIdentifier = identifier;
+    if (!m_calendarSwizzler)
+        m_calendarSwizzler = std::make_unique<ClassMethodSwizzler>([NSCalendar class], @selector(currentCalendar), reinterpret_cast<IMP>(swizzledCalendar));
+}
+    
+void TestController::cocoaResetStateToConsistentValues(const TestOptions& options)
 {
 #if WK_API_ENABLED
     __block bool doneRemoving = false;
@@ -215,8 +235,20 @@ void TestController::cocoaResetStateToConsistentValues()
     platformRunUntil(doneRemoving, noTimeout);
     [[_WKUserContentExtensionStore defaultStore] _removeAllContentExtensions];
 
-    if (PlatformWebView* webView = mainWebView())
-        [webView->platformView().configuration.userContentController _removeAllUserContentFilters];
+
+    m_calendarSwizzler = nullptr;
+    m_overriddenCalendarIdentifier = nil;
+    
+    if (auto* webView = mainWebView()) {
+        TestRunnerWKWebView *platformView = webView->platformView();
+        [platformView.configuration.userContentController _removeAllUserContentFilters];
+        platformView._viewScale = 1;
+        platformView._minimumEffectiveDeviceWidth = 0;
+
+        // Toggle on before the test, and toggle off after the test.
+        if (options.shouldShowSpellCheckingDots)
+            [platformView toggleContinuousSpellChecking:nil];
+    }
 #endif
 }
 
@@ -233,7 +265,7 @@ unsigned TestController::imageCountInGeneralPasteboard() const
 {
 #if PLATFORM(MAC)
     NSData *data = [[NSPasteboard generalPasteboard] dataForType:WebArchivePboardType];
-#elif PLATFORM(IOS)
+#elif PLATFORM(IOS_FAMILY)
     NSData *data = [[UIPasteboard generalPasteboard] valueForPasteboardType:WebArchivePboardType];
 #endif
     if (!data)
@@ -289,6 +321,73 @@ void TestController::injectUserScript(WKStringRef script)
     auto userScript = adoptNS([[WKUserScript alloc] initWithSource: toWTFString(script) injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO]);
 
     [[globalWebViewConfiguration userContentController] addUserScript: userScript.get()];
+#endif
+}
+
+void TestController::addTestKeyToKeychain(const String& privateKeyBase64, const String& attrLabel, const String& applicationTagBase64)
+{
+    // FIXME(182772)
+#if PLATFORM(IOS_FAMILY)
+    NSDictionary* options = @{
+        (id)kSecAttrKeyType: (id)kSecAttrKeyTypeECSECPrimeRandom,
+        (id)kSecAttrKeyClass: (id)kSecAttrKeyClassPrivate,
+        (id)kSecAttrKeySizeInBits: @256
+    };
+    CFErrorRef errorRef = nullptr;
+    auto key = adoptCF(SecKeyCreateWithData(
+        (__bridge CFDataRef)adoptNS([[NSData alloc] initWithBase64EncodedString:privateKeyBase64 options:NSDataBase64DecodingIgnoreUnknownCharacters]).get(),
+        (__bridge CFDictionaryRef)options,
+        &errorRef
+    ));
+    ASSERT(!errorRef);
+
+    NSDictionary* addQuery = @{
+        (id)kSecValueRef: (id)key.get(),
+        (id)kSecClass: (id)kSecClassKey,
+        (id)kSecAttrLabel: attrLabel,
+        (id)kSecAttrApplicationTag: adoptNS([[NSData alloc] initWithBase64EncodedString:applicationTagBase64 options:NSDataBase64DecodingIgnoreUnknownCharacters]).get()
+    };
+    OSStatus status = SecItemAdd((__bridge CFDictionaryRef)addQuery, NULL);
+    ASSERT_UNUSED(status, !status);
+#endif
+}
+
+void TestController::cleanUpKeychain(const String& attrLabel)
+{
+    // FIXME(182772)
+#if PLATFORM(IOS_FAMILY)
+    NSDictionary* deleteQuery = @{
+        (id)kSecClass: (id)kSecClassKey,
+        (id)kSecAttrLabel: attrLabel
+    };
+    SecItemDelete((__bridge CFDictionaryRef)deleteQuery);
+#endif
+}
+
+bool TestController::keyExistsInKeychain(const String& attrLabel, const String& applicationTagBase64)
+{
+    // FIXME(182772)
+#if PLATFORM(IOS_FAMILY)
+    NSDictionary *query = @{
+        (id)kSecClass: (id)kSecClassKey,
+        (id)kSecAttrKeyClass: (id)kSecAttrKeyClassPrivate,
+        (id)kSecAttrLabel: attrLabel,
+        (id)kSecAttrApplicationTag: adoptNS([[NSData alloc] initWithBase64EncodedString:applicationTagBase64 options:NSDataBase64DecodingIgnoreUnknownCharacters]).get(),
+    };
+    OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, NULL);
+    if (!status)
+        return true;
+    ASSERT(status == errSecItemNotFound);
+#endif
+    return false;
+}
+
+bool TestController::isDoingMediaCapture() const
+{
+#if WK_API_ENABLED
+    return m_mainWebView->platformView()._mediaCaptureState != _WKMediaCaptureStateNone;
+#else
+    return false;
 #endif
 }
 

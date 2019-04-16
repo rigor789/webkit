@@ -43,12 +43,6 @@ var PLATFORMS = {
             'MAC': {
                 expectationsDirectory: 'mac',
                 subPlatforms: {
-                    'ELCAPITAN': {
-                        subPlatforms: {
-                            'WK1': { fallbackPlatforms: ['APPLE_MAC_ELCAPITAN', 'APPLE_MAC'] },
-                            'WK2': { fallbackPlatforms: ['APPLE_MAC_ELCAPITAN', 'APPLE_MAC', 'WK2'], expectationsDirectory: 'mac-wk2'}
-                        }
-                    },
                     'SIERRA': {
                         subPlatforms: {
                             'WK1': { fallbackPlatforms: ['APPLE_MAC_SIERRA', 'APPLE_MAC'] },
@@ -93,6 +87,9 @@ var PLATFORMS = {
         subPlatforms: {
             'LINUX': { fallbackPlatforms: ['WPE', 'WK2'] }
         }
+    },
+    'WINCAIRO': {
+        expectationsDirectory: 'wincairo',
     }
 };
 
@@ -355,6 +352,9 @@ function determineBuilderPlatform(builderNameUpperCase)
         return 'GTK_LINUX';
     if (string.contains(builderNameUpperCase, 'WPE LINUX'))
         return 'WPE_LINUX';
+
+    if (string.contains(builderNameUpperCase, 'WINCAIRO'))
+        return 'WINCAIRO';
 
     if (string.contains(builderNameUpperCase, 'MOJAVE'))
         return determineWKPlatform(builderNameUpperCase, 'APPLE_MAC_MOJAVE');

@@ -27,12 +27,12 @@
 #import "HIDEventGenerator.h"
 
 #import "GeneratedTouchesDebugWindow.h"
-#import "IOKitSPI.h"
-#import "UIKitTestSPI.h"
+#import "UIKitSPI.h"
 #import <mach/mach_time.h>
+#import <pal/spi/cocoa/IOKitSPI.h>
 #import <wtf/Assertions.h>
 #import <wtf/BlockPtr.h>
-#import <wtf/RetainPtr.h>
+#import <wtf/Optional.h>
 #import <wtf/SoftLinking.h>
 
 SOFT_LINK_PRIVATE_FRAMEWORK(BackBoardServices)
@@ -171,9 +171,9 @@ static void delayBetweenMove(int eventIndex, double elapsed)
     return eventGenerator;
 }
 
-+ (unsigned)nextEventCallbackID
++ (CFIndex)nextEventCallbackID
 {
-    static unsigned callbackID = 0;
+    static CFIndex callbackID = 0;
     return ++callbackID;
 }
 
@@ -197,8 +197,6 @@ static void delayBetweenMove(int eventIndex, double elapsed)
     [_debugTouchViews release];
     [super dealloc];
 }
-
-
 
 - (void)_sendIOHIDKeyboardEvent:(uint64_t)timestamp usage:(uint32_t)usage isKeyDown:(bool)isKeyDown
 {
@@ -479,24 +477,21 @@ static InterpolationType interpolationFromString(NSString *string)
 
 - (BOOL)_sendMarkerHIDEventWithCompletionBlock:(void (^)(void))completionBlock
 {
-    unsigned callbackID = [HIDEventGenerator nextEventCallbackID];
-    void (^completionBlockCopy)() = Block_copy(completionBlock);
-    [_eventCallbacks setObject:completionBlockCopy forKey:@(callbackID)];
+    auto callbackID = [HIDEventGenerator nextEventCallbackID];
+    [_eventCallbacks setObject:Block_copy(completionBlock) forKey:@(callbackID)];
 
-    uint64_t machTime = mach_absolute_time();
-    RetainPtr<IOHIDEventRef> markerEvent = adoptCF(IOHIDEventCreateVendorDefinedEvent(kCFAllocatorDefault,
-        machTime,
+    auto markerEvent = adoptCF(IOHIDEventCreateVendorDefinedEvent(kCFAllocatorDefault,
+        mach_absolute_time(),
         kHIDPage_VendorDefinedStart + 100,
         0,
         1,
         (uint8_t*)&callbackID,
-        sizeof(unsigned),
+        sizeof(CFIndex),
         kIOHIDEventOptionNone));
     
     if (markerEvent) {
-        markerEvent.get();
-        dispatch_async(dispatch_get_main_queue(), ^{
-            uint32_t contextID = [UIApplication sharedApplication].keyWindow._contextId;
+        dispatch_async(dispatch_get_main_queue(), [markerEvent = WTFMove(markerEvent)] {
+            auto contextID = [UIApplication sharedApplication].keyWindow._contextId;
             ASSERT(contextID);
             BKSHIDEventSetDigitizerInfo(markerEvent.get(), contextID, false, false, NULL, 0, 0);
             [[UIApplication sharedApplication] _enqueueHIDEvent:markerEvent.get()];
@@ -802,7 +797,6 @@ static inline bool shouldWrapWithShiftKeyEventForCharacter(NSString *key)
     if (65 <= keyCode && keyCode <= 90)
         return true;
     switch (keyCode) {
-    case '`':
     case '!':
     case '@':
     case '#':
@@ -827,6 +821,22 @@ static inline bool shouldWrapWithShiftKeyEventForCharacter(NSString *key)
         return true;
     }
     return false;
+}
+
+static Optional<uint32_t> keyCodeForDOMFunctionKey(NSString *key)
+{
+    // Compare the input string with the function-key names defined by the DOM spec (i.e. "F1",...,"F24").
+    // If the input string is a function-key name, set its key code. On iOS the key codes for the first 12
+    // function keys are disjoint from the key codes of the last 12 function keys.
+    for (int i = 1; i <= 12; ++i) {
+        if ([key isEqualToString:[NSString stringWithFormat:@"F%d", i]])
+            return kHIDUsage_KeyboardF1 + i - 1;
+    }
+    for (int i = 13; i <= 24; ++i) {
+        if ([key isEqualToString:[NSString stringWithFormat:@"F%d", i]])
+            return kHIDUsage_KeyboardF13 + i - 1;
+    }
+    return WTF::nullopt;
 }
 
 static inline uint32_t hidUsageCodeForCharacter(NSString *key)
@@ -911,11 +921,22 @@ static inline uint32_t hidUsageCodeForCharacter(NSString *key)
             return kHIDUsage_KeyboardSpacebar;
         }
     }
-    const int functionKeyOffset = kHIDUsage_KeyboardF1;
-    for (int functionKeyIndex = 1; functionKeyIndex <= 12; ++functionKeyIndex) {
-        if ([key isEqualToString:[NSString stringWithFormat:@"F%d", functionKeyIndex]])
-            return functionKeyOffset + functionKeyIndex - 1;
-    }
+
+    if (auto keyCode = keyCodeForDOMFunctionKey(key))
+        return *keyCode;
+
+    if ([key isEqualToString:@"capsLock"])
+        return kHIDUsage_KeyboardCapsLock;
+    if ([key isEqualToString:@"pageUp"])
+        return kHIDUsage_KeyboardPageUp;
+    if ([key isEqualToString:@"pageDown"])
+        return kHIDUsage_KeyboardPageDown;
+    if ([key isEqualToString:@"home"])
+        return kHIDUsage_KeyboardHome;
+    if ([key isEqualToString:@"insert"])
+        return kHIDUsage_KeyboardInsert;
+    if ([key isEqualToString:@"end"])
+        return kHIDUsage_KeyboardEnd;
     if ([key isEqualToString:@"escape"])
         return kHIDUsage_KeyboardEscape;
     if ([key isEqualToString:@"return"] || [key isEqualToString:@"enter"])
@@ -930,15 +951,33 @@ static inline uint32_t hidUsageCodeForCharacter(NSString *key)
         return kHIDUsage_KeyboardDownArrow;
     if ([key isEqualToString:@"delete"])
         return kHIDUsage_KeyboardDeleteOrBackspace;
-    // The simulator keyboard interprets both left and right modifier keys using the left version of the usage code.
-    if ([key isEqualToString:@"leftControl"] || [key isEqualToString:@"rightControl"])
+    if ([key isEqualToString:@"forwardDelete"])
+        return kHIDUsage_KeyboardDeleteForward;
+    if ([key isEqualToString:@"leftCommand"])
+        return kHIDUsage_KeyboardLeftGUI;
+    if ([key isEqualToString:@"rightCommand"])
+        return kHIDUsage_KeyboardRightGUI;
+    if ([key isEqualToString:@"clear"]) // Num Lock / Clear
+        return kHIDUsage_KeypadNumLock;
+    if ([key isEqualToString:@"leftControl"])
         return kHIDUsage_KeyboardLeftControl;
-    if ([key isEqualToString:@"leftShift"] || [key isEqualToString:@"rightShift"])
+    if ([key isEqualToString:@"rightControl"])
+        return kHIDUsage_KeyboardRightControl;
+    if ([key isEqualToString:@"leftShift"])
         return kHIDUsage_KeyboardLeftShift;
-    if ([key isEqualToString:@"leftAlt"] || [key isEqualToString:@"rightAlt"])
+    if ([key isEqualToString:@"rightShift"])
+        return kHIDUsage_KeyboardRightShift;
+    if ([key isEqualToString:@"leftAlt"])
         return kHIDUsage_KeyboardLeftAlt;
+    if ([key isEqualToString:@"rightAlt"])
+        return kHIDUsage_KeyboardRightAlt;
 
     return 0;
+}
+
+RetainPtr<IOHIDEventRef> createHIDKeyEvent(NSString *character, uint64_t timestamp, bool isKeyDown)
+{
+    return adoptCF(IOHIDEventCreateKeyboardEvent(kCFAllocatorDefault, timestamp, kHIDPage_KeyboardOrKeypad, hidUsageCodeForCharacter(character), isKeyDown, kIOHIDEventOptionNone));
 }
 
 - (void)keyPress:(NSString *)character completionBlock:(void (^)(void))completionBlock
@@ -951,34 +990,6 @@ static inline uint32_t hidUsageCodeForCharacter(NSString *key)
         [self _sendIOHIDKeyboardEvent:absoluteMachTime usage:kHIDUsage_KeyboardLeftShift isKeyDown:true];
 
     [self _sendIOHIDKeyboardEvent:absoluteMachTime usage:usage isKeyDown:true];
-    [self _sendIOHIDKeyboardEvent:absoluteMachTime usage:usage isKeyDown:false];
-
-    if (shouldWrapWithShift)
-        [self _sendIOHIDKeyboardEvent:absoluteMachTime usage:kHIDUsage_KeyboardLeftShift isKeyDown:false];
-
-    [self _sendMarkerHIDEventWithCompletionBlock:completionBlock];
-}
-
-- (void)keyDown:(NSString *)character completionBlock:(void (^)(void))completionBlock
-{
-    bool shouldWrapWithShift = shouldWrapWithShiftKeyEventForCharacter(character);
-    uint32_t usage = hidUsageCodeForCharacter(character);
-    uint64_t absoluteMachTime = mach_absolute_time();
-
-    if (shouldWrapWithShift)
-        [self _sendIOHIDKeyboardEvent:absoluteMachTime usage:kHIDUsage_KeyboardLeftShift isKeyDown:true];
-
-    [self _sendIOHIDKeyboardEvent:absoluteMachTime usage:usage isKeyDown:true];
-
-    [self _sendMarkerHIDEventWithCompletionBlock:completionBlock];
-}
-
-- (void)keyUp:(NSString *)character completionBlock:(void (^)(void))completionBlock
-{
-    bool shouldWrapWithShift = shouldWrapWithShiftKeyEventForCharacter(character);
-    uint32_t usage = hidUsageCodeForCharacter(character);
-    uint64_t absoluteMachTime = mach_absolute_time();
-
     [self _sendIOHIDKeyboardEvent:absoluteMachTime usage:usage isKeyDown:false];
 
     if (shouldWrapWithShift)

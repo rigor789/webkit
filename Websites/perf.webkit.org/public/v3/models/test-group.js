@@ -10,6 +10,8 @@ class TestGroup extends LabeledObject {
         this._createdAt = new Date(object.createdAt);
         this._isHidden = object.hidden;
         this._needsNotification = object.needsNotification;
+        this._mayNeedMoreRequests = object.mayNeedMoreRequests;
+        this._initialRepetitionCount = object.initialRepetitionCount;
         this._buildRequests = [];
         this._orderBuildRequestsLazily = new LazilyEvaluatedFunction((...buildRequests) => {
             return buildRequests.sort((a, b) => a.order() - b.order());
@@ -33,6 +35,8 @@ class TestGroup extends LabeledObject {
         this._isHidden = object.hidden;
         this._needsNotification = object.needsNotification;
         this._notificationSentAt = object.notificationSentAt ? new Date(object.notificationSentAt) : null;
+        this._mayNeedMoreRequests = object.mayNeedMoreRequests;
+        this._initialRepetitionCount = object.initialRepetitionCount;
     }
 
     task() { return AnalysisTask.findById(this._taskId); }
@@ -40,6 +44,8 @@ class TestGroup extends LabeledObject {
     isHidden() { return this._isHidden; }
     buildRequests() { return this._buildRequests; }
     needsNotification() { return this._needsNotification; }
+    mayNeedMoreRequests() { return this._mayNeedMoreRequests; }
+    initialRepetitionCount() { return this._initialRepetitionCount; }
     notificationSentAt() { return this._notificationSentAt; }
     author() { return this._authorName; }
     addBuildRequest(request)
@@ -134,25 +140,31 @@ class TestGroup extends LabeledObject {
         return this._buildRequests.some(function (request) { return request.isPending(); });
     }
 
-    compareTestResults(metric, beforeValues, afterValues)
+    compareTestResults(metric, beforeMeasurements, afterMeasurements)
     {
         console.assert(metric);
+        const beforeValues = beforeMeasurements.map((measurment) => measurment.value);
+        const afterValues = afterMeasurements.map((measurement) => measurement.value);
         const beforeMean = Statistics.sum(beforeValues) / beforeValues.length;
         const afterMean = Statistics.sum(afterValues) / afterValues.length;
 
-        var result = {changeType: null, status: 'failed', label: 'Failed', fullLabel: 'Failed', isStatisticallySignificant: false};
+        const result = {changeType: null, status: 'failed', label: 'Failed', fullLabelForMean: 'Failed',
+            isStatisticallySignificantForMean: false, fullLabelForIndividual: 'Failed', isStatisticallySignificantForIndividual: false,
+            probabilityRangeForMean: [null, null], probabilityRangeForIndividual: [null, null]};
 
-        var hasCompleted = this.hasFinished();
+        const hasCompleted = this.hasFinished();
         if (!hasCompleted) {
             if (this.hasStarted()) {
                 result.status = 'running';
                 result.label = 'Running';
-                result.fullLabel = 'Running';
+                result.fullLabelForMean = 'Running';
+                result.fullLabelForIndividual = 'Running';
             } else {
                 console.assert(result.changeType === null);
                 result.status = 'pending';
                 result.label = 'Pending';
-                result.fullLabel = 'Pending';
+                result.fullLabelForMean = 'Pending';
+                result.fullLabelForIndividual = 'Pending';
             }
         }
 
@@ -160,54 +172,76 @@ class TestGroup extends LabeledObject {
             const summary = metric.labelForDifference(beforeMean, afterMean, 'better', 'worse');
             result.changeType = summary.changeType;
             result.label = summary.changeLabel;
-            var isSignificant = Statistics.testWelchsT(beforeValues, afterValues);
-            var significanceLabel = isSignificant ? 'significant' : 'insignificant';
+
+
+            const constructSignificanceLabel = (probabilityRange) => !!probabilityRange.range[0] ? `significant with ${(probabilityRange.range[0] * 100).toFixed()}% probability` : 'insignificant';
+
+            const probabilityRangeForMean = Statistics.probabilityRangeForWelchsT(beforeValues, afterValues);
+            const significanceLabelForMean = constructSignificanceLabel(probabilityRangeForMean);
+            result.fullLabelForMean = `${result.label} (${significanceLabelForMean})`;
+            result.isStatisticallySignificantForMean = !!probabilityRangeForMean.range[0];
+            result.probabilityRangeForMean = probabilityRangeForMean.range;
+
+            const adaptMeasurementToSamples = (measurement) => ({sum: measurement.sum, squareSum: measurement.squareSum, sampleSize: measurement.iterationCount});
+            const probabilityRangeForIndividual = Statistics.probabilityRangeForWelchsTForMultipleSamples(beforeMeasurements.map(adaptMeasurementToSamples), afterMeasurements.map(adaptMeasurementToSamples));
+            const significanceLabelForIndividual = constructSignificanceLabel(probabilityRangeForIndividual);
+            result.fullLabelForIndividual = `${result.label} (${significanceLabelForIndividual})`;
+            result.isStatisticallySignificantForIndividual = !!probabilityRangeForIndividual.range[0];
+            result.probabilityRangeForIndividual = probabilityRangeForIndividual.range;
 
             if (hasCompleted)
-                result.status = isSignificant ? result.changeType : 'unchanged';
-            result.fullLabel = `${result.label} (statistically ${significanceLabel})`;
-            result.isStatisticallySignificant = isSignificant;
+                result.status = result.isStatisticallySignificantForMean ? result.changeType : 'unchanged';
         }
 
         return result;
     }
 
+    async _updateBuildRequest(content, endPoint='update-test-group')
+    {
+        await PrivilegedAPI.sendRequest(endPoint, content);
+        const data = await TestGroup.cachedFetch(`/api/test-groups/${this.id()}`, {}, true);
+        return TestGroup._createModelsFromFetchedTestGroups(data);
+    }
+
     updateName(newName)
     {
-        var self = this;
-        var id = this.id();
-        return PrivilegedAPI.sendRequest('update-test-group', {
-            group: id,
+        return this._updateBuildRequest({
+            group: this.id(),
             name: newName,
-        }).then(function (data) {
-            return TestGroup.cachedFetch(`/api/test-groups/${id}`, {}, true)
-                .then(TestGroup._createModelsFromFetchedTestGroups.bind(TestGroup));
         });
     }
 
     updateHiddenFlag(hidden)
     {
-        var self = this;
-        var id = this.id();
-        return PrivilegedAPI.sendRequest('update-test-group', {
-            group: id,
+        return this._updateBuildRequest({
+            group: this.id(),
             hidden: !!hidden,
-        }).then(function (data) {
-            return TestGroup.cachedFetch(`/api/test-groups/${id}`, {}, true)
-                .then(TestGroup._createModelsFromFetchedTestGroups.bind(TestGroup));
         });
     }
 
     async didSendNotification()
     {
-        const id = this.id();
-        await PrivilegedAPI.sendRequest('update-test-group', {
-            group: id,
+        return await this._updateBuildRequest({
+            group: this.id(),
             needsNotification: false,
             notificationSentAt: (new Date).toISOString()
         });
-        const data = await TestGroup.cachedFetch(`/api/test-groups/${id}`, {}, true);
-        return TestGroup._createModelsFromFetchedTestGroups(data);
+    }
+
+    async addMoreBuildRequests(addCount)
+    {
+        return await this._updateBuildRequest({
+            group: this.id(),
+            addCount,
+        }, 'add-build-requests');
+    }
+
+    async clearMayNeedMoreBuildRequests()
+    {
+        return await this._updateBuildRequest({
+            group: this.id(),
+            mayNeedMoreRequests: false
+        });
     }
 
     static createWithTask(taskName, platform, test, groupName, repetitionCount, commitSets, notifyOnCompletion)
@@ -258,6 +292,11 @@ class TestGroup extends LabeledObject {
     static fetchAllWithNotificationReady()
     {
         return this.cachedFetch('/api/test-groups/ready-for-notification', null, true).then(this._createModelsFromFetchedTestGroups.bind(this));
+    }
+
+    static fetchAllThatMayNeedMoreRequests()
+    {
+        return this.cachedFetch('/api/test-groups/need-more-requests', null, true).then(this._createModelsFromFetchedTestGroups.bind(this));
     }
 
     static _createModelsFromFetchedTestGroups(data)

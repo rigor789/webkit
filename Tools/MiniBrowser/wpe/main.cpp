@@ -27,7 +27,9 @@
 
 #include "HeadlessViewBackend.h"
 #include "WindowViewBackend.h"
+#if ENABLE_WEB_AUDIO || ENABLE_VIDEO
 #include <gst/gst.h>
+#endif
 #include <memory>
 #include <wpe/webkit.h>
 
@@ -64,7 +66,7 @@ public:
 
     bool dispatchKeyboardEvent(struct wpe_input_keyboard_event* event) override
     {
-        if (event->pressed && event->modifiers & wpe_input_keyboard_modifier_control && event->keyCode == 'q') {
+        if (event->pressed && event->modifiers & wpe_input_keyboard_modifier_control && event->key_code == WPE_KEY_q) {
             g_main_loop_quit(m_loop);
             return true;
         }
@@ -84,12 +86,19 @@ static WebKitWebView* createWebViewForAutomationCallback(WebKitAutomationSession
 static void automationStartedCallback(WebKitWebContext*, WebKitAutomationSession* session, WebKitWebView* view)
 {
     auto* info = webkit_application_info_new();
-    // FIXME: add version info when wpe has WebKitVersion.h
-    // webkit_application_info_set_version(info, WEBKIT_MAJOR_VERSION, WEBKIT_MINOR_VERSION, WEBKIT_MICRO_VERSION);
+    webkit_application_info_set_version(info, WEBKIT_MAJOR_VERSION, WEBKIT_MINOR_VERSION, WEBKIT_MICRO_VERSION);
     webkit_automation_session_set_application_info(session, info);
     webkit_application_info_unref(info);
 
     g_signal_connect(session, "create-web-view", G_CALLBACK(createWebViewForAutomationCallback), view);
+}
+
+static gboolean decidePermissionRequest(WebKitWebView *, WebKitPermissionRequest *request, gpointer)
+{
+    g_print("Accepting %s request\n", G_OBJECT_TYPE_NAME(request));
+    webkit_permission_request_allow(request);
+
+    return TRUE;
 }
 
 static std::unique_ptr<WPEToolingBackends::ViewBackend> createViewBackend(uint32_t width, uint32_t height)
@@ -107,7 +116,9 @@ int main(int argc, char *argv[])
 
     GOptionContext* context = g_option_context_new(nullptr);
     g_option_context_add_main_entries(context, commandLineOptions, nullptr);
+#if ENABLE_WEB_AUDIO || ENABLE_VIDEO
     g_option_context_add_group(context, gst_init_get_option_group());
+#endif
 
     GError* error = nullptr;
     if (!g_option_context_parse(context, &argc, &argv, &error)) {
@@ -178,6 +189,7 @@ int main(int argc, char *argv[])
 
     webkit_web_context_set_automation_allowed(webContext, automationMode);
     g_signal_connect(webContext, "automation-started", G_CALLBACK(automationStartedCallback), webView);
+    g_signal_connect(webView, "permission-request", G_CALLBACK(decidePermissionRequest), NULL);
 
     if (ignoreTLSErrors)
         webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);

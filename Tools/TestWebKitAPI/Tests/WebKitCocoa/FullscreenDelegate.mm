@@ -44,7 +44,7 @@ static bool receivedDidEnterFullscreenMessage;
 static bool receivedWillExitFullscreenMessage;
 static bool receivedDidExitFullscreenMessage;
 
-static void didFinishLoadForFrame(WKPageRef, WKFrameRef, WKTypeRef, const void*)
+static void didFinishNavigation(WKPageRef, WKNavigationRef, WKTypeRef, const void*)
 {
     receivedLoadedMessage = true;
 }
@@ -117,7 +117,7 @@ TEST(Fullscreen, Delegate)
 
 TEST(Fullscreen, WKViewDelegate)
 {
-    WKRetainPtr<WKContextRef> context = adoptWK(WKContextCreate());
+    WKRetainPtr<WKContextRef> context = adoptWK(WKContextCreateWithConfiguration(nullptr));
     WKRetainPtr<WKPageGroupRef> pageGroup(AdoptWK, WKPageGroupCreateWithIdentifier(Util::toWK("FullscreenDelegate").get()));
     WKPreferencesRef preferences = WKPageGroupGetPreferences(pageGroup.get());
     WKPreferencesSetFullScreenEnabled(preferences, true);
@@ -127,12 +127,12 @@ TEST(Fullscreen, WKViewDelegate)
     RetainPtr<FullscreenDelegateMessageHandler> handler = adoptNS([[FullscreenDelegateMessageHandler alloc] init]);
     WKPageSetFullscreenDelegate(webView.page(), handler.get());
 
-    WKPageLoaderClientV0 loaderClient;
+    WKPageNavigationClientV0 loaderClient;
     memset(&loaderClient, 0 , sizeof(loaderClient));
 
     loaderClient.base.version = 0;
-    loaderClient.didFinishLoadForFrame = didFinishLoadForFrame;
-    WKPageSetPageLoaderClient(webView.page(), &loaderClient.base);
+    loaderClient.didFinishNavigation = didFinishNavigation;
+    WKPageSetPageNavigationClient(webView.page(), &loaderClient.base);
 
     receivedLoadedMessage = false;
     WKRetainPtr<WKURLRef> url(AdoptWK, Util::createURLForResource("FullscreenDelegate", "html"));

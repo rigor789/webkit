@@ -83,8 +83,7 @@ class IOSDeviceTest(ios_testcase.IOSTest):
 
     def test_get_crash_log(self):
         port = self.make_port(port_name=self.port_name)
-        with self.assertRaises(RuntimeError):
-            port._get_crash_log('DumpRenderTree', 1234, None, None, time.time(), wait_for_log=False)
+        self.assertEqual((None, None), port._get_crash_log('DumpRenderTree', 1234, None, None, time.time(), wait_for_log=False))
 
     def test_layout_test_searchpath_with_apple_additions(self):
         with port_testcase.bind_mock_apple_additions():
@@ -113,3 +112,6 @@ class IOSDeviceTest(ios_testcase.IOSTest):
         self.assertEqual(search_path[5], '/mock-checkout/LayoutTests/platform/ios-wk2')
         self.assertEqual(search_path[6], '/mock-checkout/LayoutTests/platform/ios')
         self.assertEqual(search_path[7], '/mock-checkout/LayoutTests/platform/wk2')
+
+    def test_max_child_processes(self):
+        pass

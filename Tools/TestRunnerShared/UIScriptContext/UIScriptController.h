@@ -66,6 +66,10 @@ public:
     void doAfterVisibleContentRectUpdate(JSValueRef callback);
 
     void zoomToScale(double scale, JSValueRef callback);
+    void setViewScale(double);
+    void setMinimumEffectiveWidth(double);
+
+    void resignFirstResponder();
 
     void simulateAccessibilitySettingsChangeNotification(JSValueRef callback);
 
@@ -86,10 +90,9 @@ public:
 
     void enterText(JSStringRef);
     void typeCharacterUsingHardwareKeyboard(JSStringRef character, JSValueRef callback);
-    void keyDownUsingHardwareKeyboard(JSStringRef character, JSValueRef callback);
-    void keyUpUsingHardwareKeyboard(JSStringRef character, JSValueRef callback);
 
-    void selectTextCandidateAtIndex(long index, JSValueRef callback);
+    void keyDown(JSStringRef character, JSValueRef modifierArray);
+    void toggleCapsLock(JSValueRef callback);
 
     void keyboardAccessoryBarNext();
     void keyboardAccessoryBarPrevious();
@@ -102,7 +105,11 @@ public:
     JSRetainPtr<JSStringRef> selectFormPopoverTitle() const;
     JSRetainPtr<JSStringRef> formInputLabel() const;
     void setTimePickerValue(long hour, long minute);
-    
+
+    void setShareSheetCompletesImmediatelyWithResolution(bool resolved);
+
+    bool isShowingDataListSuggestions() const;
+
     JSObjectRef contentsOfUserInterfaceItem(JSStringRef) const;
     void overridePreference(JSStringRef preference, JSStringRef value);
     
@@ -138,6 +145,8 @@ public:
     void setDidHideKeyboardCallback(JSValueRef);
     JSValueRef didHideKeyboardCallback() const;
 
+    bool isShowingKeyboard() const;
+
     void setDidEndScrollingCallback(JSValueRef);
     JSValueRef didEndScrollingCallback() const;
 
@@ -147,14 +156,22 @@ public:
     double minimumZoomScale() const;
     double maximumZoomScale() const;
     
-    std::optional<bool> stableStateOverride() const;
-    void setStableStateOverride(std::optional<bool>);
+    Optional<bool> stableStateOverride() const;
+    void setStableStateOverride(Optional<bool>);
 
     JSObjectRef contentVisibleRect() const;
     
-    JSObjectRef selectionRangeViewRects() const;
+    JSObjectRef textSelectionRangeRects() const;
     JSObjectRef textSelectionCaretRect() const;
+    JSObjectRef selectionStartGrabberViewRect() const;
+    JSObjectRef selectionEndGrabberViewRect() const;
+    JSObjectRef selectionCaretViewRect() const;
+    JSObjectRef selectionRangeViewRects() const;
+    JSObjectRef calendarType() const;
+    void setDefaultCalendarType(JSStringRef calendarIdentifier);
     JSObjectRef inputViewBounds() const;
+
+    void setKeyboardInputModeIdentifier(JSStringRef);
 
     void replaceTextAtRange(JSStringRef, int location, int length);
     void removeAllDynamicDictionaries();
@@ -183,6 +200,11 @@ public:
     void makeWindowContentViewFirstResponder();
     bool isWindowContentViewFirstResponder() const;
 
+    void drawSquareInEditableImage();
+    long numberOfStrokesInEditableImage();
+
+    JSObjectRef attachmentInfo(JSStringRef attachmentIdentifier);
+
 private:
     UIScriptController(UIScriptContext&);
     
@@ -203,9 +225,12 @@ private:
     JSClassRef wrapperClass() final;
 
     JSObjectRef objectFromRect(const WebCore::FloatRect&) const;
-    void waitForTextPredictionsViewAndSelectCandidateAtIndex(long index, unsigned callbackID, float interval);
 
     UIScriptContext* m_context;
+
+#if PLATFORM(COCOA)
+    bool m_capsLockOn { false };
+#endif
 };
 
 }

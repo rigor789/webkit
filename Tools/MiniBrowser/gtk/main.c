@@ -29,7 +29,9 @@
 
 #include "BrowserWindow.h"
 #include <errno.h>
+#if ENABLE_WEB_AUDIO || ENABLE_VIDEO
 #include <gst/gst.h>
+#endif
 #include <gtk/gtk.h>
 #include <string.h>
 #include <webkit2/webkit2.h>
@@ -266,7 +268,7 @@ static void aboutDataRequestFree(AboutDataRequest *request)
     if (request->dataMap)
         g_hash_table_destroy(request->dataMap);
 
-    g_slice_free(AboutDataRequest, request);
+    g_free(request);
 }
 
 static AboutDataRequest* aboutDataRequestNew(WebKitURISchemeRequest *uriRequest)
@@ -274,7 +276,7 @@ static AboutDataRequest* aboutDataRequestNew(WebKitURISchemeRequest *uriRequest)
     if (!aboutDataRequestMap)
         aboutDataRequestMap = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, (GDestroyNotify)aboutDataRequestFree);
 
-    AboutDataRequest *request = g_slice_new0(AboutDataRequest);
+    AboutDataRequest *request = g_new0(AboutDataRequest, 1);
     request->request = g_object_ref(uriRequest);
     g_hash_table_insert(aboutDataRequestMap, GUINT_TO_POINTER(webkit_web_view_get_page_id(webkit_uri_scheme_request_get_web_view(request->request))), request);
 
@@ -402,6 +404,7 @@ static void gotWebsiteDataCallback(WebKitWebsiteDataManager *manager, GAsyncResu
 
     guint64 pageID = webkit_web_view_get_page_id(webkit_uri_scheme_request_get_web_view(dataRequest->request));
     aboutDataFillTable(result, dataRequest, dataList, "Cookies", WEBKIT_WEBSITE_DATA_COOKIES, NULL, pageID);
+    aboutDataFillTable(result, dataRequest, dataList, "Device Id Hash Salt", WEBKIT_WEBSITE_DATA_DEVICE_ID_HASH_SALT, NULL, pageID);
     aboutDataFillTable(result, dataRequest, dataList, "Memory Cache", WEBKIT_WEBSITE_DATA_MEMORY_CACHE, NULL, pageID);
     aboutDataFillTable(result, dataRequest, dataList, "Disk Cache", WEBKIT_WEBSITE_DATA_DISK_CACHE, webkit_website_data_manager_get_disk_cache_directory(manager), pageID);
     aboutDataFillTable(result, dataRequest, dataList, "Session Storage", WEBKIT_WEBSITE_DATA_SESSION_STORAGE, NULL, pageID);
@@ -479,7 +482,9 @@ int main(int argc, char *argv[])
     GOptionContext *context = g_option_context_new(NULL);
     g_option_context_add_main_entries(context, commandLineOptions, 0);
     g_option_context_add_group(context, gtk_get_option_group(TRUE));
+#if ENABLE_WEB_AUDIO || ENABLE_VIDEO
     g_option_context_add_group(context, gst_init_get_option_group());
+#endif
 
     WebKitSettings *webkitSettings = webkit_settings_new();
     webkit_settings_set_enable_developer_extras(webkitSettings, TRUE);

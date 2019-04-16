@@ -210,6 +210,9 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
         case IDM_WEB_INSPECTOR:
             thisWindow->browserWindow()->launchInspector();
             break;
+        case IDM_PROXY_SETTINGS:
+            thisWindow->browserWindow()->openProxySettings();
+            break;
         case IDM_CACHES:
             if (!::IsWindow(thisWindow->m_hCacheWnd)) {
                 thisWindow->m_hCacheWnd = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_CACHES), hWnd, cachesDialogProc, reinterpret_cast<LPARAM>(thisWindow.get()));
@@ -294,9 +297,10 @@ bool MainWindow::toggleMenuItem(UINT menuID)
 
     switch (menuID) {
     case IDM_UA_DEFAULT:
-    case IDM_UA_SAFARI_8_0:
-    case IDM_UA_SAFARI_IOS_8_IPHONE:
-    case IDM_UA_SAFARI_IOS_8_IPAD:
+    case IDM_UA_SAFARI:
+    case IDM_UA_SAFARI_IOS_IPHONE:
+    case IDM_UA_SAFARI_IOS_IPAD:
+    case IDM_UA_EDGE:
     case IDM_UA_IE_11:
     case IDM_UA_CHROME_MAC:
     case IDM_UA_CHROME_WIN:

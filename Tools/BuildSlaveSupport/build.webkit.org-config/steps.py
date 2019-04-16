@@ -390,6 +390,7 @@ class RunWebKitTests(shell.Test):
                "--no-build",
                "--no-show-results",
                "--no-new-test-results",
+               "--clobber-old-results",
                "--builder-name", WithProperties("%(buildername)s"),
                "--build-number", WithProperties("%(buildnumber)s"),
                "--master-name", "webkit.org",
@@ -526,7 +527,7 @@ class RunPythonTests(TestWithFailureCount):
     name = "webkitpy-test"
     description = ["python-tests running"]
     descriptionDone = ["python-tests"]
-    command = ["python", "./Tools/Scripts/test-webkitpy", "--verbose"]
+    command = ["python", "./Tools/Scripts/test-webkitpy", "--verbose", WithProperties("--%(configuration)s")]
     failedTestsFormatString = "%d python test%s failed"
 
     def start(self):

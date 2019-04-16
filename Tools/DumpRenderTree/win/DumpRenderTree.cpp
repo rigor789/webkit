@@ -524,8 +524,8 @@ static void dumpHistoryItem(IWebHistoryItem* item, int indent, bool current)
         return;
 
     if (wcsstr(static_cast<wchar_t*>(url), L"file:/") == static_cast<wchar_t*>(url)) {
-        static wchar_t* layoutTestsStringUnixPath = L"/LayoutTests/";
-        static wchar_t* layoutTestsStringDOSPath = L"\\LayoutTests\\";
+        auto layoutTestsStringUnixPath = L"/LayoutTests/";
+        auto layoutTestsStringDOSPath = L"\\LayoutTests\\";
         
         wchar_t* result = wcsstr(static_cast<wchar_t*>(url), layoutTestsStringUnixPath);
         if (!result)
@@ -785,11 +785,11 @@ static void enableExperimentalFeatures(IWebPreferences* preferences)
     // FIXME: InputEvents
     // FIXME: SubtleCrypto
     prefsPrivate->setVisualViewportAPIEnabled(TRUE);
+    prefsPrivate->setCSSOMViewScrollingAPIEnabled(TRUE);
     prefsPrivate->setWebAnimationsEnabled(TRUE);
     prefsPrivate->setServerTimingEnabled(TRUE);
     // FIXME: WebGL2
     // FIXME: WebRTC
-    prefsPrivate->setCrossOriginWindowPolicySupportEnabled(TRUE);
 }
 
 static void resetWebPreferencesToConsistentValues(IWebPreferences* preferences)
@@ -832,7 +832,7 @@ static void resetWebPreferencesToConsistentValues(IWebPreferences* preferences)
     preferences->setDefaultFontSize(16);
     preferences->setDefaultFixedFontSize(13);
     preferences->setMinimumFontSize(0);
-    preferences->setDefaultTextEncodingName(L"ISO-8859-1");
+    preferences->setDefaultTextEncodingName(_bstr_t(L"ISO-8859-1"));
     preferences->setJavaEnabled(FALSE);
     preferences->setJavaScriptEnabled(TRUE);
     preferences->setEditableLinkBehavior(WebKitEditableLinkOnlyLiveWithShiftKey);
@@ -895,6 +895,7 @@ static void setWebPreferencesForTestOptions(IWebPreferences* preferences, const 
 {
     COMPtr<IWebPreferencesPrivate6> prefsPrivate { Query, preferences };
 
+    prefsPrivate->setWebAnimationsCSSIntegrationEnabled(options.enableWebAnimationsCSSIntegration);
     prefsPrivate->setMenuItemElementEnabled(options.enableMenuItemElement);
     prefsPrivate->setModernMediaControlsEnabled(options.enableModernMediaControls);
     prefsPrivate->setIsSecureContextAttributeEnabled(options.enableIsSecureContextAttribute);
@@ -915,17 +916,6 @@ static void setApplicationId()
         ASSERT(prefsPrivate4);
         _bstr_t fileName = applicationId().charactersWithNullTermination().data();
         prefsPrivate4->setApplicationId(fileName);
-    }
-}
-
-static void setCacheFolder()
-{
-    String libraryPath = libraryPathForDumpRenderTree();
-
-    COMPtr<IWebCache> webCache;
-    if (SUCCEEDED(WebKitCreateInstance(CLSID_WebCache, 0, IID_IWebCache, (void**)&webCache))) {
-        _bstr_t cacheFolder = WebCore::FileSystem::pathByAppendingComponent(libraryPath, "LocalCache").utf8().data();
-        webCache->setCacheFolder(cacheFolder);
     }
 }
 
@@ -1112,6 +1102,22 @@ static void removeFontFallbackIfPresent(const String& fontFallbackPath)
     ::setPersistentUserStyleSheetLocation(nullptr);
 }
 
+static bool handleControlCommand(const char* command)
+{
+    if (!strcmp("#CHECK FOR ABANDONED DOCUMENTS", command)) {
+        // DumpRenderTree does not support checking for abandonded documents.
+        String result("\n");
+        printf("Content-Type: text/plain\n");
+        printf("Content-Length: %u\n", result.length());
+        fwrite(result.utf8().data(), 1, result.length(), stdout);
+        printf("#EOF\n");
+        fprintf(stderr, "#EOF\n");
+        fflush(stdout);
+        fflush(stderr);
+        return true;
+    }
+    return false;
+}
 
 static void runTest(const string& inputLine)
 {
@@ -1154,12 +1160,6 @@ static void runTest(const string& inputLine)
 
     _bstr_t urlBStr(reinterpret_cast<wchar_t*>(buffer.data()));
     ASSERT(urlBStr.length() == length);
-
-    // Check that test has not already run
-    static HashSet<String> testUrls;
-    if (testUrls.contains(String(inputLine.c_str())))
-        fprintf(stderr, "Test has already run \"%s\"\n", inputLine.c_str());
-    testUrls.add(String(inputLine.c_str()));
 
     CFIndex maximumURLLengthAsUTF8 = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
     Vector<char> testURL(maximumURLLengthAsUTF8 + 1, 0);
@@ -1216,11 +1216,11 @@ static void runTest(const string& inputLine)
     if (webView && SUCCEEDED(webView->backForwardList(&bfList)))
         bfList->currentItem(&prevTestBFItem);
 
-    auto& workQueue = WorkQueue::singleton();
+    auto& workQueue = DRT::WorkQueue::singleton();
     workQueue.clear();
     workQueue.setFrozen(false);
 
-    MSG msg = { 0 };
+    MSG msg { };
     HWND hostWindow;
     webView->hostWindow(&hostWindow);
 
@@ -1327,7 +1327,7 @@ IWebView* createWebViewAndOffscreenWindow(HWND* webViewWindow)
     IWebView* webView = nullptr;
     HRESULT hr = WebKitCreateInstance(CLSID_WebView, 0, IID_IWebView, (void**)&webView);
     if (FAILED(hr)) {
-        fprintf(stderr, "Failed to create CLSID_WebView instance, error 0x%x\n", hr);
+        fprintf(stderr, "Failed to create CLSID_WebView instance, error 0x%lx\n", hr);
         return nullptr;
     }
 
@@ -1531,6 +1531,8 @@ int main(int argc, const char* argv[])
     testResult = fdopen(fdStdout, "a+b");
     // Redirect stdout to stderr.
     int result = _dup2(_fileno(stderr), 1);
+    if (result)
+        return -5;
 
     // Tests involving the clipboard are flaky when running with multiple DRTs, since the clipboard is global.
     // We can fix this by assigning each DRT a separate window station (each window station has its own clipboard).
@@ -1542,14 +1544,14 @@ int main(int argc, const char* argv[])
     auto windowsStation = ::CreateWindowStation(windowStationName.charactersWithNullTermination().data(), CWF_CREATE_ONLY, WINSTA_ALL_ACCESS, nullptr);
     if (windowsStation) {
         if (!::SetProcessWindowStation(windowsStation))
-            fprintf(stderr, "SetProcessWindowStation failed with error %d\n", ::GetLastError());
+            fprintf(stderr, "SetProcessWindowStation failed with error %lu\n", ::GetLastError());
 
         desktop = ::CreateDesktop(desktopName.charactersWithNullTermination().data(), nullptr, nullptr, 0, GENERIC_ALL, nullptr);
         if (!desktop)
-            fprintf(stderr, "Failed to create desktop with error %d\n", ::GetLastError());
+            fprintf(stderr, "Failed to create desktop with error %lu\n", ::GetLastError());
     } else {
         DWORD error = ::GetLastError();
-        fprintf(stderr, "Failed to create window station with error %d\n", error);
+        fprintf(stderr, "Failed to create window station with error %lu\n", error);
         if (error == ERROR_ACCESS_DENIED)
             fprintf(stderr, "DumpRenderTree should be run as Administrator!\n");
     }
@@ -1620,6 +1622,9 @@ int main(int argc, const char* argv[])
                 *newLineCharacter = '\0';
             
             if (strlen(filenameBuffer) == 0)
+                continue;
+
+            if (handleControlCommand(filenameBuffer))
                 continue;
 
             runTest(filenameBuffer);

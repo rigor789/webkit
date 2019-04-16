@@ -10,6 +10,7 @@ find_package(OpenSSL 2.0.0 REQUIRED)
 find_package(PNG 1.6.34 REQUIRED)
 find_package(Sqlite 3.23.1 REQUIRED)
 find_package(ZLIB 1.2.11 REQUIRED)
+find_package(LibPSL 0.20.2 REQUIRED)
 
 find_package(WebP 1.0.0)
 
@@ -32,5 +33,7 @@ set(ENABLE_GRAPHICS_CONTEXT_3D ON)
 set(ENABLE_WEBKIT ON)
 
 set(COREFOUNDATION_LIBRARY CFlite)
+
+SET_AND_EXPOSE_TO_BUILD(ENABLE_DEVELOPER_MODE ${DEVELOPER_MODE})
 
 add_definitions(-DWTF_PLATFORM_WIN_CAIRO=1)

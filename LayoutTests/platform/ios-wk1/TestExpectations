@@ -19,10 +19,29 @@ imported/w3c/web-platform-tests/fetch/cross-origin-resource-policy [ Skip ]
 # Skip WebRTC for now in WK1
 imported/w3c/web-platform-tests/webrtc [ Skip ]
 webrtc [ Skip ]
-fast/events/constructors/media-stream-event-constructor.html
 
 # Not supported on WK1
 media/no-fullscreen-when-hidden.html [ Skip ]
+
+# Skip pointerevents on WK1
+pointerevents [ Skip ]
+imported/w3c/web-platform-tests/pointerevents [ Skip ]
+
+# Datalist is unsupported in WK1
+fast/forms/datalist [ WontFix ]
+imported/w3c/web-platform-tests/html/semantics/forms/the-datalist-element [ WontFix ]
+
+# No support for testing key commands with modifiers in WK1
+fast/events/ios/focus-tab-previous-field.html [ Skip ]
+fast/events/ios/key-command-italic-dispatches-keydown.html [ Skip ]
+fast/events/ios/key-command-italic.html [ Skip ]
+fast/events/ios/type-digits-holding-control-key.html [ Skip ]
+
+# <input type=color> is not supported in WebKit1 on iOS.
+fast/forms/color/input-color-onchange-event.html [ Failure ]
+fast/forms/color/input-color-readonly.html [ Failure ]
+fast/forms/color/input-value-sanitization-color.html [ Failure ]
+fast/forms/color/color-setrangetext.html [ Failure ]
 
 # <rdar://problem/6501130> LayoutTests: Enable editing tests after we support editing
 editing/deleting/4922367.html
@@ -565,10 +584,8 @@ compositing/layer-creation/fixed-position-under-transform.html [ Failure ]
 compositing/layer-creation/no-compositing-for-preserve-3d.html [ Failure ]
 compositing/layer-creation/no-compositing-for-sticky.html [ Failure ]
 compositing/layer-creation/overflow-scroll-overlap.html [ Failure ]
-compositing/overflow/automatically-opt-into-composited-scrolling.html [ Failure ]
 compositing/overflow/clipping-behaviour-change-is-not-propagated-to-descendants.html [ Failure ]
 compositing/overflow/clipping-behaviour-change-is-not-propagated-to-descendants2.html [ Failure ]
-compositing/overflow/composited-scrolling-creates-a-stacking-container.html [ Failure ]
 compositing/overflow/composited-scrolling-paint-phases.html [ Failure ]
 compositing/overflow/content-gains-scrollbars.html [ Failure ]
 compositing/overflow/overflow-scroll.html [ Failure ]
@@ -1015,8 +1032,6 @@ animations/stop-animation-on-suspend.html [ Pass Failure ]
 legacy-animation-engine/animations/stop-animation-on-suspend.html [ Pass Failure ]
 animations/suspend-resume-animation-events.html [ Pass Failure ]
 legacy-animation-engine/animations/suspend-resume-animation-events.html [ Pass Failure ]
-animations/trigger-container-scroll-empty.html [ Failure ]
-legacy-animation-engine/animations/trigger-container-scroll-empty.html [ Failure ]
 
 # IndexedDB is not supported on iOS WK1.
 storage/indexeddb
@@ -1382,6 +1397,7 @@ webkit.org/b/156069 http/tests/download/anchor-download-no-value.html [ Skip ]
 # testRunner.setShouldDownloadUndisplayableMIMETypes() is not supported on WK1.
 fast/dom/HTMLAnchorElement/anchor-file-blob-convert-to-download.html [ Skip ]
 fast/dom/HTMLAnchorElement/anchor-file-blob-convert-to-download-async-delegate.html [ Skip ]
+http/tests/download/convert-cached-load-to-download.html [ Skip ]
 
 webkit.org/b/137572 scrollbars/scrollbar-iframe-click-does-not-blur-content.html [ Failure ]
 
@@ -1395,6 +1411,13 @@ fast/scrolling/ios/scrollTo-at-page-load.html [ Failure ]
 fast/scrolling/ios/scrolling-content-clip-to-viewport.html [ Failure ]
 fast/scrolling/ios/touch-stacking.html [ Failure ]
 fast/scrolling/ios/touch-scroll-visibility-hidden.html [ Skip ]
+
+# These tests require API for finding string which is not available in WK1.
+# See https://webkit.org/b/178789#c15
+platform/ios/fast/scrolling/find-text-in-overflow-node-indicator-position-limit.html [ ImageOnlyFailure ]
+platform/ios/fast/scrolling/find-text-in-overflow-node-indicator-position.html [ ImageOnlyFailure ]
+platform/ios/fast/scrolling/find-text-in-overflow-node.html [ Failure ]
+platform/ios/fast/scrolling/find-text-in-subframe.html [ Failure ]
 
 # dumpPolicyDelegateCallbacks is not supported in DumpRenderTree
 fast/loader/iframe-src-invalid-url.html [ Skip ]
@@ -1918,6 +1941,8 @@ fast/canvas/canvas-createPattern-video-modify.html [ Skip ]
 fast/dom/beforeload/video-before-load.html [ Skip ]
 fast/dom/FileList-iterator.html [ Skip ]
 fast/dom/HTMLAnchorElement/anchor-file-blob-download-no-extension.html [ Skip ]
+fast/forms/scroll-into-view-and-show-validation-message.html [ Skip ]
+fast/forms/navigation-dismisses-validation-bubbles.html [ Skip ]
 fast/forms/validation-bubble-disappears-when-input-detached.html [ Skip ]
 fast/forms/validation-bubble-disappears-when-input-moved.html [ Skip ]
 fast/forms/validation-bubble-disappears-when-input-no-longer-visible.html [ Skip ]
@@ -1933,7 +1958,6 @@ http/tests/appcache/video.html [ Skip ]
 http/tests/download/anchor-download-attribute-content-disposition.html [ Skip ]
 http/tests/download/anchor-download-no-extension.html [ Skip ]
 http/tests/misc/empty-urls.html [ Skip ]
-http/tests/navigation/navigation-dismisses-validation-bubbles.html [ Skip ]
 http/tests/security/canvas-remote-read-remote-video-allowed-anonymous.html [ Skip ]
 http/tests/security/canvas-remote-read-remote-video-allowed-with-credentials.html [ Skip ]
 http/tests/security/canvas-remote-read-remote-video-blocked-no-crossorigin.html [ Skip ]
@@ -1967,7 +1991,15 @@ webkit.org/b/180062 fast/text/user-installed-fonts [ ImageOnlyFailure ]
 http/tests/xmlhttprequest/range-test.html [ Skip ]
 
 # Skip anything related to WebAuthN
-http/tests/webauthn/ [ Skip ]
 http/wpt/credential-management/ [ Skip ]
 http/wpt/webauthn/ [ Skip ]
 imported/w3c/web-platform-tests/credential-management/ [ Skip ]
+
+webkit.org/b/189594 imported/w3c/web-platform-tests/css/css-animations/pending-style-changes-001.html [ Pass Failure ]
+
+# Not supported on WK1
+css-custom-properties-api [ Skip ]
+fast/css-custom-paint [ Skip ]
+css-typedom [ Skip ]
+
+webkit.org/b/188762 fast/writing-mode/english-rl-text-with-spelling-marker.html [ ImageOnlyFailure ]

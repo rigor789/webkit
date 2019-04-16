@@ -31,8 +31,8 @@
 #import <wtf/Assertions.h>
 #import <wtf/RetainPtr.h>
 
-#if PLATFORM(IOS)
-#import "UIKitTestSPI.h"
+#if PLATFORM(IOS_FAMILY)
+#import "UIKitSPI.h"
 #import <WebKit/WKWebViewPrivate.h>
 @interface WKWebView ()
 
@@ -49,25 +49,28 @@
 
 @interface TestRunnerWKWebView () <WKUIDelegatePrivate> {
     RetainPtr<NSNumber *> m_stableStateOverride;
+    BOOL m_isInteractingWithFormControl;
 }
 
 @property (nonatomic, copy) void (^zoomToScaleCompletionHandler)(void);
 @property (nonatomic, copy) void (^retrieveSpeakSelectionContentCompletionHandler)(void);
-@property (nonatomic) BOOL isShowingKeyboard;
+@property (nonatomic, getter=isShowingKeyboard, setter=setIsShowingKeyboard:) BOOL showingKeyboard;
 
 @end
 
 @implementation TestRunnerWKWebView
 
 #if PLATFORM(MAC)
+IGNORE_WARNINGS_BEGIN("deprecated-implementations")
 - (void)dragImage:(NSImage *)anImage at:(NSPoint)viewLocation offset:(NSSize)initialOffset event:(NSEvent *)event pasteboard:(NSPasteboard *)pboard source:(id)sourceObj slideBack:(BOOL)slideFlag
+IGNORE_WARNINGS_END
 {
     RetainPtr<WebKitTestRunnerDraggingInfo> draggingInfo = adoptNS([[WebKitTestRunnerDraggingInfo alloc] initWithImage:anImage offset:initialOffset pasteboard:pboard source:sourceObj]);
     [self draggingUpdated:draggingInfo.get()];
 }
 #endif
 
-#if PLATFORM(IOS)
+#if PLATFORM(IOS_FAMILY)
 - (instancetype)initWithFrame:(CGRect)frame configuration:(WKWebViewConfiguration *)configuration
 {
     if (self = [super initWithFrame:frame configuration:configuration]) {
@@ -103,14 +106,23 @@
 
 - (void)didStartFormControlInteraction
 {
+    m_isInteractingWithFormControl = YES;
+
     if (self.didStartFormControlInteractionCallback)
         self.didStartFormControlInteractionCallback();
 }
 
 - (void)didEndFormControlInteraction
 {
+    m_isInteractingWithFormControl = NO;
+
     if (self.didEndFormControlInteractionCallback)
         self.didEndFormControlInteractionCallback();
+}
+
+- (BOOL)isInteractingWithFormControl
+{
+    return m_isInteractingWithFormControl;
 }
 
 - (void)_didShowForcePressPreview
@@ -142,20 +154,20 @@
 
 - (void)_invokeShowKeyboardCallbackIfNecessary
 {
-    if (self.isShowingKeyboard)
+    if (self.showingKeyboard)
         return;
 
-    self.isShowingKeyboard = YES;
+    self.showingKeyboard = YES;
     if (self.didShowKeyboardCallback)
         self.didShowKeyboardCallback();
 }
 
 - (void)_invokeHideKeyboardCallbackIfNecessary
 {
-    if (!self.isShowingKeyboard)
+    if (!self.showingKeyboard)
         return;
 
-    self.isShowingKeyboard = NO;
+    self.showingKeyboard = NO;
     if (self.didHideKeyboardCallback)
         self.didHideKeyboardCallback();
 }
@@ -246,7 +258,7 @@
     [self _invokeHideKeyboardCallbackIfNecessary];
 }
 
-#endif // PLATFORM(IOS)
+#endif // PLATFORM(IOS_FAMILY)
 
 @end
 
