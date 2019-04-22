@@ -410,12 +410,12 @@ EncodedJSValue JSC_HOST_CALL moduleLoaderParseModule(ExecState* exec)
 
         if (syntaxError) {
             auto result = deferred->reject(exec, syntaxError);
-            scope.releaseAssertNoException();
+            catchScope.releaseAssertNoException();
             return JSValue::encode(result);
         }
 
         sourceString = "export default undefined;"_s;
-        sourceCode = makeSource(sourceString, SourceOrigin(), WTF::emptyString(), WTF::TextPosition(), SourceProviderSourceType::Module);
+        sourceCode = makeSource(sourceString, SourceOrigin(), URL(), WTF::TextPosition(), SourceProviderSourceType::Module);
     }
     
     std::unique_ptr<ModuleProgramNode> moduleProgramNode = parse<ModuleProgramNode>(

@@ -156,9 +156,8 @@ void ModuleAnalyzer::ensureDefaultExportIfNothingExported() {
 
     if (m_moduleRecord->requestedModules().isEmpty() && m_moduleRecord->exportEntries().isEmpty() && m_moduleRecord->starExportEntries().isEmpty()) {
 
-        auto moduleUrl = m_moduleRecord->sourceCode().provider()->url();
         error = ParserError();
-        sourceC = makeSource("export default undefined;"_s, SourceOrigin(), WTF::emptyString(), WTF::TextPosition(), SourceProviderSourceType::Module);
+        sourceC = makeSource("export default undefined;"_s, SourceOrigin(), URL(), WTF::TextPosition(), SourceProviderSourceType::Module);
 
         std::unique_ptr<ModuleProgramNode> moduleProgramNode = parse<ModuleProgramNode>(
                                                                                         m_vm, sourceC, Identifier(), JSParserBuiltinMode::NotBuiltin,
@@ -176,8 +175,9 @@ void ModuleAnalyzer::ensureDefaultExportIfNothingExported() {
 
         JSObject* exception = nullptr;
 
-        SourceCode functionSource = makeSource(moduleFunctionSource.toString(), SourceOrigin(), moduleUrl, WTF::TextPosition(), SourceProviderSourceType::Module);
-        FunctionExecutable* moduleFunctionExecutable = FunctionExecutable::fromGlobalCode(Identifier::fromString(m_exec, "anonymous"), *m_exec, functionSource, exception, -1);
+        URL moduleUrl = m_moduleRecord->sourceCode().provider()->url();
+        SourceCode functionSource = makeSource(moduleFunctionSource.toString(), SourceOrigin(), ::WTFMove(moduleUrl), WTF::TextPosition(), SourceProviderSourceType::Module);
+        FunctionExecutable* moduleFunctionExecutable = FunctionExecutable::fromGlobalCode(Identifier::fromString(m_exec, "anonymous"), *m_exec, functionSource, exception, -1, WTF::nullopt);
         if (!moduleFunctionExecutable) {
             ASSERT(exception);
             return;

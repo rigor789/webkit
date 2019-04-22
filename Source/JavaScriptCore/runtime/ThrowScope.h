@@ -66,7 +66,7 @@ public:
         }
 
         bool willBeHandleByLLIntOrJIT = false;
-        void* previousScopeStackPosition = m_previousScope ? m_previousScope->stackPosition() : nullptr;
+        const void* previousScopeStackPosition = m_previousScope ? m_previousScope->stackPosition() : nullptr;
         void* topEntryFrame = m_vm.topEntryFrame;
 
         // If the topEntryFrame was pushed on the stack after the previousScope was instantiated,

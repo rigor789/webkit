@@ -22,10 +22,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
- 
-/*
- * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
- */
 
 #include "config.h"
 #include <wtf/OSRandomSource.h>
@@ -33,27 +29,6 @@
 #include <mutex>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/RandomDevice.h>
-#include <stdint.h>
-#include <stdlib.h>
-
-#if !OS(DARWIN) && OS(UNIX)
-#include <errno.h>
-#include <fcntl.h>
-#include <unistd.h>
-#endif
-
-#if OS(WINDOWS)
-#include <windows.h>
-#include <wincrypt.h> // windows.h must be included before wincrypt.h.
-#endif
-
-#if OS(DARWIN)
-#if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
-#include <Security/SecRandom.h>
-#else
-#include "CommonCryptoSPI.h"
-#endif
-#endif
 
 namespace WTF {
 
@@ -67,45 +42,6 @@ void cryptographicallyRandomValuesFromOS(unsigned char* buffer, size_t length)
             device.construct();
         });
     device.get().cryptographicallyRandomValues(buffer, length);
-
-#if OS(DARWIN)
-#if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
-    RELEASE_ASSERT(!SecRandomCopyBytes(kSecRandomDefault, length, buffer));
-#else
-    RELEASE_ASSERT(!CCRandomCopyBytes(kCCRandomDefault, buffer, length));
-#endif
-    
-#elif OS(UNIX)
-    int fd = open("/dev/urandom", O_RDONLY, 0);
-    if (fd < 0)
-        crashUnableToOpenURandom(); // We need /dev/urandom for this API to work...
-
-    ssize_t amountRead = 0;
-    while (static_cast<size_t>(amountRead) < length) {
-        ssize_t currentRead = read(fd, buffer + amountRead, length - amountRead);
-        // We need to check for both EAGAIN and EINTR since on some systems /dev/urandom
-        // is blocking and on others it is non-blocking.
-        if (currentRead == -1) {
-            if (!(errno == EAGAIN || errno == EINTR))
-                crashUnableToReadFromURandom();
-        } else
-            amountRead += currentRead;
-    }
-    
-    close(fd);
-
-#elif OS(WINDOWS)
-    HCRYPTPROV hCryptProv = 0;
-    if (!CryptAcquireContext(&hCryptProv, 0, MS_DEF_PROV, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
-        CRASH();
-    if (!CryptGenRandom(hCryptProv, length, buffer))
-        CRASH();
-    CryptReleaseContext(hCryptProv, 0);
-#else
-    #error "This configuration doesn't have a strong source of randomness."
-    // WARNING: When adding new sources of OS randomness, the randomness must
-    //          be of cryptographic quality!
-#endif
 }
 
 }

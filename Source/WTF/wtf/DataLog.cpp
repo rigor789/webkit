@@ -56,7 +56,8 @@
 #define DATA_LOG_FILENAME "/tmp/WTFLog"
 
 #ifdef OS_LOG
-
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <asl.h>
 #include <wtf/text/WTFString.h>
 
@@ -87,6 +88,8 @@ public:
 private:
     WTF::String m_prevLineBuffer;
 };
+
+#pragma clang diagnostic pop
 
 #endif
 

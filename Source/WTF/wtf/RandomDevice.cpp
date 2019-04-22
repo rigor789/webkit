@@ -42,13 +42,9 @@
 #endif
 
 #if OS(DARWIN)
-#if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
-#include <Security/SecRandom.h>
-#else
 #include <CommonCrypto/CommonCryptoError.h>
 #include <CommonCrypto/CommonRandom.h>
 #endif
-#endif // DARWIN
 
 #if OS(FUCHSIA)
 #include <zircon/syscalls.h>
@@ -93,15 +89,9 @@ RandomDevice::~RandomDevice()
 void RandomDevice::cryptographicallyRandomValues(unsigned char* buffer, size_t length)
 {
 #if OS(DARWIN)
-
-#if PLATFORM(IOS) && !USE(APPLE_INTERNAL_SDK)
-    RELEASE_ASSERT(!SecRandomCopyBytes(kSecRandomDefault, length, buffer));
-#else
-    RELEASE_ASSERT(!CCRandomCopyBytes(kCCRandomDefault, buffer, length));
-#endif
+    RELEASE_ASSERT(!CCRandomGenerateBytes(buffer, length));
 #elif OS(FUCHSIA)
     zx_cprng_draw(buffer, length);
-
 #elif OS(UNIX)
     ssize_t amountRead = 0;
     while (static_cast<size_t>(amountRead) < length) {
