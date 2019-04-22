@@ -58,7 +58,7 @@
 #ifdef OS_LOG
 
 #include <asl.h>
-#include "WTFString.h"
+#include <wtf/text/WTFString.h>
 
 class OsLogPrintStream : public PrintStream {
 public:
