@@ -1,5 +1,3 @@
-// © 2016 and later: Unicode, Inc. and others.
-// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT: 
  * Copyright (c) 1997-2012, International Business Machines Corporation and
@@ -98,11 +96,6 @@
  *     <td>C API</td>
  *   </tr>
  *   <tr>
- *     <td>Codepage Detection</td>
- *     <td>ucsdet.h</td>
- *     <td>C API</td>
- *   </tr>
- *   <tr>
  *     <td>Unicode Text Compression</td>
  *     <td>ucnv.h<br/>(encoding name "SCSU" or "BOCU-1")</td>
  *     <td>C API</td>
@@ -154,7 +147,7 @@
  *   </tr>
  *   <tr>
  *     <td>Bidirectional Algorithm</td>
- *     <td>ubidi.h, ubiditransform.h</td>
+ *     <td>ubidi.h</td>
  *     <td>C API</td>
  *   </tr>
  *   <tr>

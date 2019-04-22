@@ -36,7 +36,6 @@
 #import <pal/spi/cg/CoreGraphicsSPI.h>
 #import <sys/param.h>
 #import <unicode/uchar.h>
-#import <unicode/char16ptr.h>
 
 NSString *WebKitLocalCacheDefaultsKey = @"WebKitLocalCache";
 NSString *WebKitResourceLoadStatisticsDirectoryDefaultsKey = @"WebKitResourceLoadStatisticsDirectory";

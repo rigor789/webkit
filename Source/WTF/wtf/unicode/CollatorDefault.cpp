@@ -25,20 +25,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
-/*
- * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
- */
 
 #include "config.h"
 #include <wtf/unicode/Collator.h>
-#include <wtf/text/StringView.h>
 
 #if UCONFIG_NO_COLLATION
 
 namespace WTF {
 
-int Collator::collate(StringView a, StringView b)
+int Collator::collate(StringView a, StringView b) const
 {
     unsigned commonLength = std::min(a.length(), b.length());
     for (unsigned i = 0; i < commonLength; ++i) {
@@ -56,7 +51,7 @@ int Collator::collate(StringView a, StringView b)
     return 0;
 }
 
-int Collator::collateUTF8(const char* a, const char* b)
+int Collator::collateUTF8(const char* a, const char* b) const
 {
     return collate(String::fromUTF8(a), String::fromUTF8(b));
 }

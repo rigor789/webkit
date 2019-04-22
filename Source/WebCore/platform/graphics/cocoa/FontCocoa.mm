@@ -38,7 +38,6 @@
 #import <float.h>
 #import <pal/spi/cg/CoreGraphicsSPI.h>
 #import <pal/spi/cocoa/CoreTextSPI.h>
-#import <unicode/char16ptr.h>
 #import <unicode/uchar.h>
 #import <wtf/Assertions.h>
 #import <wtf/RetainPtr.h>

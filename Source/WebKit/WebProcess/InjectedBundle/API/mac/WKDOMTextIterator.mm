@@ -30,7 +30,6 @@
 
 #import "WKDOMInternals.h"
 #import "WKDOMRange.h"
-#import <unicode/char16ptr.h>
 #import <WebCore/TextIterator.h>
 
 @interface WKDOMTextIterator () {

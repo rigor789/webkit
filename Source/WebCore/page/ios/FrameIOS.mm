@@ -69,8 +69,6 @@
 #import <wtf/BlockObjCExceptions.h>
 #import <wtf/text/TextStream.h>
 
-#include "unicode/char16ptr.h"
-
 using namespace WebCore::HTMLNames;
 using namespace WTF::Unicode;
 

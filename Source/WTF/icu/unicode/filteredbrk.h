@@ -1,8 +1,6 @@
-// © 2016 and later: Unicode, Inc. and others.
-// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ********************************************************************************
-*   Copyright (C) 1997-2015, International Business Machines
+*   Copyright (C) 1997-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 ********************************************************************************
 */
@@ -14,6 +12,7 @@
 #include "unicode/brkiter.h"
 
 #if !UCONFIG_NO_BREAK_ITERATION && !UCONFIG_NO_FILTERED_BREAK_ITERATION
+#ifndef U_HIDE_INTERNAL_API
 
 U_NAMESPACE_BEGIN
 
@@ -31,13 +30,25 @@ U_NAMESPACE_BEGIN
  *  but with "Mr." as an exception, a filtered break iterator
  *  would consider the string "Mr. Smith" to be a single segment.
  *
- * @stable ICU 56
+ * <p><b>Note:</b> An instance of {@link BreakIterator} returned by this builder
+ * class currently does not support following operations in this technology preview
+ * version:
+ * <ul>
+ *   <li>{@link BreakIterator#next(int32_t) next(int32_t n)}</li>
+ *   <li>{@link BreakIterator#previous(void) previous(void)}</li>
+ *   <li>{@link BreakIterator#following(int32_t) following(int32_t offset)}</li>
+ *   <li>{@link BreakIterator#preceding(int32_t) preceding(int32_t offset)}</li>
+ * </ul>
+ * When one of above methods is called, BreakIterator.DONE will be returned immediately
+ * without updating the internal state.
+ *
+ * @internal technology preview
  */
-class U_COMMON_API FilteredBreakIteratorBuilder : public UObject {
+class U_I18N_API FilteredBreakIteratorBuilder : public UObject {
  public:
   /**
    *  destructor.
-   * @stable ICU 56
+   * @internal technology preview
    */
   virtual ~FilteredBreakIteratorBuilder();
 
@@ -51,7 +62,7 @@ class U_COMMON_API FilteredBreakIteratorBuilder : public UObject {
    * @param where the locale.
    * @param status The error code.
    * @return the new builder
-   * @stable ICU 56
+   * @internal technology preview
    */
   static FilteredBreakIteratorBuilder *createInstance(const Locale& where, UErrorCode& status);
 
@@ -60,7 +71,7 @@ class U_COMMON_API FilteredBreakIteratorBuilder : public UObject {
    * In this state, it will not suppress any segment boundaries.
    * @param status The error code.
    * @return the new builder
-   * @stable ICU 56
+   * @internal technology preview
    */
   static FilteredBreakIteratorBuilder *createInstance(UErrorCode &status);
 
@@ -72,7 +83,7 @@ class U_COMMON_API FilteredBreakIteratorBuilder : public UObject {
    * @param status error code
    * @return returns TRUE if the string was not present and now added,
    * FALSE if the call was a no-op because the string was already being suppressed.
-   * @stable ICU 56
+   * @internal technology preview
    */
   virtual UBool suppressBreakAfter(const UnicodeString& string, UErrorCode& status) = 0;
 
@@ -85,7 +96,7 @@ class U_COMMON_API FilteredBreakIteratorBuilder : public UObject {
    * @param status error code
    * @return returns TRUE if the string was present and now removed,
    * FALSE if the call was a no-op because the string was not being suppressed.
-   * @stable ICU 56
+   * @internal technology preview
    */
   virtual UBool unsuppressBreakAfter(const UnicodeString& string, UErrorCode& status) = 0;
 
@@ -99,14 +110,14 @@ class U_COMMON_API FilteredBreakIteratorBuilder : public UObject {
    * @param adoptBreakIterator the break iterator to adopt
    * @param status error code
    * @return the new BreakIterator, owned by the caller.
-   * @stable ICU 56
+   * @internal technology preview
    */
   virtual BreakIterator *build(BreakIterator* adoptBreakIterator, UErrorCode& status) = 0;
 
  protected:
   /**
    * For subclass use
-   * @stable ICU 56
+   * @internal technology preview
    */
   FilteredBreakIteratorBuilder();
 };
@@ -114,6 +125,7 @@ class U_COMMON_API FilteredBreakIteratorBuilder : public UObject {
 
 U_NAMESPACE_END
 
+#endif  /* U_HIDE_INTERNAL_API */
 #endif // #if !UCONFIG_NO_BREAK_ITERATION && !UCONFIG_NO_FILTERED_BREAK_ITERATION
 
 #endif // #ifndef FILTEREDBRK_H

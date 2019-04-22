@@ -29,7 +29,6 @@
 #import "Logging.h"
 #import "PlatformKeyboardEvent.h"
 #import "WindowsKeyboardCodes.h"
-#import <unicode/char16ptr.h>
 #import <wtf/ASCIICType.h>
 #import <wtf/MainThread.h>
 #import <wtf/text/WTFString.h>

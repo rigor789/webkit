@@ -4,7 +4,6 @@
 
 #include <CoreFoundation/CFString.h>
 #include <wtf/RetainPtr.h>
-#include <unicode/char16ptr.h>
 
 U_STABLE int32_t U_EXPORT2
 ios_specific_unorm2_normalize(const UNormalizer2 *norm2, const UChar *source, int32_t sourceLength, UChar *resultBuffer, int32_t resultLength, UErrorCode *status) {
@@ -21,7 +20,7 @@ ios_specific_unorm2_normalize(const UNormalizer2 *norm2, const UChar *source, in
     }
 
     WTF::RetainPtr<CFMutableStringRef> normalizedString = WTF::adoptCF(CFStringCreateMutable(kCFAllocatorDefault, 0));
-    CFStringAppendCharacters(normalizedString.get(), toOldUCharPtr(source), sourceLength);
+    CFStringAppendCharacters(normalizedString.get(), source, sourceLength);
     if (norm2 == nullptr) {
         norm2 = reinterpret_cast<UNormalizer2*>(kCFStringNormalizationFormC);
     }
@@ -35,7 +34,7 @@ ios_specific_unorm2_normalize(const UNormalizer2 *norm2, const UChar *source, in
     }
 
     if (resultLength > 0 && resultBuffer != nullptr) {
-        CFStringGetCharacters(normalizedString.get(), CFRangeMake(0, resultLength), toOldUCharPtr(resultBuffer));
+        CFStringGetCharacters(normalizedString.get(), CFRangeMake(0, resultLength), resultBuffer);
     }
     return normalizedLength;
 }

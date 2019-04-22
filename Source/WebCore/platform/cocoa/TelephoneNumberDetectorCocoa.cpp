@@ -28,7 +28,6 @@
 
 #if ENABLE(TELEPHONE_NUMBER_DETECTION)
 
-#include <unicode/char16ptr.h>
 #include <wtf/SoftLinking.h>
 
 #if USE(APPLE_INTERNAL_SDK)

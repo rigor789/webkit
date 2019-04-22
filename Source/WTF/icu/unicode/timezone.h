@@ -1,7 +1,5 @@
-// © 2016 and later: Unicode, Inc. and others.
-// License & terms of use: http://www.unicode.org/copyright.html
 /*************************************************************************
-* Copyright (c) 1997-2016, International Business Machines Corporation
+* Copyright (c) 1997-2015, International Business Machines Corporation
 * and others. All Rights Reserved.
 **************************************************************************
 *
@@ -68,8 +66,8 @@ class StringEnumeration;
  * TimeZone *tz = TimeZone::createTimeZone("America/Los_Angeles");
  * </pre>
  * \htmlonly</blockquote>\endhtmlonly
- * You can use the <code>createEnumeration</code> method to iterate through
- * all the supported time zone IDs, or the <code>getCanonicalID</code> method to check
+ * You can use <code>getAvailableIDs</code> method to iterate through
+ * all the supported time zone IDs, or getCanonicalID method to check
  * if a time zone ID is supported or not.  You can then choose a
  * supported ID to get a <code>TimeZone</code>.
  * If the time zone you want is not represented by one of the
@@ -275,6 +273,7 @@ public:
     static const UnicodeString U_EXPORT2 getEquivalentID(const UnicodeString& id,
                                                int32_t index);
 
+#ifndef U_HIDE_DRAFT_API
     /**
      * Creates an instance of TimeZone detected from the current host
      * system configuration. Note that ICU4C does not change the default
@@ -286,9 +285,10 @@ public:
      *
      * @return  A new instance of TimeZone detected from the current host system
      *          configuration.
-     * @stable ICU 55
+     * @draft ICU 55
      */
     static TimeZone* U_EXPORT2 detectHostTimeZone();
+#endif
 
     /**
      * Creates a new copy of the default TimeZone for this host. Unless the default time
@@ -863,7 +863,7 @@ private:
      * @param id zone id string
      * @return the pointer of the ID resource, or NULL.
      */
-    static const char16_t* findID(const UnicodeString& id);
+    static const UChar* findID(const UnicodeString& id);
 
     /**
      * Resolve a link in Olson tzdata.  When the given id is known and it's not a link,
@@ -873,7 +873,7 @@ private:
      * @param id zone id string
      * @return the dereferenced zone or NULL
      */
-    static const char16_t* dereferOlsonLink(const UnicodeString& id);
+    static const UChar* dereferOlsonLink(const UnicodeString& id);
 
     /**
      * Returns the region code associated with the given zone,
@@ -881,7 +881,7 @@ private:
      * @param id zone id string
      * @return the region associated with the given zone
      */
-    static const char16_t* getRegion(const UnicodeString& id);
+    static const UChar* getRegion(const UnicodeString& id);
 
   public:
 #ifndef U_HIDE_INTERNAL_API
@@ -893,7 +893,7 @@ private:
      * @return the region associated with the given zone
      * @internal
      */
-    static const char16_t* getRegion(const UnicodeString& id, UErrorCode& status);
+    static const UChar* getRegion(const UnicodeString& id, UErrorCode& status);
 #endif  /* U_HIDE_INTERNAL_API */
 
   private:

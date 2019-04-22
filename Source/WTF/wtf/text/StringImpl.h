@@ -23,12 +23,7 @@
 #pragma once
 
 #include <limits.h>
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmacro-redefined"
-
 #include <unicode/ustring.h>
-
-#pragma clang diagnostic pop
 #include <wtf/ASCIICType.h>
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/Expected.h>

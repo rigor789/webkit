@@ -22,7 +22,6 @@
 #include <wtf/text/WTFString.h>
 
 #include <CoreFoundation/CFString.h>
-#include <unicode/char16ptr.h>
 
 namespace WTF {
 
@@ -44,7 +43,7 @@ String::String(NSString *str)
         }
 
         Vector<UChar, 1024> ucharBuffer(size);
-        CFStringGetCharacters(reinterpret_cast<CFStringRef>(str), CFRangeMake(0, size), toOldUCharPtr(ucharBuffer.data()));
+        CFStringGetCharacters(reinterpret_cast<CFStringRef>(str), CFRangeMake(0, size), ucharBuffer.data());
         m_impl = StringImpl::create(ucharBuffer.data(), size);
     }
 }

@@ -1,5 +1,3 @@
-// © 2016 and later: Unicode, Inc. and others.
-// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ******************************************************************************
 *
@@ -33,8 +31,10 @@
 
 #include "unicode/utypes.h"
 #include "unicode/uobject.h"
+#include "unicode/unistr.h"
 #include "unicode/putil.h"
 #include "unicode/uloc.h"
+#include "unicode/strenum.h"
 
 /**
  * \file
@@ -45,9 +45,6 @@ U_NAMESPACE_BEGIN
 
 // Forward Declarations
 void U_CALLCONV locale_available_init(); /**< @internal */
-
-class StringEnumeration;
-class UnicodeString;
 
 /**
  * A <code>Locale</code> object represents a specific geographical, political,
@@ -496,6 +493,7 @@ public:
      */
     uint32_t        getLCID(void) const;
 
+#ifndef U_HIDE_DRAFT_API
     /**
      * Returns whether this locale's script is written right-to-left.
      * If there is no script subtag, then the likely script is used, see uloc_addLikelySubtags().
@@ -507,9 +505,10 @@ public:
      * Returns TRUE for "ar" and "en-Hebr", FALSE for "zh" and "fa-Cyrl".
      *
      * @return TRUE if the locale's script is written right-to-left
-     * @stable ICU 54
+     * @draft ICU 54
      */
     UBool isRightToLeft() const;
+#endif  /* U_HIDE_DRAFT_API */
 
     /**
      * Fills in "dispLang" with the name of this locale's language in a format suitable for

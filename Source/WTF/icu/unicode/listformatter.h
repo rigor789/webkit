@@ -1,14 +1,12 @@
-// © 2016 and later: Unicode, Inc. and others.
-// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2012-2016, International Business Machines
+*   Copyright (C) 2012-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
 *   file name:  listformatter.h
-*   encoding:   UTF-8
+*   encoding:   US-ASCII
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -147,7 +145,7 @@ class U_COMMON_API ListFormatter : public UObject{
     /**
      * @internal constructor made public for testing.
      */
-    ListFormatter(const ListFormatData &data, UErrorCode &errorCode);
+    ListFormatter(const ListFormatData &data);
     /**
      * @internal constructor made public for testing.
      */
@@ -157,8 +155,6 @@ class U_COMMON_API ListFormatter : public UObject{
   private:
     static void initializeHash(UErrorCode& errorCode);
     static const ListFormatInternal* getListFormatInternal(const Locale& locale, const char *style, UErrorCode& errorCode);
-    struct ListPatternsSink;
-    static ListFormatInternal* loadListFormatInternal(const Locale& locale, const char* style, UErrorCode& errorCode);
 
     ListFormatter();
 

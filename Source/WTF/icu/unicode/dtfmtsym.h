@@ -1,8 +1,6 @@
-// © 2016 and later: Unicode, Inc. and others.
-// License & terms of use: http://www.unicode.org/copyright.html
-/*
+/*  
 ********************************************************************************
-*   Copyright (C) 1997-2016, International Business Machines
+*   Copyright (C) 1997-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 ********************************************************************************
 *
@@ -16,23 +14,22 @@
 *                            Changed to match C++ conventions
 ********************************************************************************
 */
-
+     
 #ifndef DTFMTSYM_H
 #define DTFMTSYM_H
-
+ 
 #include "unicode/utypes.h"
 
 #if !UCONFIG_NO_FORMATTING
 
 #include "unicode/calendar.h"
-#include "unicode/strenum.h"
 #include "unicode/uobject.h"
 #include "unicode/locid.h"
 #include "unicode/udat.h"
 #include "unicode/ures.h"
 
 /**
- * \file
+ * \file 
  * \brief C++ API: Symbols for formatting dates.
  */
 
@@ -118,7 +115,7 @@ public:
      * data for the default locale, it will return a last-resort object
      * based on hard-coded strings.
      *
-     * @param type      Type of calendar (as returned by Calendar::getType).
+     * @param type      Type of calendar (as returned by Calendar::getType). 
      *                  Will be used to access the correct set of strings.
      *                  (NULL or empty string defaults to "gregorian".)
      * @param status    Status code.  Failure
@@ -133,7 +130,7 @@ public:
      * resources for the given locale, in the default calendar (Gregorian).
      *
      * @param locale    Locale to load format data from.
-     * @param type      Type of calendar (as returned by Calendar::getType).
+     * @param type      Type of calendar (as returned by Calendar::getType). 
      *                  Will be used to access the correct set of strings.
      *                  (NULL or empty string defaults to "gregorian".)
      * @param status    Status code.  Failure
@@ -273,15 +270,9 @@ public:
      * @stable ICU 3.6
      */
     enum DtContextType {
-        FORMAT,
-        STANDALONE,
-#ifndef U_HIDE_DEPRECATED_API
-        /**
-         * One more than the highest normal DtContextType value.
-         * @deprecated ICU 58 The numeric value may change over time, see ICU ticket #12420.
-         */
-        DT_CONTEXT_COUNT
-#endif  // U_HIDE_DEPRECATED_API
+         FORMAT,
+         STANDALONE,
+         DT_CONTEXT_COUNT
     };
 
     /**
@@ -289,21 +280,17 @@ public:
      * @stable ICU 3.6
      */
     enum DtWidthType {
-        ABBREVIATED,
-        WIDE,
-        NARROW,
-        /**
-         * Short width is currently only supported for weekday names.
-         * @stable ICU 51
-         */
-        SHORT,
-#ifndef U_HIDE_DEPRECATED_API
-        /**
-         * One more than the highest normal DtWidthType value.
-         * @deprecated ICU 58 The numeric value may change over time, see ICU ticket #12420.
-         */
-        DT_WIDTH_COUNT = 4
-#endif  // U_HIDE_DEPRECATED_API
+         ABBREVIATED,
+         WIDE,
+         NARROW,
+         /**
+          * Short width is currently only supported for weekday names.
+          * @stable ICU 51
+          */
+         SHORT,
+         /**
+          */
+         DT_WIDTH_COUNT = 4
     };
 
     /**
@@ -427,30 +414,33 @@ public:
      * doesn't specify any time separator, and always recognized when parsing.
      * @internal
      */
-    static const char16_t DEFAULT_TIME_SEPARATOR = 0x003a;  // ':'
+    static const UChar DEFAULT_TIME_SEPARATOR = 0x003a;  // ':'
 
     /**
      * This alternate time separator is always recognized when parsing.
      * @internal
      */
-    static const char16_t ALTERNATE_TIME_SEPARATOR = 0x002e;  // '.'
+    static const UChar ALTERNATE_TIME_SEPARATOR = 0x002e;  // '.'
+#endif  /* U_HIDE_INTERNAL_API */
 
+#ifndef U_HIDE_DRAFT_API
     /**
      * Gets the time separator string. For example: ":".
      * @param result Output param which will receive the time separator string.
      * @return       A reference to 'result'.
-     * @internal
+     * @draft ICU 55
      */
     UnicodeString& getTimeSeparatorString(UnicodeString& result) const;
 
     /**
      * Sets the time separator string. For example: ":".
      * @param newTimeSeparator the new time separator string.
-     * @internal
+     * @draft ICU 55
      */
     void setTimeSeparatorString(const UnicodeString& newTimeSeparator);
-#endif  /* U_HIDE_INTERNAL_API */
+#endif  /* U_HIDE_DRAFT_API */
 
+#ifndef U_HIDE_DRAFT_API
     /**
      * Gets cyclic year name strings if the calendar has them, by width and context.
      * For example: "jia-zi", "yi-chou", etc.
@@ -459,7 +449,7 @@ public:
      * @param width     The requested name width: WIDE, ABBREVIATED, NARROW.
      * @return          The year name strings (DateFormatSymbols retains ownership),
      *                  or null if they are not available for this calendar.
-     * @stable ICU 54
+     * @draft ICU 54
      */
     const UnicodeString* getYearNames(int32_t& count,
                             DtContextType context, DtWidthType width) const;
@@ -471,7 +461,7 @@ public:
      * @param count     The length of the array.
      * @param context   The usage context: FORMAT, STANDALONE (currently only FORMAT is supported).
      * @param width     The name width: WIDE, ABBREVIATED, NARROW (currently only ABBREVIATED is supported).
-     * @stable ICU 54
+     * @draft ICU 54
      */
     void setYearNames(const UnicodeString* yearNames, int32_t count,
                             DtContextType context, DtWidthType width);
@@ -484,7 +474,7 @@ public:
      * @param width     The requested name width: WIDE, ABBREVIATED, NARROW.
      * @return          The zodiac name strings (DateFormatSymbols retains ownership),
      *                  or null if they are not available for this calendar.
-     * @stable ICU 54
+     * @draft ICU 54
      */
     const UnicodeString* getZodiacNames(int32_t& count,
                             DtContextType context, DtWidthType width) const;
@@ -496,10 +486,12 @@ public:
      * @param count     The length of the array.
      * @param context   The usage context: FORMAT, STANDALONE (currently only FORMAT is supported).
      * @param width     The name width: WIDE, ABBREVIATED, NARROW (currently only ABBREVIATED is supported).
-     * @stable ICU 54
+     * @draft ICU 54
      */
     void setZodiacNames(const UnicodeString* zodiacNames, int32_t count,
                             DtContextType context, DtWidthType width);
+
+#endif  /* U_HIDE_DRAFT_API */
 
 #ifndef U_HIDE_INTERNAL_API
     /**
@@ -567,7 +559,7 @@ public:
      * @return    the non-localized date-time pattern characters
      * @stable ICU 2.0
      */
-    static const char16_t * U_EXPORT2 getPatternUChars(void);
+    static const UChar * U_EXPORT2 getPatternUChars(void);
 
     /**
      * Gets localized date-time pattern characters. For example: 'u', 't', etc.
@@ -863,42 +855,6 @@ private:
      */
      UBool fCapitalization[kCapContextUsageTypeCount][2];
 
-    /**
-     * Abbreviated (== short) day period strings.
-     */
-    UnicodeString  *fAbbreviatedDayPeriods;
-    int32_t         fAbbreviatedDayPeriodsCount;
-
-    /**
-     * Wide day period strings.
-     */
-    UnicodeString  *fWideDayPeriods;
-    int32_t         fWideDayPeriodsCount;
-
-    /**
-     * Narrow day period strings.
-     */
-    UnicodeString  *fNarrowDayPeriods;
-    int32_t         fNarrowDayPeriodsCount;
-
-    /**
-     * Stand-alone abbreviated (== short) day period strings.
-     */
-    UnicodeString  *fStandaloneAbbreviatedDayPeriods;
-    int32_t         fStandaloneAbbreviatedDayPeriodsCount;
-
-    /**
-     * Stand-alone wide day period strings.
-     */
-    UnicodeString  *fStandaloneWideDayPeriods;
-    int32_t         fStandaloneWideDayPeriodsCount;
-
-    /**
-     * Stand-alone narrow day period strings.
-     */
-    UnicodeString  *fStandaloneNarrowDayPeriods;
-    int32_t         fStandaloneNarrowDayPeriodsCount;
-
 private:
     /** valid/actual locale information 
      *  these are always ICU locales, so the length should not be a problem
@@ -978,7 +934,7 @@ private:
      * Returns the date format field index of the pattern character c,
      * or UDAT_FIELD_COUNT if c is not a pattern character.
      */
-    static UDateFormatField U_EXPORT2 getPatternCharIndex(char16_t c);
+    static UDateFormatField U_EXPORT2 getPatternCharIndex(UChar c);
 
     /**
      * Returns TRUE if f (with its pattern character repeated count times) is a numeric field.
@@ -988,7 +944,7 @@ private:
     /**
      * Returns TRUE if c (repeated count times) is the pattern character for a numeric field.
      */
-    static UBool U_EXPORT2 isNumericPatternChar(char16_t c, int32_t count);
+    static UBool U_EXPORT2 isNumericPatternChar(UChar c, int32_t count);
 public:
 #ifndef U_HIDE_INTERNAL_API
     /**

@@ -76,7 +76,6 @@
 #import <pal/avfoundation/MediaTimeAVFoundation.h>
 #import <pal/spi/cocoa/QuartzCoreSPI.h>
 #import <pal/spi/mac/AVFoundationSPI.h>
-#import <unicode/char16ptr.h>
 #import <wtf/BlockObjCExceptions.h>
 #import <wtf/ListHashSet.h>
 #import <wtf/NeverDestroyed.h>

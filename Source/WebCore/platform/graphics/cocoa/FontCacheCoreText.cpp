@@ -32,8 +32,6 @@
 
 #include <CoreText/SFNTLayoutTypes.h>
 
-#include <unicode/char16ptr.h>
-
 #include <wtf/HashSet.h>
 #include <wtf/MainThread.h>
 #include <wtf/NeverDestroyed.h>

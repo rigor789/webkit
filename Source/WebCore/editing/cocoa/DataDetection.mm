@@ -55,8 +55,6 @@
 
 #import "DataDetectorsCoreSoftLink.h"
 
-#include "unicode/char16ptr.h"
-
 #if PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 101400
 template <>
 struct WTF::CFTypeTrait<DDResultRef> {

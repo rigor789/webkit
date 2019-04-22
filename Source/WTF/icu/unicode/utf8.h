@@ -1,14 +1,12 @@
-// © 2016 and later: Unicode, Inc. and others.
-// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
 *
-*   Copyright (C) 1999-2015, International Business Machines
+*   Copyright (C) 1999-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
 *   file name:  utf8.h
-*   encoding:   UTF-8
+*   encoding:   US-ASCII
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -41,7 +39,25 @@
 
 /* internal definitions ----------------------------------------------------- */
 
-
+/**
+ * \var utf8_countTrailBytes
+ * Internal array with numbers of trail bytes for any given byte used in
+ * lead byte position.
+ *
+ * This is internal since it is not meant to be called directly by external clients;
+ * however it is called by public macros in this file and thus must remain stable,
+ * and should not be hidden when other internal functions are hidden (otherwise
+ * public macros would fail to compile).
+ * @internal
+ */
+#ifdef U_UTF8_IMPL
+U_EXPORT const uint8_t 
+#elif defined(U_STATIC_IMPLEMENTATION) || defined(U_COMMON_IMPLEMENTATION)
+U_CFUNC const uint8_t
+#else
+U_CFUNC U_IMPORT const uint8_t /* U_IMPORT2? */ /*U_IMPORT*/ 
+#endif
+utf8_countTrailBytes[256];
 
 /**
  * Counts the trail bytes for a UTF-8 lead byte.
@@ -799,7 +815,7 @@ utf8_back1SafeBody(const uint8_t *s, int32_t start, int32_t i);
  * @stable ICU 2.4
  */
 #define U8_SET_CP_LIMIT(s, start, i, length) { \
-    if((start)<(i) && ((i)<(length) || (length)<0)) { \
+    if((start)<(i) && ((i)<(length) || ((length)<0 && (s)[i]!=0))) { \
         U8_BACK_1(s, start, i); \
         U8_FWD_1(s, i, length); \
     } \

@@ -1,5 +1,3 @@
-// © 2016 and later: Unicode, Inc. and others.
-// License & terms of use: http://www.unicode.org/copyright.html
 // Copyright (C) 2009-2012, International Business Machines
 // Corporation and others. All Rights Reserved.
 //
@@ -222,6 +220,8 @@ private:
   CheckedArrayByteSink &operator=(const CheckedArrayByteSink &); ///< assignment operator not implemented
 };
 
+#if U_HAVE_STD_STRING
+
 /** 
  * Implementation of ByteSink that writes to a "string".
  * The StringClass is usually instantiated with a std::string.
@@ -249,6 +249,8 @@ class StringByteSink : public ByteSink {
   StringByteSink(const StringByteSink &); ///< copy constructor not implemented
   StringByteSink &operator=(const StringByteSink &); ///< assignment operator not implemented
 };
+
+#endif
 
 U_NAMESPACE_END
 

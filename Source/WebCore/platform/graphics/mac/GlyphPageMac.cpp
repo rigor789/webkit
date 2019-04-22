@@ -34,8 +34,6 @@
 #include <pal/spi/cg/CoreGraphicsSPI.h>
 #include <pal/spi/cocoa/CoreTextSPI.h>
 
-#include <unicode/char16ptr.h>
-
 namespace WebCore {
 
 static bool shouldFillWithVerticalGlyphs(const UChar* buffer, unsigned bufferLength, const Font& font)
