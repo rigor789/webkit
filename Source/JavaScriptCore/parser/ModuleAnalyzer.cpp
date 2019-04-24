@@ -26,10 +26,12 @@
 #include "config.h"
 #include "ModuleAnalyzer.h"
 
+#include "ConsoleClient.h"
 #include "JSCInlines.h"
 #include "JSGlobalObject.h"
 #include "JSModuleRecord.h"
 #include "ModuleScopeData.h"
+#include "ScriptArguments.h"
 #include "StrongInlines.h"
 
 namespace JSC {
@@ -152,22 +154,33 @@ void ModuleAnalyzer::ensureDefaultExportIfNothingExported() {
 
     WTF::String source = m_moduleRecord->sourceCode().view().toString();
     SourceCode sourceC;
-    ParserError error;
 
     if (m_moduleRecord->requestedModules().isEmpty() && m_moduleRecord->exportEntries().isEmpty() && m_moduleRecord->starExportEntries().isEmpty()) {
 
-        error = ParserError();
-        sourceC = makeSource("export default undefined;"_s, SourceOrigin(), URL(), WTF::TextPosition(), SourceProviderSourceType::Module);
+        ParserError error;
+        const char *defaultExportSrc = "export default undefined;";
+        sourceC = makeSource(defaultExportSrc, SourceOrigin(), URL(), WTF::TextPosition(), SourceProviderSourceType::Module);
 
         std::unique_ptr<ModuleProgramNode> moduleProgramNode = parse<ModuleProgramNode>(
                                                                                         m_vm, sourceC, Identifier(), JSParserBuiltinMode::NotBuiltin,
                                                                                         JSParserStrictMode::NotStrict, JSParserScriptMode::Module, SourceParseMode::ModuleAnalyzeMode, SuperBinding::NotNeeded, error);
+        if (error.isValid()) {
+            auto consoleMsgArgs = Inspector::ScriptArguments::create(*m_exec,
+                                                                     {
+                                                                         Strong<JSC::Unknown>(*m_vm, jsString(m_exec, String::format("Error parsing default export for key: %s. Source: '%s'", m_moduleRecord->moduleKey().utf8().data(), defaultExportSrc))),
+                                                                         Strong<JSC::Unknown>(*m_vm, jsString(m_exec, error.message())),
+                                                                     });
+            ConsoleClient::printConsoleMessageWithArguments(MessageSource::JS,
+                                                            MessageType::Assert,
+                                                            MessageLevel::Error,
+                                                            m_exec,
+                                                            WTFMove(consoleMsgArgs));
+            return;
+        }
 
         m_moduleRecord = Strong<JSModuleRecord>(*m_vm, JSModuleRecord::create(m_exec, *m_vm, m_exec->lexicalGlobalObject()->moduleRecordStructure(),  m_moduleRecord->moduleKey(), sourceC, moduleProgramNode->varDeclarations(), moduleProgramNode->lexicalVariables()));
 
         parseModule(moduleProgramNode.get());
-        ASSERT(!error.isValid());
-
         WTF::StringBuilder moduleFunctionSource;
         moduleFunctionSource.append(COMMONJS_FUNCTION_PROLOGUE);
         moduleFunctionSource.append(source);
@@ -180,14 +193,25 @@ void ModuleAnalyzer::ensureDefaultExportIfNothingExported() {
         FunctionExecutable* moduleFunctionExecutable = FunctionExecutable::fromGlobalCode(Identifier::fromString(m_exec, "anonymous"), *m_exec, functionSource, exception, -1, WTF::nullopt);
         if (!moduleFunctionExecutable) {
             ASSERT(exception);
+
+            auto consoleMsgArgs = Inspector::ScriptArguments::create(*m_exec,
+                                                                     {
+                                                                         Strong<JSC::Unknown>(*m_vm, jsString(m_exec, "Error defining CommonJS function: "_s)),
+                                                                         Strong<JSC::Unknown>(*m_vm, jsString(m_exec, moduleFunctionSource.toString())),
+                                                                         Strong<JSC::Unknown>(*m_vm, exception),
+                                                                         Strong<JSC::Unknown>(*m_vm, exception->getDirect(*m_vm, m_vm->propertyNames->stack)),
+                                                                     });
+            ConsoleClient::printConsoleMessageWithArguments(MessageSource::JS,
+                                                            MessageType::Assert,
+                                                            MessageLevel::Error,
+                                                            m_exec,
+                                                            WTFMove(consoleMsgArgs));
             return;
         }
 
         JSFunction* moduleFunction = JSFunction::create(*m_vm, moduleFunctionExecutable, m_exec->lexicalGlobalObject());
         m_moduleRecord->putDirect(*m_vm, Identifier::fromString(m_vm, "CommonJSModuleFunction"), moduleFunction);
 
-    }  else if (error.isValid()) {
-        //TODO: throw error
     }
 }
 
