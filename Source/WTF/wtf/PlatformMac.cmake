@@ -92,7 +92,8 @@ add_custom_command(
         ${DERIVED_SOURCES_WTF_DIR}/mach_excUser.c
     MAIN_DEPENDENCY mac/MachExceptions.defs
     WORKING_DIRECTORY ${DERIVED_SOURCES_WTF_DIR}
-    COMMAND mig -sheader MachExceptionsServer.h MachExceptions.defs
+    # hardcode /usr/bin because Xcode 10.2's toolchain doesn't contain mac_exc.defs
+    COMMAND env -i /usr/bin/mig -sheader MachExceptionsServer.h MachExceptions.defs
     VERBATIM)
 list(APPEND WTF_SOURCES
     ${DERIVED_SOURCES_WTF_DIR}/mach_excServer.c

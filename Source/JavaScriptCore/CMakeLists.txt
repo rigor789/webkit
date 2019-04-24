@@ -48,6 +48,7 @@ set(JavaScriptCore_PRIVATE_INCLUDE_DIRECTORIES
     "${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/inspector"
     "${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/runtime"
     "${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/yarr"
+    "${WTF_DIR}"
 )
 
 if (USE_CAPSTONE)
@@ -283,7 +284,7 @@ add_custom_command(
 # Additionally, setting the OBJECT_DEPENDS property will make the .h files a Makefile
 # dependency of both LLIntOffsetsExtractor and LLIntOffsetsExtractor.cpp, so the command will
 # actually be run multiple times!
-add_executable(LLIntSettingsExtractor
+add_library(LLIntSettingsExtractor STATIC
     ${JAVASCRIPTCORE_DIR}/llint/LLIntSettingsExtractor.cpp
     ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/LLIntDesiredSettings.h ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/Bytecodes.h ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/BytecodeStructs.h
 )
@@ -1281,17 +1282,17 @@ WEBKIT_CREATE_FORWARDING_HEADERS(JavaScriptCore
     DIRECTORIES ${FORWARDING_HEADERS_DIR}/JavaScriptCore
     FILES ${JavaScriptCore_PUBLIC_FRAMEWORK_HEADERS} ${JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS})
 
-# WEBKIT_MAKE_FORWARDING_HEADERS(JavaScriptCore
-#     FILES ${JavaScriptCore_PUBLIC_FRAMEWORK_HEADERS}
-#     FLATTENED
-# )
+WEBKIT_MAKE_FORWARDING_HEADERS(JavaScriptCore
+    FILES ${JavaScriptCore_PUBLIC_FRAMEWORK_HEADERS}
+    FLATTENED
+)
 
-# WEBKIT_MAKE_FORWARDING_HEADERS(JavaScriptCore
-#     TARGET_NAME JavaScriptCorePrivateForwardingHeaders
-#     FILES ${JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS}
-#     DERIVED_SOURCE_DIRECTORIES ${DERIVED_SOURCES_DIR}/JavaScriptCore ${DERIVED_SOURCES_DIR}/JavaScriptCore/inspector
-#     FLATTENED
-# )
+WEBKIT_MAKE_FORWARDING_HEADERS(JavaScriptCore
+    TARGET_NAME JavaScriptCorePrivateForwardingHeaders
+    FILES ${JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS}
+    DERIVED_SOURCE_DIRECTORIES ${DERIVED_SOURCES_DIR}/JavaScriptCore ${DERIVED_SOURCES_DIR}/JavaScriptCore/inspector
+    FLATTENED
+)
 
 target_include_directories(LLIntSettingsExtractor PRIVATE
     ${JavaScriptCore_INCLUDE_DIRECTORIES}

@@ -438,7 +438,9 @@ set(WTF_SOURCES
     text/TextBreakIterator.cpp
     text/TextStream.cpp
     text/WTFString.cpp
-    text/mac/StringMac.mm
+    text/cocoa/StringViewCocoa.mm
+    text/cocoa/StringImplCocoa.mm
+    text/cocoa/StringCocoa.mm
 
     text/icu/UTextProvider.cpp
     text/icu/UTextProviderLatin1.cpp
