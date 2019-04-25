@@ -159,6 +159,7 @@ void ModuleAnalyzer::ensureDefaultExportIfNothingExported() {
 
         ParserError error;
         const char *defaultExportSrc = "export default undefined;";
+        const URL& moduleUrl = m_moduleRecord->sourceCode().provider()->url();
         sourceC = makeSource(defaultExportSrc, SourceOrigin(), URL(), WTF::TextPosition(), SourceProviderSourceType::Module);
 
         std::unique_ptr<ModuleProgramNode> moduleProgramNode = parse<ModuleProgramNode>(
@@ -188,8 +189,7 @@ void ModuleAnalyzer::ensureDefaultExportIfNothingExported() {
 
         JSObject* exception = nullptr;
 
-        URL moduleUrl = m_moduleRecord->sourceCode().provider()->url();
-        SourceCode functionSource = makeSource(moduleFunctionSource.toString(), SourceOrigin(), ::WTFMove(moduleUrl), WTF::TextPosition(), SourceProviderSourceType::Module);
+        SourceCode functionSource = makeSource(moduleFunctionSource.toString(), SourceOrigin(), URL(moduleUrl), WTF::TextPosition(), SourceProviderSourceType::Module);
         FunctionExecutable* moduleFunctionExecutable = FunctionExecutable::fromGlobalCode(Identifier::fromString(m_exec, "anonymous"), *m_exec, functionSource, exception, -1, WTF::nullopt);
         if (!moduleFunctionExecutable) {
             ASSERT(exception);
