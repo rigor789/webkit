@@ -252,7 +252,8 @@ else ()
     #     set(OFFLINE_ASM_BACKEND "MIPS")
     # endif ()
 
-    set(OFFLINE_ASM_BACKEND "ARM64 ARMv7 X86_64 X86")
+    set(OFFLINE_ASM_BACKEND "ARM64 C_LOOP X86_64 X86")
+    # set(OFFLINE_ASM_BACKEND "ARM64 ARMv7 X86_64 X86")
 
     if (NOT ENABLE_JIT)
         if (ENABLE_C_LOOP)

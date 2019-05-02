@@ -85,7 +85,9 @@ void InspectorScriptProfilerAgent::startTracking(ErrorString&, const bool* inclu
         m_enabledSamplingProfiler = true;
     }
 #else
+#if !USE(JSVALUE32_64)
 #error disabled sampling
+#endif
     UNUSED_PARAM(includeSamples);
 #endif // ENABLE(SAMPLING_PROFILER)
 

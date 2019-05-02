@@ -356,7 +356,7 @@
 #endif
 #endif
 
-/* ==== OS() - underlying operating system; only to be used for mandated low-level services like 
+/* ==== OS() - underlying operating system; only to be used for mandated low-level services like
    virtual memory, not to choose a GUI toolkit ==== */
 
 /* OS(AIX) - AIX */
@@ -771,20 +771,11 @@
 #undef ENABLE_DFG_JIT
 #define ENABLE_DFG_JIT 0
 #else
-// TODO: Delete these lines if issues occur or the comments that follow if everything works as expected
+/* Disable JIT and force C_LOOP on all 32bit-architectures but ARMv7-Thumb2/Linux. */
 #undef ENABLE_JIT
 #define ENABLE_JIT 0
 #undef ENABLE_C_LOOP
 #define ENABLE_C_LOOP 1
-
-/* Disable JIT and force C_LOOP on all 32bit-architectures but ARMv7-Thumb2/Linux. */
-// NativeScript: don't disable JIT for 32-bit archs, we disable it at runtime when initializing JSC
-// I'm not sure for the reasons we make this change here but I guess that these disabling 
-// reduces performance and/or leads to build issues.
-//#undef ENABLE_JIT
-//#define ENABLE_JIT 0
-//#undef ENABLE_C_LOOP
-//#define ENABLE_C_LOOP 1
 #endif
 #endif
 
@@ -909,6 +900,11 @@
 #else
 #define ENABLE_SAMPLING_PROFILER 0
 #endif
+#endif
+
+// Disable Sampling profiler when CLoop is enabled
+#if ENABLE(C_LOOP)
+#define ENABLE_SAMPLING_PROFILER 0
 #endif
 
 #if ENABLE(WEBASSEMBLY) && HAVE(MACHINE_CONTEXT)
