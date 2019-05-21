@@ -231,6 +231,23 @@ list(APPEND JavaScriptCore_HEADERS
     ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/BytecodeStructs.h
 )
 
+
+# LLIntOutput dependencies per architecture
+set(LLIntOutputCurrentStampFileName ${LLIntOutput}-$(PLATFORM_NAME)-$(CONFIGURATION).stamp)
+set(LLIntOutputCurrentStamp ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/${LLIntOutputCurrentStampFileName})
+set(LLIntOutputAllStampsWildcard '${LLIntOutput}-*.stamp')
+
+# The ${LLIntOutput} file is architecture-specific but resides in a common place. When we build for Simulator,
+# it is created for the x86/x86_64 processor architectures. Afterwards all device builds will start failing
+# because they need arm7/arm64 architectures but the file will be considered up-to-date and won't be regenerated.
+# As a workaround we're creating an additional dependency of a stamp file per architecture. Whenever a specific
+# architecture is generated, all other ones will be invalidated by touching the corresponding dependency files.
+add_custom_command(
+    OUTPUT ${LLIntOutputCurrentStamp}
+    COMMAND [ -f ${LLIntOutputCurrentStamp} ] || touch ${LLIntOutputCurrentStamp}
+    VERBATIM)
+
+
 if (WIN32)
   set(OFFLINE_ASM_BACKEND "X86_WIN, X86_64_WIN, C_LOOP")
 else ()
@@ -265,14 +282,14 @@ endif ()
 add_custom_command(
     OUTPUT ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/LLIntDesiredSettings.h
     MAIN_DEPENDENCY ${JAVASCRIPTCORE_DIR}/offlineasm/generate_settings_extractor.rb
-    DEPENDS ${LLINT_ASM} ${OFFLINE_ASM} ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/InitBytecodes.asm
+    DEPENDS ${LLINT_ASM} ${OFFLINE_ASM} ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/InitBytecodes.asm ${LLIntOutputCurrentStamp}
     COMMAND ${RUBY_EXECUTABLE} ${JAVASCRIPTCORE_DIR}/offlineasm/generate_settings_extractor.rb -I${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/ ${JAVASCRIPTCORE_DIR}/llint/LowLevelInterpreter.asm ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/LLIntDesiredSettings.h ${OFFLINE_ASM_BACKEND}
     VERBATIM)
 
 add_custom_command(
     OUTPUT ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/LLIntDesiredOffsets.h
     MAIN_DEPENDENCY ${JAVASCRIPTCORE_DIR}/offlineasm/generate_offset_extractor.rb
-    DEPENDS LLIntSettingsExtractor ${LLINT_ASM} ${OFFLINE_ASM} ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/InitBytecodes.asm
+    DEPENDS LLIntSettingsExtractor ${LLINT_ASM} ${OFFLINE_ASM} ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/InitBytecodes.asm ${LLIntOutputCurrentStamp}
     COMMAND ${RUBY_EXECUTABLE} ${JAVASCRIPTCORE_DIR}/offlineasm/generate_offset_extractor.rb -I${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/ ${JAVASCRIPTCORE_DIR}/llint/LowLevelInterpreter.asm $<TARGET_FILE:LLIntSettingsExtractor> ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/LLIntDesiredOffsets.h ${OFFLINE_ASM_BACKEND}
     VERBATIM)
 
@@ -312,21 +329,6 @@ if (MSVC AND NOT ENABLE_C_LOOP)
 else ()
     set(LLIntOutput LLIntAssembly.h)
 endif ()
-
-# LLIntOutput dependencies per architecture
-set(LLIntOutputCurrentStampFileName ${LLIntOutput}-$(PLATFORM_NAME)-$(CONFIGURATION).stamp)
-set(LLIntOutputCurrentStamp ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/${LLIntOutputCurrentStampFileName})
-set(LLIntOutputAllStampsWildcard '${LLIntOutput}-*.stamp')
-
-# The ${LLIntOutput} file is architecture-specific but resides in a common place. When we build for Simulator,
-# it is created for the x86/x86_64 processor architectures. Afterwards all device builds will start failing
-# because they need arm7/arm64 architectures but the file will be considered up-to-date and won't be regenerated.
-# As a workaround we're creating an additional dependency of a stamp file per architecture. Whenever a specific
-# architecture is generated, all other ones will be invalidated by touching the corresponding dependency files.
-add_custom_command(
-    OUTPUT ${LLIntOutputCurrentStamp}
-    COMMAND [ -f ${LLIntOutputCurrentStamp} ] || touch ${LLIntOutputCurrentStamp}
-    VERBATIM)
 
 add_custom_command(
     OUTPUT ${DERIVED_SOURCES_JAVASCRIPTCORE_DIR}/${LLIntOutput}
