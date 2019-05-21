@@ -1,6 +1,1630 @@
+2019-04-24  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r244174. rdar://problem/28160396
+
+    Cherry-pick r243841. rdar://problem/49725678
+    
+        -apple-trailing-word is needed for browser detection
+        https://bugs.webkit.org/show_bug.cgi?id=196575
+    
+        Unreviewed.
+    
+        PerformanceTests:
+    
+        * MotionMark/resources/debug-runner/motionmark.css:
+        (#intro .start-benchmark p):
+    
+        Source/JavaScriptCore:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebCore:
+    
+        This is an unreviewed partial revert of r243819. Turns out there are some websites
+        which use this property to do browser detection. So, we need to continue to parse
+        the property, but we don't need the property to do anything.
+    
+        Test: fast/text/trailing-word-detection.html
+    
+        * Configurations/FeatureDefines.xcconfig:
+        * css/CSSComputedStyleDeclaration.cpp:
+        (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+        * css/CSSPrimitiveValueMappings.h:
+        (WebCore::CSSPrimitiveValue::CSSPrimitiveValue):
+        (WebCore::CSSPrimitiveValue::operator TrailingWord const):
+        * css/CSSProperties.json:
+        * css/CSSValueKeywords.in:
+        * css/parser/CSSParserFastPaths.cpp:
+        (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+        (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+        * rendering/style/RenderStyle.h:
+        (WebCore::RenderStyle::trailingWord const):
+        (WebCore::RenderStyle::setTrailingWord):
+        (WebCore::RenderStyle::initialTrailingWord):
+        * rendering/style/RenderStyleConstants.h:
+    
+        Source/WebCore/PAL:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebKit:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebKitLegacy/mac:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Tools:
+    
+        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+        LayoutTests:
+    
+        * fast/text/trailing-word-detection-expected.txt: Added.
+        * fast/text/trailing-word-detection.html: Added.
+        * platform/gtk/TestExpectations:
+        * platform/win/TestExpectations:
+    
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243841 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/branches/safari-607-branch@244174 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-10  Alan Coon  <alancoon@apple.com>
+
+            Cherry-pick r243841. rdar://problem/49725678
+
+        -apple-trailing-word is needed for browser detection
+        https://bugs.webkit.org/show_bug.cgi?id=196575
+
+        Unreviewed.
+
+        PerformanceTests:
+
+        * MotionMark/resources/debug-runner/motionmark.css:
+        (#intro .start-benchmark p):
+
+        Source/JavaScriptCore:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebCore:
+
+        This is an unreviewed partial revert of r243819. Turns out there are some websites
+        which use this property to do browser detection. So, we need to continue to parse
+        the property, but we don't need the property to do anything.
+
+        Test: fast/text/trailing-word-detection.html
+
+        * Configurations/FeatureDefines.xcconfig:
+        * css/CSSComputedStyleDeclaration.cpp:
+        (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+        * css/CSSPrimitiveValueMappings.h:
+        (WebCore::CSSPrimitiveValue::CSSPrimitiveValue):
+        (WebCore::CSSPrimitiveValue::operator TrailingWord const):
+        * css/CSSProperties.json:
+        * css/CSSValueKeywords.in:
+        * css/parser/CSSParserFastPaths.cpp:
+        (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+        (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+        * rendering/style/RenderStyle.h:
+        (WebCore::RenderStyle::trailingWord const):
+        (WebCore::RenderStyle::setTrailingWord):
+        (WebCore::RenderStyle::initialTrailingWord):
+        * rendering/style/RenderStyleConstants.h:
+
+        Source/WebCore/PAL:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebKit:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebKitLegacy/mac:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Tools:
+
+        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+
+        LayoutTests:
+
+        * fast/text/trailing-word-detection-expected.txt: Added.
+        * fast/text/trailing-word-detection.html: Added.
+        * platform/gtk/TestExpectations:
+        * platform/win/TestExpectations:
+
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243841 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+        2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+
+                -apple-trailing-word is needed for browser detection
+                https://bugs.webkit.org/show_bug.cgi?id=196575
+
+                Unreviewed.
+
+                * fast/text/trailing-word-detection-expected.txt: Added.
+                * fast/text/trailing-word-detection.html: Added.
+                * platform/gtk/TestExpectations:
+                * platform/win/TestExpectations:
+
+2019-04-24  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r244173. rdar://problem/28160396
+
+    Cherry-pick r243819. rdar://problem/49725678
+    
+        Remove support for -apple-trailing-word
+        https://bugs.webkit.org/show_bug.cgi?id=196525
+    
+        Reviewed by Zalan Bujtas.
+    
+        This CSS property is nonstandard and not used.
+    
+        .:
+    
+        * Source/cmake/WebKitFeatures.cmake:
+    
+        Source/JavaScriptCore:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebCore:
+    
+        * Configurations/FeatureDefines.xcconfig:
+        * css/CSSComputedStyleDeclaration.cpp:
+        (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+        * css/CSSPrimitiveValueMappings.h:
+        (WebCore::CSSPrimitiveValue::operator TrailingWord const): Deleted.
+        * css/CSSProperties.json:
+        * css/CSSValueKeywords.in:
+        * css/parser/CSSParserFastPaths.cpp:
+        (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+        (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+        * rendering/SimpleLineLayout.cpp:
+        (WebCore::SimpleLineLayout::canUseForStyle):
+        * rendering/SimpleLineLayoutCoverage.cpp:
+        (WebCore::SimpleLineLayout::printReason):
+        * rendering/SimpleLineLayoutCoverage.h:
+        * rendering/line/BreakingContext.h:
+        (WebCore::BreakingContext::BreakingContext):
+        (WebCore::BreakingContext::lineBreak):
+        (WebCore::BreakingContext::clearLineBreakIfFitsOnLine):
+        (WebCore::BreakingContext::commitLineBreakClear):
+        (WebCore::BreakingContext::commitLineBreakAtCurrentWidth):
+        (WebCore::BreakingContext::handleBR):
+        (WebCore::BreakingContext::handleFloat):
+        (WebCore::BreakingContext::handleText):
+        (WebCore::BreakingContext::handleEndOfLine):
+        (WebCore::BreakingContext::InlineIteratorHistory::InlineIteratorHistory): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::push): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::update): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::renderer const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::offset const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::nextBreakablePosition const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::atTextParagraphSeparator const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::previousInSameNode const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::get const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::current const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::historyLength const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::moveTo): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::increment): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::clear): Deleted.
+        (WebCore::BreakingContext::optimalLineBreakLocationForTrailingWord): Deleted.
+        * rendering/style/RenderStyle.h:
+        (WebCore::RenderStyle::trailingWord const): Deleted.
+        (WebCore::RenderStyle::setTrailingWord): Deleted.
+        (WebCore::RenderStyle::initialTrailingWord): Deleted.
+        * rendering/style/RenderStyleConstants.h:
+        * rendering/style/StyleRareInheritedData.cpp:
+        (WebCore::StyleRareInheritedData::StyleRareInheritedData):
+        (WebCore::StyleRareInheritedData::operator== const):
+        * rendering/style/StyleRareInheritedData.h:
+    
+        Source/WebCore/PAL:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebInspectorUI:
+    
+        * UserInterface/Models/CSSKeywordCompletions.js:
+    
+        Source/WebKit:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebKitLegacy/mac:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Tools:
+    
+        * Scripts/webkitperl/FeatureList.pm:
+        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+        LayoutTests:
+    
+        * fast/text/trailing-word-expected.html: Removed.
+        * fast/text/trailing-word.html: Removed.
+        * platform/gtk/TestExpectations:
+        * platform/mac/fast/text/trailing-word-parse-expected.txt: Removed.
+        * platform/mac/fast/text/trailing-word-parse.html: Removed.
+        * platform/win/TestExpectations:
+    
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243819 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/branches/safari-607-branch@244173 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-10  Alan Coon  <alancoon@apple.com>
+
+            Cherry-pick r243819. rdar://problem/49725678
+
+        Remove support for -apple-trailing-word
+        https://bugs.webkit.org/show_bug.cgi?id=196525
+
+        Reviewed by Zalan Bujtas.
+
+        This CSS property is nonstandard and not used.
+
+        .:
+
+        * Source/cmake/WebKitFeatures.cmake:
+
+        Source/JavaScriptCore:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebCore:
+
+        * Configurations/FeatureDefines.xcconfig:
+        * css/CSSComputedStyleDeclaration.cpp:
+        (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+        * css/CSSPrimitiveValueMappings.h:
+        (WebCore::CSSPrimitiveValue::operator TrailingWord const): Deleted.
+        * css/CSSProperties.json:
+        * css/CSSValueKeywords.in:
+        * css/parser/CSSParserFastPaths.cpp:
+        (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+        (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+        * rendering/SimpleLineLayout.cpp:
+        (WebCore::SimpleLineLayout::canUseForStyle):
+        * rendering/SimpleLineLayoutCoverage.cpp:
+        (WebCore::SimpleLineLayout::printReason):
+        * rendering/SimpleLineLayoutCoverage.h:
+        * rendering/line/BreakingContext.h:
+        (WebCore::BreakingContext::BreakingContext):
+        (WebCore::BreakingContext::lineBreak):
+        (WebCore::BreakingContext::clearLineBreakIfFitsOnLine):
+        (WebCore::BreakingContext::commitLineBreakClear):
+        (WebCore::BreakingContext::commitLineBreakAtCurrentWidth):
+        (WebCore::BreakingContext::handleBR):
+        (WebCore::BreakingContext::handleFloat):
+        (WebCore::BreakingContext::handleText):
+        (WebCore::BreakingContext::handleEndOfLine):
+        (WebCore::BreakingContext::InlineIteratorHistory::InlineIteratorHistory): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::push): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::update): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::renderer const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::offset const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::nextBreakablePosition const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::atTextParagraphSeparator const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::previousInSameNode const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::get const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::current const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::historyLength const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::moveTo): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::increment): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::clear): Deleted.
+        (WebCore::BreakingContext::optimalLineBreakLocationForTrailingWord): Deleted.
+        * rendering/style/RenderStyle.h:
+        (WebCore::RenderStyle::trailingWord const): Deleted.
+        (WebCore::RenderStyle::setTrailingWord): Deleted.
+        (WebCore::RenderStyle::initialTrailingWord): Deleted.
+        * rendering/style/RenderStyleConstants.h:
+        * rendering/style/StyleRareInheritedData.cpp:
+        (WebCore::StyleRareInheritedData::StyleRareInheritedData):
+        (WebCore::StyleRareInheritedData::operator== const):
+        * rendering/style/StyleRareInheritedData.h:
+
+        Source/WebCore/PAL:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebInspectorUI:
+
+        * UserInterface/Models/CSSKeywordCompletions.js:
+
+        Source/WebKit:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebKitLegacy/mac:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Tools:
+
+        * Scripts/webkitperl/FeatureList.pm:
+        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+
+        LayoutTests:
+
+        * fast/text/trailing-word-expected.html: Removed.
+        * fast/text/trailing-word.html: Removed.
+        * platform/gtk/TestExpectations:
+        * platform/mac/fast/text/trailing-word-parse-expected.txt: Removed.
+        * platform/mac/fast/text/trailing-word-parse.html: Removed.
+        * platform/win/TestExpectations:
+
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243819 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+        2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+
+                Remove support for -apple-trailing-word
+                https://bugs.webkit.org/show_bug.cgi?id=196525
+
+                Reviewed by Zalan Bujtas.
+
+                This CSS property is nonstandard and not used.
+
+                * fast/text/trailing-word-expected.html: Removed.
+                * fast/text/trailing-word.html: Removed.
+                * platform/gtk/TestExpectations:
+                * platform/mac/fast/text/trailing-word-parse-expected.txt: Removed.
+                * platform/mac/fast/text/trailing-word-parse.html: Removed.
+                * platform/win/TestExpectations:
+
+2019-04-24  Alan Coon  <alancoon@apple.com>
+
+        Revert r244173. rdar://problem/28160396
+
+2019-04-24  Alan Coon  <alancoon@apple.com>
+
+        Revert r244174. rdar://problem/28160396
+
+2019-04-10  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243841. rdar://problem/49725678
+
+    -apple-trailing-word is needed for browser detection
+    https://bugs.webkit.org/show_bug.cgi?id=196575
+    
+    Unreviewed.
+    
+    PerformanceTests:
+    
+    * MotionMark/resources/debug-runner/motionmark.css:
+    (#intro .start-benchmark p):
+    
+    Source/JavaScriptCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore:
+    
+    This is an unreviewed partial revert of r243819. Turns out there are some websites
+    which use this property to do browser detection. So, we need to continue to parse
+    the property, but we don't need the property to do anything.
+    
+    Test: fast/text/trailing-word-detection.html
+    
+    * Configurations/FeatureDefines.xcconfig:
+    * css/CSSComputedStyleDeclaration.cpp:
+    (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+    * css/CSSPrimitiveValueMappings.h:
+    (WebCore::CSSPrimitiveValue::CSSPrimitiveValue):
+    (WebCore::CSSPrimitiveValue::operator TrailingWord const):
+    * css/CSSProperties.json:
+    * css/CSSValueKeywords.in:
+    * css/parser/CSSParserFastPaths.cpp:
+    (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+    (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+    * rendering/style/RenderStyle.h:
+    (WebCore::RenderStyle::trailingWord const):
+    (WebCore::RenderStyle::setTrailingWord):
+    (WebCore::RenderStyle::initialTrailingWord):
+    * rendering/style/RenderStyleConstants.h:
+    
+    Source/WebCore/PAL:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKit:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKitLegacy/mac:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Tools:
+    
+    * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+    LayoutTests:
+    
+    * fast/text/trailing-word-detection-expected.txt: Added.
+    * fast/text/trailing-word-detection.html: Added.
+    * platform/gtk/TestExpectations:
+    * platform/win/TestExpectations:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243841 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+
+            -apple-trailing-word is needed for browser detection
+            https://bugs.webkit.org/show_bug.cgi?id=196575
+
+            Unreviewed.
+
+            * fast/text/trailing-word-detection-expected.txt: Added.
+            * fast/text/trailing-word-detection.html: Added.
+            * platform/gtk/TestExpectations:
+            * platform/win/TestExpectations:
+
+2019-04-10  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243819. rdar://problem/49725678
+
+    Remove support for -apple-trailing-word
+    https://bugs.webkit.org/show_bug.cgi?id=196525
+    
+    Reviewed by Zalan Bujtas.
+    
+    This CSS property is nonstandard and not used.
+    
+    .:
+    
+    * Source/cmake/WebKitFeatures.cmake:
+    
+    Source/JavaScriptCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    * css/CSSComputedStyleDeclaration.cpp:
+    (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+    * css/CSSPrimitiveValueMappings.h:
+    (WebCore::CSSPrimitiveValue::operator TrailingWord const): Deleted.
+    * css/CSSProperties.json:
+    * css/CSSValueKeywords.in:
+    * css/parser/CSSParserFastPaths.cpp:
+    (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+    (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+    * rendering/SimpleLineLayout.cpp:
+    (WebCore::SimpleLineLayout::canUseForStyle):
+    * rendering/SimpleLineLayoutCoverage.cpp:
+    (WebCore::SimpleLineLayout::printReason):
+    * rendering/SimpleLineLayoutCoverage.h:
+    * rendering/line/BreakingContext.h:
+    (WebCore::BreakingContext::BreakingContext):
+    (WebCore::BreakingContext::lineBreak):
+    (WebCore::BreakingContext::clearLineBreakIfFitsOnLine):
+    (WebCore::BreakingContext::commitLineBreakClear):
+    (WebCore::BreakingContext::commitLineBreakAtCurrentWidth):
+    (WebCore::BreakingContext::handleBR):
+    (WebCore::BreakingContext::handleFloat):
+    (WebCore::BreakingContext::handleText):
+    (WebCore::BreakingContext::handleEndOfLine):
+    (WebCore::BreakingContext::InlineIteratorHistory::InlineIteratorHistory): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::push): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::update): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::renderer const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::offset const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::nextBreakablePosition const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::atTextParagraphSeparator const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::previousInSameNode const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::get const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::current const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::historyLength const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::moveTo): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::increment): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::clear): Deleted.
+    (WebCore::BreakingContext::optimalLineBreakLocationForTrailingWord): Deleted.
+    * rendering/style/RenderStyle.h:
+    (WebCore::RenderStyle::trailingWord const): Deleted.
+    (WebCore::RenderStyle::setTrailingWord): Deleted.
+    (WebCore::RenderStyle::initialTrailingWord): Deleted.
+    * rendering/style/RenderStyleConstants.h:
+    * rendering/style/StyleRareInheritedData.cpp:
+    (WebCore::StyleRareInheritedData::StyleRareInheritedData):
+    (WebCore::StyleRareInheritedData::operator== const):
+    * rendering/style/StyleRareInheritedData.h:
+    
+    Source/WebCore/PAL:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebInspectorUI:
+    
+    * UserInterface/Models/CSSKeywordCompletions.js:
+    
+    Source/WebKit:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKitLegacy/mac:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Tools:
+    
+    * Scripts/webkitperl/FeatureList.pm:
+    * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+    LayoutTests:
+    
+    * fast/text/trailing-word-expected.html: Removed.
+    * fast/text/trailing-word.html: Removed.
+    * platform/gtk/TestExpectations:
+    * platform/mac/fast/text/trailing-word-parse-expected.txt: Removed.
+    * platform/mac/fast/text/trailing-word-parse.html: Removed.
+    * platform/win/TestExpectations:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243819 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+
+            Remove support for -apple-trailing-word
+            https://bugs.webkit.org/show_bug.cgi?id=196525
+
+            Reviewed by Zalan Bujtas.
+
+            This CSS property is nonstandard and not used.
+
+            * fast/text/trailing-word-expected.html: Removed.
+            * fast/text/trailing-word.html: Removed.
+            * platform/gtk/TestExpectations:
+            * platform/mac/fast/text/trailing-word-parse-expected.txt: Removed.
+            * platform/mac/fast/text/trailing-word-parse.html: Removed.
+            * platform/win/TestExpectations:
+
+2019-04-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243828. rdar://problem/49725673
+
+    Documents can be destroyed before their CSSFontFaceSet is destroyed
+    https://bugs.webkit.org/show_bug.cgi?id=195830
+    
+    Reviewed by Darin Adler.
+    
+    Source/WebCore:
+    
+    CSSFontFaceSet has a raw pointer to its owning document. JS can keep the CSSFontFaceSet alive (by using FontFaceSet)
+    and can destroy the document at any time. When the document is destroyed, the link between the two objects needs to
+    be severed.
+    
+    Test: fast/text/font-face-set-destroy-document.html
+    
+    * css/CSSFontFace.cpp:
+    (WebCore::CSSFontFace::CSSFontFace):
+    * css/CSSFontFace.h:
+    * css/CSSFontFaceSet.cpp:
+    (WebCore::CSSFontFaceSet::CSSFontFaceSet):
+    (WebCore::CSSFontFaceSet::ensureLocalFontFacesForFamilyRegistered):
+    * css/CSSFontFaceSet.h:
+    * css/CSSFontSelector.cpp:
+    (WebCore::CSSFontSelector::CSSFontSelector):
+    (WebCore::CSSFontSelector::addFontFaceRule):
+    * css/CSSFontSelector.h:
+    * css/FontFace.cpp:
+    (WebCore::FontFace::FontFace):
+    
+    LayoutTests:
+    
+    * fast/text/font-face-set-destroy-document-expected.html: Added.
+    * fast/text/font-face-set-destroy-document.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243828 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+
+            Documents can be destroyed before their CSSFontFaceSet is destroyed
+            https://bugs.webkit.org/show_bug.cgi?id=195830
+
+            Reviewed by Darin Adler.
+
+            * fast/text/font-face-set-destroy-document-expected.html: Added.
+            * fast/text/font-face-set-destroy-document.html: Added.
+
+2019-04-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243786. rdar://problem/49725702
+
+    REGRESSION (r238266): Exchange 2013 Outlook Web Access displays partially blank page when creating new e-mail
+    https://bugs.webkit.org/show_bug.cgi?id=196522
+    Source/WebCore:
+    
+    rdar://problem/49472941
+    
+    Reviewed by Zalan Bujtas.
+    
+    In this content a layer is composited to clip descendants, and has negative z-order children,
+    so we compute that it "paints into ancestor", and has a foreground layer. This combination doesn't
+    make sense, and when the layer becomes scrollable, we end up with bad paint phases on layers, and
+    fail to paint the contents.
+    
+    Fix by ensuring that a layer has its own backing store if it requires a foreground layer
+    by virtue of having negative z-order children.
+    
+    Test: compositing/backing/foreground-layer-no-paints-into-ancestor.html
+    
+    * rendering/RenderLayerCompositor.cpp:
+    (WebCore::RenderLayerCompositor::requiresOwnBackingStore const):
+    
+    LayoutTests:
+    
+    Reviewed by Zalan Bujtas.
+    
+    * compositing/backing/foreground-layer-no-paints-into-ancestor-expected.html: Added.
+    * compositing/backing/foreground-layer-no-paints-into-ancestor.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243786 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-02  Simon Fraser  <simon.fraser@apple.com>
+
+            REGRESSION (r238266): Exchange 2013 Outlook Web Access displays partially blank page when creating new e-mail
+            https://bugs.webkit.org/show_bug.cgi?id=196522
+
+            Reviewed by Zalan Bujtas.
+
+            * compositing/backing/foreground-layer-no-paints-into-ancestor-expected.html: Added.
+            * compositing/backing/foreground-layer-no-paints-into-ancestor.html: Added.
+
+2019-04-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243660. rdar://problem/49725670
+
+    [Simple line layout] Turn off inline boxtree generation for multiline content
+    https://bugs.webkit.org/show_bug.cgi?id=196404
+    <rdar://problem/49234033>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    Currently simple line layout can't provide the correct line breaking context to the inline tree when the boxtree is
+    generated using the simple line runs. This patch limits the generation of such trees to single lines. Multiline content will
+    go through the "let's layout this content again" codepath.
+    This patch fixes disappearing content on Questar.
+    
+    Test: fast/text/simple-line-layout-and-multiline-inlineboxtree.html
+    
+    * rendering/SimpleLineLayoutFunctions.cpp:
+    (WebCore::SimpleLineLayout::canUseForLineBoxTree):
+    
+    LayoutTests:
+    
+    * fast/text/simple-line-layout-and-multiline-inlineboxtree-expected.html: Added.
+    * fast/text/simple-line-layout-and-multiline-inlineboxtree.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243660 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-29  Zalan Bujtas  <zalan@apple.com>
+
+            [Simple line layout] Turn off inline boxtree generation for multiline content
+            https://bugs.webkit.org/show_bug.cgi?id=196404
+            <rdar://problem/49234033>
+
+            Reviewed by Simon Fraser.
+
+            * fast/text/simple-line-layout-and-multiline-inlineboxtree-expected.html: Added.
+            * fast/text/simple-line-layout-and-multiline-inlineboxtree.html: Added.
+
+2019-04-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243605. rdar://problem/49725707
+
+    [SimpleLineLayout] Disable SLL when text-underline-position is not auto.
+    https://bugs.webkit.org/show_bug.cgi?id=196338
+    <rdar://problem/47975167>
+    
+    Reviewed by Daniel Bates.
+    
+    Source/WebCore:
+    
+    Disable simple line layout unconditionally on non-auto text-underline-position content. We don't support it yet.
+    
+    Test: fast/text/simple-line-layout-with-text-underline-position.html
+    
+    * rendering/SimpleLineLayout.cpp:
+    (WebCore::SimpleLineLayout::canUseForStyle):
+    
+    LayoutTests:
+    
+    * fast/text/simple-line-layout-with-text-underline-position-expected.html: Added.
+    * fast/text/simple-line-layout-with-text-underline-position.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243605 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-28  Zalan Bujtas  <zalan@apple.com>
+
+            [SimpleLineLayout] Disable SLL when text-underline-position is not auto.
+            https://bugs.webkit.org/show_bug.cgi?id=196338
+            <rdar://problem/47975167>
+
+            Reviewed by Daniel Bates.
+
+            * fast/text/simple-line-layout-with-text-underline-position-expected.html: Added.
+            * fast/text/simple-line-layout-with-text-underline-position.html: Added.
+
+2019-04-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r241931. rdar://problem/49725665
+
+    Fix the test failure following r241918
+    (https://bugs.webkit.org/show_bug.cgi?id=194906)
+    
+    For some reason strict cookies are sent via HTTP in WK1 and not in WK2. Will investigate in <https://bugs.webkit.org/show_bug.cgi?id=194933>.
+    This sub-test failure occurs with and without the patch. As the primary purpose of this test
+    was to ensure correctness for Same Site lax cookies, I've amended the test and test result
+    for now.
+    
+    * http/tests/cookies/same-site/user-load-cross-site-redirect-expected.txt:
+    * http/tests/cookies/same-site/user-load-cross-site-redirect.php:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@241931 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-02-21  Daniel Bates  <dabates@apple.com>
+
+            Fix the test failure following r241918
+            (https://bugs.webkit.org/show_bug.cgi?id=194906)
+
+            For some reason strict cookies are sent via HTTP in WK1 and not in WK2. Will investigate in <https://bugs.webkit.org/show_bug.cgi?id=194933>.
+            This sub-test failure occurs with and without the patch. As the primary purpose of this test
+            was to ensure correctness for Same Site lax cookies, I've amended the test and test result
+            for now.
+
+            * http/tests/cookies/same-site/user-load-cross-site-redirect-expected.txt:
+            * http/tests/cookies/same-site/user-load-cross-site-redirect.php:
+
+2019-04-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r241918. rdar://problem/49725665
+
+    Same Site Lax cookies are not sent with cross-site redirect from client-initiated load
+    https://bugs.webkit.org/show_bug.cgi?id=194906
+    <rdar://problem/44305947>
+    
+    Reviewed by Brent Fulgham.
+    
+    Source/WebCore:
+    
+    Ensure that a request for a top-level navigation is annotated as such regardless of whether
+    the request has a computed Same Site policy.
+    
+    "New loads" initiated by a the client (Safari) either by API or a human either explicitly
+    typing a URL in the address bar or Command + clicking a hyperlink to open it in a new window/tab
+    are always considered Same Site. This is by definition from the spec. [1] as we aren't navigating
+    from an existing page. (Command + click should be thought of as a convenience to the user from
+    having to copy the hyperlink's URL, create a new window, and paste the URL into the address bar).
+    Currently the frame loader marks a request as a top-level navigation if and only if the request
+    does not have a pre-computed Same Site policy. However, "New loads" have a pre-computed Same Site
+    policy. So, these loads would never be marked as a top-level navigation by the frame loading code.
+    Therefore, if the "new load" turned out to be a cross-site redirect then WebKit would incorrectly
+    tell the networking stack that the load was a cross-site, non-top-level navigation, and per the
+    Same Site spec [2], the networking stack would not send Same Site Lax cookies. Instead,
+    WebKit should unconditionally ensure that requests are marked as a top-level navigation, if applicable.
+    
+    [1] See Note for (1) in  <https://tools.ietf.org/html/draft-ietf-httpbis-rfc6265bis-02#section-5.2>
+    [2] <https://tools.ietf.org/html/draft-ietf-httpbis-rfc6265bis-02#section-5.3.7.1>
+    
+    Test: http/tests/cookies/same-site/user-load-cross-site-redirect.php
+    
+    * loader/FrameLoader.cpp:
+    (WebCore::FrameLoader::addExtraFieldsToRequest): Unconditionally update the request's top-
+    level navigation bit.
+    * platform/network/ResourceRequestBase.cpp:
+    (WebCore::ResourceRequestBase::setAsIsolatedCopy): Unconditionally copy a request's top-
+    level navigation bit.
+    
+    LayoutTests:
+    
+    Add a test that is representative of a user loading a cross-site page that redirects
+    to a page that expects Same Site Lax cookies.
+    
+    * http/tests/cookies/same-site/user-load-cross-site-redirect-expected.txt: Added.
+    * http/tests/cookies/same-site/user-load-cross-site-redirect.php: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@241918 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-02-21  Daniel Bates  <dabates@apple.com>
+
+            Same Site Lax cookies are not sent with cross-site redirect from client-initiated load
+            https://bugs.webkit.org/show_bug.cgi?id=194906
+            <rdar://problem/44305947>
+
+            Reviewed by Brent Fulgham.
+
+            Add a test that is representative of a user loading a cross-site page that redirects
+            to a page that expects Same Site Lax cookies.
+
+            * http/tests/cookies/same-site/user-load-cross-site-redirect-expected.txt: Added.
+            * http/tests/cookies/same-site/user-load-cross-site-redirect.php: Added.
+
+2019-04-04  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Cherry-pick r243768. rdar://problem/49539493
+
+    [Mojave] Layout test fast/text/complex-initial-advance.html is failing
+    https://bugs.webkit.org/show_bug.cgi?id=196512
+    
+    Unreviewed test gardening.
+    
+    * platform/mac/TestExpectations: Mark test as failing.
+    
+    git-svn-id: http://svn.webkit.org/repository/webkit/trunk@243768 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-02  Ryan Haddad  <ryanhaddad@apple.com>
+
+            [Mojave] Layout test fast/text/complex-initial-advance.html is failing
+            https://bugs.webkit.org/show_bug.cgi?id=196512
+
+            Unreviewed test gardening.
+
+            * platform/mac/TestExpectations: Mark test as failing.
+
+2019-04-04  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Cherry-pick r241307. rdar://problem/49610758
+
+    AX: Fix flaky accessibility/loading-iframe-sends-notification.html
+    https://bugs.webkit.org/show_bug.cgi?id=194546
+    
+    Reviewed by Zalan Bujtas.
+    
+    This test was relying on timing between load events being sent and accessibility events being sent.
+    We don't need to do that, we can more directly test this interplay.
+    
+    * accessibility/loading-iframe-sends-notification-expected.txt:
+    * accessibility/loading-iframe-sends-notification.html:
+    
+    
+    git-svn-id: http://svn.webkit.org/repository/webkit/trunk@241307 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-02-12  Chris Fleizach  <cfleizach@apple.com>
+
+            AX: Fix flaky accessibility/loading-iframe-sends-notification.html
+            https://bugs.webkit.org/show_bug.cgi?id=194546
+
+            Reviewed by Zalan Bujtas.
+
+            This test was relying on timing between load events being sent and accessibility events being sent.
+            We don't need to do that, we can more directly test this interplay.
+
+            * accessibility/loading-iframe-sends-notification-expected.txt:
+            * accessibility/loading-iframe-sends-notification.html:
+
+2019-04-02  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r240492. rdar://problem/49539128
+
+    webkitpy: Implement device type specific expected results (Gardening)
+    https://bugs.webkit.org/show_bug.cgi?id=192162
+    <rdar://problem/46345449>
+    
+    Unreviewed test gardening.
+    
+    * platform/ios/TestExpectations: Remove non-existant directories.
+    * platform/mac/TestExpectations: Ditto.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@240492 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-01-25  Jonathan Bedard  <jbedard@apple.com>
+
+            webkitpy: Implement device type specific expected results (Gardening)
+            https://bugs.webkit.org/show_bug.cgi?id=192162
+            <rdar://problem/46345449>
+
+            Unreviewed test gardening.
+
+            * platform/ios/TestExpectations: Remove non-existant directories.
+            * platform/mac/TestExpectations: Ditto.
+
+2019-04-02  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r240157. rdar://problem/49539128
+
+    webkitpy: Implement device type specific expected results (Follow-up fix)
+    https://bugs.webkit.org/show_bug.cgi?id=192162
+    <rdar://problem/46345449>
+    
+    Unreviewed test gardening.
+    
+    * tiled-drawing/ios/iphone7: Removed.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@240157 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-01-18  Jonathan Bedard  <jbedard@apple.com>
+
+            webkitpy: Implement device type specific expected results (Follow-up fix)
+            https://bugs.webkit.org/show_bug.cgi?id=192162
+            <rdar://problem/46345449>
+
+            Unreviewed test gardening.
+
+            * tiled-drawing/ios/iphone7: Removed.
+
+2019-04-02  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r240150. rdar://problem/49539128
+
+    webkitpy: Implement device type specific expected results (Part 2)
+    https://bugs.webkit.org/show_bug.cgi?id=192162
+    <rdar://problem/46345449>
+    
+    Rubber-stamped by Aakash Jain.
+    
+    Tools:
+    
+    This change uses device_type to select a different set of TestExpectation files based on the type of device running
+    tests. This requires multiple baseline search paths to be used in a single instantiation of run-webkit-tests. Note
+    that while multiple baseline search paths are used, any single test will only ever be run on a single device type.
+    
+    * Scripts/webkitpy/layout_tests/controllers/layout_test_finder.py:
+    (LayoutTestFinder.find_tests): Pass device_type through.
+    * Scripts/webkitpy/layout_tests/controllers/layout_test_finder_unittest.py:
+    (LayoutTestFinderTests.test_touched_but_skipped_test): Allow device_type to be passed in.
+    * Scripts/webkitpy/layout_tests/controllers/manager.py:
+    (Manager.__init__): Make _expectations an OrderedDict indexed by device_type, add current_device_type.
+    (Manager._collect_tests): Pass device type to test finder.
+    (Manager._needs_web_platform_test):
+    (Manager._prepare_lists): Index _expectations by device type.
+    (Manager._test_input_for_file):
+    (Manager._test_is_slow): Ditto.
+    (Manager._test_should_dump_jsconsolelog_in_stderr):
+    (Manager._test_should_dump_jsconsolelog_in_stderr): Ditto.
+    (Manager._get_test_inputs):
+    (Manager._update_worker_count):
+    (Manager._set_up_run): Use current_device_type instead of passing device_type in.
+    (Manager.run): Re-write function to gather and parse expectations from multiple baseline search paths. In the event
+    that a test can be run on multiple device types, the first device in the device type list which is eligible will be
+    the one which runs the test.
+    (Manager._run_test_subset):
+    (Manager._run_tests): Index _expectations by current_device_type.
+    (Manager._print_expectation_line_for_test): Ditto.
+    (Manager._print_expectations_for_subset): Ditto.
+    (Manager.print_expectations): Re-write function to gather and parse expectations from multiple baseline search paths.
+    Unlike run, this function will behave the same regardless of what devices are available.
+    (Manager._custom_device_for_test): Deleted.
+    * Scripts/webkitpy/layout_tests/controllers/manager_unittest.py:
+    (ManagerTest.test_uses_custom_device): Deleted.
+    (ManagerTest.test_uses_custom_device.get_manager): Deleted.
+    * Scripts/webkitpy/layout_tests/layout_package/json_layout_results_generator.py:
+    (JSONLayoutResultsGenerator.__init__): Pass expectations as a dictionary indexed by device type.
+    (JSONLayoutResultsGenerator._insert_failure_summaries): The number of fixable tests must take into consideration
+    all of the expectations.
+    * Scripts/webkitpy/layout_tests/lint_test_expectations_unittest.py:
+    (FakePort.skipped_layout_tests): Allow device_type to be passed in.
+    * Scripts/webkitpy/layout_tests/models/test_expectations.py:
+    (TestExpectations.__init__): Allow device_type to be passed through.
+    (TestExpectations.parse_all_expectations): Pick expectations_dict by device type.
+    * Scripts/webkitpy/layout_tests/models/test_expectations_unittest.py: Allow device_type to be passed in.
+    * Scripts/webkitpy/layout_tests/models/test_run_results.py:
+    (summarize_results):
+    * Scripts/webkitpy/layout_tests/models/test_run_results_unittest.py:
+    (summarized_results): Expectations are stored in a dictionary indexed by device_type. When determining the expectation
+    a test ran with, one must check all expectations to find the first non-skip expectation.
+    * Scripts/webkitpy/layout_tests/run_webkit_tests_integrationtest.py:
+    (RunTest.test_device_type_test_division):
+    (RunTest):
+    (RunTest.test_device_type_specific_listing):
+    * Scripts/webkitpy/port/base.py:
+    (Port): Add default values for DEVICE_TYPE and DEFAULT_DEVICE_TYPES.
+    (Port.supported_device_types): The result of this function will change based on what devices are available.
+    * Scripts/webkitpy/port/device_port.py:
+    (DevicePort._device_type_with_version): Replace DEFAULT_DEVICE_TYPE with DEVICE_TYPE.
+    (DevicePort.default_child_processes): DEVICE_TYPE is a general type, so the built-in comparison of the DeviceType object
+    can be used.
+    (DevicePort.supported_device_types): Generates a list of device types determined by the available devices, if there are
+    any, or the DEFAULT_DEVICE_TYPES of the port.
+    * Scripts/webkitpy/port/ios.py:
+    (IOSPort): Change DEFAULT_DEVICE_TYPE to DEVICE_TYPE.
+    * Scripts/webkitpy/port/ios_simulator.py:
+    (IOSSimulatorPort): Set the DEFAULT_DEVICE_TYPES to the devices currently used to run layout tests.
+    * Scripts/webkitpy/port/watch.py:
+    (WatchPort): Change DEFAULT_DEVICE_TYPE to DEVICE_TYPE.
+    * Scripts/webkitpy/port/watch_simulator.py:
+    (WatchSimulatorPort): Set the DEFAULT_DEVICE_TYPES to the device currently used to run layout tests.
+    * Scripts/webkitpy/xcode/device_type.py:
+    (DeviceType):
+    (DeviceType.__hash__): Allow DeviceType to be used as a dictionary index.
+    
+    LayoutTests:
+    
+    Move iPad and iPhone 7 tests to their respective platform specific directories.
+    
+    * TestExpectations:
+    * fast/events/touch/ios/iphone7: Removed.
+    * fast/forms/ios/ipad: Removed.
+    * fast/text-autosizing/ios/ipad: Removed.
+    * fast/viewport/ios/ipad: Removed.
+    * media/controls/ipad: Removed.
+    * media/modern-media-controls/media-documents/ipad: Removed.
+    * media/modern-media-controls/pip-support/ipad: Removed.
+    * platform/ios-wk1/TestExpectations:
+    * platform/ios/TestExpectations:
+    * platform/ipad: Added.
+    * platform/ipad/fast: Added.
+    * platform/ipad/fast/forms: Added.
+    * platform/ipad/fast/forms/choose-select-option-expected.txt: Added.
+    * platform/ipad/fast/forms/choose-select-option.html: Added.
+    * platform/ipad/fast/forms/focus-input-via-button-expected.txt: Added.
+    * platform/ipad/fast/forms/focus-input-via-button.html: Added.
+    * platform/ipad/fast/forms/multiple-select-updates-renderer-expected.txt: Added.
+    * platform/ipad/fast/forms/multiple-select-updates-renderer.html: Added.
+    * platform/ipad/fast/forms/select-form-run-twice-expected.txt: Added.
+    * platform/ipad/fast/forms/select-form-run-twice.html: Added.
+    * platform/ipad/fast/forms/select-with-title-expected.txt: Added.
+    * platform/ipad/fast/forms/select-with-title.html: Added.
+    * platform/ipad/fast/forms/unfocus-inside-fixed-hittest-expected.txt: Added.
+    * platform/ipad/fast/forms/unfocus-inside-fixed-hittest.html: Added.
+    * platform/ipad/fast/text-autosizing: Added.
+    * platform/ipad/fast/text-autosizing/programmatic-text-size-adjust-expected.txt: Added.
+    * platform/ipad/fast/text-autosizing/programmatic-text-size-adjust.html: Added.
+    * platform/ipad/fast/text-autosizing/text-size-adjust-inline-style-expected.html: Added.
+    * platform/ipad/fast/text-autosizing/text-size-adjust-inline-style.html: Added.
+    * platform/ipad/fast/viewport: Added.
+    * platform/ipad/fast/viewport/empty-meta-expected.txt: Added.
+    * platform/ipad/fast/viewport/empty-meta.html: Added.
+    * platform/ipad/fast/viewport/meta-viewport-ignored-expected.txt: Added.
+    * platform/ipad/fast/viewport/meta-viewport-ignored.html: Added.
+    * platform/ipad/fast/viewport/viewport-overriden-by-minimum-effective-width-if-ignore-meta-viewport-expected.txt: Added.
+    * platform/ipad/fast/viewport/viewport-overriden-by-minimum-effective-width-if-ignore-meta-viewport.html: Added.
+    * platform/ipad/fast/viewport/viewport-unchanged-by-minimum-effective-width-if-not-ignore-meta-viewport-expected.txt: Added.
+    * platform/ipad/fast/viewport/viewport-unchanged-by-minimum-effective-width-if-not-ignore-meta-viewport.html: Added.
+    * platform/ipad/fast/viewport/width-is-device-width-expected.txt: Added.
+    * platform/ipad/fast/viewport/width-is-device-width.html: Added.
+    * platform/ipad/media: Added.
+    * platform/ipad/media/controls: Added.
+    * platform/ipad/media/controls/close-page-with-picture-in-picture-video-assertion-failure-expected.txt: Added.
+    * platform/ipad/media/controls/close-page-with-picture-in-picture-video-assertion-failure.html: Added.
+    * platform/ipad/media/controls/resources: Added.
+    * platform/ipad/media/controls/resources/picture-in-picture.html: Added.
+    * platform/ipad/media/modern-media-controls: Added.
+    * platform/ipad/media/modern-media-controls/media-documents: Added.
+    * platform/ipad/media/modern-media-controls/media-documents/media-document-audio-ios-sizing-expected.txt: Added.
+    * platform/ipad/media/modern-media-controls/media-documents/media-document-audio-ios-sizing.html: Added.
+    * platform/ipad/media/modern-media-controls/media-documents/media-document-video-ios-sizing-expected.txt: Added.
+    * platform/ipad/media/modern-media-controls/media-documents/media-document-video-ios-sizing.html: Added.
+    * platform/ipad/media/modern-media-controls/pip-support: Added.
+    * platform/ipad/media/modern-media-controls/pip-support/pip-support-enabled-expected.txt: Added.
+    * platform/ipad/media/modern-media-controls/pip-support/pip-support-enabled.html: Added.
+    * platform/ipad/media/modern-media-controls/pip-support/pip-support-tap-expected.txt: Added.
+    * platform/ipad/media/modern-media-controls/pip-support/pip-support-tap.html: Added.
+    * platform/iphone-7: Added.
+    * platform/iphone-7/fast: Added.
+    * platform/iphone-7/fast/events: Added.
+    * platform/iphone-7/fast/events/touch: Added.
+    * platform/iphone-7/fast/events/touch/force-press-event-expected.txt: Added.
+    * platform/iphone-7/fast/events/touch/force-press-event.html: Added.
+    * platform/iphone-7/fast/events/touch/force-press-on-link-expected.txt: Added.
+    * platform/iphone-7/fast/events/touch/force-press-on-link.html: Added.
+    * platform/iphone-7/fast/events/touch/prevent-default-touchmove-prevents-scrolling-expected.txt: Added.
+    * platform/iphone-7/fast/events/touch/prevent-default-touchmove-prevents-scrolling.html: Added.
+    * platform/iphone-7/tiled-drawing: Added.
+    * platform/iphone-7/tiled-drawing/compositing-layers-deep-color-expected.txt: Added.
+    * platform/iphone-7/tiled-drawing/compositing-layers-deep-color.html: Added.
+    * platform/mac-wk2/TestExpectations:
+    * platform/mac/TestExpectations:
+    * tiled-drawing/ios: Removed.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@240150 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-01-18  Jonathan Bedard  <jbedard@apple.com>
+
+            webkitpy: Implement device type specific expected results (Part 2)
+            https://bugs.webkit.org/show_bug.cgi?id=192162
+            <rdar://problem/46345449>
+
+            Rubber-stamped by Aakash Jain.
+
+            Move iPad and iPhone 7 tests to their respective platform specific directories.
+
+            * TestExpectations:
+            * fast/events/touch/ios/iphone7: Removed.
+            * fast/forms/ios/ipad: Removed.
+            * fast/text-autosizing/ios/ipad: Removed.
+            * fast/viewport/ios/ipad: Removed.
+            * media/controls/ipad: Removed.
+            * media/modern-media-controls/media-documents/ipad: Removed.
+            * media/modern-media-controls/pip-support/ipad: Removed.
+            * platform/ios-wk1/TestExpectations:
+            * platform/ios/TestExpectations:
+            * platform/ipad: Added.
+            * platform/ipad/fast: Added.
+            * platform/ipad/fast/forms: Added.
+            * platform/ipad/fast/forms/choose-select-option-expected.txt: Added.
+            * platform/ipad/fast/forms/choose-select-option.html: Added.
+            * platform/ipad/fast/forms/focus-input-via-button-expected.txt: Added.
+            * platform/ipad/fast/forms/focus-input-via-button.html: Added.
+            * platform/ipad/fast/forms/multiple-select-updates-renderer-expected.txt: Added.
+            * platform/ipad/fast/forms/multiple-select-updates-renderer.html: Added.
+            * platform/ipad/fast/forms/select-form-run-twice-expected.txt: Added.
+            * platform/ipad/fast/forms/select-form-run-twice.html: Added.
+            * platform/ipad/fast/forms/select-with-title-expected.txt: Added.
+            * platform/ipad/fast/forms/select-with-title.html: Added.
+            * platform/ipad/fast/forms/unfocus-inside-fixed-hittest-expected.txt: Added.
+            * platform/ipad/fast/forms/unfocus-inside-fixed-hittest.html: Added.
+            * platform/ipad/fast/text-autosizing: Added.
+            * platform/ipad/fast/text-autosizing/programmatic-text-size-adjust-expected.txt: Added.
+            * platform/ipad/fast/text-autosizing/programmatic-text-size-adjust.html: Added.
+            * platform/ipad/fast/text-autosizing/text-size-adjust-inline-style-expected.html: Added.
+            * platform/ipad/fast/text-autosizing/text-size-adjust-inline-style.html: Added.
+            * platform/ipad/fast/viewport: Added.
+            * platform/ipad/fast/viewport/empty-meta-expected.txt: Added.
+            * platform/ipad/fast/viewport/empty-meta.html: Added.
+            * platform/ipad/fast/viewport/meta-viewport-ignored-expected.txt: Added.
+            * platform/ipad/fast/viewport/meta-viewport-ignored.html: Added.
+            * platform/ipad/fast/viewport/viewport-overriden-by-minimum-effective-width-if-ignore-meta-viewport-expected.txt: Added.
+            * platform/ipad/fast/viewport/viewport-overriden-by-minimum-effective-width-if-ignore-meta-viewport.html: Added.
+            * platform/ipad/fast/viewport/viewport-unchanged-by-minimum-effective-width-if-not-ignore-meta-viewport-expected.txt: Added.
+            * platform/ipad/fast/viewport/viewport-unchanged-by-minimum-effective-width-if-not-ignore-meta-viewport.html: Added.
+            * platform/ipad/fast/viewport/width-is-device-width-expected.txt: Added.
+            * platform/ipad/fast/viewport/width-is-device-width.html: Added.
+            * platform/ipad/media: Added.
+            * platform/ipad/media/controls: Added.
+            * platform/ipad/media/controls/close-page-with-picture-in-picture-video-assertion-failure-expected.txt: Added.
+            * platform/ipad/media/controls/close-page-with-picture-in-picture-video-assertion-failure.html: Added.
+            * platform/ipad/media/controls/resources: Added.
+            * platform/ipad/media/controls/resources/picture-in-picture.html: Added.
+            * platform/ipad/media/modern-media-controls: Added.
+            * platform/ipad/media/modern-media-controls/media-documents: Added.
+            * platform/ipad/media/modern-media-controls/media-documents/media-document-audio-ios-sizing-expected.txt: Added.
+            * platform/ipad/media/modern-media-controls/media-documents/media-document-audio-ios-sizing.html: Added.
+            * platform/ipad/media/modern-media-controls/media-documents/media-document-video-ios-sizing-expected.txt: Added.
+            * platform/ipad/media/modern-media-controls/media-documents/media-document-video-ios-sizing.html: Added.
+            * platform/ipad/media/modern-media-controls/pip-support: Added.
+            * platform/ipad/media/modern-media-controls/pip-support/pip-support-enabled-expected.txt: Added.
+            * platform/ipad/media/modern-media-controls/pip-support/pip-support-enabled.html: Added.
+            * platform/ipad/media/modern-media-controls/pip-support/pip-support-tap-expected.txt: Added.
+            * platform/ipad/media/modern-media-controls/pip-support/pip-support-tap.html: Added.
+            * platform/iphone-7: Added.
+            * platform/iphone-7/fast: Added.
+            * platform/iphone-7/fast/events: Added.
+            * platform/iphone-7/fast/events/touch: Added.
+            * platform/iphone-7/fast/events/touch/force-press-event-expected.txt: Added.
+            * platform/iphone-7/fast/events/touch/force-press-event.html: Added.
+            * platform/iphone-7/fast/events/touch/force-press-on-link-expected.txt: Added.
+            * platform/iphone-7/fast/events/touch/force-press-on-link.html: Added.
+            * platform/iphone-7/fast/events/touch/prevent-default-touchmove-prevents-scrolling-expected.txt: Added.
+            * platform/iphone-7/fast/events/touch/prevent-default-touchmove-prevents-scrolling.html: Added.
+            * platform/iphone-7/tiled-drawing: Added.
+            * platform/iphone-7/tiled-drawing/compositing-layers-deep-color-expected.txt: Added.
+            * platform/iphone-7/tiled-drawing/compositing-layers-deep-color.html: Added.
+            * platform/mac-wk2/TestExpectations:
+            * platform/mac/TestExpectations:
+            * tiled-drawing/ios: Removed.
+
+2019-03-27  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r242943. rdar://problem/49307995
+
+    Cleanup inline boxes when list marker gets blockified
+    https://bugs.webkit.org/show_bug.cgi?id=195746
+    <rdar://problem/48049175>
+    
+    Reviewed by Antti Koivisto.
+    
+    Source/WebCore:
+    
+    Normally when an element gets blockified (inline -> block) we destroy its renderer and construct a new one (RenderInline -> RenderBlock).
+    During this process the associated inline boxtree gets destroyed as well. Since RenderListMarker is just a generic RenderBox, the blockifying
+    change does not require a new renderer.
+    This patch takes care of destroying the inline boxtree when the marker gains block display type.
+    
+    Test: fast/block/float/list-marker-is-float-crash.html
+    
+    * rendering/RenderListMarker.cpp:
+    (WebCore::RenderListMarker::styleDidChange):
+    
+    LayoutTests:
+    
+    * fast/block/float/list-marker-is-float-crash-expected.txt: Added.
+    * fast/block/float/list-marker-is-float-crash.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242943 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-14  Zalan Bujtas  <zalan@apple.com>
+
+            Cleanup inline boxes when list marker gets blockified
+            https://bugs.webkit.org/show_bug.cgi?id=195746
+            <rdar://problem/48049175>
+
+            Reviewed by Antti Koivisto.
+
+            * fast/block/float/list-marker-is-float-crash-expected.txt: Added.
+            * fast/block/float/list-marker-is-float-crash.html: Added.
+
+2019-03-27  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243506. rdar://problem/49307987
+
+    vertexAttribPointer must restrict offset parameter
+    https://bugs.webkit.org/show_bug.cgi?id=196261
+    <rdar://problem/48458086>
+    
+    Reviewed by Antoine Quint.
+    
+    Source/WebCore:
+    
+    This WebGL function should fail if the offset parameter is
+    not within [0, max 32-bit int].
+    
+    Test: fast/canvas/webgl/vertexAttribPointer-with-bad-offset.html
+    
+    * html/canvas/WebGLRenderingContextBase.cpp:
+    (WebCore::WebGLRenderingContextBase::vertexAttribPointer):
+    
+    LayoutTests:
+    
+    Add a test where the offset parameter is out of bounds.
+    
+    * fast/canvas/webgl/vertexAttribPointer-with-bad-offset-expected.txt: Added.
+    * fast/canvas/webgl/vertexAttribPointer-with-bad-offset.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243506 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-26  Dean Jackson  <dino@apple.com>
+
+            vertexAttribPointer must restrict offset parameter
+            https://bugs.webkit.org/show_bug.cgi?id=196261
+            <rdar://problem/48458086>
+
+            Reviewed by Antoine Quint.
+
+            Add a test where the offset parameter is out of bounds.
+
+            * fast/canvas/webgl/vertexAttribPointer-with-bad-offset-expected.txt: Added.
+            * fast/canvas/webgl/vertexAttribPointer-with-bad-offset.html: Added.
+
+2019-03-27  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243331. rdar://problem/49308068
+
+    Do not insert the first-letter anonymous container until after we've constructed the first-letter renderer.
+    https://bugs.webkit.org/show_bug.cgi?id=195919
+    <rdar://problem/48573434>
+    
+    Reviewed by Brent Fulgham.
+    
+    Source/WebCore:
+    
+    When the container is injected too early, we might end up removing it as part of the collapsing logic
+    while the text renderer is being removed (replaced with the first letter + remaining text).
+    
+    Test: fast/css/first-letter-and-float-crash.html
+    
+    * rendering/updating/RenderTreeBuilderFirstLetter.cpp:
+    (WebCore::RenderTreeBuilder::FirstLetter::createRenderers):
+    
+    LayoutTests:
+    
+    * fast/css/first-letter-and-float-crash-expected.txt: Added.
+    * fast/css/first-letter-and-float-crash.html: Added.
+    * platform/mac/TestExpectations:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243331 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-21  Zalan Bujtas  <zalan@apple.com>
+
+            Do not insert the first-letter anonymous container until after we've constructed the first-letter renderer.
+            https://bugs.webkit.org/show_bug.cgi?id=195919
+            <rdar://problem/48573434>
+
+            Reviewed by Brent Fulgham.
+
+            * fast/css/first-letter-and-float-crash-expected.txt: Added.
+            * fast/css/first-letter-and-float-crash.html: Added.
+            * platform/mac/TestExpectations:
+
+2019-03-27  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r242919. rdar://problem/49307949
+
+    Use RenderBox::previousSiblingBox/nextSiblingBox in RenderMultiColumnFlow
+    https://bugs.webkit.org/show_bug.cgi?id=195701
+    <rdar://problem/48448658>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    It's safer to use existing RenderBox functions to get sibling boxes.
+    
+    Test: fast/ruby/crash-when-paginated-ruby.html
+    
+    * rendering/RenderMultiColumnFlow.cpp:
+    (WebCore::RenderMultiColumnFlow::nextColumnSetOrSpannerSiblingOf):
+    (WebCore::RenderMultiColumnFlow::previousColumnSetOrSpannerSiblingOf):
+    
+    LayoutTests:
+    
+    * fast/ruby/crash-when-paginated-ruby-expected.txt: Added.
+    * fast/ruby/crash-when-paginated-ruby.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242919 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-13  Zalan Bujtas  <zalan@apple.com>
+
+            Use RenderBox::previousSiblingBox/nextSiblingBox in RenderMultiColumnFlow
+            https://bugs.webkit.org/show_bug.cgi?id=195701
+            <rdar://problem/48448658>
+
+            Reviewed by Simon Fraser.
+
+            * fast/ruby/crash-when-paginated-ruby-expected.txt: Added.
+            * fast/ruby/crash-when-paginated-ruby.html: Added.
+
+2019-03-27  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r242917. rdar://problem/49307956
+
+    Fix an edge case where HTMLFormElement::removeFormElement is invoked twice with the same element
+    https://bugs.webkit.org/show_bug.cgi?id=195663
+    <rdar://problem/48576391>
+    
+    Reviewed by Ryosuke Niwa.
+    
+    Source/WebCore:
+    
+    Currently, it's possible for HTMLFormControlElement's destructor to be reentrant. This may happen if the form
+    control element is ref'd while carrying out its destructor's logic. This may happen in two places in
+    HTMLFormControlElement (didChangeForm and resetDefaultButton), both of which actually don't require ensuring a
+    protected reference to the form control element since they should never result in any script execution.
+    
+    To fix the bug, convert these strong references into raw pointers, and add ScriptDisallowedScope to ensure that
+    we don't change these codepaths in the future, such that they trigger arbitrary script execution.
+    
+    Test: fast/forms/remove-associated-element-after-gc.html
+    
+    * html/HTMLFormControlElement.cpp:
+    (WebCore::HTMLFormControlElement::didChangeForm):
+    * html/HTMLFormElement.cpp:
+    (WebCore::HTMLFormElement::resetDefaultButton):
+    
+    LayoutTests:
+    
+    Add a layout test to exercise the scenario described in the WebCore ChangeLog.
+    
+    * fast/forms/remove-associated-element-after-gc-expected.txt: Added.
+    * fast/forms/remove-associated-element-after-gc.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242917 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-13  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            Fix an edge case where HTMLFormElement::removeFormElement is invoked twice with the same element
+            https://bugs.webkit.org/show_bug.cgi?id=195663
+            <rdar://problem/48576391>
+
+            Reviewed by Ryosuke Niwa.
+
+            Add a layout test to exercise the scenario described in the WebCore ChangeLog.
+
+            * fast/forms/remove-associated-element-after-gc-expected.txt: Added.
+            * fast/forms/remove-associated-element-after-gc.html: Added.
+
+2019-03-18  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Apply patch. rdar://problem/48839387
+
+    2019-03-18  John Wilander  <wilander@apple.com>
+
+            Resource Load Statistics: Further restrict client-side cookie persistence after cross-site navigations with link decoration (branch patch)
+            https://bugs.webkit.org/show_bug.cgi?id=195711
+            <rdar://problem/48839387>
+            <rdar://problem/48832278>
+
+            Reviewed by Brent Fulgham.
+
+            * http/tests/resourceLoadStatistics/capped-lifetime-for-cookie-set-in-js-with-link-decoration-same-site-expected.txt: Added.
+            * http/tests/resourceLoadStatistics/capped-lifetime-for-cookie-set-in-js-with-link-decoration-same-site.html: Added.
+            * http/tests/resourceLoadStatistics/capped-lifetime-for-cookie-set-in-js-with-link-fragment-from-prevalent-resource-expected.txt: Added.
+            * http/tests/resourceLoadStatistics/capped-lifetime-for-cookie-set-in-js-with-link-fragment-from-prevalent-resource.html: Added.
+            * http/tests/resourceLoadStatistics/capped-lifetime-for-cookie-set-in-js-with-link-query-and-fragment-from-prevalent-resource-expected.txt: Added.
+            * http/tests/resourceLoadStatistics/capped-lifetime-for-cookie-set-in-js-with-link-query-and-fragment-from-prevalent-resource.html: Added.
+            * http/tests/resourceLoadStatistics/capped-lifetime-for-cookie-set-in-js-with-link-query-from-prevalent-resource-expected.txt: Added.
+            * http/tests/resourceLoadStatistics/capped-lifetime-for-cookie-set-in-js-with-link-query-from-prevalent-resource.html: Added.
+            * http/tests/resourceLoadStatistics/capped-lifetime-for-cookie-set-in-js-without-link-decoration-from-prevalent-resource-expected.txt: Added.
+            * http/tests/resourceLoadStatistics/capped-lifetime-for-cookie-set-in-js-without-link-decoration-from-prevalent-resource.html: Added.
+            * http/tests/resourceLoadStatistics/capped-lifetime-for-cookie-set-in-js.html:
+
+2019-03-13  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r242749. rdar://problem/48839358
+
+    [macOS] Dispatching reentrant "contextmenu" events may cause crashes
+    https://bugs.webkit.org/show_bug.cgi?id=195571
+    <rdar://problem/48086046>
+    
+    Reviewed by Andy Estes.
+    
+    Source/WebCore:
+    
+    Make ContextMenuController::handleContextMenuEvent robust against reentrancy by guarding it with a boolean flag.
+    As demonstrated in the test case, it is currently possible to force WebKit into a bad state by dispatching a
+    synthetic "contextmenu" event from within the scope of one of the "before(copy|cut|paste)" events triggered as
+    a result of handling a context menu event.
+    
+    Test: fast/events/contextmenu-reentrancy-crash.html
+    
+    * page/ContextMenuController.cpp:
+    (WebCore::ContextMenuController::handleContextMenuEvent):
+    * page/ContextMenuController.h:
+    
+    LayoutTests:
+    
+    Add a test to verify that triggering reentrant "contextmenu" events from script does not cause a crash.
+    
+    * fast/events/contextmenu-reentrancy-crash-expected.txt: Added.
+    * fast/events/contextmenu-reentrancy-crash.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242749 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-11  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [macOS] Dispatching reentrant "contextmenu" events may cause crashes
+            https://bugs.webkit.org/show_bug.cgi?id=195571
+            <rdar://problem/48086046>
+
+            Reviewed by Andy Estes.
+
+            Add a test to verify that triggering reentrant "contextmenu" events from script does not cause a crash.
+
+            * fast/events/contextmenu-reentrancy-crash-expected.txt: Added.
+            * fast/events/contextmenu-reentrancy-crash.html: Added.
+
+2019-03-13  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r242587. rdar://problem/48839354
+
+    Crash when attempting to change input type while dismissing datalist suggestions
+    https://bugs.webkit.org/show_bug.cgi?id=195384
+    <rdar://problem/48563718>
+    
+    Reviewed by Brent Fulgham.
+    
+    Source/WebCore:
+    
+    When closing a datalist suggestion menu, WebPageProxy sends a message to WebPage instructing it to tell its
+    active datalist suggestions picker to close. However, for a myriad of reasons, the suggestions picker (kept
+    alive by its text input type) may have already gone away by this point. To mitigate this, make WebPage weakly
+    reference its active datalist suggestions picker.
+    
+    Test: fast/forms/datalist/change-input-type-after-closing-datalist-suggestions.html
+    
+    * platform/DataListSuggestionPicker.h:
+    
+    Make DataListSuggestionPicker capable of being weakly referenced. Additionally, fix some minor preexisting
+    issues in this header (#imports instead of #includes, as well as an unnecessary include of IntRect.h).
+    
+    Source/WebKit:
+    
+    See WebCore ChangeLog for more details.
+    
+    * WebProcess/WebPage/WebPage.cpp:
+    (WebKit::WebPage::setActiveDataListSuggestionPicker):
+    (WebKit::WebPage::didSelectDataListOption):
+    (WebKit::WebPage::didCloseSuggestions):
+    * WebProcess/WebPage/WebPage.h:
+    
+    Turn m_activeDataListSuggestionPicker from a raw pointer into a WeakPtr.
+    
+    LayoutTests:
+    
+    Add a new layout test to exercise this scenario.
+    
+    * fast/forms/datalist/change-input-type-after-closing-datalist-suggestions-expected.txt: Added.
+    * fast/forms/datalist/change-input-type-after-closing-datalist-suggestions.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242587 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-06  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            Crash when attempting to change input type while dismissing datalist suggestions
+            https://bugs.webkit.org/show_bug.cgi?id=195384
+            <rdar://problem/48563718>
+
+            Reviewed by Brent Fulgham.
+
+            Add a new layout test to exercise this scenario.
+
+            * fast/forms/datalist/change-input-type-after-closing-datalist-suggestions-expected.txt: Added.
+            * fast/forms/datalist/change-input-type-after-closing-datalist-suggestions.html: Added.
+
+2019-03-13  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r242515. rdar://problem/48839275
+
+    SVGPathSegList.insertItemBefore() should fail if the newItem belongs to an animating animPathSegList
+    https://bugs.webkit.org/show_bug.cgi?id=195333
+    <rdar://problem/48475802>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    Because the SVG1.1 specs states that the newItem should be removed from
+    its original list before adding it to another list,
+    SVGPathSegList.insertItemBefore() should fail if the new item belongs to
+    an animating animPathSegList since it is read-only.
+    
+    Test: svg/dom/SVGPathSegList-insert-from-animating-animPathSegList.svg
+    
+    * svg/SVGPathSegList.cpp:
+    (WebCore::SVGPathSegList::processIncomingListItemValue):
+    
+    LayoutTests:
+    
+    * svg/dom/SVGPathSegList-insert-from-animating-animPathSegList-expected.txt: Added.
+    * svg/dom/SVGPathSegList-insert-from-animating-animPathSegList.svg: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242515 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-05  Said Abou-Hallawa  <sabouhallawa@apple.com>
+
+            SVGPathSegList.insertItemBefore() should fail if the newItem belongs to an animating animPathSegList
+            https://bugs.webkit.org/show_bug.cgi?id=195333
+            <rdar://problem/48475802>
+
+            Reviewed by Simon Fraser.
+
+            * svg/dom/SVGPathSegList-insert-from-animating-animPathSegList-expected.txt: Added.
+            * svg/dom/SVGPathSegList-insert-from-animating-animPathSegList.svg: Added.
+
+2019-03-13  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r241608. rdar://problem/48839277
+
+    [WebVTT] Inline WebVTT styles should start with '::cue'
+    https://bugs.webkit.org/show_bug.cgi?id=194227
+    
+    Reviewed by Eric Carlson.
+    
+    Source/WebCore:
+    
+    The original fix in r241203 is not sufficient, since it only checks if the CSS string starts
+    with '::cue'. Before accepting a CSS string from a WebVTT file, it should be checked that
+    all selectors starts with '::cue'.
+    
+    Test: media/track/track-cue-css.html
+    
+    * html/track/WebVTTParser.cpp:
+    (WebCore::WebVTTParser::checkAndStoreStyleSheet):
+    
+    LayoutTests:
+    
+    Add invalid 'STYLE' blocks which the WebVTT parser should reject.
+    
+    * media/track/captions-webvtt/css-styling.vtt:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@241608 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-02-15  Per Arne Vollan  <pvollan@apple.com>
+
+            [WebVTT] Inline WebVTT styles should start with '::cue'
+            https://bugs.webkit.org/show_bug.cgi?id=194227
+
+            Reviewed by Eric Carlson.
+
+            Add invalid 'STYLE' blocks which the WebVTT parser should reject.
+
+            * media/track/captions-webvtt/css-styling.vtt:
+
 2019-03-01  Babak Shafiei  <bshafiei@apple.com>
 
-        Cherry-pick r242248. rdar://problem/48503712
+        Cherry-pick r242248. rdar://problem/48503715
 
     [iOS] Dark flash when opening Google AMP pages
     https://bugs.webkit.org/show_bug.cgi?id=195193

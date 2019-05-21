@@ -1,6 +1,1513 @@
-2019-03-08  Kocsen Chung  <kocsen_chung@apple.com>
+2019-04-24  Babak Shafiei  <bshafiei@apple.com>
 
-        Cherry-pick r242629. rdar://problem/48716549
+        Cherry-pick r244174. rdar://problem/28160396
+
+    Cherry-pick r243841. rdar://problem/49725678
+    
+        -apple-trailing-word is needed for browser detection
+        https://bugs.webkit.org/show_bug.cgi?id=196575
+    
+        Unreviewed.
+    
+        PerformanceTests:
+    
+        * MotionMark/resources/debug-runner/motionmark.css:
+        (#intro .start-benchmark p):
+    
+        Source/JavaScriptCore:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebCore:
+    
+        This is an unreviewed partial revert of r243819. Turns out there are some websites
+        which use this property to do browser detection. So, we need to continue to parse
+        the property, but we don't need the property to do anything.
+    
+        Test: fast/text/trailing-word-detection.html
+    
+        * Configurations/FeatureDefines.xcconfig:
+        * css/CSSComputedStyleDeclaration.cpp:
+        (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+        * css/CSSPrimitiveValueMappings.h:
+        (WebCore::CSSPrimitiveValue::CSSPrimitiveValue):
+        (WebCore::CSSPrimitiveValue::operator TrailingWord const):
+        * css/CSSProperties.json:
+        * css/CSSValueKeywords.in:
+        * css/parser/CSSParserFastPaths.cpp:
+        (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+        (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+        * rendering/style/RenderStyle.h:
+        (WebCore::RenderStyle::trailingWord const):
+        (WebCore::RenderStyle::setTrailingWord):
+        (WebCore::RenderStyle::initialTrailingWord):
+        * rendering/style/RenderStyleConstants.h:
+    
+        Source/WebCore/PAL:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebKit:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebKitLegacy/mac:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Tools:
+    
+        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+        LayoutTests:
+    
+        * fast/text/trailing-word-detection-expected.txt: Added.
+        * fast/text/trailing-word-detection.html: Added.
+        * platform/gtk/TestExpectations:
+        * platform/win/TestExpectations:
+    
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243841 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/branches/safari-607-branch@244174 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-10  Alan Coon  <alancoon@apple.com>
+
+            Cherry-pick r243841. rdar://problem/49725678
+
+        -apple-trailing-word is needed for browser detection
+        https://bugs.webkit.org/show_bug.cgi?id=196575
+
+        Unreviewed.
+
+        PerformanceTests:
+
+        * MotionMark/resources/debug-runner/motionmark.css:
+        (#intro .start-benchmark p):
+
+        Source/JavaScriptCore:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebCore:
+
+        This is an unreviewed partial revert of r243819. Turns out there are some websites
+        which use this property to do browser detection. So, we need to continue to parse
+        the property, but we don't need the property to do anything.
+
+        Test: fast/text/trailing-word-detection.html
+
+        * Configurations/FeatureDefines.xcconfig:
+        * css/CSSComputedStyleDeclaration.cpp:
+        (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+        * css/CSSPrimitiveValueMappings.h:
+        (WebCore::CSSPrimitiveValue::CSSPrimitiveValue):
+        (WebCore::CSSPrimitiveValue::operator TrailingWord const):
+        * css/CSSProperties.json:
+        * css/CSSValueKeywords.in:
+        * css/parser/CSSParserFastPaths.cpp:
+        (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+        (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+        * rendering/style/RenderStyle.h:
+        (WebCore::RenderStyle::trailingWord const):
+        (WebCore::RenderStyle::setTrailingWord):
+        (WebCore::RenderStyle::initialTrailingWord):
+        * rendering/style/RenderStyleConstants.h:
+
+        Source/WebCore/PAL:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebKit:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebKitLegacy/mac:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Tools:
+
+        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+
+        LayoutTests:
+
+        * fast/text/trailing-word-detection-expected.txt: Added.
+        * fast/text/trailing-word-detection.html: Added.
+        * platform/gtk/TestExpectations:
+        * platform/win/TestExpectations:
+
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243841 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+        2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+
+                -apple-trailing-word is needed for browser detection
+                https://bugs.webkit.org/show_bug.cgi?id=196575
+
+                Unreviewed.
+
+                * Configurations/FeatureDefines.xcconfig:
+
+2019-04-24  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r244173. rdar://problem/28160396
+
+    Cherry-pick r243819. rdar://problem/49725678
+    
+        Remove support for -apple-trailing-word
+        https://bugs.webkit.org/show_bug.cgi?id=196525
+    
+        Reviewed by Zalan Bujtas.
+    
+        This CSS property is nonstandard and not used.
+    
+        .:
+    
+        * Source/cmake/WebKitFeatures.cmake:
+    
+        Source/JavaScriptCore:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebCore:
+    
+        * Configurations/FeatureDefines.xcconfig:
+        * css/CSSComputedStyleDeclaration.cpp:
+        (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+        * css/CSSPrimitiveValueMappings.h:
+        (WebCore::CSSPrimitiveValue::operator TrailingWord const): Deleted.
+        * css/CSSProperties.json:
+        * css/CSSValueKeywords.in:
+        * css/parser/CSSParserFastPaths.cpp:
+        (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+        (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+        * rendering/SimpleLineLayout.cpp:
+        (WebCore::SimpleLineLayout::canUseForStyle):
+        * rendering/SimpleLineLayoutCoverage.cpp:
+        (WebCore::SimpleLineLayout::printReason):
+        * rendering/SimpleLineLayoutCoverage.h:
+        * rendering/line/BreakingContext.h:
+        (WebCore::BreakingContext::BreakingContext):
+        (WebCore::BreakingContext::lineBreak):
+        (WebCore::BreakingContext::clearLineBreakIfFitsOnLine):
+        (WebCore::BreakingContext::commitLineBreakClear):
+        (WebCore::BreakingContext::commitLineBreakAtCurrentWidth):
+        (WebCore::BreakingContext::handleBR):
+        (WebCore::BreakingContext::handleFloat):
+        (WebCore::BreakingContext::handleText):
+        (WebCore::BreakingContext::handleEndOfLine):
+        (WebCore::BreakingContext::InlineIteratorHistory::InlineIteratorHistory): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::push): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::update): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::renderer const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::offset const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::nextBreakablePosition const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::atTextParagraphSeparator const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::previousInSameNode const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::get const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::current const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::historyLength const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::moveTo): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::increment): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::clear): Deleted.
+        (WebCore::BreakingContext::optimalLineBreakLocationForTrailingWord): Deleted.
+        * rendering/style/RenderStyle.h:
+        (WebCore::RenderStyle::trailingWord const): Deleted.
+        (WebCore::RenderStyle::setTrailingWord): Deleted.
+        (WebCore::RenderStyle::initialTrailingWord): Deleted.
+        * rendering/style/RenderStyleConstants.h:
+        * rendering/style/StyleRareInheritedData.cpp:
+        (WebCore::StyleRareInheritedData::StyleRareInheritedData):
+        (WebCore::StyleRareInheritedData::operator== const):
+        * rendering/style/StyleRareInheritedData.h:
+    
+        Source/WebCore/PAL:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebInspectorUI:
+    
+        * UserInterface/Models/CSSKeywordCompletions.js:
+    
+        Source/WebKit:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebKitLegacy/mac:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Tools:
+    
+        * Scripts/webkitperl/FeatureList.pm:
+        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+        LayoutTests:
+    
+        * fast/text/trailing-word-expected.html: Removed.
+        * fast/text/trailing-word.html: Removed.
+        * platform/gtk/TestExpectations:
+        * platform/mac/fast/text/trailing-word-parse-expected.txt: Removed.
+        * platform/mac/fast/text/trailing-word-parse.html: Removed.
+        * platform/win/TestExpectations:
+    
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243819 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/branches/safari-607-branch@244173 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-10  Alan Coon  <alancoon@apple.com>
+
+            Cherry-pick r243819. rdar://problem/49725678
+
+        Remove support for -apple-trailing-word
+        https://bugs.webkit.org/show_bug.cgi?id=196525
+
+        Reviewed by Zalan Bujtas.
+
+        This CSS property is nonstandard and not used.
+
+        .:
+
+        * Source/cmake/WebKitFeatures.cmake:
+
+        Source/JavaScriptCore:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebCore:
+
+        * Configurations/FeatureDefines.xcconfig:
+        * css/CSSComputedStyleDeclaration.cpp:
+        (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+        * css/CSSPrimitiveValueMappings.h:
+        (WebCore::CSSPrimitiveValue::operator TrailingWord const): Deleted.
+        * css/CSSProperties.json:
+        * css/CSSValueKeywords.in:
+        * css/parser/CSSParserFastPaths.cpp:
+        (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+        (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+        * rendering/SimpleLineLayout.cpp:
+        (WebCore::SimpleLineLayout::canUseForStyle):
+        * rendering/SimpleLineLayoutCoverage.cpp:
+        (WebCore::SimpleLineLayout::printReason):
+        * rendering/SimpleLineLayoutCoverage.h:
+        * rendering/line/BreakingContext.h:
+        (WebCore::BreakingContext::BreakingContext):
+        (WebCore::BreakingContext::lineBreak):
+        (WebCore::BreakingContext::clearLineBreakIfFitsOnLine):
+        (WebCore::BreakingContext::commitLineBreakClear):
+        (WebCore::BreakingContext::commitLineBreakAtCurrentWidth):
+        (WebCore::BreakingContext::handleBR):
+        (WebCore::BreakingContext::handleFloat):
+        (WebCore::BreakingContext::handleText):
+        (WebCore::BreakingContext::handleEndOfLine):
+        (WebCore::BreakingContext::InlineIteratorHistory::InlineIteratorHistory): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::push): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::update): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::renderer const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::offset const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::nextBreakablePosition const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::atTextParagraphSeparator const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::previousInSameNode const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::get const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::current const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::historyLength const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::moveTo): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::increment): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::clear): Deleted.
+        (WebCore::BreakingContext::optimalLineBreakLocationForTrailingWord): Deleted.
+        * rendering/style/RenderStyle.h:
+        (WebCore::RenderStyle::trailingWord const): Deleted.
+        (WebCore::RenderStyle::setTrailingWord): Deleted.
+        (WebCore::RenderStyle::initialTrailingWord): Deleted.
+        * rendering/style/RenderStyleConstants.h:
+        * rendering/style/StyleRareInheritedData.cpp:
+        (WebCore::StyleRareInheritedData::StyleRareInheritedData):
+        (WebCore::StyleRareInheritedData::operator== const):
+        * rendering/style/StyleRareInheritedData.h:
+
+        Source/WebCore/PAL:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebInspectorUI:
+
+        * UserInterface/Models/CSSKeywordCompletions.js:
+
+        Source/WebKit:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebKitLegacy/mac:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Tools:
+
+        * Scripts/webkitperl/FeatureList.pm:
+        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+
+        LayoutTests:
+
+        * fast/text/trailing-word-expected.html: Removed.
+        * fast/text/trailing-word.html: Removed.
+        * platform/gtk/TestExpectations:
+        * platform/mac/fast/text/trailing-word-parse-expected.txt: Removed.
+        * platform/mac/fast/text/trailing-word-parse.html: Removed.
+        * platform/win/TestExpectations:
+
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243819 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+        2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+
+                Remove support for -apple-trailing-word
+                https://bugs.webkit.org/show_bug.cgi?id=196525
+
+                Reviewed by Zalan Bujtas.
+
+                This CSS property is nonstandard and not used.
+
+                * Configurations/FeatureDefines.xcconfig:
+
+2019-04-24  Alan Coon  <alancoon@apple.com>
+
+        Revert r244173. rdar://problem/28160396
+
+2019-04-24  Alan Coon  <alancoon@apple.com>
+
+        Revert r244174. rdar://problem/28160396
+
+2019-04-19  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r244458. rdar://problem/50041560
+
+    YouTube and Twitter embeds don't load in News
+    https://bugs.webkit.org/show_bug.cgi?id=197111
+    <rdar://problem/50010081>
+    
+    Reviewed by Timothy Hatcher.
+    
+    * WebProcess/com.apple.WebProcess.sb.in:
+    Adjust this sandbox exception to include both platforms.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@244458 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-19  Tim Horton  <timothy_horton@apple.com>
+
+            YouTube and Twitter embeds don't load in News
+            https://bugs.webkit.org/show_bug.cgi?id=197111
+            <rdar://problem/50010081>
+
+            Reviewed by Timothy Hatcher.
+
+            * WebProcess/com.apple.WebProcess.sb.in:
+            Adjust this sandbox exception to include both platforms.
+
+2019-04-14  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r243487. rdar://problem/49788895
+
+    Do not terminate the NetworkProcess if a third party application sends a NSCredential with a SecIdentityRef
+    https://bugs.webkit.org/show_bug.cgi?id=196213
+    
+    Patch by Alex Christensen <achristensen@webkit.org> on 2019-03-25
+    Reviewed by Geoff Garen.
+    
+    Source/WebKit:
+    
+    A release assertion added in r230225 was reachable.  I reached it in a unit test that responds to a challenge
+    with a SecIdentityRef wrapped in an NSCredential.
+    
+    * Shared/cf/ArgumentCodersCF.cpp:
+    (IPC::decode):
+    
+    Tools:
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/Challenge.mm: Added.
+    (credentialWithIdentityAndKeychainPath):
+    (-[ChallengeDelegate webView:didFinishNavigation:]):
+    (-[ChallengeDelegate webView:didReceiveAuthenticationChallenge:completionHandler:]):
+    (TestWebKitAPI::TEST):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243487 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-25  Alex Christensen  <achristensen@webkit.org>
+
+            Do not terminate the NetworkProcess if a third party application sends a NSCredential with a SecIdentityRef
+            https://bugs.webkit.org/show_bug.cgi?id=196213
+
+            Reviewed by Geoff Garen.
+
+            A release assertion added in r230225 was reachable.  I reached it in a unit test that responds to a challenge
+            with a SecIdentityRef wrapped in an NSCredential.
+
+            * Shared/cf/ArgumentCodersCF.cpp:
+            (IPC::decode):
+
+2019-04-11  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Revert r244165. rdar://problem/49788895
+
+2019-04-11  Alan Coon  <alancoon@apple.com>
+
+        Apply patch. rdar://problem/49788956
+
+    2019-04-11  Chris Dumez  <cdumez@apple.com>
+
+            WebProcessCache should keep track of processes being added
+            https://bugs.webkit.org/show_bug.cgi?id=195538
+
+            Reviewed by Geoffrey Garen.
+
+            WebProcessCache should keep track of processes being added, while they are being
+            checked for responsiveness. This is useful so that:
+            - Requests to clear the cache also clear processes being added
+            - Requests to remove a given process from the cache (either because it crashed
+              or because it is being used for a history navigation) actually remove the
+              process if it is still being checked for responsiveness.
+            - The cached process eviction timer applies to such processes in case something
+              goes wrong with the code and the pending request does not get processed.
+
+            * UIProcess/WebProcessCache.cpp:
+            (WebKit::generateAddRequestIdentifier):
+            (WebKit::WebProcessCache::addProcessIfPossible):
+            (WebKit::WebProcessCache::addProcess):
+            (WebKit::WebProcessCache::clear):
+            (WebKit::WebProcessCache::clearAllProcessesForSession):
+            (WebKit::WebProcessCache::removeProcess):
+            (WebKit::WebProcessCache::CachedProcess::evictionTimerFired):
+            (WebKit::WebProcessCache::evictProcess): Deleted.
+            * UIProcess/WebProcessCache.h:
+            (WebKit::WebProcessCache::size const):
+            * UIProcess/WebProcessPool.cpp:
+            (WebKit::WebProcessPool::processForNavigationInternal):
+            * UIProcess/WebProcessProxy.cpp:
+            (WebKit::WebProcessProxy::processDidTerminateOrFailedToLaunch):
+
+2019-04-10  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243841. rdar://problem/49725678
+
+    -apple-trailing-word is needed for browser detection
+    https://bugs.webkit.org/show_bug.cgi?id=196575
+    
+    Unreviewed.
+    
+    PerformanceTests:
+    
+    * MotionMark/resources/debug-runner/motionmark.css:
+    (#intro .start-benchmark p):
+    
+    Source/JavaScriptCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore:
+    
+    This is an unreviewed partial revert of r243819. Turns out there are some websites
+    which use this property to do browser detection. So, we need to continue to parse
+    the property, but we don't need the property to do anything.
+    
+    Test: fast/text/trailing-word-detection.html
+    
+    * Configurations/FeatureDefines.xcconfig:
+    * css/CSSComputedStyleDeclaration.cpp:
+    (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+    * css/CSSPrimitiveValueMappings.h:
+    (WebCore::CSSPrimitiveValue::CSSPrimitiveValue):
+    (WebCore::CSSPrimitiveValue::operator TrailingWord const):
+    * css/CSSProperties.json:
+    * css/CSSValueKeywords.in:
+    * css/parser/CSSParserFastPaths.cpp:
+    (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+    (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+    * rendering/style/RenderStyle.h:
+    (WebCore::RenderStyle::trailingWord const):
+    (WebCore::RenderStyle::setTrailingWord):
+    (WebCore::RenderStyle::initialTrailingWord):
+    * rendering/style/RenderStyleConstants.h:
+    
+    Source/WebCore/PAL:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKit:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKitLegacy/mac:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Tools:
+    
+    * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+    LayoutTests:
+    
+    * fast/text/trailing-word-detection-expected.txt: Added.
+    * fast/text/trailing-word-detection.html: Added.
+    * platform/gtk/TestExpectations:
+    * platform/win/TestExpectations:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243841 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+
+            -apple-trailing-word is needed for browser detection
+            https://bugs.webkit.org/show_bug.cgi?id=196575
+
+            Unreviewed.
+
+            * Configurations/FeatureDefines.xcconfig:
+
+2019-04-10  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243819. rdar://problem/49725678
+
+    Remove support for -apple-trailing-word
+    https://bugs.webkit.org/show_bug.cgi?id=196525
+    
+    Reviewed by Zalan Bujtas.
+    
+    This CSS property is nonstandard and not used.
+    
+    .:
+    
+    * Source/cmake/WebKitFeatures.cmake:
+    
+    Source/JavaScriptCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    * css/CSSComputedStyleDeclaration.cpp:
+    (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+    * css/CSSPrimitiveValueMappings.h:
+    (WebCore::CSSPrimitiveValue::operator TrailingWord const): Deleted.
+    * css/CSSProperties.json:
+    * css/CSSValueKeywords.in:
+    * css/parser/CSSParserFastPaths.cpp:
+    (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+    (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+    * rendering/SimpleLineLayout.cpp:
+    (WebCore::SimpleLineLayout::canUseForStyle):
+    * rendering/SimpleLineLayoutCoverage.cpp:
+    (WebCore::SimpleLineLayout::printReason):
+    * rendering/SimpleLineLayoutCoverage.h:
+    * rendering/line/BreakingContext.h:
+    (WebCore::BreakingContext::BreakingContext):
+    (WebCore::BreakingContext::lineBreak):
+    (WebCore::BreakingContext::clearLineBreakIfFitsOnLine):
+    (WebCore::BreakingContext::commitLineBreakClear):
+    (WebCore::BreakingContext::commitLineBreakAtCurrentWidth):
+    (WebCore::BreakingContext::handleBR):
+    (WebCore::BreakingContext::handleFloat):
+    (WebCore::BreakingContext::handleText):
+    (WebCore::BreakingContext::handleEndOfLine):
+    (WebCore::BreakingContext::InlineIteratorHistory::InlineIteratorHistory): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::push): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::update): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::renderer const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::offset const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::nextBreakablePosition const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::atTextParagraphSeparator const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::previousInSameNode const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::get const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::current const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::historyLength const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::moveTo): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::increment): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::clear): Deleted.
+    (WebCore::BreakingContext::optimalLineBreakLocationForTrailingWord): Deleted.
+    * rendering/style/RenderStyle.h:
+    (WebCore::RenderStyle::trailingWord const): Deleted.
+    (WebCore::RenderStyle::setTrailingWord): Deleted.
+    (WebCore::RenderStyle::initialTrailingWord): Deleted.
+    * rendering/style/RenderStyleConstants.h:
+    * rendering/style/StyleRareInheritedData.cpp:
+    (WebCore::StyleRareInheritedData::StyleRareInheritedData):
+    (WebCore::StyleRareInheritedData::operator== const):
+    * rendering/style/StyleRareInheritedData.h:
+    
+    Source/WebCore/PAL:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebInspectorUI:
+    
+    * UserInterface/Models/CSSKeywordCompletions.js:
+    
+    Source/WebKit:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKitLegacy/mac:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Tools:
+    
+    * Scripts/webkitperl/FeatureList.pm:
+    * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+    LayoutTests:
+    
+    * fast/text/trailing-word-expected.html: Removed.
+    * fast/text/trailing-word.html: Removed.
+    * platform/gtk/TestExpectations:
+    * platform/mac/fast/text/trailing-word-parse-expected.txt: Removed.
+    * platform/mac/fast/text/trailing-word-parse.html: Removed.
+    * platform/win/TestExpectations:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243819 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+
+            Remove support for -apple-trailing-word
+            https://bugs.webkit.org/show_bug.cgi?id=196525
+
+            Reviewed by Zalan Bujtas.
+
+            This CSS property is nonstandard and not used.
+
+            * Configurations/FeatureDefines.xcconfig:
+
+2019-04-10  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243487. rdar://problem/49788895
+
+    Do not terminate the NetworkProcess if a third party application sends a NSCredential with a SecIdentityRef
+    https://bugs.webkit.org/show_bug.cgi?id=196213
+    
+    Patch by Alex Christensen <achristensen@webkit.org> on 2019-03-25
+    Reviewed by Geoff Garen.
+    
+    Source/WebKit:
+    
+    A release assertion added in r230225 was reachable.  I reached it in a unit test that responds to a challenge
+    with a SecIdentityRef wrapped in an NSCredential.
+    
+    * Shared/cf/ArgumentCodersCF.cpp:
+    (IPC::decode):
+    
+    Tools:
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/Challenge.mm: Added.
+    (credentialWithIdentityAndKeychainPath):
+    (-[ChallengeDelegate webView:didFinishNavigation:]):
+    (-[ChallengeDelegate webView:didReceiveAuthenticationChallenge:completionHandler:]):
+    (TestWebKitAPI::TEST):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243487 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-25  Alex Christensen  <achristensen@webkit.org>
+
+            Do not terminate the NetworkProcess if a third party application sends a NSCredential with a SecIdentityRef
+            https://bugs.webkit.org/show_bug.cgi?id=196213
+
+            Reviewed by Geoff Garen.
+
+            A release assertion added in r230225 was reachable.  I reached it in a unit test that responds to a challenge
+            with a SecIdentityRef wrapped in an NSCredential.
+
+            * Shared/cf/ArgumentCodersCF.cpp:
+            (IPC::decode):
+
+2019-04-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243562. rdar://problem/49725686
+
+    [ iOS Sim ] REGRESSION (r242277) Layout Test http/tests/cookies/same-site/lax-samesite-cookie-after-cross-site-history-load.php is a flaky timeout
+    https://bugs.webkit.org/show_bug.cgi?id=195425
+    <rdar://problem/48682403>
+    
+    Reviewed by Alex Christensen.
+    
+    When process-swapping on history navigation, we lookup the WebProcessProxy we'd like to use from the
+    process identifier that is saved on the WebBackForwardListItem, to try and load the item in the process
+    in which it was previously loaded. However, we were failing to check if the WebProcess in question was
+    still running so we could potentially try to use a process that's already exited.
+    
+    * UIProcess/WebProcessPool.cpp:
+    (WebKit::WebProcessPool::processForNavigationInternal):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243562 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-27  Chris Dumez  <cdumez@apple.com>
+
+            [ iOS Sim ] REGRESSION (r242277) Layout Test http/tests/cookies/same-site/lax-samesite-cookie-after-cross-site-history-load.php is a flaky timeout
+            https://bugs.webkit.org/show_bug.cgi?id=195425
+            <rdar://problem/48682403>
+
+            Reviewed by Alex Christensen.
+
+            When process-swapping on history navigation, we lookup the WebProcessProxy we'd like to use from the
+            process identifier that is saved on the WebBackForwardListItem, to try and load the item in the process
+            in which it was previously loaded. However, we were failing to check if the WebProcess in question was
+            still running so we could potentially try to use a process that's already exited.
+
+            * UIProcess/WebProcessPool.cpp:
+            (WebKit::WebProcessPool::processForNavigationInternal):
+
+2019-04-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243848. rdar://problem/49725697
+
+    The page's focusedFrame / frameSetLargestFrame do not get cleared on process swap or crash
+    https://bugs.webkit.org/show_bug.cgi?id=196588
+    <rdar://problem/49365787>
+    
+    Reviewed by Ryosuke Niwa.
+    
+    Source/WebKit:
+    
+    The page's focusedFrame / frameSetLargestFrame do not get cleared on process swap or crash.
+    This can lead to returning stale frames to the client if it asks for those.
+    
+    * UIProcess/WebPageProxy.cpp:
+    (WebKit::WebPageProxy::resetState):
+    
+    Tools:
+    
+    Add API test coverage.
+    
+    * TestWebKitAPI/Tests/WebKit/ReloadPageAfterCrash.cpp:
+    (TestWebKitAPI::nullJavaScriptCallback):
+    (TestWebKitAPI::didCrashCheckFrames):
+    (TestWebKitAPI::TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243848 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-03  Chris Dumez  <cdumez@apple.com>
+
+            The page's focusedFrame / frameSetLargestFrame do not get cleared on process swap or crash
+            https://bugs.webkit.org/show_bug.cgi?id=196588
+            <rdar://problem/49365787>
+
+            Reviewed by Ryosuke Niwa.
+
+            The page's focusedFrame / frameSetLargestFrame do not get cleared on process swap or crash.
+            This can lead to returning stale frames to the client if it asks for those.
+
+            * UIProcess/WebPageProxy.cpp:
+            (WebKit::WebPageProxy::resetState):
+
+2019-03-27  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243291. rdar://problem/49307996
+
+    Fix possible memory leak when dismissing a color picker
+    https://bugs.webkit.org/show_bug.cgi?id=196026
+    <rdar://problem/48778568>
+    
+    Reviewed by Wenson Hsieh.
+    
+    Fix a problem with WebPageProxy::endColorPicker where an early return could leave a color picker
+    with a +1 reference count after dismissing it.
+    
+    * UIProcess/WebColorPicker.cpp:
+    (WebKit::WebColorPicker::endPicker):
+    * UIProcess/WebPageProxy.cpp:
+    (WebKit::WebPageProxy::endColorPicker):
+    (WebKit::WebPageProxy::didEndColorPicker):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243291 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-21  Brent Fulgham  <bfulgham@apple.com>
+
+            Fix possible memory leak when dismissing a color picker
+            https://bugs.webkit.org/show_bug.cgi?id=196026
+            <rdar://problem/48778568>
+
+            Reviewed by Wenson Hsieh.
+
+            Fix a problem with WebPageProxy::endColorPicker where an early return could leave a color picker
+            with a +1 reference count after dismissing it.
+
+            * UIProcess/WebColorPicker.cpp:
+            (WebKit::WebColorPicker::endPicker):
+            * UIProcess/WebPageProxy.cpp:
+            (WebKit::WebPageProxy::endColorPicker):
+            (WebKit::WebPageProxy::didEndColorPicker):
+
+2019-03-27  Alan Coon  <alancoon@apple.com>
+
+        Apply patch. rdar://problem/49307967
+
+    fix-radar-48878188
+
+    2019-03-14  Youenn Fablet  <youenn@apple.com>
+
+            v2: CrashTracer: MobileSafari at WebKit: WebKit::WebPageProxy::setMediaStreamCaptureMuted.
+            rdar://problem/48878188.
+
+            There are cases where we might not update correctly the stateMap in UserMediaProcessManager.cpp.
+            One such case is:
+            - UserMediaPermissionRequestManagerProxy registers itself at construction time in a map whose key is the page process
+            - UserMediaPermissionRequestManagerProxy unregisters itself at destruction time by using the page process as well.
+            - Page changed process in some cases without UserMediaPermissionRequestManagerProxy being destroyed.
+
+            In Jazzkon, a new model was implemented that removed the need for this map.
+
+            For F, to ensure that we do not use wrong managers, keep a Vector of WeakPtr instead of a Vector of raw pointers.
+            Whenever getting the managers, check whether some of them are destroyed and remove them from the vector.
+
+            * UIProcess/UserMediaProcessManager.cpp:
+            (WebKit::ProcessState::managers):
+            (WebKit::ProcessState::addRequestManager):
+            (WebKit::ProcessState::removeRequestManager):
+
+2019-03-18  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Apply patch. rdar://problem/48839387
+
+    2019-03-18  John Wilander  <wilander@apple.com>
+
+            Resource Load Statistics: Further restrict client-side cookie persistence after cross-site navigations with link decoration (branch patch)
+            https://bugs.webkit.org/show_bug.cgi?id=195711
+            <rdar://problem/48839387>
+            <rdar://problem/48832278>
+
+            Reviewed by Brent Fulgham.
+
+            This patch does three things:
+
+            1) Applies the changes in https://trac.webkit.org/changeset/242288 to
+            a branch. The only meaningful difference is the use of String instead
+            of WebCore::RegistrableDomain. Tracked by <rdar://problem/48839387>.
+
+            2) Set the lifetime cap for client-side cookies in the call to
+            NetworkStorageSession::setPrevalentDomainsToBlockCookiesFor(). This
+            change makes sure that if ITP is enabled, the cap will be applied.
+            Previously, the cap was set when WebProcessPool::ensureNetworkProcess()
+            called WebsiteDataStore::didCreateNetworkProcess() which might fail if
+            the website data store's m_resourceLoadStatistics object is not created
+            yet. Tracked by <rdar://problem/48832278>.
+
+            3) Makes sure WebProcessPool::ensureNetworkProcess() calls
+            WebsiteDataStore::didCreateNetworkProcess() also if there was an
+            existing website data store object supplied (the withWebsiteDataStore
+            parameter). Tracked by <rdar://problem/48832278>.
+
+            * NetworkProcess/NetworkConnectionToWebProcess.cpp:
+            (WebKit::NetworkConnectionToWebProcess::clearPageSpecificDataForResourceLoadStatistics):
+            (WebKit::NetworkConnectionToWebProcess::removeStorageAccessForAllFramesOnPage): Deleted.
+            * NetworkProcess/NetworkConnectionToWebProcess.h:
+            * NetworkProcess/NetworkConnectionToWebProcess.messages.in:
+            * NetworkProcess/NetworkProcess.cpp:
+            (WebKit::NetworkProcess::committedCrossSiteLoadWithLinkDecoration):
+            (WebKit::NetworkProcess::resetCrossSiteLoadsWithLinkDecorationForTesting):
+            * NetworkProcess/NetworkProcess.h:
+            * NetworkProcess/NetworkProcess.messages.in:
+            * UIProcess/API/C/WKWebsiteDataStoreRef.cpp:
+            (WKWebsiteDataStoreStatisticsResetToConsistentState):
+            * UIProcess/Network/NetworkProcessProxy.cpp:
+            (WebKit::NetworkProcessProxy::resetCrossSiteLoadsWithLinkDecorationForTesting):
+            * UIProcess/Network/NetworkProcessProxy.h:
+            * UIProcess/ResourceLoadStatisticsMemoryStore.cpp:
+            (WebKit::ResourceLoadStatisticsMemoryStore::didCreateNetworkProcess):
+            * UIProcess/WebPageProxy.cpp:
+            (WebKit::isNonUniqueNavigationWithLinkDecoration):
+            (WebKit::WebPageProxy::didCommitLoadForFrame):
+            * UIProcess/WebProcessPool.cpp:
+            (WebKit::WebProcessPool::ensureNetworkProcess):
+            * UIProcess/WebsiteData/WebsiteDataStore.cpp:
+            (WebKit::WebsiteDataStore::resetCrossSiteLoadsWithLinkDecorationForTesting):
+            * UIProcess/WebsiteData/WebsiteDataStore.h:
+            * WebProcess/WebPage/WebPage.cpp:
+            (WebKit::WebPage::close):
+
+2019-03-06  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r242554. rdar://problem/48647490
+
+    REGRESSION (r238490): YouTube.com: Returning PiP to Safari after sleeping device loses page
+    https://bugs.webkit.org/show_bug.cgi?id=195364
+    <rdar://problem/48538837>
+    
+    Reviewed by Geoffrey Garen.
+    
+    Make sure we unset the LayerTreeFreezeReason::ProcessSuspended layer tree freeze reason
+    when WebPage::applicationWillEnterForeground() is called. This restores pre-r238490
+    behavior and addresses the issue with PiP on youtube.com.
+    
+    * WebProcess/WebPage/ios/WebPageIOS.mm:
+    (WebKit::WebPage::applicationWillEnterForeground):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242554 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-06  Chris Dumez  <cdumez@apple.com>
+
+            REGRESSION (r238490): YouTube.com: Returning PiP to Safari after sleeping device loses page
+            https://bugs.webkit.org/show_bug.cgi?id=195364
+            <rdar://problem/48538837>
+
+            Reviewed by Geoffrey Garen.
+
+            Make sure we unset the LayerTreeFreezeReason::ProcessSuspended layer tree freeze reason
+            when WebPage::applicationWillEnterForeground() is called. This restores pre-r238490
+            behavior and addresses the issue with PiP on youtube.com.
+
+            * WebProcess/WebPage/ios/WebPageIOS.mm:
+            (WebKit::WebPage::applicationWillEnterForeground):
+
+2019-03-13  Babak Shafiei  <bshafiei@apple.com>
+
+        Apply patch. rdar://problem/48839383
+
+    Cherry-pick r242230. rdar://problem/48839383
+    
+        Revert r232263: it caused processes to crash because process was suspended with locked file
+        https://bugs.webkit.org/show_bug.cgi?id=195122
+        <rdar://problem/48444599>
+    
+        Reviewed by Geoffrey Garen.
+    
+        * NetworkProcess/NetworkProcess.cpp:
+        (WebKit::NetworkProcess::NetworkProcess):
+        * NetworkProcess/NetworkProcess.h:
+        * Shared/WebSQLiteDatabaseTracker.cpp:
+        (WebKit::WebSQLiteDatabaseTracker::WebSQLiteDatabaseTracker):
+        (WebKit::WebSQLiteDatabaseTracker::hysteresisUpdated):
+        * Shared/WebSQLiteDatabaseTracker.h:
+        * WebProcess/WebProcess.cpp:
+        (WebKit::m_webSQLiteDatabaseTracker):
+        (WebKit::m_nonVisibleProcessCleanupTimer): Deleted.
+        * WebProcess/WebProcess.h:
+    
+        git-svn-id: http://svn.webkit.org/repository/webkit/trunk@242230 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-13  Babak Shafiei  <bshafiei@apple.com>
+
+            Cherry-pick r242230. rdar://problem/48839383
+
+        Revert r232263: it caused processes to crash because process was suspended with locked file
+        https://bugs.webkit.org/show_bug.cgi?id=195122
+        <rdar://problem/48444599>
+
+        Reviewed by Geoffrey Garen.
+
+        * NetworkProcess/NetworkProcess.cpp:
+        (WebKit::NetworkProcess::NetworkProcess):
+        * NetworkProcess/NetworkProcess.h:
+        * Shared/WebSQLiteDatabaseTracker.cpp:
+        (WebKit::WebSQLiteDatabaseTracker::WebSQLiteDatabaseTracker):
+        (WebKit::WebSQLiteDatabaseTracker::hysteresisUpdated):
+        * Shared/WebSQLiteDatabaseTracker.h:
+        * WebProcess/WebProcess.cpp:
+        (WebKit::m_webSQLiteDatabaseTracker):
+        (WebKit::m_nonVisibleProcessCleanupTimer): Deleted.
+        * WebProcess/WebProcess.h:
+
+
+        git-svn-id: http://svn.webkit.org/repository/webkit/trunk@242230 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+        2019-02-28  Sihui Liu  <sihui_liu@apple.com>
+
+            Revert r232263: it caused processes to crash because process was suspended with locked file
+            https://bugs.webkit.org/show_bug.cgi?id=195122
+            <rdar://problem/48444599>
+
+            Reviewed by Geoffrey Garen.
+
+            * NetworkProcess/NetworkProcess.cpp:
+            (WebKit::NetworkProcess::NetworkProcess):
+            * NetworkProcess/NetworkProcess.h:
+            * Shared/WebSQLiteDatabaseTracker.cpp:
+            (WebKit::WebSQLiteDatabaseTracker::WebSQLiteDatabaseTracker):
+            (WebKit::WebSQLiteDatabaseTracker::hysteresisUpdated):
+            * Shared/WebSQLiteDatabaseTracker.h:
+            * WebProcess/WebProcess.cpp:
+            (WebKit::m_webSQLiteDatabaseTracker):
+            (WebKit::m_nonVisibleProcessCleanupTimer): Deleted.
+            * WebProcess/WebProcess.h:
+
+2019-03-13  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r242735. rdar://problem/48780112
+
+    Add a WKContentRuleList variant that uses copied memory instead of mmap'd shared memory for class A containerized apps
+    https://bugs.webkit.org/show_bug.cgi?id=195511
+    <rdar://problem/44873269>
+    
+    Patch by Alex Christensen <achristensen@webkit.org> on 2019-03-11
+    Reviewed by Darin Adler.
+    
+    Source/WebKit:
+    
+    * NetworkProcess/NetworkContentRuleListManager.cpp:
+    (WebKit::NetworkContentRuleListManager::addContentRuleLists):
+    * NetworkProcess/NetworkContentRuleListManager.h:
+    * NetworkProcess/cache/NetworkCacheFileSystem.cpp:
+    (WebKit::NetworkCache::pathRegisteredAsUnsafeToMemoryMapForTesting):
+    (WebKit::NetworkCache::registerPathAsUnsafeToMemoryMapForTesting):
+    (WebKit::NetworkCache::isSafeToUseMemoryMapForPath):
+    * NetworkProcess/cache/NetworkCacheFileSystem.h:
+    * Shared/WebCompiledContentRuleList.cpp:
+    (WebKit::WebCompiledContentRuleList::usesCopiedMemory const):
+    (WebKit::WebCompiledContentRuleList::conditionsApplyOnlyToDomain const):
+    (WebKit::WebCompiledContentRuleList::filtersWithoutConditionsBytecode const):
+    (WebKit::WebCompiledContentRuleList::filtersWithConditionsBytecode const):
+    (WebKit::WebCompiledContentRuleList::topURLFiltersBytecode const):
+    (WebKit::WebCompiledContentRuleList::actions const):
+    * Shared/WebCompiledContentRuleList.h:
+    * Shared/WebCompiledContentRuleListData.cpp:
+    (WebKit::WebCompiledContentRuleListData::size const):
+    (WebKit::WebCompiledContentRuleListData::dataPointer const):
+    (WebKit::WebCompiledContentRuleListData::encode const):
+    (WebKit::WebCompiledContentRuleListData::decode):
+    * Shared/WebCompiledContentRuleListData.h:
+    (WebKit::WebCompiledContentRuleListData::WebCompiledContentRuleListData):
+    * UIProcess/API/APIContentRuleList.cpp:
+    (API::ContentRuleList::usesCopiedMemory const):
+    * UIProcess/API/APIContentRuleList.h:
+    * UIProcess/API/APIContentRuleListStore.cpp:
+    (API::getData):
+    (API::decodeContentRuleListMetaData):
+    (API::ContentRuleListStore::readContentsOfFile):
+    (API::MappedOrCopiedData::dataPointer const):
+    (API::openAndMapOrCopyContentRuleList):
+    (API::compiledToFile):
+    (API::createExtension):
+    (API::ContentRuleListStore::lookupContentRuleList):
+    (API::ContentRuleListStore::compileContentRuleList):
+    (API::ContentRuleListStore::getContentRuleListSource):
+    (API::openAndMapContentRuleList): Deleted.
+    * UIProcess/API/APIContentRuleListStore.h:
+    * UIProcess/API/Cocoa/APIContentRuleListStoreCocoa.mm:
+    (API::ContentRuleListStore::readContentsOfFile):
+    * UIProcess/API/Cocoa/WKContentRuleListStore.mm:
+    (+[WKContentRuleListStore _registerPathAsUnsafeToMemoryMapForTesting:]):
+    * UIProcess/API/Cocoa/WKContentRuleListStorePrivate.h:
+    * UIProcess/API/Cocoa/_WKUserContentFilter.mm:
+    (-[_WKUserContentFilter usesCopiedMemory]):
+    * UIProcess/API/Cocoa/_WKUserContentFilterPrivate.h:
+    * WebProcess/UserContent/WebUserContentController.cpp:
+    (WebKit::WebUserContentController::addContentRuleLists):
+    * WebProcess/UserContent/WebUserContentController.h:
+    * WebProcess/WebPage/WebPage.cpp:
+    (WebKit::m_hostFileDescriptor):
+    
+    Tools:
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/WKContentExtensionStore.mm:
+    (-[TestSchemeHandlerSubresourceShouldBeBlocked webView:startURLSchemeTask:]):
+    (-[TestSchemeHandlerSubresourceShouldBeBlocked webView:stopURLSchemeTask:]):
+    (TEST_F):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242735 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-11  Alex Christensen  <achristensen@webkit.org>
+
+            Add a WKContentRuleList variant that uses copied memory instead of mmap'd shared memory for class A containerized apps
+            https://bugs.webkit.org/show_bug.cgi?id=195511
+            <rdar://problem/44873269>
+
+            Reviewed by Darin Adler.
+
+            * NetworkProcess/NetworkContentRuleListManager.cpp:
+            (WebKit::NetworkContentRuleListManager::addContentRuleLists):
+            * NetworkProcess/NetworkContentRuleListManager.h:
+            * NetworkProcess/cache/NetworkCacheFileSystem.cpp:
+            (WebKit::NetworkCache::pathRegisteredAsUnsafeToMemoryMapForTesting):
+            (WebKit::NetworkCache::registerPathAsUnsafeToMemoryMapForTesting):
+            (WebKit::NetworkCache::isSafeToUseMemoryMapForPath):
+            * NetworkProcess/cache/NetworkCacheFileSystem.h:
+            * Shared/WebCompiledContentRuleList.cpp:
+            (WebKit::WebCompiledContentRuleList::usesCopiedMemory const):
+            (WebKit::WebCompiledContentRuleList::conditionsApplyOnlyToDomain const):
+            (WebKit::WebCompiledContentRuleList::filtersWithoutConditionsBytecode const):
+            (WebKit::WebCompiledContentRuleList::filtersWithConditionsBytecode const):
+            (WebKit::WebCompiledContentRuleList::topURLFiltersBytecode const):
+            (WebKit::WebCompiledContentRuleList::actions const):
+            * Shared/WebCompiledContentRuleList.h:
+            * Shared/WebCompiledContentRuleListData.cpp:
+            (WebKit::WebCompiledContentRuleListData::size const):
+            (WebKit::WebCompiledContentRuleListData::dataPointer const):
+            (WebKit::WebCompiledContentRuleListData::encode const):
+            (WebKit::WebCompiledContentRuleListData::decode):
+            * Shared/WebCompiledContentRuleListData.h:
+            (WebKit::WebCompiledContentRuleListData::WebCompiledContentRuleListData):
+            * UIProcess/API/APIContentRuleList.cpp:
+            (API::ContentRuleList::usesCopiedMemory const):
+            * UIProcess/API/APIContentRuleList.h:
+            * UIProcess/API/APIContentRuleListStore.cpp:
+            (API::getData):
+            (API::decodeContentRuleListMetaData):
+            (API::ContentRuleListStore::readContentsOfFile):
+            (API::MappedOrCopiedData::dataPointer const):
+            (API::openAndMapOrCopyContentRuleList):
+            (API::compiledToFile):
+            (API::createExtension):
+            (API::ContentRuleListStore::lookupContentRuleList):
+            (API::ContentRuleListStore::compileContentRuleList):
+            (API::ContentRuleListStore::getContentRuleListSource):
+            (API::openAndMapContentRuleList): Deleted.
+            * UIProcess/API/APIContentRuleListStore.h:
+            * UIProcess/API/Cocoa/APIContentRuleListStoreCocoa.mm:
+            (API::ContentRuleListStore::readContentsOfFile):
+            * UIProcess/API/Cocoa/WKContentRuleListStore.mm:
+            (+[WKContentRuleListStore _registerPathAsUnsafeToMemoryMapForTesting:]):
+            * UIProcess/API/Cocoa/WKContentRuleListStorePrivate.h:
+            * UIProcess/API/Cocoa/_WKUserContentFilter.mm:
+            (-[_WKUserContentFilter usesCopiedMemory]):
+            * UIProcess/API/Cocoa/_WKUserContentFilterPrivate.h:
+            * WebProcess/UserContent/WebUserContentController.cpp:
+            (WebKit::WebUserContentController::addContentRuleLists):
+            * WebProcess/UserContent/WebUserContentController.h:
+            * WebProcess/WebPage/WebPage.cpp:
+            (WebKit::m_hostFileDescriptor):
+
+2019-03-13  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r242587. rdar://problem/48839354
+
+    Crash when attempting to change input type while dismissing datalist suggestions
+    https://bugs.webkit.org/show_bug.cgi?id=195384
+    <rdar://problem/48563718>
+    
+    Reviewed by Brent Fulgham.
+    
+    Source/WebCore:
+    
+    When closing a datalist suggestion menu, WebPageProxy sends a message to WebPage instructing it to tell its
+    active datalist suggestions picker to close. However, for a myriad of reasons, the suggestions picker (kept
+    alive by its text input type) may have already gone away by this point. To mitigate this, make WebPage weakly
+    reference its active datalist suggestions picker.
+    
+    Test: fast/forms/datalist/change-input-type-after-closing-datalist-suggestions.html
+    
+    * platform/DataListSuggestionPicker.h:
+    
+    Make DataListSuggestionPicker capable of being weakly referenced. Additionally, fix some minor preexisting
+    issues in this header (#imports instead of #includes, as well as an unnecessary include of IntRect.h).
+    
+    Source/WebKit:
+    
+    See WebCore ChangeLog for more details.
+    
+    * WebProcess/WebPage/WebPage.cpp:
+    (WebKit::WebPage::setActiveDataListSuggestionPicker):
+    (WebKit::WebPage::didSelectDataListOption):
+    (WebKit::WebPage::didCloseSuggestions):
+    * WebProcess/WebPage/WebPage.h:
+    
+    Turn m_activeDataListSuggestionPicker from a raw pointer into a WeakPtr.
+    
+    LayoutTests:
+    
+    Add a new layout test to exercise this scenario.
+    
+    * fast/forms/datalist/change-input-type-after-closing-datalist-suggestions-expected.txt: Added.
+    * fast/forms/datalist/change-input-type-after-closing-datalist-suggestions.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242587 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-06  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            Crash when attempting to change input type while dismissing datalist suggestions
+            https://bugs.webkit.org/show_bug.cgi?id=195384
+            <rdar://problem/48563718>
+
+            Reviewed by Brent Fulgham.
+
+            See WebCore ChangeLog for more details.
+
+            * WebProcess/WebPage/WebPage.cpp:
+            (WebKit::WebPage::setActiveDataListSuggestionPicker):
+            (WebKit::WebPage::didSelectDataListOption):
+            (WebKit::WebPage::didCloseSuggestions):
+            * WebProcess/WebPage/WebPage.h:
+
+            Turn m_activeDataListSuggestionPicker from a raw pointer into a WeakPtr.
+
+2019-03-13  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r241452. rdar://problem/48839390
+
+    Make WebRTCUnifiedPlanEnabled true by default
+    https://bugs.webkit.org/show_bug.cgi?id=194595
+    
+    Reviewed by Eric Carlson.
+    
+    * Shared/WebPreferences.yaml:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@241452 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-02-13  Youenn Fablet  <youenn@apple.com>
+
+            Make WebRTCUnifiedPlanEnabled true by default
+            https://bugs.webkit.org/show_bug.cgi?id=194595
+
+            Reviewed by Eric Carlson.
+
+            * Shared/WebPreferences.yaml:
+
+2019-03-13  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r241002. rdar://problem/48839377
+
+    UserMediaPermissionRequestManagerProxy lambdas should check for 'this' being valid
+    https://bugs.webkit.org/show_bug.cgi?id=194246
+    
+    Reviewed by Eric Carlson.
+    
+    With PSON enabled, the manager proxy can be destroyed.
+    It is thus important for its callbacks to check for 'this' to be valid.
+    
+    * UIProcess/UserMediaPermissionRequestManagerProxy.cpp:
+    (WebKit::UserMediaPermissionRequestManagerProxy::captureDevicesChanged):
+    (WebKit::UserMediaPermissionRequestManagerProxy::requestUserMediaPermissionForFrame):
+    (WebKit::UserMediaPermissionRequestManagerProxy::enumerateMediaDevicesForFrame):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@241002 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-02-05  Youenn Fablet  <youenn@apple.com>
+
+            UserMediaPermissionRequestManagerProxy lambdas should check for 'this' being valid
+            https://bugs.webkit.org/show_bug.cgi?id=194246
+
+            Reviewed by Eric Carlson.
+
+            With PSON enabled, the manager proxy can be destroyed.
+            It is thus important for its callbacks to check for 'this' to be valid.
+
+            * UIProcess/UserMediaPermissionRequestManagerProxy.cpp:
+            (WebKit::UserMediaPermissionRequestManagerProxy::captureDevicesChanged):
+            (WebKit::UserMediaPermissionRequestManagerProxy::requestUserMediaPermissionForFrame):
+            (WebKit::UserMediaPermissionRequestManagerProxy::enumerateMediaDevicesForFrame):
+
+2019-03-12  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r242502. rdar://problem/48591282
+
+    Cherry-pick r242394. rdar://problem/48591281
+    
+        Unreviewed build fix after r242378
+    
+        * UIProcess/ios/EditableImageController.mm:
+        (WebKit::EditableImageController::associateWithAttachment):
+    
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242394 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/branches/safari-607.1.40.0-branch@242502 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-05  Kocsen Chung  <kocsen_chung@apple.com>
+
+            Cherry-pick r242394. rdar://problem/48591281
+
+        Unreviewed build fix after r242378
+
+        * UIProcess/ios/EditableImageController.mm:
+        (WebKit::EditableImageController::associateWithAttachment):
+
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242394 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+        2019-03-04  Brent Fulgham  <bfulgham@apple.com>
+
+                Unreviewed build fix after r242378
+
+                * UIProcess/ios/EditableImageController.mm:
+                (WebKit::EditableImageController::associateWithAttachment):
+
+2019-03-12  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r242501. rdar://problem/48591282
+
+    Cherry-pick r242378. rdar://problem/48591281
+    
+        Check contextIDs when handling WebContent messages
+        https://bugs.webkit.org/show_bug.cgi?id=195289
+        <rdar://problem/48475870>
+    
+        Reviewed by Alex Christensen.
+    
+        The WebContent process is untrusted because it handles arbitrary markup and javascript from untrusted sources.
+        We should handle its messages with suspicion, and make sure the arguments are valid and usable before honoring them.
+    
+        This patch hardens the message passing layer by performing MESSAGE_CHECK in places that had been overlooked.
+    
+        * UIProcess/Cocoa/PlaybackSessionManagerProxy.mm:
+        (WebKit::PlaybackSessionManagerProxy::setUpPlaybackControlsManagerWithID):
+        (WebKit::PlaybackSessionManagerProxy::currentTimeChanged):
+        (WebKit::PlaybackSessionManagerProxy::bufferedTimeChanged):
+        (WebKit::PlaybackSessionManagerProxy::seekableRangesVectorChanged):
+        (WebKit::PlaybackSessionManagerProxy::canPlayFastReverseChanged):
+        (WebKit::PlaybackSessionManagerProxy::audioMediaSelectionOptionsChanged):
+        (WebKit::PlaybackSessionManagerProxy::legibleMediaSelectionOptionsChanged):
+        (WebKit::PlaybackSessionManagerProxy::audioMediaSelectionIndexChanged):
+        (WebKit::PlaybackSessionManagerProxy::legibleMediaSelectionIndexChanged):
+        (WebKit::PlaybackSessionManagerProxy::externalPlaybackPropertiesChanged):
+        (WebKit::PlaybackSessionManagerProxy::wirelessVideoPlaybackDisabledChanged):
+        (WebKit::PlaybackSessionManagerProxy::mutedChanged):
+        (WebKit::PlaybackSessionManagerProxy::volumeChanged):
+        (WebKit::PlaybackSessionManagerProxy::durationChanged):
+        (WebKit::PlaybackSessionManagerProxy::playbackStartedTimeChanged):
+        (WebKit::PlaybackSessionManagerProxy::rateChanged):
+        (WebKit::PlaybackSessionManagerProxy::pictureInPictureSupportedChanged):
+        (WebKit::PlaybackSessionManagerProxy::pictureInPictureActiveChanged):
+        (WebKit::PlaybackSessionManagerProxy::handleControlledElementIDResponse const):
+        * UIProcess/Cocoa/UserMediaCaptureManagerProxy.cpp:
+        (WebKit::UserMediaCaptureManagerProxy::createMediaSourceForCaptureDeviceWithConstraints):
+        (WebKit::UserMediaCaptureManagerProxy::startProducingData):
+        (WebKit::UserMediaCaptureManagerProxy::stopProducingData):
+        (WebKit::UserMediaCaptureManagerProxy::end):
+        (WebKit::UserMediaCaptureManagerProxy::capabilities):
+        (WebKit::UserMediaCaptureManagerProxy::setMuted):
+        (WebKit::UserMediaCaptureManagerProxy::applyConstraints):
+        * UIProcess/Cocoa/VideoFullscreenManagerProxy.mm:
+        (WebKit::VideoFullscreenManagerProxy::setupFullscreenWithID):
+        (WebKit::VideoFullscreenManagerProxy::setHasVideo):
+        (WebKit::VideoFullscreenManagerProxy::setVideoDimensions):
+        (WebKit::VideoFullscreenManagerProxy::enterFullscreen):
+        (WebKit::VideoFullscreenManagerProxy::exitFullscreen):
+        (WebKit::VideoFullscreenManagerProxy::exitFullscreenWithoutAnimationToMode):
+        (WebKit::VideoFullscreenManagerProxy::setInlineRect):
+        (WebKit::VideoFullscreenManagerProxy::setHasVideoContentLayer):
+        (WebKit::VideoFullscreenManagerProxy::cleanupFullscreen):
+        (WebKit::VideoFullscreenManagerProxy::preparedToReturnToInline):
+        (WebKit::VideoFullscreenManagerProxy::preparedToExitFullscreen):
+        * UIProcess/ios/EditableImageController.mm:
+        (WebKit::EditableImageController::didCreateEditableImage):
+        (WebKit::EditableImageController::didDestroyEditableImage):
+        (WebKit::EditableImageController::associateWithAttachment):
+    
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242378 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/branches/safari-607.1.40.0-branch@242501 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-05  Kocsen Chung  <kocsen_chung@apple.com>
+
+            Cherry-pick r242378. rdar://problem/48591281
+
+        Check contextIDs when handling WebContent messages
+        https://bugs.webkit.org/show_bug.cgi?id=195289
+        <rdar://problem/48475870>
+
+        Reviewed by Alex Christensen.
+
+        The WebContent process is untrusted because it handles arbitrary markup and javascript from untrusted sources.
+        We should handle its messages with suspicion, and make sure the arguments are valid and usable before honoring them.
+
+        This patch hardens the message passing layer by performing MESSAGE_CHECK in places that had been overlooked.
+
+        * UIProcess/Cocoa/PlaybackSessionManagerProxy.mm:
+        (WebKit::PlaybackSessionManagerProxy::setUpPlaybackControlsManagerWithID):
+        (WebKit::PlaybackSessionManagerProxy::currentTimeChanged):
+        (WebKit::PlaybackSessionManagerProxy::bufferedTimeChanged):
+        (WebKit::PlaybackSessionManagerProxy::seekableRangesVectorChanged):
+        (WebKit::PlaybackSessionManagerProxy::canPlayFastReverseChanged):
+        (WebKit::PlaybackSessionManagerProxy::audioMediaSelectionOptionsChanged):
+        (WebKit::PlaybackSessionManagerProxy::legibleMediaSelectionOptionsChanged):
+        (WebKit::PlaybackSessionManagerProxy::audioMediaSelectionIndexChanged):
+        (WebKit::PlaybackSessionManagerProxy::legibleMediaSelectionIndexChanged):
+        (WebKit::PlaybackSessionManagerProxy::externalPlaybackPropertiesChanged):
+        (WebKit::PlaybackSessionManagerProxy::wirelessVideoPlaybackDisabledChanged):
+        (WebKit::PlaybackSessionManagerProxy::mutedChanged):
+        (WebKit::PlaybackSessionManagerProxy::volumeChanged):
+        (WebKit::PlaybackSessionManagerProxy::durationChanged):
+        (WebKit::PlaybackSessionManagerProxy::playbackStartedTimeChanged):
+        (WebKit::PlaybackSessionManagerProxy::rateChanged):
+        (WebKit::PlaybackSessionManagerProxy::pictureInPictureSupportedChanged):
+        (WebKit::PlaybackSessionManagerProxy::pictureInPictureActiveChanged):
+        (WebKit::PlaybackSessionManagerProxy::handleControlledElementIDResponse const):
+        * UIProcess/Cocoa/UserMediaCaptureManagerProxy.cpp:
+        (WebKit::UserMediaCaptureManagerProxy::createMediaSourceForCaptureDeviceWithConstraints):
+        (WebKit::UserMediaCaptureManagerProxy::startProducingData):
+        (WebKit::UserMediaCaptureManagerProxy::stopProducingData):
+        (WebKit::UserMediaCaptureManagerProxy::end):
+        (WebKit::UserMediaCaptureManagerProxy::capabilities):
+        (WebKit::UserMediaCaptureManagerProxy::setMuted):
+        (WebKit::UserMediaCaptureManagerProxy::applyConstraints):
+        * UIProcess/Cocoa/VideoFullscreenManagerProxy.mm:
+        (WebKit::VideoFullscreenManagerProxy::setupFullscreenWithID):
+        (WebKit::VideoFullscreenManagerProxy::setHasVideo):
+        (WebKit::VideoFullscreenManagerProxy::setVideoDimensions):
+        (WebKit::VideoFullscreenManagerProxy::enterFullscreen):
+        (WebKit::VideoFullscreenManagerProxy::exitFullscreen):
+        (WebKit::VideoFullscreenManagerProxy::exitFullscreenWithoutAnimationToMode):
+        (WebKit::VideoFullscreenManagerProxy::setInlineRect):
+        (WebKit::VideoFullscreenManagerProxy::setHasVideoContentLayer):
+        (WebKit::VideoFullscreenManagerProxy::cleanupFullscreen):
+        (WebKit::VideoFullscreenManagerProxy::preparedToReturnToInline):
+        (WebKit::VideoFullscreenManagerProxy::preparedToExitFullscreen):
+        * UIProcess/ios/EditableImageController.mm:
+        (WebKit::EditableImageController::didCreateEditableImage):
+        (WebKit::EditableImageController::didDestroyEditableImage):
+        (WebKit::EditableImageController::associateWithAttachment):
+
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242378 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+        2019-03-04  Brent Fulgham  <bfulgham@apple.com>
+
+                Check contextIDs when handling WebContent messages
+                https://bugs.webkit.org/show_bug.cgi?id=195289
+                <rdar://problem/48475870>
+
+                Reviewed by Alex Christensen.
+
+                The WebContent process is untrusted because it handles arbitrary markup and javascript from untrusted sources.
+                We should handle its messages with suspicion, and make sure the arguments are valid and usable before honoring them.
+
+                This patch hardens the message passing layer by performing MESSAGE_CHECK in places that had been overlooked.
+
+                * UIProcess/Cocoa/PlaybackSessionManagerProxy.mm:
+                (WebKit::PlaybackSessionManagerProxy::setUpPlaybackControlsManagerWithID):
+                (WebKit::PlaybackSessionManagerProxy::currentTimeChanged):
+                (WebKit::PlaybackSessionManagerProxy::bufferedTimeChanged):
+                (WebKit::PlaybackSessionManagerProxy::seekableRangesVectorChanged):
+                (WebKit::PlaybackSessionManagerProxy::canPlayFastReverseChanged):
+                (WebKit::PlaybackSessionManagerProxy::audioMediaSelectionOptionsChanged):
+                (WebKit::PlaybackSessionManagerProxy::legibleMediaSelectionOptionsChanged):
+                (WebKit::PlaybackSessionManagerProxy::audioMediaSelectionIndexChanged):
+                (WebKit::PlaybackSessionManagerProxy::legibleMediaSelectionIndexChanged):
+                (WebKit::PlaybackSessionManagerProxy::externalPlaybackPropertiesChanged):
+                (WebKit::PlaybackSessionManagerProxy::wirelessVideoPlaybackDisabledChanged):
+                (WebKit::PlaybackSessionManagerProxy::mutedChanged):
+                (WebKit::PlaybackSessionManagerProxy::volumeChanged):
+                (WebKit::PlaybackSessionManagerProxy::durationChanged):
+                (WebKit::PlaybackSessionManagerProxy::playbackStartedTimeChanged):
+                (WebKit::PlaybackSessionManagerProxy::rateChanged):
+                (WebKit::PlaybackSessionManagerProxy::pictureInPictureSupportedChanged):
+                (WebKit::PlaybackSessionManagerProxy::pictureInPictureActiveChanged):
+                (WebKit::PlaybackSessionManagerProxy::handleControlledElementIDResponse const):
+                * UIProcess/Cocoa/UserMediaCaptureManagerProxy.cpp:
+                (WebKit::UserMediaCaptureManagerProxy::createMediaSourceForCaptureDeviceWithConstraints):
+                (WebKit::UserMediaCaptureManagerProxy::startProducingData):
+                (WebKit::UserMediaCaptureManagerProxy::stopProducingData):
+                (WebKit::UserMediaCaptureManagerProxy::end):
+                (WebKit::UserMediaCaptureManagerProxy::capabilities):
+                (WebKit::UserMediaCaptureManagerProxy::setMuted):
+                (WebKit::UserMediaCaptureManagerProxy::applyConstraints):
+                * UIProcess/Cocoa/VideoFullscreenManagerProxy.mm:
+                (WebKit::VideoFullscreenManagerProxy::setupFullscreenWithID):
+                (WebKit::VideoFullscreenManagerProxy::setHasVideo):
+                (WebKit::VideoFullscreenManagerProxy::setVideoDimensions):
+                (WebKit::VideoFullscreenManagerProxy::enterFullscreen):
+                (WebKit::VideoFullscreenManagerProxy::exitFullscreen):
+                (WebKit::VideoFullscreenManagerProxy::exitFullscreenWithoutAnimationToMode):
+                (WebKit::VideoFullscreenManagerProxy::setInlineRect):
+                (WebKit::VideoFullscreenManagerProxy::setHasVideoContentLayer):
+                (WebKit::VideoFullscreenManagerProxy::cleanupFullscreen):
+                (WebKit::VideoFullscreenManagerProxy::preparedToReturnToInline):
+                (WebKit::VideoFullscreenManagerProxy::preparedToExitFullscreen):
+                * UIProcess/ios/EditableImageController.mm:
+                (WebKit::EditableImageController::didCreateEditableImage):
+                (WebKit::EditableImageController::didDestroyEditableImage):
+                (WebKit::EditableImageController::associateWithAttachment):
+
+2019-03-12  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r242629. rdar://problem/48716552
 
     Crash under RemoteLayerTreePropertyApplier::applyProperties
     https://bugs.webkit.org/show_bug.cgi?id=195448
@@ -37,7 +1544,7 @@
 
 2019-03-06  Kocsen Chung  <kocsen_chung@apple.com>
 
-        Cherry-pick r242554. rdar://problem/48538837
+        Cherry-pick r242554. rdar://problem/48647490
 
     REGRESSION (r238490): YouTube.com: Returning PiP to Safari after sleeping device loses page
     https://bugs.webkit.org/show_bug.cgi?id=195364
@@ -70,147 +1577,9 @@
             * WebProcess/WebPage/ios/WebPageIOS.mm:
             (WebKit::WebPage::applicationWillEnterForeground):
 
-2019-03-05  Kocsen Chung  <kocsen_chung@apple.com>
+2019-03-04  Kocsen Chung  <kocsen_chung@apple.com>
 
-        Cherry-pick r242394. rdar://problem/48591281
-
-    Unreviewed build fix after r242378
-    
-    * UIProcess/ios/EditableImageController.mm:
-    (WebKit::EditableImageController::associateWithAttachment):
-    
-    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242394 268f45cc-cd09-0410-ab3c-d52691b4dbfc
-
-    2019-03-04  Brent Fulgham  <bfulgham@apple.com>
-
-            Unreviewed build fix after r242378
-
-            * UIProcess/ios/EditableImageController.mm:
-            (WebKit::EditableImageController::associateWithAttachment):
-
-2019-03-05  Kocsen Chung  <kocsen_chung@apple.com>
-
-        Cherry-pick r242378. rdar://problem/48591281
-
-    Check contextIDs when handling WebContent messages
-    https://bugs.webkit.org/show_bug.cgi?id=195289
-    <rdar://problem/48475870>
-    
-    Reviewed by Alex Christensen.
-    
-    The WebContent process is untrusted because it handles arbitrary markup and javascript from untrusted sources.
-    We should handle its messages with suspicion, and make sure the arguments are valid and usable before honoring them.
-    
-    This patch hardens the message passing layer by performing MESSAGE_CHECK in places that had been overlooked.
-    
-    * UIProcess/Cocoa/PlaybackSessionManagerProxy.mm:
-    (WebKit::PlaybackSessionManagerProxy::setUpPlaybackControlsManagerWithID):
-    (WebKit::PlaybackSessionManagerProxy::currentTimeChanged):
-    (WebKit::PlaybackSessionManagerProxy::bufferedTimeChanged):
-    (WebKit::PlaybackSessionManagerProxy::seekableRangesVectorChanged):
-    (WebKit::PlaybackSessionManagerProxy::canPlayFastReverseChanged):
-    (WebKit::PlaybackSessionManagerProxy::audioMediaSelectionOptionsChanged):
-    (WebKit::PlaybackSessionManagerProxy::legibleMediaSelectionOptionsChanged):
-    (WebKit::PlaybackSessionManagerProxy::audioMediaSelectionIndexChanged):
-    (WebKit::PlaybackSessionManagerProxy::legibleMediaSelectionIndexChanged):
-    (WebKit::PlaybackSessionManagerProxy::externalPlaybackPropertiesChanged):
-    (WebKit::PlaybackSessionManagerProxy::wirelessVideoPlaybackDisabledChanged):
-    (WebKit::PlaybackSessionManagerProxy::mutedChanged):
-    (WebKit::PlaybackSessionManagerProxy::volumeChanged):
-    (WebKit::PlaybackSessionManagerProxy::durationChanged):
-    (WebKit::PlaybackSessionManagerProxy::playbackStartedTimeChanged):
-    (WebKit::PlaybackSessionManagerProxy::rateChanged):
-    (WebKit::PlaybackSessionManagerProxy::pictureInPictureSupportedChanged):
-    (WebKit::PlaybackSessionManagerProxy::pictureInPictureActiveChanged):
-    (WebKit::PlaybackSessionManagerProxy::handleControlledElementIDResponse const):
-    * UIProcess/Cocoa/UserMediaCaptureManagerProxy.cpp:
-    (WebKit::UserMediaCaptureManagerProxy::createMediaSourceForCaptureDeviceWithConstraints):
-    (WebKit::UserMediaCaptureManagerProxy::startProducingData):
-    (WebKit::UserMediaCaptureManagerProxy::stopProducingData):
-    (WebKit::UserMediaCaptureManagerProxy::end):
-    (WebKit::UserMediaCaptureManagerProxy::capabilities):
-    (WebKit::UserMediaCaptureManagerProxy::setMuted):
-    (WebKit::UserMediaCaptureManagerProxy::applyConstraints):
-    * UIProcess/Cocoa/VideoFullscreenManagerProxy.mm:
-    (WebKit::VideoFullscreenManagerProxy::setupFullscreenWithID):
-    (WebKit::VideoFullscreenManagerProxy::setHasVideo):
-    (WebKit::VideoFullscreenManagerProxy::setVideoDimensions):
-    (WebKit::VideoFullscreenManagerProxy::enterFullscreen):
-    (WebKit::VideoFullscreenManagerProxy::exitFullscreen):
-    (WebKit::VideoFullscreenManagerProxy::exitFullscreenWithoutAnimationToMode):
-    (WebKit::VideoFullscreenManagerProxy::setInlineRect):
-    (WebKit::VideoFullscreenManagerProxy::setHasVideoContentLayer):
-    (WebKit::VideoFullscreenManagerProxy::cleanupFullscreen):
-    (WebKit::VideoFullscreenManagerProxy::preparedToReturnToInline):
-    (WebKit::VideoFullscreenManagerProxy::preparedToExitFullscreen):
-    * UIProcess/ios/EditableImageController.mm:
-    (WebKit::EditableImageController::didCreateEditableImage):
-    (WebKit::EditableImageController::didDestroyEditableImage):
-    (WebKit::EditableImageController::associateWithAttachment):
-    
-    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242378 268f45cc-cd09-0410-ab3c-d52691b4dbfc
-
-    2019-03-04  Brent Fulgham  <bfulgham@apple.com>
-
-            Check contextIDs when handling WebContent messages
-            https://bugs.webkit.org/show_bug.cgi?id=195289
-            <rdar://problem/48475870>
-
-            Reviewed by Alex Christensen.
-
-            The WebContent process is untrusted because it handles arbitrary markup and javascript from untrusted sources.
-            We should handle its messages with suspicion, and make sure the arguments are valid and usable before honoring them.
-
-            This patch hardens the message passing layer by performing MESSAGE_CHECK in places that had been overlooked.
-
-            * UIProcess/Cocoa/PlaybackSessionManagerProxy.mm:
-            (WebKit::PlaybackSessionManagerProxy::setUpPlaybackControlsManagerWithID):
-            (WebKit::PlaybackSessionManagerProxy::currentTimeChanged):
-            (WebKit::PlaybackSessionManagerProxy::bufferedTimeChanged):
-            (WebKit::PlaybackSessionManagerProxy::seekableRangesVectorChanged):
-            (WebKit::PlaybackSessionManagerProxy::canPlayFastReverseChanged):
-            (WebKit::PlaybackSessionManagerProxy::audioMediaSelectionOptionsChanged):
-            (WebKit::PlaybackSessionManagerProxy::legibleMediaSelectionOptionsChanged):
-            (WebKit::PlaybackSessionManagerProxy::audioMediaSelectionIndexChanged):
-            (WebKit::PlaybackSessionManagerProxy::legibleMediaSelectionIndexChanged):
-            (WebKit::PlaybackSessionManagerProxy::externalPlaybackPropertiesChanged):
-            (WebKit::PlaybackSessionManagerProxy::wirelessVideoPlaybackDisabledChanged):
-            (WebKit::PlaybackSessionManagerProxy::mutedChanged):
-            (WebKit::PlaybackSessionManagerProxy::volumeChanged):
-            (WebKit::PlaybackSessionManagerProxy::durationChanged):
-            (WebKit::PlaybackSessionManagerProxy::playbackStartedTimeChanged):
-            (WebKit::PlaybackSessionManagerProxy::rateChanged):
-            (WebKit::PlaybackSessionManagerProxy::pictureInPictureSupportedChanged):
-            (WebKit::PlaybackSessionManagerProxy::pictureInPictureActiveChanged):
-            (WebKit::PlaybackSessionManagerProxy::handleControlledElementIDResponse const):
-            * UIProcess/Cocoa/UserMediaCaptureManagerProxy.cpp:
-            (WebKit::UserMediaCaptureManagerProxy::createMediaSourceForCaptureDeviceWithConstraints):
-            (WebKit::UserMediaCaptureManagerProxy::startProducingData):
-            (WebKit::UserMediaCaptureManagerProxy::stopProducingData):
-            (WebKit::UserMediaCaptureManagerProxy::end):
-            (WebKit::UserMediaCaptureManagerProxy::capabilities):
-            (WebKit::UserMediaCaptureManagerProxy::setMuted):
-            (WebKit::UserMediaCaptureManagerProxy::applyConstraints):
-            * UIProcess/Cocoa/VideoFullscreenManagerProxy.mm:
-            (WebKit::VideoFullscreenManagerProxy::setupFullscreenWithID):
-            (WebKit::VideoFullscreenManagerProxy::setHasVideo):
-            (WebKit::VideoFullscreenManagerProxy::setVideoDimensions):
-            (WebKit::VideoFullscreenManagerProxy::enterFullscreen):
-            (WebKit::VideoFullscreenManagerProxy::exitFullscreen):
-            (WebKit::VideoFullscreenManagerProxy::exitFullscreenWithoutAnimationToMode):
-            (WebKit::VideoFullscreenManagerProxy::setInlineRect):
-            (WebKit::VideoFullscreenManagerProxy::setHasVideoContentLayer):
-            (WebKit::VideoFullscreenManagerProxy::cleanupFullscreen):
-            (WebKit::VideoFullscreenManagerProxy::preparedToReturnToInline):
-            (WebKit::VideoFullscreenManagerProxy::preparedToExitFullscreen):
-            * UIProcess/ios/EditableImageController.mm:
-            (WebKit::EditableImageController::didCreateEditableImage):
-            (WebKit::EditableImageController::didDestroyEditableImage):
-            (WebKit::EditableImageController::associateWithAttachment):
-
-2019-03-04  Null  <null@apple.com>
-
-        Cherry-pick r242302. rdar://problem/48520362
+        Cherry-pick r242302. rdar://problem/48572673
 
     Add setters on WKWebsiteDataStore for sourceApplicationBundleIdentifier and sourceApplicationSecondaryIdentifier
     https://bugs.webkit.org/show_bug.cgi?id=195229
@@ -285,7 +1654,7 @@
 
 2019-03-04  Babak Shafiei  <bshafiei@apple.com>
 
-        Cherry-pick r242355. rdar://problem/48563891
+        Cherry-pick r242355. rdar://problem/48563894
 
     [iOS] Fullscreen "stay in page" option breaks video playback
     https://bugs.webkit.org/show_bug.cgi?id=195277
@@ -324,6 +1693,15 @@
 
             * UIProcess/ios/fullscreen/WKFullScreenViewController.mm:
             (-[WKFullScreenViewController _showPhishingAlert]):
+
+2019-02-28  Andy Estes  <aestes@apple.com>
+
+        [watchOS] Disable Parental Controls content filtering
+        <rdar://problem/48464986>
+
+        Rubber-stamped by Beth Dakin.
+
+        * Configurations/FeatureDefines.xcconfig:
 
 2019-02-27  Babak Shafiei  <bshafiei@apple.com>
 
