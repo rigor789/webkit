@@ -764,7 +764,7 @@ static id containerValueToObject(JSGlobalContextRef context, JSContainerConverto
     JSContainerConvertor convertor(context);
     convertor.add(task);
     ASSERT(!convertor.isWorkListEmpty());
-    
+
     do {
         JSContainerConvertor::Task current = convertor.take();
         ASSERT(JSValueIsObject(context, current.js));
@@ -773,7 +773,7 @@ static id containerValueToObject(JSGlobalContextRef context, JSContainerConverto
         if (current.type == ContainerArray) {
             ASSERT([current.objc isKindOfClass:[NSMutableArray class]]);
             NSMutableArray *array = (NSMutableArray *)current.objc;
-        
+
             auto lengthString = OpaqueJSString::tryCreate("length"_s);
             unsigned length = JSC::toUInt32(JSValueToNumber(context, JSObjectGetProperty(context, js, lengthString.get(), 0), 0));
 

@@ -39,7 +39,7 @@
 #import <unicode/uchar.h>
 #import <unicode/uscript.h>
 #import <wtf/Assertions.h>
-#import <wtf/ObjCRuntimeExtras.h>
+#import <wtf/ObjcRuntimeExtras.h>
 #import <wtf/URL.h>
 #import <wtf/cocoa/NSURLExtras.h>
 

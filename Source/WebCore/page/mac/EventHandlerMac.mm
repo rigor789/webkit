@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "config.h"
@@ -68,7 +68,7 @@
 #include <wtf/BlockObjCExceptions.h>
 #include <wtf/MainThread.h>
 #include <wtf/NeverDestroyed.h>
-#include <wtf/ObjCRuntimeExtras.h>
+#include <wtf/ObjcRuntimeExtras.h>
 #include <wtf/ProcessPrivilege.h>
 
 #if ENABLE(MAC_GESTURE_EVENTS)
@@ -198,7 +198,7 @@ static bool lastEventIsMouseUp()
     // When they finish, currentEvent is the mouseUp that they exited on. We need to update
     // the WebCore state with this mouseUp, which we never saw. This method lets us detect
     // that state. Handling this was critical when we used AppKit widgets for form elements.
-    // It's not clear in what cases this is helpful now -- it's possible it can be removed. 
+    // It's not clear in what cases this is helpful now -- it's possible it can be removed.
 
     ASSERT([NSApp isRunning]);
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
@@ -271,7 +271,7 @@ bool EventHandler::passMouseDownEventToWidget(Widget* pWidget)
     }
 
     m_sendingEventToSubview = false;
-    
+
     if (!wasDeferringLoading)
         page->setDefersLoading(false);
 
@@ -332,10 +332,10 @@ NSView *EventHandler::mouseDownViewIfStillGood()
 bool EventHandler::eventLoopHandleMouseDragged(const MouseEventWithHitTestResults&)
 {
     NSView *view = mouseDownViewIfStillGood();
-    
+
     if (!view)
         return false;
-    
+
     if (!m_mouseDownWasInSubframe) {
         ASSERT(!m_sendingEventToSubview);
         m_sendingEventToSubview = true;
@@ -344,7 +344,7 @@ bool EventHandler::eventLoopHandleMouseDragged(const MouseEventWithHitTestResult
         END_BLOCK_OBJC_EXCEPTIONS;
         m_sendingEventToSubview = false;
     }
-    
+
     return true;
 }
 #endif // ENABLE(DRAG_SUPPORT)
@@ -363,10 +363,10 @@ bool EventHandler::eventLoopHandleMouseUp(const MouseEventWithHitTestResults&)
         END_BLOCK_OBJC_EXCEPTIONS;
         m_sendingEventToSubview = false;
     }
- 
+
     return true;
 }
-    
+
 bool EventHandler::passSubframeEventToSubframe(MouseEventWithHitTestResults& event, Frame* subframe, HitTestResult* hoveredNode)
 {
     BEGIN_BLOCK_OBJC_EXCEPTIONS;
@@ -392,7 +392,7 @@ bool EventHandler::passSubframeEventToSubframe(MouseEventWithHitTestResults& eve
         subframe->eventHandler().handleMouseMoveEvent(currentPlatformMouseEvent(), hoveredNode);
         m_sendingEventToSubview = false;
         return true;
-        
+
     case NSEventTypeLeftMouseDown: {
         Node* node = event.targetNode();
         if (!node)
@@ -505,9 +505,9 @@ void EventHandler::mouseDown(NSEvent *event, NSEvent *correspondingPressureEvent
         return;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS;
-    
+
     m_mouseDownView = nil;
-    
+
     CurrentEventScope scope(event, correspondingPressureEvent);
 
     handleMousePressEvent(currentPlatformMouseEvent());
@@ -551,7 +551,7 @@ void EventHandler::mouseUp(NSEvent *event, NSEvent *correspondingPressureEvent)
         handleMouseDoubleClickEvent(currentPlatformMouseEvent());
     else
         handleMouseReleaseEvent(currentPlatformMouseEvent());
-    
+
     m_mouseDownView = nil;
 
     END_BLOCK_OBJC_EXCEPTIONS;
@@ -561,9 +561,9 @@ void EventHandler::mouseUp(NSEvent *event, NSEvent *correspondingPressureEvent)
  A hack for the benefit of AK's PopUpButton, which uses the Carbon menu manager, which thus
  eats all subsequent events after it is starts its modal tracking loop.  After the interaction
  is done, this routine is used to fix things up.  When a mouse down started us tracking in
- the widget, we post a fake mouse up to balance the mouse down we started with. When a 
+ the widget, we post a fake mouse up to balance the mouse down we started with. When a
  key down started us tracking in the widget, we post a fake key up to balance things out.
- In addition, we post a fake mouseMoved to get the cursor in sync with whatever we happen to 
+ In addition, we post a fake mouseMoved to get the cursor in sync with whatever we happen to
  be over after the tracking is done.
  */
 void EventHandler::sendFakeEventsAfterWidgetTracking(NSEvent *initiatingEvent)
@@ -591,7 +591,7 @@ void EventHandler::sendFakeEventsAfterWidgetTracking(NSEvent *initiatingEvent)
                                         eventNumber:[initiatingEvent eventNumber]
                                          clickCount:[initiatingEvent clickCount]
                                            pressure:[initiatingEvent pressure]];
-        
+
             [NSApp postEvent:fakeEvent atStart:YES];
         } else { // eventType == NSEventTypeKeyDown
             fakeEvent = [NSEvent keyEventWithType:NSEventTypeKeyUp
@@ -600,9 +600,9 @@ void EventHandler::sendFakeEventsAfterWidgetTracking(NSEvent *initiatingEvent)
                                         timestamp:[initiatingEvent timestamp]
                                      windowNumber:[initiatingEvent windowNumber]
                                           context:nullptr
-                                       characters:[initiatingEvent characters] 
-                      charactersIgnoringModifiers:[initiatingEvent charactersIgnoringModifiers] 
-                                        isARepeat:[initiatingEvent isARepeat] 
+                                       characters:[initiatingEvent characters]
+                      charactersIgnoringModifiers:[initiatingEvent charactersIgnoringModifiers]
+                                        isARepeat:[initiatingEvent isARepeat]
                                           keyCode:[initiatingEvent keyCode]];
             [NSApp postEvent:fakeEvent atStart:YES];
         }
@@ -624,7 +624,7 @@ void EventHandler::sendFakeEventsAfterWidgetTracking(NSEvent *initiatingEvent)
                                        pressure:0];
         [NSApp postEvent:fakeEvent atStart:YES];
     }
-    
+
     END_BLOCK_OBJC_EXCEPTIONS;
 }
 
@@ -738,15 +738,15 @@ bool EventHandler::tabsToAllFormControls(KeyboardEvent* event) const
     // If tab-to-links is off, option-tab always highlights all controls
     if ((keyboardUIMode & KeyboardAccessTabsToLinks) == 0 && handlingOptionTab)
         return true;
-    
+
     // If system preferences say to include all controls, we always include all controls
     if (keyboardUIMode & KeyboardAccessFull)
         return true;
-    
+
     // Otherwise tab-to-links includes all controls, unless the sense is flipped via option-tab.
     if (keyboardUIMode & KeyboardAccessTabsToLinks)
         return !handlingOptionTab;
-    
+
     return handlingOptionTab;
 }
 
@@ -756,7 +756,7 @@ bool EventHandler::needsKeyboardEventDisambiguationQuirks() const
     if (m_frame.settings().usesDashboardBackwardCompatibilityMode())
         return true;
 #endif
-        
+
     if (m_frame.settings().needsKeyboardEventDisambiguationQuirks())
         return true;
 
@@ -781,7 +781,7 @@ static ScrollableArea* scrollableAreaForBox(RenderBox& box)
 
     return box.layer();
 }
-    
+
 static ContainerNode* findEnclosingScrollableContainer(ContainerNode* node, float deltaX, float deltaY)
 {
     // Find the first node with a valid scrollable area starting with the current
@@ -803,7 +803,7 @@ static ContainerNode* findEnclosingScrollableContainer(ContainerNode* node, floa
             }
         }
     }
-    
+
     return nullptr;
 }
 
@@ -811,7 +811,7 @@ static bool deltaIsPredominantlyVertical(float deltaX, float deltaY)
 {
     return std::abs(deltaY) > std::abs(deltaX);
 }
-    
+
 static bool scrolledToEdgeInDominantDirection(const ContainerNode& container, const ScrollableArea& area, float deltaX, float deltaY)
 {
     if (!container.renderer())
@@ -825,7 +825,7 @@ static bool scrolledToEdgeInDominantDirection(const ContainerNode& container, co
 
         if (deltaX < 0)
             return area.scrolledToRight();
-        
+
         return area.scrolledToLeft();
     }
 
@@ -834,7 +834,7 @@ static bool scrolledToEdgeInDominantDirection(const ContainerNode& container, co
 
     if (deltaY < 0)
         return area.scrolledToBottom();
-    
+
     return area.scrolledToTop();
 }
 
@@ -846,13 +846,13 @@ static WeakPtr<ScrollableArea> scrollableAreaForEventTarget(Element* eventTarget
 
     return makeWeakPtr(static_cast<ScrollableArea&>(static_cast<ScrollView&>(*widget)));
 }
-    
+
 static bool eventTargetIsPlatformWidget(Element* eventTarget)
 {
     Widget* widget = EventHandler::widgetForEventTarget(eventTarget);
     if (!widget)
         return false;
-    
+
     return widget->platformWidget();
 }
 
@@ -889,7 +889,7 @@ static bool latchingIsLockedToAncestorOfThisFrame(const Frame& frame)
         if (ancestor == latchedState->frame())
             return true;
     }
-    
+
     return false;
 }
 
@@ -902,7 +902,7 @@ static WeakPtr<ScrollableArea> scrollableAreaForContainerNode(ContainerNode& con
     auto scrollableAreaPtr = scrollableAreaForBox(*box);
     if (!scrollableAreaPtr)
         return { };
-    
+
     return makeWeakPtr(*scrollableAreaPtr);
 }
 
@@ -959,7 +959,7 @@ void EventHandler::platformPrepareForWheelEvents(const PlatformWheelEvent& wheel
             }
         }
     }
-    
+
     Page* page = m_frame.page();
     if (scrollableArea && page && page->expectsWheelEventTriggers())
         scrollableArea->scrollAnimator().setWheelEventTestTrigger(page->testTrigger());
@@ -1064,10 +1064,10 @@ bool EventHandler::platformCompleteWheelEvent(const PlatformWheelEvent& wheelEve
         // If the platform widget is handling the event, we always want to return false.
         if (scrollableArea == view && view->platformWidget())
             didHandleWheelEvent = false;
-        
+
         return didHandleWheelEvent;
     }
-    
+
     bool didHandleEvent = view->wheelEvent(wheelEvent);
     m_isHandlingWheelEvent = false;
     return didHandleEvent;
@@ -1129,7 +1129,7 @@ static IntSize autoscrollAdjustmentFactorForScreenBoundaries(const IntPoint& scr
     // in order to get autoscrolling to feel natural in this situation.
 
     IntSize adjustmentFactor;
-    
+
 #define EDGE_DISTANCE_THRESHOLD 50
 #define PIXELS_MULTIPLIER 20
 

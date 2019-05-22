@@ -35,7 +35,7 @@
 #import <unicode/uscript.h>
 #import <wtf/Function.h>
 #import <wtf/HexNumber.h>
-#import <wtf/ObjCRuntimeExtras.h>
+#import <wtf/ObjcRuntimeExtras.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/URLParser.h>
 #import <wtf/Vector.h>

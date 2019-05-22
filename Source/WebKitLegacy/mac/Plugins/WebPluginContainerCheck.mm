@@ -43,7 +43,7 @@
 #import <WebCore/FrameLoaderTypes.h>
 #import <WebCore/SecurityOrigin.h>
 #import <wtf/Assertions.h>
-#import <wtf/ObjCRuntimeExtras.h>
+#import <wtf/ObjcRuntimeExtras.h>
 
 using namespace WebCore;
 

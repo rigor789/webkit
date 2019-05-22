@@ -77,7 +77,7 @@
 #import <pal/spi/mac/NSCellSPI.h>
 #import <pal/spi/mac/NSSharingServicePickerSPI.h>
 #import <wtf/MathExtras.h>
-#import <wtf/ObjCRuntimeExtras.h>
+#import <wtf/ObjcRuntimeExtras.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/StdLibExtras.h>
 #import <wtf/text/StringBuilder.h>
@@ -2149,7 +2149,7 @@ bool RenderThemeMac::paintSearchFieldResultsDecorationPart(const RenderBox& box,
         input = box.element();
     if (!is<RenderBox>(input->renderer()))
         return false;
-    
+
     const RenderBox& inputBox = downcast<RenderBox>(*input->renderer());
     LocalCurrentGraphicsContext localContext(paintInfo.context());
     setSearchCellState(inputBox, r);
@@ -2197,7 +2197,7 @@ bool RenderThemeMac::paintSearchFieldResultsButton(const RenderBox& box, const P
         input = box.element();
     if (!is<RenderBox>(input->renderer()))
         return false;
-    
+
     const RenderBox& inputBox = downcast<RenderBox>(*input->renderer());
     LocalCurrentGraphicsContext localContext(paintInfo.context());
     setSearchCellState(inputBox, r);
@@ -2219,7 +2219,7 @@ bool RenderThemeMac::paintSearchFieldResultsButton(const RenderBox& box, const P
         adjustedXPosition = inputBox.contentBoxRect().x();
     localBounds.setX(adjustedXPosition);
     FloatPoint paintingPos = convertToPaintingPosition(inputBox, box, localBounds.location(), r.location());
-    
+
     FloatRect unzoomedRect(paintingPos, localBounds.size());
     if (zoomLevel != 1.0f) {
         unzoomedRect.setSize(unzoomedRect.size() / zoomLevel);
@@ -2572,7 +2572,7 @@ private:
 static Color titleTextColorForAttachment(const RenderAttachment& attachment, AttachmentLayoutStyle style)
 {
     Color result = Color::black;
-    
+
     if (style == AttachmentLayoutStyle::Selected) {
         if (attachment.frame().selection().isFocusedAndActive())
             result = colorFromNSColor([NSColor alternateSelectedControlTextColor]);
@@ -2778,7 +2778,7 @@ static void paintAttachmentIconBackground(const RenderAttachment& attachment, Gr
 static RefPtr<Icon> iconForAttachment(const RenderAttachment& attachment)
 {
     String attachmentType = attachment.attachmentElement().attachmentType();
-    
+
     if (!attachmentType.isEmpty()) {
         if (equalIgnoringASCIICase(attachmentType, "multipart/x-folder") || equalIgnoringASCIICase(attachmentType, "application/vnd.apple.folder")) {
             if (auto icon = Icon::createIconForUTI("public.directory"))
@@ -2983,3 +2983,4 @@ bool RenderThemeMac::paintAttachment(const RenderObject& renderer, const PaintIn
 } // namespace WebCore
 
 #endif // PLATFORM(MAC)
+if // PLATFORM(MAC)
