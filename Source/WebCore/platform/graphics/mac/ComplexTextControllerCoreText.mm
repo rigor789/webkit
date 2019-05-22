@@ -105,7 +105,7 @@ static const UniChar* provideStringAndAttributes(CFIndex stringIndex, CFIndex* c
 
     *charCount = info->length - stringIndex;
     *attributes = info->attributes;
-    return toOldUCharPtr(info->cp) + stringIndex;
+    return info->cp + stringIndex;
 }
 
 static inline bool safeCFEqual(CFTypeRef a, CFTypeRef b)

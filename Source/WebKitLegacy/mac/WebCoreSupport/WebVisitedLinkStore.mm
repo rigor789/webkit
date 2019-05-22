@@ -84,13 +84,13 @@ void WebVisitedLinkStore::addVisitedLink(NSString *urlString)
 
     size_t length = urlString.length;
 
-    if (const UChar* characters = ConstChar16Ptr(CFStringGetCharactersPtr((__bridge CFStringRef)urlString))) {
+    if (const UChar* characters = CFStringGetCharactersPtr((__bridge CFStringRef)urlString)) {
         addVisitedLinkHash(computeSharedStringHash(characters, length));
         return;
     }
 
     Vector<UChar, 512> buffer(length);
-    [urlString getCharacters:toOldUCharPtr(buffer.data())];
+    [urlString getCharacters:buffer.data()];
 
     addVisitedLinkHash(computeSharedStringHash(buffer.data(), length));
 }

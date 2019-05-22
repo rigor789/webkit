@@ -206,7 +206,7 @@ String keyForCharCode(unichar charCode)
     case NSNextFunctionKey:
         return "Unidentified"_s;
     default:
-        return String(Char16Ptr(&charCode), 1);
+        return String(&charCode, 1);
     }
 }
 

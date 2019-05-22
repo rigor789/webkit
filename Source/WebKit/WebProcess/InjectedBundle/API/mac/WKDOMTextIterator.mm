@@ -75,7 +75,7 @@
     if (!length)
         return nullptr;
     if (!text.is8Bit())
-        return toOldUCharPtr(text.characters16());
+        return text.characters16();
     if (_upconvertedText.isEmpty())
         _upconvertedText.appendRange(text.characters8(), text.characters8() + length);
     ASSERT(_upconvertedText.size() == text.length());

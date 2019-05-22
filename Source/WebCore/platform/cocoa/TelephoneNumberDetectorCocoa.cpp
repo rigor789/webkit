@@ -66,7 +66,7 @@ bool isSupported()
 bool find(const UChar* buffer, unsigned length, int* startPos, int* endPos)
 {
     ASSERT(isSupported());
-    return DDDFAScannerFirstResultInUnicharArray(phoneNumbersScanner(), toOldUCharPtr(buffer), length, startPos, endPos);
+    return DDDFAScannerFirstResultInUnicharArray(phoneNumbersScanner(), buffer, length, startPos, endPos);
 }
 
 } // namespace TelephoneNumberDetector
