@@ -944,9 +944,7 @@ void WebPageProxy::initializeWebPage()
     if (m_preferences->developerExtrasEnabled())
         inspector()->enableRemoteInspection();
 #endif
-
-    auto parameters = creationParameters();
-
+    
     setDrawingArea(pageClient().createDrawingAreaProxy(m_process));
     ASSERT(m_drawingArea);
 

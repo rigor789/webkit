@@ -41,7 +41,6 @@ messages -> WebInspector {
     StopElementSelection()
 
     SetFrontendConnection(IPC::Attachment connectionIdentifier)
-    SetFrontendConnection(IPC::Attachment connectionIdentifier)
 
 #if ENABLE(INSPECTOR_SERVER)
     RemoteFrontendConnected()
