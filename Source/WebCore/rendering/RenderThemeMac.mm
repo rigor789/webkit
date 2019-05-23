@@ -2983,4 +2983,3 @@ bool RenderThemeMac::paintAttachment(const RenderObject& renderer, const PaintIn
 } // namespace WebCore
 
 #endif // PLATFORM(MAC)
-if // PLATFORM(MAC)
