@@ -18,8 +18,6 @@ fast/forms/search/search-results-hidden-crash.html [ Pass ]
 fast/url/user-visible [ Pass ]
 fast/images/eps-as-image.html [ Pass ]
 
-fast/text-autosizing/ios/ipad/programmatic-text-size-adjust.html [ Skip ]
-fast/text-autosizing/ios/ipad/text-size-adjust-inline-style.html [ Skip ]
 fast/text-autosizing/ios/programmatic-text-size-adjust.html [ Skip ]
 fast/text-autosizing/ios/text-size-adjust-inline-style.html [ Skip ]
 fast/text-autosizing [ Pass ]
@@ -150,6 +148,7 @@ fast/mediastream/RTCPeerConnection-stats.html [ Skip ]
 
 # Asserts in debug.
 [ Debug ] fast/images/large-size-image-crash.html [ Skip ]
+[ Debug ] fast/ruby/crash-when-paginated-ruby.html [ Skip ]
 
 webkit.org/b/188061 [ Debug ] webgl/2.0.0/conformance2/glsl3/compound-assignment-type-combination.html [ Slow ]
 
@@ -1418,8 +1417,6 @@ webkit.org/b/178127 media/modern-media-controls/media-controller/media-controlle
 # on iOS, and the bug it was created to regression-test was iOS-only, so there is no hurry to make it work on Mac.
 media/modern-media-controls/media-documents/background-color-and-centering.html [ Pass ImageOnlyFailure ]
 
-media/modern-media-controls/pip-support/ipad [ Skip ]
-
 webkit.org/b/169158 media/modern-media-controls/tracks-support/tracks-support-show-panel-after-dragging-controls.html [ Skip ]
 
 webkit.org/b/170907 [ Debug ] imported/w3c/web-platform-tests/WebCryptoAPI/derive_bits_keys/hkdf.https.worker.html [ Pass Failure Timeout ]
@@ -1823,3 +1820,5 @@ webkit.org/b/192956 [ Sierra ] webgpu/webgpu-basics.html [ Skip ]
 webkit.org/b/192956 [ Sierra ] webgpu/webgpu-enabled.html [ Skip ]
 webkit.org/b/192956 [ Sierra ] webgpu/simple-triangle-strip.html [ Skip ]
 webkit.org/b/192956 [ Sierra ] webgpu/vertex-buffer-triangle-strip.html [ Skip ]
+
+webkit.org/b/196512 [ Mojave+ ] fast/text/complex-initial-advance.html [ ImageOnlyFailure ]

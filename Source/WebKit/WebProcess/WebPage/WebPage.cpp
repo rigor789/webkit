@@ -624,7 +624,7 @@ WebPage::WebPage(uint64_t pageID, WebPageCreationParameters&& parameters)
     m_userContentController->addUserStyleSheets(parameters.userStyleSheets);
     m_userContentController->addUserScriptMessageHandlers(parameters.messageHandlers);
 #if ENABLE(CONTENT_EXTENSIONS)
-    m_userContentController->addContentRuleLists(parameters.contentRuleLists);
+    m_userContentController->addContentRuleLists(WTFMove(parameters.contentRuleLists));
 #endif
 
 #if PLATFORM(IOS_FAMILY)
@@ -1208,7 +1208,7 @@ void WebPage::close()
     if (m_isClosed)
         return;
 
-    WebProcess::singleton().ensureNetworkProcessConnection().connection().send(Messages::NetworkConnectionToWebProcess::RemoveStorageAccessForAllFramesOnPage(sessionID(), m_pageID), 0);
+    WebProcess::singleton().ensureNetworkProcessConnection().connection().send(Messages::NetworkConnectionToWebProcess::ClearPageSpecificDataForResourceLoadStatistics(sessionID(), m_pageID), 0);
     
     m_isClosed = true;
 
@@ -3862,19 +3862,19 @@ void WebPage::didChooseColor(const WebCore::Color& color)
 
 void WebPage::setActiveDataListSuggestionPicker(WebDataListSuggestionPicker* dataListSuggestionPicker)
 {
-    m_activeDataListSuggestionPicker = dataListSuggestionPicker;
+    m_activeDataListSuggestionPicker = makeWeakPtr(dataListSuggestionPicker);
 }
 
 void WebPage::didSelectDataListOption(const String& selectedOption)
 {
-    m_activeDataListSuggestionPicker->didSelectOption(selectedOption);
+    if (m_activeDataListSuggestionPicker)
+        m_activeDataListSuggestionPicker->didSelectOption(selectedOption);
 }
 
 void WebPage::didCloseSuggestions()
 {
-    if (m_activeDataListSuggestionPicker)
-        m_activeDataListSuggestionPicker->didCloseSuggestions();
-    m_activeDataListSuggestionPicker = nullptr;
+    if (auto picker = std::exchange(m_activeDataListSuggestionPicker, nullptr))
+        picker->didCloseSuggestions();
 }
 
 #endif

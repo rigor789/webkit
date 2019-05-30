@@ -1,5 +1,5 @@
 # Copyright (C) 2011 Google Inc. All rights reserved.
-# Copyright (C) 2012, 2013, 2016 Apple Inc. All rights reserved.
+# Copyright (C) 2012-2019 Apple Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -69,8 +69,7 @@ class MacPort(DarwinPort):
     def _build_driver_flags(self):
         return ['ARCHS=i386'] if self.architecture() == 'x86' else []
 
-    @memoized
-    def default_baseline_search_path(self):
+    def default_baseline_search_path(self, **kwargs):
         versions_to_fallback = []
         version_name_map = VersionNameMap.map(self.host.platform)
 
@@ -280,3 +279,14 @@ class MacPort(DarwinPort):
         worthless_patterns.append((re.compile('.*<<<< VMC >>>>.*\n'), ''))
         worthless_patterns.append((re.compile('.*<<< FFR_Common >>>.*\n'), ''))
         return worthless_patterns
+
+    def configuration_for_upload(self, host=None):
+        host = host or self.host
+        configuration = super(MacPort, self).configuration_for_upload(host=host)
+
+        output = host.executive.run_command(['/usr/sbin/sysctl', 'hw.model']).rstrip()
+        match = re.match(r'hw.model: (?P<model>.*)', output)
+        if match:
+            configuration['model'] = match.group('model')
+
+        return configuration

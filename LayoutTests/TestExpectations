@@ -42,7 +42,6 @@ scrollingcoordinator/ios [ Skip ]
 fast/content-observation [ Skip ]
 media/mac [ Skip ]
 media/ios [ Skip ]
-media/controls/ipad [ Skip ]
 fast/text-autosizing [ Skip ]
 fast/css/variables/env/ios [ Skip ]
 http/tests/events/touch/ios [ Skip ]
@@ -2905,3 +2904,5 @@ webkit.org/b/190032 imported/w3c/web-platform-tests/css/css-scoping/keyframes-00
 fast/mediacapturefromelement/CanvasCaptureMediaStream-imagebitmaprenderingcontext.html [ Skip ]
 fast/mediacapturefromelement/CanvasCaptureMediaStream-framerate-0.html [ Skip ]
 fast/mediacapturefromelement/CanvasCaptureMediaStream-capture-out-of-DOM-element.html [ Skip ]
+
+[ Debug ] fast/css/first-letter-and-float-crash.html [ Skip ]

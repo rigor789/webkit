@@ -1,6 +1,1906 @@
-2019-03-04  Null  <null@apple.com>
+2019-04-24  Babak Shafiei  <bshafiei@apple.com>
 
-        Cherry-pick r242302. rdar://problem/48520362
+        Cherry-pick r244174. rdar://problem/28160396
+
+    Cherry-pick r243841. rdar://problem/49725678
+    
+        -apple-trailing-word is needed for browser detection
+        https://bugs.webkit.org/show_bug.cgi?id=196575
+    
+        Unreviewed.
+    
+        PerformanceTests:
+    
+        * MotionMark/resources/debug-runner/motionmark.css:
+        (#intro .start-benchmark p):
+    
+        Source/JavaScriptCore:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebCore:
+    
+        This is an unreviewed partial revert of r243819. Turns out there are some websites
+        which use this property to do browser detection. So, we need to continue to parse
+        the property, but we don't need the property to do anything.
+    
+        Test: fast/text/trailing-word-detection.html
+    
+        * Configurations/FeatureDefines.xcconfig:
+        * css/CSSComputedStyleDeclaration.cpp:
+        (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+        * css/CSSPrimitiveValueMappings.h:
+        (WebCore::CSSPrimitiveValue::CSSPrimitiveValue):
+        (WebCore::CSSPrimitiveValue::operator TrailingWord const):
+        * css/CSSProperties.json:
+        * css/CSSValueKeywords.in:
+        * css/parser/CSSParserFastPaths.cpp:
+        (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+        (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+        * rendering/style/RenderStyle.h:
+        (WebCore::RenderStyle::trailingWord const):
+        (WebCore::RenderStyle::setTrailingWord):
+        (WebCore::RenderStyle::initialTrailingWord):
+        * rendering/style/RenderStyleConstants.h:
+    
+        Source/WebCore/PAL:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebKit:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebKitLegacy/mac:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Tools:
+    
+        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+        LayoutTests:
+    
+        * fast/text/trailing-word-detection-expected.txt: Added.
+        * fast/text/trailing-word-detection.html: Added.
+        * platform/gtk/TestExpectations:
+        * platform/win/TestExpectations:
+    
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243841 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/branches/safari-607-branch@244174 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-10  Alan Coon  <alancoon@apple.com>
+
+            Cherry-pick r243841. rdar://problem/49725678
+
+        -apple-trailing-word is needed for browser detection
+        https://bugs.webkit.org/show_bug.cgi?id=196575
+
+        Unreviewed.
+
+        PerformanceTests:
+
+        * MotionMark/resources/debug-runner/motionmark.css:
+        (#intro .start-benchmark p):
+
+        Source/JavaScriptCore:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebCore:
+
+        This is an unreviewed partial revert of r243819. Turns out there are some websites
+        which use this property to do browser detection. So, we need to continue to parse
+        the property, but we don't need the property to do anything.
+
+        Test: fast/text/trailing-word-detection.html
+
+        * Configurations/FeatureDefines.xcconfig:
+        * css/CSSComputedStyleDeclaration.cpp:
+        (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+        * css/CSSPrimitiveValueMappings.h:
+        (WebCore::CSSPrimitiveValue::CSSPrimitiveValue):
+        (WebCore::CSSPrimitiveValue::operator TrailingWord const):
+        * css/CSSProperties.json:
+        * css/CSSValueKeywords.in:
+        * css/parser/CSSParserFastPaths.cpp:
+        (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+        (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+        * rendering/style/RenderStyle.h:
+        (WebCore::RenderStyle::trailingWord const):
+        (WebCore::RenderStyle::setTrailingWord):
+        (WebCore::RenderStyle::initialTrailingWord):
+        * rendering/style/RenderStyleConstants.h:
+
+        Source/WebCore/PAL:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebKit:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebKitLegacy/mac:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Tools:
+
+        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+
+        LayoutTests:
+
+        * fast/text/trailing-word-detection-expected.txt: Added.
+        * fast/text/trailing-word-detection.html: Added.
+        * platform/gtk/TestExpectations:
+        * platform/win/TestExpectations:
+
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243841 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+        2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+
+                -apple-trailing-word is needed for browser detection
+                https://bugs.webkit.org/show_bug.cgi?id=196575
+
+                Unreviewed.
+
+                * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+
+2019-04-24  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r244173. rdar://problem/28160396
+
+    Cherry-pick r243819. rdar://problem/49725678
+    
+        Remove support for -apple-trailing-word
+        https://bugs.webkit.org/show_bug.cgi?id=196525
+    
+        Reviewed by Zalan Bujtas.
+    
+        This CSS property is nonstandard and not used.
+    
+        .:
+    
+        * Source/cmake/WebKitFeatures.cmake:
+    
+        Source/JavaScriptCore:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebCore:
+    
+        * Configurations/FeatureDefines.xcconfig:
+        * css/CSSComputedStyleDeclaration.cpp:
+        (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+        * css/CSSPrimitiveValueMappings.h:
+        (WebCore::CSSPrimitiveValue::operator TrailingWord const): Deleted.
+        * css/CSSProperties.json:
+        * css/CSSValueKeywords.in:
+        * css/parser/CSSParserFastPaths.cpp:
+        (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+        (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+        * rendering/SimpleLineLayout.cpp:
+        (WebCore::SimpleLineLayout::canUseForStyle):
+        * rendering/SimpleLineLayoutCoverage.cpp:
+        (WebCore::SimpleLineLayout::printReason):
+        * rendering/SimpleLineLayoutCoverage.h:
+        * rendering/line/BreakingContext.h:
+        (WebCore::BreakingContext::BreakingContext):
+        (WebCore::BreakingContext::lineBreak):
+        (WebCore::BreakingContext::clearLineBreakIfFitsOnLine):
+        (WebCore::BreakingContext::commitLineBreakClear):
+        (WebCore::BreakingContext::commitLineBreakAtCurrentWidth):
+        (WebCore::BreakingContext::handleBR):
+        (WebCore::BreakingContext::handleFloat):
+        (WebCore::BreakingContext::handleText):
+        (WebCore::BreakingContext::handleEndOfLine):
+        (WebCore::BreakingContext::InlineIteratorHistory::InlineIteratorHistory): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::push): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::update): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::renderer const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::offset const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::nextBreakablePosition const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::atTextParagraphSeparator const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::previousInSameNode const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::get const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::current const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::historyLength const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::moveTo): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::increment): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::clear): Deleted.
+        (WebCore::BreakingContext::optimalLineBreakLocationForTrailingWord): Deleted.
+        * rendering/style/RenderStyle.h:
+        (WebCore::RenderStyle::trailingWord const): Deleted.
+        (WebCore::RenderStyle::setTrailingWord): Deleted.
+        (WebCore::RenderStyle::initialTrailingWord): Deleted.
+        * rendering/style/RenderStyleConstants.h:
+        * rendering/style/StyleRareInheritedData.cpp:
+        (WebCore::StyleRareInheritedData::StyleRareInheritedData):
+        (WebCore::StyleRareInheritedData::operator== const):
+        * rendering/style/StyleRareInheritedData.h:
+    
+        Source/WebCore/PAL:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebInspectorUI:
+    
+        * UserInterface/Models/CSSKeywordCompletions.js:
+    
+        Source/WebKit:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Source/WebKitLegacy/mac:
+    
+        * Configurations/FeatureDefines.xcconfig:
+    
+        Tools:
+    
+        * Scripts/webkitperl/FeatureList.pm:
+        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+        LayoutTests:
+    
+        * fast/text/trailing-word-expected.html: Removed.
+        * fast/text/trailing-word.html: Removed.
+        * platform/gtk/TestExpectations:
+        * platform/mac/fast/text/trailing-word-parse-expected.txt: Removed.
+        * platform/mac/fast/text/trailing-word-parse.html: Removed.
+        * platform/win/TestExpectations:
+    
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243819 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/branches/safari-607-branch@244173 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-10  Alan Coon  <alancoon@apple.com>
+
+            Cherry-pick r243819. rdar://problem/49725678
+
+        Remove support for -apple-trailing-word
+        https://bugs.webkit.org/show_bug.cgi?id=196525
+
+        Reviewed by Zalan Bujtas.
+
+        This CSS property is nonstandard and not used.
+
+        .:
+
+        * Source/cmake/WebKitFeatures.cmake:
+
+        Source/JavaScriptCore:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebCore:
+
+        * Configurations/FeatureDefines.xcconfig:
+        * css/CSSComputedStyleDeclaration.cpp:
+        (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+        * css/CSSPrimitiveValueMappings.h:
+        (WebCore::CSSPrimitiveValue::operator TrailingWord const): Deleted.
+        * css/CSSProperties.json:
+        * css/CSSValueKeywords.in:
+        * css/parser/CSSParserFastPaths.cpp:
+        (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+        (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+        * rendering/SimpleLineLayout.cpp:
+        (WebCore::SimpleLineLayout::canUseForStyle):
+        * rendering/SimpleLineLayoutCoverage.cpp:
+        (WebCore::SimpleLineLayout::printReason):
+        * rendering/SimpleLineLayoutCoverage.h:
+        * rendering/line/BreakingContext.h:
+        (WebCore::BreakingContext::BreakingContext):
+        (WebCore::BreakingContext::lineBreak):
+        (WebCore::BreakingContext::clearLineBreakIfFitsOnLine):
+        (WebCore::BreakingContext::commitLineBreakClear):
+        (WebCore::BreakingContext::commitLineBreakAtCurrentWidth):
+        (WebCore::BreakingContext::handleBR):
+        (WebCore::BreakingContext::handleFloat):
+        (WebCore::BreakingContext::handleText):
+        (WebCore::BreakingContext::handleEndOfLine):
+        (WebCore::BreakingContext::InlineIteratorHistory::InlineIteratorHistory): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::push): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::update): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::renderer const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::offset const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::nextBreakablePosition const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::atTextParagraphSeparator const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::previousInSameNode const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::get const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::current const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::historyLength const): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::moveTo): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::increment): Deleted.
+        (WebCore::BreakingContext::InlineIteratorHistory::clear): Deleted.
+        (WebCore::BreakingContext::optimalLineBreakLocationForTrailingWord): Deleted.
+        * rendering/style/RenderStyle.h:
+        (WebCore::RenderStyle::trailingWord const): Deleted.
+        (WebCore::RenderStyle::setTrailingWord): Deleted.
+        (WebCore::RenderStyle::initialTrailingWord): Deleted.
+        * rendering/style/RenderStyleConstants.h:
+        * rendering/style/StyleRareInheritedData.cpp:
+        (WebCore::StyleRareInheritedData::StyleRareInheritedData):
+        (WebCore::StyleRareInheritedData::operator== const):
+        * rendering/style/StyleRareInheritedData.h:
+
+        Source/WebCore/PAL:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebInspectorUI:
+
+        * UserInterface/Models/CSSKeywordCompletions.js:
+
+        Source/WebKit:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Source/WebKitLegacy/mac:
+
+        * Configurations/FeatureDefines.xcconfig:
+
+        Tools:
+
+        * Scripts/webkitperl/FeatureList.pm:
+        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+
+        LayoutTests:
+
+        * fast/text/trailing-word-expected.html: Removed.
+        * fast/text/trailing-word.html: Removed.
+        * platform/gtk/TestExpectations:
+        * platform/mac/fast/text/trailing-word-parse-expected.txt: Removed.
+        * platform/mac/fast/text/trailing-word-parse.html: Removed.
+        * platform/win/TestExpectations:
+
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243819 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+        2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+
+                Remove support for -apple-trailing-word
+                https://bugs.webkit.org/show_bug.cgi?id=196525
+
+                Reviewed by Zalan Bujtas.
+
+                This CSS property is nonstandard and not used.
+
+                * Scripts/webkitperl/FeatureList.pm:
+                * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+
+2019-04-24  Alan Coon  <alancoon@apple.com>
+
+        Revert r244173. rdar://problem/28160396
+
+2019-04-24  Alan Coon  <alancoon@apple.com>
+
+        Revert r244174. rdar://problem/28160396
+
+2019-04-17  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Cherry-pick r240301. rdar://problem/49984116
+
+    [iOS] Multiple WKWebViewAutofillTests are flaky failures
+    https://bugs.webkit.org/show_bug.cgi?id=189165
+    <rdar://problem/47433765>
+    
+    Reviewed by Tim Horton.
+    
+    These tests are currently flaky because they expect an invocation of "Element.blur()" in the web process to
+    immediately dispatch an IPC message to notify the UI process that the element has been blurred. In particular,
+    the -textInputHasAutofillContext helper assumes that waiting for the next remote layer tree commit in the UI
+    process in sufficient to ensure that any previous action that blurred the focused element in the web process
+    would make its way to the UI process by the time the layer tree commit is finished.
+    
+    However, WebPage::elementDidBlur sends its IPC message to the UI process asynchronously, using callOnMainThread.
+    This means that if a layer tree flush was already scheduled in the web process before the element was blurred,
+    the element blur IPC message to the UI process will lose the race against the layer tree commit, and the test
+    will fail because it asks for -_autofillContext too early.
+    
+    To fix this, we tweak these tests to actually wait until the intended input session change triggered by script
+    is handled in the UI process.
+    
+    * TestWebKitAPI/Tests/ios/WKWebViewAutofillTests.mm:
+    
+    Tweak some of these tests to wait for input session changes before checking for the presence of an autofill
+    context. The only exception is an existing test that doesn't allow programmatic focus to begin input sessions
+    by default; to fix this test, we simply wait for _WKInputDelegate to be invoked, instead of waiting for a new
+    input session.
+    
+    (-[AutofillTestView textInputHasAutofillContext]):
+    
+    Remove the incorrect presentation update here. This helper now assumes that the UI process is up to date.
+    
+    * TestWebKitAPI/cocoa/TestWKWebView.h:
+    * TestWebKitAPI/cocoa/TestWKWebView.mm:
+    (nextInputSessionChangeCount):
+    
+    Monotonically increasing identifier that's incremented whenever an input session is started in the UI process.
+    This includes changing the focused element from one to another.
+    
+    (-[TestWKWebView initWithFrame:configuration:addToWindow:]):
+    (-[TestWKWebView didStartFormControlInteraction]):
+    (-[TestWKWebView didEndFormControlInteraction]):
+    (-[TestWKWebView evaluateJavaScriptAndWaitForInputSessionToChange:]):
+    
+    Add a helper to evaluate JavaScript and wait for this script to cause some change in the input session. This
+    handles three cases: (1) changing focus from an element that doesn't require an input session to one that does,
+    (2) changing focus between elements that require input sessions, and (3) changing focus from an input session
+    that doesn't require an input session to one that doesn't.
+    
+    
+    git-svn-id: http://svn.webkit.org/repository/webkit/trunk@240301 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-01-22  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [iOS] Multiple WKWebViewAutofillTests are flaky failures
+            https://bugs.webkit.org/show_bug.cgi?id=189165
+            <rdar://problem/47433765>
+
+            Reviewed by Tim Horton.
+
+            These tests are currently flaky because they expect an invocation of "Element.blur()" in the web process to
+            immediately dispatch an IPC message to notify the UI process that the element has been blurred. In particular,
+            the -textInputHasAutofillContext helper assumes that waiting for the next remote layer tree commit in the UI
+            process in sufficient to ensure that any previous action that blurred the focused element in the web process
+            would make its way to the UI process by the time the layer tree commit is finished.
+
+            However, WebPage::elementDidBlur sends its IPC message to the UI process asynchronously, using callOnMainThread.
+            This means that if a layer tree flush was already scheduled in the web process before the element was blurred,
+            the element blur IPC message to the UI process will lose the race against the layer tree commit, and the test
+            will fail because it asks for -_autofillContext too early.
+
+            To fix this, we tweak these tests to actually wait until the intended input session change triggered by script
+            is handled in the UI process.
+
+            * TestWebKitAPI/Tests/ios/WKWebViewAutofillTests.mm:
+
+            Tweak some of these tests to wait for input session changes before checking for the presence of an autofill
+            context. The only exception is an existing test that doesn't allow programmatic focus to begin input sessions
+            by default; to fix this test, we simply wait for _WKInputDelegate to be invoked, instead of waiting for a new
+            input session.
+
+            (-[AutofillTestView textInputHasAutofillContext]):
+
+            Remove the incorrect presentation update here. This helper now assumes that the UI process is up to date.
+
+            * TestWebKitAPI/cocoa/TestWKWebView.h:
+            * TestWebKitAPI/cocoa/TestWKWebView.mm:
+            (nextInputSessionChangeCount):
+
+            Monotonically increasing identifier that's incremented whenever an input session is started in the UI process.
+            This includes changing the focused element from one to another.
+
+            (-[TestWKWebView initWithFrame:configuration:addToWindow:]):
+            (-[TestWKWebView didStartFormControlInteraction]):
+            (-[TestWKWebView didEndFormControlInteraction]):
+            (-[TestWKWebView evaluateJavaScriptAndWaitForInputSessionToChange:]):
+
+            Add a helper to evaluate JavaScript and wait for this script to cause some change in the input session. This
+            handles three cases: (1) changing focus from an element that doesn't require an input session to one that does,
+            (2) changing focus between elements that require input sessions, and (3) changing focus from an input session
+            that doesn't require an input session to one that doesn't.
+
+2019-04-17  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Cherry-pick r242819. rdar://problem/49979209
+
+    Flaky API Test TestWebKitAPI.WebKitLegacy.ScrollingDoesNotPauseMedia
+    https://bugs.webkit.org/show_bug.cgi?id=195137
+    <rdar://problem/48810307>
+    
+    Reviewed by Eric Carlson.
+    
+    * TestWebKitAPI/Tests/WebKitLegacy/ios/ScrollingDoesNotPauseMedia.mm:
+    (TestWebKitAPI::TEST):
+    
+    
+    git-svn-id: http://svn.webkit.org/repository/webkit/trunk@242819 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-12  Jer Noble  <jer.noble@apple.com>
+
+            Flaky API Test TestWebKitAPI.WebKitLegacy.ScrollingDoesNotPauseMedia
+            https://bugs.webkit.org/show_bug.cgi?id=195137
+            <rdar://problem/48810307>
+
+            Reviewed by Eric Carlson.
+
+            * TestWebKitAPI/Tests/WebKitLegacy/ios/ScrollingDoesNotPauseMedia.mm:
+            (TestWebKitAPI::TEST):
+
+2019-04-15  Alan Coon  <alancoon@apple.com>
+
+        Apply patch. rdar://problem/49788895
+
+    2019-04-15  Alex Christensen  <achristensen@webkit.org>
+
+            Do not terminate the NetworkProcess if a third party application sends a NSCredential with a SecIdentityRef
+            https://bugs.webkit.org/show_bug.cgi?id=196213
+
+            Reviewed by Geoff Garen.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKitCocoa/Challenge.mm: Added.
+            (credentialWithIdentityAndKeychainPath):
+            (-[ChallengeDelegate webView:didFinishNavigation:]):
+            (-[ChallengeDelegate webView:didReceiveAuthenticationChallenge:completionHandler:]):
+            (TestWebKitAPI::TEST):
+
+2019-04-11  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Revert r244165. rdar://problem/49788895
+
+2019-04-10  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243841. rdar://problem/49725678
+
+    -apple-trailing-word is needed for browser detection
+    https://bugs.webkit.org/show_bug.cgi?id=196575
+    
+    Unreviewed.
+    
+    PerformanceTests:
+    
+    * MotionMark/resources/debug-runner/motionmark.css:
+    (#intro .start-benchmark p):
+    
+    Source/JavaScriptCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore:
+    
+    This is an unreviewed partial revert of r243819. Turns out there are some websites
+    which use this property to do browser detection. So, we need to continue to parse
+    the property, but we don't need the property to do anything.
+    
+    Test: fast/text/trailing-word-detection.html
+    
+    * Configurations/FeatureDefines.xcconfig:
+    * css/CSSComputedStyleDeclaration.cpp:
+    (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+    * css/CSSPrimitiveValueMappings.h:
+    (WebCore::CSSPrimitiveValue::CSSPrimitiveValue):
+    (WebCore::CSSPrimitiveValue::operator TrailingWord const):
+    * css/CSSProperties.json:
+    * css/CSSValueKeywords.in:
+    * css/parser/CSSParserFastPaths.cpp:
+    (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+    (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+    * rendering/style/RenderStyle.h:
+    (WebCore::RenderStyle::trailingWord const):
+    (WebCore::RenderStyle::setTrailingWord):
+    (WebCore::RenderStyle::initialTrailingWord):
+    * rendering/style/RenderStyleConstants.h:
+    
+    Source/WebCore/PAL:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKit:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKitLegacy/mac:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Tools:
+    
+    * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+    LayoutTests:
+    
+    * fast/text/trailing-word-detection-expected.txt: Added.
+    * fast/text/trailing-word-detection.html: Added.
+    * platform/gtk/TestExpectations:
+    * platform/win/TestExpectations:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243841 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+
+            -apple-trailing-word is needed for browser detection
+            https://bugs.webkit.org/show_bug.cgi?id=196575
+
+            Unreviewed.
+
+            * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+
+2019-04-10  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243819. rdar://problem/49725678
+
+    Remove support for -apple-trailing-word
+    https://bugs.webkit.org/show_bug.cgi?id=196525
+    
+    Reviewed by Zalan Bujtas.
+    
+    This CSS property is nonstandard and not used.
+    
+    .:
+    
+    * Source/cmake/WebKitFeatures.cmake:
+    
+    Source/JavaScriptCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    * css/CSSComputedStyleDeclaration.cpp:
+    (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
+    * css/CSSPrimitiveValueMappings.h:
+    (WebCore::CSSPrimitiveValue::operator TrailingWord const): Deleted.
+    * css/CSSProperties.json:
+    * css/CSSValueKeywords.in:
+    * css/parser/CSSParserFastPaths.cpp:
+    (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
+    (WebCore::CSSParserFastPaths::isKeywordPropertyID):
+    * rendering/SimpleLineLayout.cpp:
+    (WebCore::SimpleLineLayout::canUseForStyle):
+    * rendering/SimpleLineLayoutCoverage.cpp:
+    (WebCore::SimpleLineLayout::printReason):
+    * rendering/SimpleLineLayoutCoverage.h:
+    * rendering/line/BreakingContext.h:
+    (WebCore::BreakingContext::BreakingContext):
+    (WebCore::BreakingContext::lineBreak):
+    (WebCore::BreakingContext::clearLineBreakIfFitsOnLine):
+    (WebCore::BreakingContext::commitLineBreakClear):
+    (WebCore::BreakingContext::commitLineBreakAtCurrentWidth):
+    (WebCore::BreakingContext::handleBR):
+    (WebCore::BreakingContext::handleFloat):
+    (WebCore::BreakingContext::handleText):
+    (WebCore::BreakingContext::handleEndOfLine):
+    (WebCore::BreakingContext::InlineIteratorHistory::InlineIteratorHistory): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::push): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::update): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::renderer const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::offset const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::nextBreakablePosition const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::atTextParagraphSeparator const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::previousInSameNode const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::get const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::current const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::historyLength const): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::moveTo): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::increment): Deleted.
+    (WebCore::BreakingContext::InlineIteratorHistory::clear): Deleted.
+    (WebCore::BreakingContext::optimalLineBreakLocationForTrailingWord): Deleted.
+    * rendering/style/RenderStyle.h:
+    (WebCore::RenderStyle::trailingWord const): Deleted.
+    (WebCore::RenderStyle::setTrailingWord): Deleted.
+    (WebCore::RenderStyle::initialTrailingWord): Deleted.
+    * rendering/style/RenderStyleConstants.h:
+    * rendering/style/StyleRareInheritedData.cpp:
+    (WebCore::StyleRareInheritedData::StyleRareInheritedData):
+    (WebCore::StyleRareInheritedData::operator== const):
+    * rendering/style/StyleRareInheritedData.h:
+    
+    Source/WebCore/PAL:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebInspectorUI:
+    
+    * UserInterface/Models/CSSKeywordCompletions.js:
+    
+    Source/WebKit:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKitLegacy/mac:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Tools:
+    
+    * Scripts/webkitperl/FeatureList.pm:
+    * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+    
+    LayoutTests:
+    
+    * fast/text/trailing-word-expected.html: Removed.
+    * fast/text/trailing-word.html: Removed.
+    * platform/gtk/TestExpectations:
+    * platform/mac/fast/text/trailing-word-parse-expected.txt: Removed.
+    * platform/mac/fast/text/trailing-word-parse.html: Removed.
+    * platform/win/TestExpectations:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243819 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+
+            Remove support for -apple-trailing-word
+            https://bugs.webkit.org/show_bug.cgi?id=196525
+
+            Reviewed by Zalan Bujtas.
+
+            This CSS property is nonstandard and not used.
+
+            * Scripts/webkitperl/FeatureList.pm:
+            * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+
+2019-04-10  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243487. rdar://problem/49788895
+
+    Do not terminate the NetworkProcess if a third party application sends a NSCredential with a SecIdentityRef
+    https://bugs.webkit.org/show_bug.cgi?id=196213
+    
+    Patch by Alex Christensen <achristensen@webkit.org> on 2019-03-25
+    Reviewed by Geoff Garen.
+    
+    Source/WebKit:
+    
+    A release assertion added in r230225 was reachable.  I reached it in a unit test that responds to a challenge
+    with a SecIdentityRef wrapped in an NSCredential.
+    
+    * Shared/cf/ArgumentCodersCF.cpp:
+    (IPC::decode):
+    
+    Tools:
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/Challenge.mm: Added.
+    (credentialWithIdentityAndKeychainPath):
+    (-[ChallengeDelegate webView:didFinishNavigation:]):
+    (-[ChallengeDelegate webView:didReceiveAuthenticationChallenge:completionHandler:]):
+    (TestWebKitAPI::TEST):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243487 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-25  Alex Christensen  <achristensen@webkit.org>
+
+            Do not terminate the NetworkProcess if a third party application sends a NSCredential with a SecIdentityRef
+            https://bugs.webkit.org/show_bug.cgi?id=196213
+
+            Reviewed by Geoff Garen.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKitCocoa/Challenge.mm: Added.
+            (credentialWithIdentityAndKeychainPath):
+            (-[ChallengeDelegate webView:didFinishNavigation:]):
+            (-[ChallengeDelegate webView:didReceiveAuthenticationChallenge:completionHandler:]):
+            (TestWebKitAPI::TEST):
+
+2019-04-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243870. rdar://problem/49725697
+
+    Unreviewed, roll out r243858 which made tests time out.
+    
+    Disable new API tests on Windows instead.
+    
+    * TestWebKitAPI/Tests/WebKit/ReloadPageAfterCrash.cpp:
+    (TestWebKitAPI::TEST):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243870 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-04  Chris Dumez  <cdumez@apple.com>
+
+            Unreviewed, roll out r243858 which made tests time out.
+
+            Disable new API tests on Windows instead.
+
+            * TestWebKitAPI/Tests/WebKit/ReloadPageAfterCrash.cpp:
+            (TestWebKitAPI::TEST):
+
+2019-04-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243858. rdar://problem/49725697
+
+    The page's focusedFrame / frameSetLargestFrame do not get cleared on process swap or crash
+    https://bugs.webkit.org/show_bug.cgi?id=196588
+    <rdar://problem/49365787>
+    
+    Unreviewed build fix for Windows port.
+    
+    error C3861: 'kill': identifier not found
+    
+    * TestWebKitAPI/Tests/WebKit/ReloadPageAfterCrash.cpp:
+    (TestWebKitAPI::TEST): Replaced kill with WKPageTerminate.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243858 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-03  Fujii Hironori  <Hironori.Fujii@sony.com>
+
+            The page's focusedFrame / frameSetLargestFrame do not get cleared on process swap or crash
+            https://bugs.webkit.org/show_bug.cgi?id=196588
+            <rdar://problem/49365787>
+
+            Unreviewed build fix for Windows port.
+
+            error C3861: 'kill': identifier not found
+
+            * TestWebKitAPI/Tests/WebKit/ReloadPageAfterCrash.cpp:
+            (TestWebKitAPI::TEST): Replaced kill with WKPageTerminate.
+
+2019-04-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243849. rdar://problem/49725697
+
+    Unreviewed, fix typo in the name of API test added in r243848.
+    
+    * TestWebKitAPI/Tests/WebKit/ReloadPageAfterCrash.cpp:
+    (TestWebKitAPI::TEST):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243849 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-03  Chris Dumez  <cdumez@apple.com>
+
+            Unreviewed, fix typo in the name of API test added in r243848.
+
+            * TestWebKitAPI/Tests/WebKit/ReloadPageAfterCrash.cpp:
+            (TestWebKitAPI::TEST):
+
+2019-04-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r243848. rdar://problem/49725697
+
+    The page's focusedFrame / frameSetLargestFrame do not get cleared on process swap or crash
+    https://bugs.webkit.org/show_bug.cgi?id=196588
+    <rdar://problem/49365787>
+    
+    Reviewed by Ryosuke Niwa.
+    
+    Source/WebKit:
+    
+    The page's focusedFrame / frameSetLargestFrame do not get cleared on process swap or crash.
+    This can lead to returning stale frames to the client if it asks for those.
+    
+    * UIProcess/WebPageProxy.cpp:
+    (WebKit::WebPageProxy::resetState):
+    
+    Tools:
+    
+    Add API test coverage.
+    
+    * TestWebKitAPI/Tests/WebKit/ReloadPageAfterCrash.cpp:
+    (TestWebKitAPI::nullJavaScriptCallback):
+    (TestWebKitAPI::didCrashCheckFrames):
+    (TestWebKitAPI::TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243848 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-03  Chris Dumez  <cdumez@apple.com>
+
+            The page's focusedFrame / frameSetLargestFrame do not get cleared on process swap or crash
+            https://bugs.webkit.org/show_bug.cgi?id=196588
+            <rdar://problem/49365787>
+
+            Reviewed by Ryosuke Niwa.
+
+            Add API test coverage.
+
+            * TestWebKitAPI/Tests/WebKit/ReloadPageAfterCrash.cpp:
+            (TestWebKitAPI::nullJavaScriptCallback):
+            (TestWebKitAPI::didCrashCheckFrames):
+            (TestWebKitAPI::TEST):
+
+2019-04-05  Alex Christensen  <achristensen@webkit.org>
+
+        REGRESSION(AppleWebKit/605.1.15): WebDownloadDelegate delegate methods called on non-main thread
+        https://bugs.webkit.org/show_bug.cgi?id=190918
+        <rdar://problem/45603890>
+
+        Reviewed by Darin Adler.
+
+        * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+        * TestWebKitAPI/Tests/WebKitLegacy/mac/DownloadThread.mm: Added.
+        (-[DownloadThreadChecker webView:decidePolicyForMIMEType:request:frame:decisionListener:]):
+        (-[DownloadThreadChecker downloadDidBegin:]):
+        (-[DownloadThreadChecker download:shouldDecodeSourceDataOfMIMEType:]):
+        (-[DownloadThreadChecker download:decideDestinationWithSuggestedFilename:]):
+        (-[DownloadThreadChecker download:didCreateDestination:]):
+        (-[DownloadThreadChecker downloadDidFinish:]):
+        (TestWebKitAPI::TEST):
+
+2019-04-05  Alex Christensen  <achristensen@webkit.org>
+
+        Flaky API Test TestWebKitAPI.WebKit.PerformedActionForURL
+        https://bugs.webkit.org/show_bug.cgi?id=196151
+
+        Reviewed by Chris Dumez.
+
+        * TestWebKitAPI/Tests/WebKitCocoa/ContentRuleListNotification.mm:
+        (TEST):
+        We were assuming that messages were received in a certain order.
+        Actually wait for all messages to be received before checking results.
+
+2019-04-04  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r243842. rdar://problem/34841155
+
+    run-webkit-tests: Upload test results (new results database)
+    https://bugs.webkit.org/show_bug.cgi?id=196577
+    <rdar://problem/34841155>
+    
+    Reviewed by Lucas Forschler.
+    
+    * Scripts/webkitpy/layout_tests/controllers/manager.py:
+    (Manager.run): Upload results after each device shard, since the configuration will be
+    different for each device.
+    (Manager._results_to_upload_json_trie): Convert a TestRunResults object to a trie to be
+    uploaded to a results database.
+    * Scripts/webkitpy/layout_tests/run_webkit_tests.py:
+    (parse_args): Add new 'Upload Options' and prepare 'Results JSON Options' for deprecation.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243842 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-03  Jonathan Bedard  <jbedard@apple.com>
+
+            run-webkit-tests: Upload test results (new results database)
+            https://bugs.webkit.org/show_bug.cgi?id=196577
+            <rdar://problem/34841155>
+
+            Reviewed by Lucas Forschler.
+
+            * Scripts/webkitpy/layout_tests/controllers/manager.py:
+            (Manager.run): Upload results after each device shard, since the configuration will be
+            different for each device.
+            (Manager._results_to_upload_json_trie): Convert a TestRunResults object to a trie to be
+            uploaded to a results database.
+            * Scripts/webkitpy/layout_tests/run_webkit_tests.py:
+            (parse_args): Add new 'Upload Options' and prepare 'Results JSON Options' for deprecation.
+
+2019-04-02  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r240339. rdar://problem/49539128
+
+    webkitpy: Use correct config for --iphone-simulator and --ipad-simulator
+    https://bugs.webkit.org/show_bug.cgi?id=193722
+    <rdar://problem/47481475>
+    
+    Reviewed by Lucas Forschler.
+    
+    iPhone and iPad ports should both use the iOS config.
+    
+    * Scripts/webkitpy/port/ios_simulator.py:
+    (IPhoneSimulatorPort.__init__):
+    (IPadSimulatorPort.__init__):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@240339 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-01-23  Jonathan Bedard  <jbedard@apple.com>
+
+            webkitpy: Use correct config for --iphone-simulator and --ipad-simulator
+            https://bugs.webkit.org/show_bug.cgi?id=193722
+            <rdar://problem/47481475>
+
+            Reviewed by Lucas Forschler.
+
+            iPhone and iPad ports should both use the iOS config.
+
+            * Scripts/webkitpy/port/ios_simulator.py:
+            (IPhoneSimulatorPort.__init__):
+            (IPadSimulatorPort.__init__):
+
+2019-04-02  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r240163. rdar://problem/49539128
+
+    webkitpy: Add iPhone and iPad ports
+    https://bugs.webkit.org/show_bug.cgi?id=193537
+    <rdar://problem/47353390>
+    
+    Reviewed by Lucas Forschler.
+    
+    Add --iphone-simulator and --ipad-simulator commands to run-webkit-tests which separate iPhone and iPad into separate
+    ports. Note that this separation is optional, the --ios-simulator command remains.
+    
+    * Scripts/webkitpy/layout_tests/run_webkit_tests_integrationtest.py:
+    (RunTest.test_device_type_test_division): Drive-by fix.
+    (RunTest.test_device_type_specific_listing): Ditto.
+    (RunTest.test_ipad_test_division):
+    (RunTest):
+    (RunTest.test_ipad_listing):
+    * Scripts/webkitpy/port/factory.py:
+    (platform_options): Add --iphone-simulator and --ipad-simulator flags.
+    (PortFactory):
+    * Scripts/webkitpy/port/ios_simulator.py:
+    (IPhoneSimulatorPort):
+    (IPadSimulatorPort):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@240163 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-01-18  Jonathan Bedard  <jbedard@apple.com>
+
+            webkitpy: Add iPhone and iPad ports
+            https://bugs.webkit.org/show_bug.cgi?id=193537
+            <rdar://problem/47353390>
+
+            Reviewed by Lucas Forschler.
+
+            Add --iphone-simulator and --ipad-simulator commands to run-webkit-tests which separate iPhone and iPad into separate
+            ports. Note that this separation is optional, the --ios-simulator command remains.
+
+            * Scripts/webkitpy/layout_tests/run_webkit_tests_integrationtest.py:
+            (RunTest.test_device_type_test_division): Drive-by fix.
+            (RunTest.test_device_type_specific_listing): Ditto.
+            (RunTest.test_ipad_test_division):
+            (RunTest):
+            (RunTest.test_ipad_listing):
+            * Scripts/webkitpy/port/factory.py:
+            (platform_options): Add --iphone-simulator and --ipad-simulator flags.
+            (PortFactory):
+            * Scripts/webkitpy/port/ios_simulator.py:
+            (IPhoneSimulatorPort):
+            (IPadSimulatorPort):
+
+2019-04-02  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r240153. rdar://problem/49539128
+
+    webkitpy: Implement device type specific expected results (Follow-up fix)
+    https://bugs.webkit.org/show_bug.cgi?id=192162
+    <rdar://problem/46345449>
+    
+    Unreviewed infrastructure fix.
+    
+    * Scripts/webkitpy/layout_tests/controllers/manager.py:
+    (Manager.run): Don't boot a device if no tests are available to run on it.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@240153 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-01-18  Jonathan Bedard  <jbedard@apple.com>
+
+            webkitpy: Implement device type specific expected results (Follow-up fix)
+            https://bugs.webkit.org/show_bug.cgi?id=192162
+            <rdar://problem/46345449>
+
+            Unreviewed infrastructure fix.
+
+            * Scripts/webkitpy/layout_tests/controllers/manager.py:
+            (Manager.run): Don't boot a device if no tests are available to run on it.
+
+2019-04-02  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r240151. rdar://problem/49539128
+
+    webkitpy: Implement device type specific expected results (Follow-up fix)
+    https://bugs.webkit.org/show_bug.cgi?id=192162
+    <rdar://problem/46345449>
+    
+    Unreviewed infrastructure fix.
+    
+    * Scripts/webkitpy/api_tests/manager.py:
+    (Manager._initialize_devices): Use DEVICE_TYPE when running API tests.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@240151 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-01-18  Jonathan Bedard  <jbedard@apple.com>
+
+            webkitpy: Implement device type specific expected results (Follow-up fix)
+            https://bugs.webkit.org/show_bug.cgi?id=192162
+            <rdar://problem/46345449>
+
+            Unreviewed infrastructure fix.
+
+            * Scripts/webkitpy/api_tests/manager.py:
+            (Manager._initialize_devices): Use DEVICE_TYPE when running API tests.
+
+2019-04-02  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r240150. rdar://problem/49539128
+
+    webkitpy: Implement device type specific expected results (Part 2)
+    https://bugs.webkit.org/show_bug.cgi?id=192162
+    <rdar://problem/46345449>
+    
+    Rubber-stamped by Aakash Jain.
+    
+    Tools:
+    
+    This change uses device_type to select a different set of TestExpectation files based on the type of device running
+    tests. This requires multiple baseline search paths to be used in a single instantiation of run-webkit-tests. Note
+    that while multiple baseline search paths are used, any single test will only ever be run on a single device type.
+    
+    * Scripts/webkitpy/layout_tests/controllers/layout_test_finder.py:
+    (LayoutTestFinder.find_tests): Pass device_type through.
+    * Scripts/webkitpy/layout_tests/controllers/layout_test_finder_unittest.py:
+    (LayoutTestFinderTests.test_touched_but_skipped_test): Allow device_type to be passed in.
+    * Scripts/webkitpy/layout_tests/controllers/manager.py:
+    (Manager.__init__): Make _expectations an OrderedDict indexed by device_type, add current_device_type.
+    (Manager._collect_tests): Pass device type to test finder.
+    (Manager._needs_web_platform_test):
+    (Manager._prepare_lists): Index _expectations by device type.
+    (Manager._test_input_for_file):
+    (Manager._test_is_slow): Ditto.
+    (Manager._test_should_dump_jsconsolelog_in_stderr):
+    (Manager._test_should_dump_jsconsolelog_in_stderr): Ditto.
+    (Manager._get_test_inputs):
+    (Manager._update_worker_count):
+    (Manager._set_up_run): Use current_device_type instead of passing device_type in.
+    (Manager.run): Re-write function to gather and parse expectations from multiple baseline search paths. In the event
+    that a test can be run on multiple device types, the first device in the device type list which is eligible will be
+    the one which runs the test.
+    (Manager._run_test_subset):
+    (Manager._run_tests): Index _expectations by current_device_type.
+    (Manager._print_expectation_line_for_test): Ditto.
+    (Manager._print_expectations_for_subset): Ditto.
+    (Manager.print_expectations): Re-write function to gather and parse expectations from multiple baseline search paths.
+    Unlike run, this function will behave the same regardless of what devices are available.
+    (Manager._custom_device_for_test): Deleted.
+    * Scripts/webkitpy/layout_tests/controllers/manager_unittest.py:
+    (ManagerTest.test_uses_custom_device): Deleted.
+    (ManagerTest.test_uses_custom_device.get_manager): Deleted.
+    * Scripts/webkitpy/layout_tests/layout_package/json_layout_results_generator.py:
+    (JSONLayoutResultsGenerator.__init__): Pass expectations as a dictionary indexed by device type.
+    (JSONLayoutResultsGenerator._insert_failure_summaries): The number of fixable tests must take into consideration
+    all of the expectations.
+    * Scripts/webkitpy/layout_tests/lint_test_expectations_unittest.py:
+    (FakePort.skipped_layout_tests): Allow device_type to be passed in.
+    * Scripts/webkitpy/layout_tests/models/test_expectations.py:
+    (TestExpectations.__init__): Allow device_type to be passed through.
+    (TestExpectations.parse_all_expectations): Pick expectations_dict by device type.
+    * Scripts/webkitpy/layout_tests/models/test_expectations_unittest.py: Allow device_type to be passed in.
+    * Scripts/webkitpy/layout_tests/models/test_run_results.py:
+    (summarize_results):
+    * Scripts/webkitpy/layout_tests/models/test_run_results_unittest.py:
+    (summarized_results): Expectations are stored in a dictionary indexed by device_type. When determining the expectation
+    a test ran with, one must check all expectations to find the first non-skip expectation.
+    * Scripts/webkitpy/layout_tests/run_webkit_tests_integrationtest.py:
+    (RunTest.test_device_type_test_division):
+    (RunTest):
+    (RunTest.test_device_type_specific_listing):
+    * Scripts/webkitpy/port/base.py:
+    (Port): Add default values for DEVICE_TYPE and DEFAULT_DEVICE_TYPES.
+    (Port.supported_device_types): The result of this function will change based on what devices are available.
+    * Scripts/webkitpy/port/device_port.py:
+    (DevicePort._device_type_with_version): Replace DEFAULT_DEVICE_TYPE with DEVICE_TYPE.
+    (DevicePort.default_child_processes): DEVICE_TYPE is a general type, so the built-in comparison of the DeviceType object
+    can be used.
+    (DevicePort.supported_device_types): Generates a list of device types determined by the available devices, if there are
+    any, or the DEFAULT_DEVICE_TYPES of the port.
+    * Scripts/webkitpy/port/ios.py:
+    (IOSPort): Change DEFAULT_DEVICE_TYPE to DEVICE_TYPE.
+    * Scripts/webkitpy/port/ios_simulator.py:
+    (IOSSimulatorPort): Set the DEFAULT_DEVICE_TYPES to the devices currently used to run layout tests.
+    * Scripts/webkitpy/port/watch.py:
+    (WatchPort): Change DEFAULT_DEVICE_TYPE to DEVICE_TYPE.
+    * Scripts/webkitpy/port/watch_simulator.py:
+    (WatchSimulatorPort): Set the DEFAULT_DEVICE_TYPES to the device currently used to run layout tests.
+    * Scripts/webkitpy/xcode/device_type.py:
+    (DeviceType):
+    (DeviceType.__hash__): Allow DeviceType to be used as a dictionary index.
+    
+    LayoutTests:
+    
+    Move iPad and iPhone 7 tests to their respective platform specific directories.
+    
+    * TestExpectations:
+    * fast/events/touch/ios/iphone7: Removed.
+    * fast/forms/ios/ipad: Removed.
+    * fast/text-autosizing/ios/ipad: Removed.
+    * fast/viewport/ios/ipad: Removed.
+    * media/controls/ipad: Removed.
+    * media/modern-media-controls/media-documents/ipad: Removed.
+    * media/modern-media-controls/pip-support/ipad: Removed.
+    * platform/ios-wk1/TestExpectations:
+    * platform/ios/TestExpectations:
+    * platform/ipad: Added.
+    * platform/ipad/fast: Added.
+    * platform/ipad/fast/forms: Added.
+    * platform/ipad/fast/forms/choose-select-option-expected.txt: Added.
+    * platform/ipad/fast/forms/choose-select-option.html: Added.
+    * platform/ipad/fast/forms/focus-input-via-button-expected.txt: Added.
+    * platform/ipad/fast/forms/focus-input-via-button.html: Added.
+    * platform/ipad/fast/forms/multiple-select-updates-renderer-expected.txt: Added.
+    * platform/ipad/fast/forms/multiple-select-updates-renderer.html: Added.
+    * platform/ipad/fast/forms/select-form-run-twice-expected.txt: Added.
+    * platform/ipad/fast/forms/select-form-run-twice.html: Added.
+    * platform/ipad/fast/forms/select-with-title-expected.txt: Added.
+    * platform/ipad/fast/forms/select-with-title.html: Added.
+    * platform/ipad/fast/forms/unfocus-inside-fixed-hittest-expected.txt: Added.
+    * platform/ipad/fast/forms/unfocus-inside-fixed-hittest.html: Added.
+    * platform/ipad/fast/text-autosizing: Added.
+    * platform/ipad/fast/text-autosizing/programmatic-text-size-adjust-expected.txt: Added.
+    * platform/ipad/fast/text-autosizing/programmatic-text-size-adjust.html: Added.
+    * platform/ipad/fast/text-autosizing/text-size-adjust-inline-style-expected.html: Added.
+    * platform/ipad/fast/text-autosizing/text-size-adjust-inline-style.html: Added.
+    * platform/ipad/fast/viewport: Added.
+    * platform/ipad/fast/viewport/empty-meta-expected.txt: Added.
+    * platform/ipad/fast/viewport/empty-meta.html: Added.
+    * platform/ipad/fast/viewport/meta-viewport-ignored-expected.txt: Added.
+    * platform/ipad/fast/viewport/meta-viewport-ignored.html: Added.
+    * platform/ipad/fast/viewport/viewport-overriden-by-minimum-effective-width-if-ignore-meta-viewport-expected.txt: Added.
+    * platform/ipad/fast/viewport/viewport-overriden-by-minimum-effective-width-if-ignore-meta-viewport.html: Added.
+    * platform/ipad/fast/viewport/viewport-unchanged-by-minimum-effective-width-if-not-ignore-meta-viewport-expected.txt: Added.
+    * platform/ipad/fast/viewport/viewport-unchanged-by-minimum-effective-width-if-not-ignore-meta-viewport.html: Added.
+    * platform/ipad/fast/viewport/width-is-device-width-expected.txt: Added.
+    * platform/ipad/fast/viewport/width-is-device-width.html: Added.
+    * platform/ipad/media: Added.
+    * platform/ipad/media/controls: Added.
+    * platform/ipad/media/controls/close-page-with-picture-in-picture-video-assertion-failure-expected.txt: Added.
+    * platform/ipad/media/controls/close-page-with-picture-in-picture-video-assertion-failure.html: Added.
+    * platform/ipad/media/controls/resources: Added.
+    * platform/ipad/media/controls/resources/picture-in-picture.html: Added.
+    * platform/ipad/media/modern-media-controls: Added.
+    * platform/ipad/media/modern-media-controls/media-documents: Added.
+    * platform/ipad/media/modern-media-controls/media-documents/media-document-audio-ios-sizing-expected.txt: Added.
+    * platform/ipad/media/modern-media-controls/media-documents/media-document-audio-ios-sizing.html: Added.
+    * platform/ipad/media/modern-media-controls/media-documents/media-document-video-ios-sizing-expected.txt: Added.
+    * platform/ipad/media/modern-media-controls/media-documents/media-document-video-ios-sizing.html: Added.
+    * platform/ipad/media/modern-media-controls/pip-support: Added.
+    * platform/ipad/media/modern-media-controls/pip-support/pip-support-enabled-expected.txt: Added.
+    * platform/ipad/media/modern-media-controls/pip-support/pip-support-enabled.html: Added.
+    * platform/ipad/media/modern-media-controls/pip-support/pip-support-tap-expected.txt: Added.
+    * platform/ipad/media/modern-media-controls/pip-support/pip-support-tap.html: Added.
+    * platform/iphone-7: Added.
+    * platform/iphone-7/fast: Added.
+    * platform/iphone-7/fast/events: Added.
+    * platform/iphone-7/fast/events/touch: Added.
+    * platform/iphone-7/fast/events/touch/force-press-event-expected.txt: Added.
+    * platform/iphone-7/fast/events/touch/force-press-event.html: Added.
+    * platform/iphone-7/fast/events/touch/force-press-on-link-expected.txt: Added.
+    * platform/iphone-7/fast/events/touch/force-press-on-link.html: Added.
+    * platform/iphone-7/fast/events/touch/prevent-default-touchmove-prevents-scrolling-expected.txt: Added.
+    * platform/iphone-7/fast/events/touch/prevent-default-touchmove-prevents-scrolling.html: Added.
+    * platform/iphone-7/tiled-drawing: Added.
+    * platform/iphone-7/tiled-drawing/compositing-layers-deep-color-expected.txt: Added.
+    * platform/iphone-7/tiled-drawing/compositing-layers-deep-color.html: Added.
+    * platform/mac-wk2/TestExpectations:
+    * platform/mac/TestExpectations:
+    * tiled-drawing/ios: Removed.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@240150 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-01-18  Jonathan Bedard  <jbedard@apple.com>
+
+            webkitpy: Implement device type specific expected results (Part 2)
+            https://bugs.webkit.org/show_bug.cgi?id=192162
+            <rdar://problem/46345449>
+
+            Rubber-stamped by Aakash Jain.
+
+            This change uses device_type to select a different set of TestExpectation files based on the type of device running
+            tests. This requires multiple baseline search paths to be used in a single instantiation of run-webkit-tests. Note
+            that while multiple baseline search paths are used, any single test will only ever be run on a single device type.
+
+            * Scripts/webkitpy/layout_tests/controllers/layout_test_finder.py:
+            (LayoutTestFinder.find_tests): Pass device_type through.
+            * Scripts/webkitpy/layout_tests/controllers/layout_test_finder_unittest.py:
+            (LayoutTestFinderTests.test_touched_but_skipped_test): Allow device_type to be passed in.
+            * Scripts/webkitpy/layout_tests/controllers/manager.py:
+            (Manager.__init__): Make _expectations an OrderedDict indexed by device_type, add current_device_type.
+            (Manager._collect_tests): Pass device type to test finder.
+            (Manager._needs_web_platform_test):
+            (Manager._prepare_lists): Index _expectations by device type.
+            (Manager._test_input_for_file):
+            (Manager._test_is_slow): Ditto.
+            (Manager._test_should_dump_jsconsolelog_in_stderr):
+            (Manager._test_should_dump_jsconsolelog_in_stderr): Ditto.
+            (Manager._get_test_inputs):
+            (Manager._update_worker_count):
+            (Manager._set_up_run): Use current_device_type instead of passing device_type in.
+            (Manager.run): Re-write function to gather and parse expectations from multiple baseline search paths. In the event
+            that a test can be run on multiple device types, the first device in the device type list which is eligible will be
+            the one which runs the test.
+            (Manager._run_test_subset):
+            (Manager._run_tests): Index _expectations by current_device_type.
+            (Manager._print_expectation_line_for_test): Ditto.
+            (Manager._print_expectations_for_subset): Ditto.
+            (Manager.print_expectations): Re-write function to gather and parse expectations from multiple baseline search paths.
+            Unlike run, this function will behave the same regardless of what devices are available.
+            (Manager._custom_device_for_test): Deleted.
+            * Scripts/webkitpy/layout_tests/controllers/manager_unittest.py:
+            (ManagerTest.test_uses_custom_device): Deleted.
+            (ManagerTest.test_uses_custom_device.get_manager): Deleted.
+            * Scripts/webkitpy/layout_tests/layout_package/json_layout_results_generator.py:
+            (JSONLayoutResultsGenerator.__init__): Pass expectations as a dictionary indexed by device type.
+            (JSONLayoutResultsGenerator._insert_failure_summaries): The number of fixable tests must take into consideration
+            all of the expectations.
+            * Scripts/webkitpy/layout_tests/lint_test_expectations_unittest.py:
+            (FakePort.skipped_layout_tests): Allow device_type to be passed in.
+            * Scripts/webkitpy/layout_tests/models/test_expectations.py:
+            (TestExpectations.__init__): Allow device_type to be passed through.
+            (TestExpectations.parse_all_expectations): Pick expectations_dict by device type.
+            * Scripts/webkitpy/layout_tests/models/test_expectations_unittest.py: Allow device_type to be passed in.
+            * Scripts/webkitpy/layout_tests/models/test_run_results.py:
+            (summarize_results):
+            * Scripts/webkitpy/layout_tests/models/test_run_results_unittest.py:
+            (summarized_results): Expectations are stored in a dictionary indexed by device_type. When determining the expectation
+            a test ran with, one must check all expectations to find the first non-skip expectation.
+            * Scripts/webkitpy/layout_tests/run_webkit_tests_integrationtest.py:
+            (RunTest.test_device_type_test_division):
+            (RunTest):
+            (RunTest.test_device_type_specific_listing):
+            * Scripts/webkitpy/port/base.py:
+            (Port): Add default values for DEVICE_TYPE and DEFAULT_DEVICE_TYPES.
+            (Port.supported_device_types): The result of this function will change based on what devices are available.
+            * Scripts/webkitpy/port/device_port.py:
+            (DevicePort._device_type_with_version): Replace DEFAULT_DEVICE_TYPE with DEVICE_TYPE.
+            (DevicePort.default_child_processes): DEVICE_TYPE is a general type, so the built-in comparison of the DeviceType object
+            can be used.
+            (DevicePort.supported_device_types): Generates a list of device types determined by the available devices, if there are
+            any, or the DEFAULT_DEVICE_TYPES of the port.
+            * Scripts/webkitpy/port/ios.py:
+            (IOSPort): Change DEFAULT_DEVICE_TYPE to DEVICE_TYPE.
+            * Scripts/webkitpy/port/ios_simulator.py:
+            (IOSSimulatorPort): Set the DEFAULT_DEVICE_TYPES to the devices currently used to run layout tests.
+            * Scripts/webkitpy/port/watch.py:
+            (WatchPort): Change DEFAULT_DEVICE_TYPE to DEVICE_TYPE.
+            * Scripts/webkitpy/port/watch_simulator.py:
+            (WatchSimulatorPort): Set the DEFAULT_DEVICE_TYPES to the device currently used to run layout tests.
+            * Scripts/webkitpy/xcode/device_type.py:
+            (DeviceType):
+            (DeviceType.__hash__): Allow DeviceType to be used as a dictionary index.
+
+2019-04-02  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r239989. rdar://problem/49539128
+
+    webkitpy: Implement device type specific expected results (Part 1)
+    https://bugs.webkit.org/show_bug.cgi?id=192162
+    
+    Reviewed by Lucas Forschler.
+    
+    Device type specific expected results covers two related ideas. The first (covered by this change)
+    is where to search for -expected.* files. The second is which tests to run based on the
+    TestExpectations.txt file.
+    
+    After this change, the baseline search path will be determined by the type of device running a
+    test. Device type will be passed into any function which picks a file based on the baseline search
+    path.
+    
+    * Scripts/webkitpy/layout_tests/controllers/layout_test_runner.py:
+    (Worker._update_test_input): Pass device_type to self._port.reference_files(...).
+    * Scripts/webkitpy/layout_tests/controllers/manager.py:
+    (Manager.run): Print baseline search path for each round of devices.
+    * Scripts/webkitpy/layout_tests/controllers/single_test_runner.py:
+    (SingleTestRunner.__init__): Pass device_type into expected_*(...).
+    (SingleTestRunner._expected_driver_output): Ditto.
+    (SingleTestRunner._driver_input): Ditto.
+    * Scripts/webkitpy/layout_tests/views/printing.py:
+    (Printer.print_config): Move printing of baseline search path to a separate function.
+    (Printer.print_baseline_search_path): Moved from Printer.print_config.
+    * Scripts/webkitpy/layout_tests/views/printing_unittest.py:
+    (Testprinter.test_print_config):
+    (Testprinter.test_print_baseline_search_path):
+    * Scripts/webkitpy/port/base.py:
+    (Port.baseline_search_path): Pass device_type through.
+    (Port._expected_baselines_for_suffixes): Ditto.
+    (Port.expected_baselines): Ditto.
+    (Port.expected_filename): Ditto.
+    (Port.expected_checksum): Ditto.
+    (Port.expected_image): Ditto.
+    (Port.expected_audio): Ditto.
+    (Port.expected_text): Ditto.
+    (Port.reference_files): Ditto.
+    (Port.tests): Ditto.
+    (Port._expanded_paths): Ditto.
+    (Port.skipped_layout_tests): Ditto.
+    (Port.expectations_dict): Ditto.
+    (Port._port_specific_expectations_files): Ditto.
+    (Port.expectations_files): Ditto.
+    (Port.test_search_path): Ditto.
+    (Port._tests_for_other_platforms): Ditto.
+    * Scripts/webkitpy/port/base_unittest.py:
+    (PortTest.test_additional_platform_directory): Accept, but do not use, device_type.
+    (PortTest.test_nonexistant_expectations): Ditto.
+    (test_ref_tests_platform_directory): Ditto.
+    * Scripts/webkitpy/port/darwin.py:
+    (DarwinPort._port_specific_expectations_files): Accept device_type.
+    * Scripts/webkitpy/port/driver.py:
+    (DriverProxy):
+    (DriverProxy.host): Expose _target_host for device_type information.
+    * Scripts/webkitpy/port/gtk.py:
+    (GtkPort._port_specific_expectations_files): Accept, but do not use, device_type.
+    * Scripts/webkitpy/port/ios.py:
+    (IOSPort. default_baseline_search_path): Remove memoized, since it does not accept **kwargs.
+    * Scripts/webkitpy/port/mac.py:
+    (MacPort. default_baseline_search_path): Ditto.
+    * Scripts/webkitpy/port/port_testcase.py:
+    (TestWebKitPort._tests_for_other_platforms): Accept, but do not use, device_type.
+    * Scripts/webkitpy/port/test.py:
+    * Scripts/webkitpy/port/watch.py:
+    (WatchPort. default_baseline_search_path): Remove memoized, since it does not accept **kwargs.
+    * Scripts/webkitpy/port/win.py:
+    (WinPort.test_search_path): Accept, but do not use, device_type.
+    * Scripts/webkitpy/port/wpe.py:
+    (WPEPort._port_specific_expectations_files): Ditto.
+    * Scripts/webkitpy/tool/servers/rebaselineserver.py:
+    (get_test_baselines.AllPlatformsPort.baseline_search_path): Ditto.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@239989 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-01-15  Jonathan Bedard  <jbedard@apple.com>
+
+            webkitpy: Implement device type specific expected results (Part 1)
+            https://bugs.webkit.org/show_bug.cgi?id=192162
+
+            Reviewed by Lucas Forschler.
+
+            Device type specific expected results covers two related ideas. The first (covered by this change)
+            is where to search for -expected.* files. The second is which tests to run based on the
+            TestExpectations.txt file.
+
+            After this change, the baseline search path will be determined by the type of device running a
+            test. Device type will be passed into any function which picks a file based on the baseline search
+            path.
+
+            * Scripts/webkitpy/layout_tests/controllers/layout_test_runner.py:
+            (Worker._update_test_input): Pass device_type to self._port.reference_files(...).
+            * Scripts/webkitpy/layout_tests/controllers/manager.py:
+            (Manager.run): Print baseline search path for each round of devices.
+            * Scripts/webkitpy/layout_tests/controllers/single_test_runner.py:
+            (SingleTestRunner.__init__): Pass device_type into expected_*(...).
+            (SingleTestRunner._expected_driver_output): Ditto.
+            (SingleTestRunner._driver_input): Ditto.
+            * Scripts/webkitpy/layout_tests/views/printing.py:
+            (Printer.print_config): Move printing of baseline search path to a separate function.
+            (Printer.print_baseline_search_path): Moved from Printer.print_config.
+            * Scripts/webkitpy/layout_tests/views/printing_unittest.py:
+            (Testprinter.test_print_config):
+            (Testprinter.test_print_baseline_search_path):
+            * Scripts/webkitpy/port/base.py:
+            (Port.baseline_search_path): Pass device_type through.
+            (Port._expected_baselines_for_suffixes): Ditto.
+            (Port.expected_baselines): Ditto.
+            (Port.expected_filename): Ditto.
+            (Port.expected_checksum): Ditto.
+            (Port.expected_image): Ditto.
+            (Port.expected_audio): Ditto.
+            (Port.expected_text): Ditto.
+            (Port.reference_files): Ditto.
+            (Port.tests): Ditto.
+            (Port._expanded_paths): Ditto.
+            (Port.skipped_layout_tests): Ditto.
+            (Port.expectations_dict): Ditto.
+            (Port._port_specific_expectations_files): Ditto.
+            (Port.expectations_files): Ditto.
+            (Port.test_search_path): Ditto.
+            (Port._tests_for_other_platforms): Ditto.
+            * Scripts/webkitpy/port/base_unittest.py:
+            (PortTest.test_additional_platform_directory): Accept, but do not use, device_type.
+            (PortTest.test_nonexistant_expectations): Ditto.
+            (test_ref_tests_platform_directory): Ditto.
+            * Scripts/webkitpy/port/darwin.py:
+            (DarwinPort._port_specific_expectations_files): Accept device_type.
+            * Scripts/webkitpy/port/driver.py:
+            (DriverProxy):
+            (DriverProxy.host): Expose _target_host for device_type information.
+            * Scripts/webkitpy/port/gtk.py:
+            (GtkPort._port_specific_expectations_files): Accept, but do not use, device_type.
+            * Scripts/webkitpy/port/ios.py:
+            (IOSPort. default_baseline_search_path): Remove memoized, since it does not accept **kwargs.
+            * Scripts/webkitpy/port/mac.py:
+            (MacPort. default_baseline_search_path): Ditto.
+            * Scripts/webkitpy/port/port_testcase.py:
+            (TestWebKitPort._tests_for_other_platforms): Accept, but do not use, device_type.
+            * Scripts/webkitpy/port/test.py:
+            * Scripts/webkitpy/port/watch.py:
+            (WatchPort. default_baseline_search_path): Remove memoized, since it does not accept **kwargs.
+            * Scripts/webkitpy/port/win.py:
+            (WinPort.test_search_path): Accept, but do not use, device_type.
+            * Scripts/webkitpy/port/wpe.py:
+            (WPEPort._port_specific_expectations_files): Ditto.
+            * Scripts/webkitpy/tool/servers/rebaselineserver.py:
+            (get_test_baselines.AllPlatformsPort.baseline_search_path): Ditto.
+
+2019-04-02  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r239945. rdar://problem/49539128
+
+    webkitpy: Expose device_type from host-like objects
+    https://bugs.webkit.org/show_bug.cgi?id=193406
+    <rdar://problem/47262305>
+    
+    Reviewed by Lucas Forschler.
+    
+    Devices should expose device_type. As a result, all host objects should
+    provide a device_type property, even if they do not yet define a device_type.
+    
+    * Scripts/webkitpy/common/system/systemhost.py:
+    (SystemHost):
+    (SystemHost.device_type):
+    * Scripts/webkitpy/common/system/systemhost_mock.py:
+    (MockSystemHost):
+    (MockSystemHost.device_type):
+    * Scripts/webkitpy/port/device.py:
+    (Device):
+    (Device.device_type):
+    * Scripts/webkitpy/xcode/simulated_device.py:
+    (SimulatedDeviceManager._find_exisiting_device_for_request):
+    (SimulatedDeviceManager._disambiguate_device_type):
+    (SimulatedDeviceManager._does_fulfill_request):
+    (SimulatedDeviceManager.device_count_for_type):
+    (SimulatedDeviceManager.initialize_devices):
+    * Scripts/webkitpy/xcode/simulated_device_unittest.py:
+    (test_available_devices):
+    (test_swapping_devices):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@239945 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-01-14  Jonathan Bedard  <jbedard@apple.com>
+
+            webkitpy: Expose device_type from host-like objects
+            https://bugs.webkit.org/show_bug.cgi?id=193406
+            <rdar://problem/47262305>
+
+            Reviewed by Lucas Forschler.
+
+            Devices should expose device_type. As a result, all host objects should
+            provide a device_type property, even if they do not yet define a device_type.
+
+            * Scripts/webkitpy/common/system/systemhost.py:
+            (SystemHost):
+            (SystemHost.device_type):
+            * Scripts/webkitpy/common/system/systemhost_mock.py:
+            (MockSystemHost):
+            (MockSystemHost.device_type):
+            * Scripts/webkitpy/port/device.py:
+            (Device):
+            (Device.device_type):
+            * Scripts/webkitpy/xcode/simulated_device.py:
+            (SimulatedDeviceManager._find_exisiting_device_for_request):
+            (SimulatedDeviceManager._disambiguate_device_type):
+            (SimulatedDeviceManager._does_fulfill_request):
+            (SimulatedDeviceManager.device_count_for_type):
+            (SimulatedDeviceManager.initialize_devices):
+            * Scripts/webkitpy/xcode/simulated_device_unittest.py:
+            (test_available_devices):
+            (test_swapping_devices):
+
+2019-04-02  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r239875. rdar://problem/49539128
+
+    webkitpy: Incorporate device type into baseline search path
+    https://bugs.webkit.org/show_bug.cgi?id=193356
+    <rdar://problem/47215515>
+    
+    Reviewed by Lucas Forschler.
+    
+    We need a way to include device type in the baseline search path for iOS to support device specific test expectations.
+    
+    * Scripts/webkitpy/port/base.py:
+    (Port.default_baseline_search_path): Allow device type to be passed in.
+    * Scripts/webkitpy/port/gtk.py:
+    (GtkPort.default_baseline_search_path): Ignore device type.
+    * Scripts/webkitpy/port/ios.py:
+    (IOSPort.default_baseline_search_path): Optionally allow device type to be incorporated into the baseline search path.
+    (IOSPort.test_expectations_file_position): Update index for the additional device-type specific baseline search path.
+    * Scripts/webkitpy/port/ios_device_unittest.py:
+    (IOSDeviceTest):
+    * Scripts/webkitpy/port/ios_simulator_unittest.py:
+    (IOSSimulatorTest):
+    * Scripts/webkitpy/port/mac.py:
+    (MacPort.default_baseline_search_path): Ignore device type.
+    * Scripts/webkitpy/port/watch.py:
+    (WatchPort.default_baseline_search_path): Ditto.
+    * Scripts/webkitpy/port/win.py:
+    (WinPort.default_baseline_search_path): Ditto.
+    (WinCairoPort.default_baseline_search_path): Ditto.
+    * Scripts/webkitpy/port/wpe.py:
+    (WPEPort.default_baseline_search_path): Ditto.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@239875 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-01-11  Jonathan Bedard  <jbedard@apple.com>
+
+            webkitpy: Incorporate device type into baseline search path
+            https://bugs.webkit.org/show_bug.cgi?id=193356
+            <rdar://problem/47215515>
+
+            Reviewed by Lucas Forschler.
+
+            We need a way to include device type in the baseline search path for iOS to support device specific test expectations.
+
+            * Scripts/webkitpy/port/base.py:
+            (Port.default_baseline_search_path): Allow device type to be passed in.
+            * Scripts/webkitpy/port/gtk.py:
+            (GtkPort.default_baseline_search_path): Ignore device type.
+            * Scripts/webkitpy/port/ios.py:
+            (IOSPort.default_baseline_search_path): Optionally allow device type to be incorporated into the baseline search path.
+            (IOSPort.test_expectations_file_position): Update index for the additional device-type specific baseline search path.
+            * Scripts/webkitpy/port/ios_device_unittest.py:
+            (IOSDeviceTest):
+            * Scripts/webkitpy/port/ios_simulator_unittest.py:
+            (IOSSimulatorTest):
+            * Scripts/webkitpy/port/mac.py:
+            (MacPort.default_baseline_search_path): Ignore device type.
+            * Scripts/webkitpy/port/watch.py:
+            (WatchPort.default_baseline_search_path): Ditto.
+            * Scripts/webkitpy/port/win.py:
+            (WinPort.default_baseline_search_path): Ditto.
+            (WinCairoPort.default_baseline_search_path): Ditto.
+            * Scripts/webkitpy/port/wpe.py:
+            (WPEPort.default_baseline_search_path): Ditto.
+
+2019-04-02  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r243732. rdar://problem/49356714
+
+    run-api-tests: Upload test results
+    https://bugs.webkit.org/show_bug.cgi?id=196323
+    <rdar://problem/49356714>
+    
+    Reviewed by Lucas Forschler.
+    
+    * Scripts/webkitpy/api_tests/manager.py:
+    (Manager):
+    (Manager.run): Upload results to a results database.
+    * Scripts/webkitpy/api_tests/run_api_tests.py:
+    (parse_args): Add upload arguments.
+    * Scripts/webkitpy/port/base.py:
+    (Port):
+    (Port.configuration_for_upload): Creates a configuration dictionary for uploading results.
+    (Port.commits_for_upload): Create a list of commits from the WebKit repository tests are run from along
+    with commits from any other associated repositories.
+    * Scripts/webkitpy/port/device.py:
+    (Device):
+    (Device.build_version): Access build_versoin of underlying platform device.
+    * Scripts/webkitpy/port/ios_simulator_unittest.py:
+    (IOSSimulatorTest):
+    (IOSSimulatorTest.test_configuration_for_upload):
+    * Scripts/webkitpy/port/device_port.py:
+    (DevicePort):
+    (DevicePort.configuration_for_upload): Devices are unique because their configuration is not
+    the same as the machine uploading results.
+    * Scripts/webkitpy/port/mac.py:
+    (MacPort):
+    (MacPort.configuration_for_upload): Define SDK in upload configuration for Mac.
+    * Scripts/webkitpy/port/mac_unittest.py:
+    (MacTest):
+    (MacTest.test_configuration_for_upload):
+    * Scripts/webkitpy/xcode/simulated_device.py:
+    (SimulatedDeviceManager._create_device_with_runtime):
+    (SimulatedDevice.__init__): Create simulated device with a build_version.
+    * Scripts/webkitpy/xcode/simulated_device_unittest.py:
+    (test_existing_simulator):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243732 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-04-01  Jonathan Bedard  <jbedard@apple.com>
+
+            run-api-tests: Upload test results
+            https://bugs.webkit.org/show_bug.cgi?id=196323
+            <rdar://problem/49356714>
+
+            Reviewed by Lucas Forschler.
+
+            * Scripts/webkitpy/api_tests/manager.py:
+            (Manager):
+            (Manager.run): Upload results to a results database.
+            * Scripts/webkitpy/api_tests/run_api_tests.py:
+            (parse_args): Add upload arguments.
+            * Scripts/webkitpy/port/base.py:
+            (Port):
+            (Port.configuration_for_upload): Creates a configuration dictionary for uploading results.
+            (Port.commits_for_upload): Create a list of commits from the WebKit repository tests are run from along
+            with commits from any other associated repositories.
+            * Scripts/webkitpy/port/device.py:
+            (Device):
+            (Device.build_version): Access build_versoin of underlying platform device.
+            * Scripts/webkitpy/port/ios_simulator_unittest.py:
+            (IOSSimulatorTest):
+            (IOSSimulatorTest.test_configuration_for_upload):
+            * Scripts/webkitpy/port/device_port.py:
+            (DevicePort):
+            (DevicePort.configuration_for_upload): Devices are unique because their configuration is not
+            the same as the machine uploading results.
+            * Scripts/webkitpy/port/mac.py:
+            (MacPort):
+            (MacPort.configuration_for_upload): Define SDK in upload configuration for Mac.
+            * Scripts/webkitpy/port/mac_unittest.py:
+            (MacTest):
+            (MacTest.test_configuration_for_upload):
+            * Scripts/webkitpy/xcode/simulated_device.py:
+            (SimulatedDeviceManager._create_device_with_runtime):
+            (SimulatedDevice.__init__): Create simulated device with a build_version.
+            * Scripts/webkitpy/xcode/simulated_device_unittest.py:
+            (test_existing_simulator):
+
+2019-03-18  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r243030. rdar://problem/48896182
+
+    webkitpy: Upload test results
+    https://bugs.webkit.org/show_bug.cgi?id=195755
+    <rdar://problem/48896182>
+    
+    Reviewed by Aakash Jain.
+    
+    Establish a new format for uploading results that is not tied to layout tests, apply
+    that format to webkitpy tests.
+    
+    * Scripts/webkitpy/common/checkout/scm/git.py:
+    (Git.native_branch): Return what branch the current checkout is on.
+    * Scripts/webkitpy/common/checkout/scm/scm_mock.py:
+    * Scripts/webkitpy/common/checkout/scm/scm_unittest.py:
+    * Scripts/webkitpy/common/checkout/scm/svn.py:
+    (SVN.native_branch): Ditto.
+    * Scripts/webkitpy/common/system/platforminfo.py:
+    (PlatformInfo.build_version): Return a build version for Mac.
+    * Scripts/webkitpy/common/system/platforminfo_mock.py:
+    (MockPlatformInfo.__init__):
+    (MockPlatformInfo.build_version):
+    * Scripts/webkitpy/results: Added.
+    * Scripts/webkitpy/results/__init__.py: Added.
+    * Scripts/webkitpy/results/options.py: Added.
+    (upload_options): OptParse list for upload options.
+    * Scripts/webkitpy/results/upload.py: Added.
+    (Upload): Class which enforces the upload format expected by the results server.
+    (Upload.Expectations):
+    (Upload.create_configuration):
+    (Upload.create_commit):
+    (Upload.create_details):
+    (Upload.create_run_stats):
+    (Upload.create_test_result):
+    (Upload.__init__):
+    (Upload.Encoder): Encode Upload object as json.
+    (Upload.upload): Upload results to the results server, returning 'True' if the upload is successful.
+    * Scripts/webkitpy/results/upload_unittest.py: Added.
+    * Scripts/webkitpy/test/main.py:
+    (Tester._parse_args): Add upload arguments.
+    (Tester._run_tests): Allow results to be uploaded.
+    * Scripts/webkitpy/test/runner.py:
+    (Runner.__init__): Record which tests were run, rather than just counting them.
+    (Runner.handle):
+    * Scripts/webkitpy/test/runner_unittest.py:
+    (RunnerTest.test_run):
+    * Scripts/webkitpy/thirdparty/__init__.py:
+    (AutoinstallImportHook.find_module): Add requests auto-install.
+    (AutoinstallImportHook._install_requests):
+    * Scripts/webkitpy/tool/commands/queues_unittest.py:
+    (PatchProcessingQueueTest.test_upload_results_archive_for_patch): Update os name for testing.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243030 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-15  Jonathan Bedard  <jbedard@apple.com>
+
+            webkitpy: Upload test results
+            https://bugs.webkit.org/show_bug.cgi?id=195755
+            <rdar://problem/48896182>
+
+            Reviewed by Aakash Jain.
+
+            Establish a new format for uploading results that is not tied to layout tests, apply
+            that format to webkitpy tests.
+
+            * Scripts/webkitpy/common/checkout/scm/git.py:
+            (Git.native_branch): Return what branch the current checkout is on.
+            * Scripts/webkitpy/common/checkout/scm/scm_mock.py:
+            * Scripts/webkitpy/common/checkout/scm/scm_unittest.py:
+            * Scripts/webkitpy/common/checkout/scm/svn.py:
+            (SVN.native_branch): Ditto.
+            * Scripts/webkitpy/common/system/platforminfo.py:
+            (PlatformInfo.build_version): Return a build version for Mac.
+            * Scripts/webkitpy/common/system/platforminfo_mock.py:
+            (MockPlatformInfo.__init__):
+            (MockPlatformInfo.build_version):
+            * Scripts/webkitpy/results: Added.
+            * Scripts/webkitpy/results/__init__.py: Added.
+            * Scripts/webkitpy/results/options.py: Added.
+            (upload_options): OptParse list for upload options.
+            * Scripts/webkitpy/results/upload.py: Added.
+            (Upload): Class which enforces the upload format expected by the results server.
+            (Upload.Expectations):
+            (Upload.create_configuration):
+            (Upload.create_commit):
+            (Upload.create_details):
+            (Upload.create_run_stats):
+            (Upload.create_test_result):
+            (Upload.__init__):
+            (Upload.Encoder): Encode Upload object as json.
+            (Upload.upload): Upload results to the results server, returning 'True' if the upload is successful.
+            * Scripts/webkitpy/results/upload_unittest.py: Added.
+            * Scripts/webkitpy/test/main.py:
+            (Tester._parse_args): Add upload arguments.
+            (Tester._run_tests): Allow results to be uploaded.
+            * Scripts/webkitpy/test/runner.py:
+            (Runner.__init__): Record which tests were run, rather than just counting them.
+            (Runner.handle):
+            * Scripts/webkitpy/test/runner_unittest.py:
+            (RunnerTest.test_run):
+            * Scripts/webkitpy/thirdparty/__init__.py:
+            (AutoinstallImportHook.find_module): Add requests auto-install.
+            (AutoinstallImportHook._install_requests):
+            * Scripts/webkitpy/tool/commands/queues_unittest.py:
+            (PatchProcessingQueueTest.test_upload_results_archive_for_patch): Update os name for testing.
+
+2019-03-13  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r242735. rdar://problem/48780112
+
+    Add a WKContentRuleList variant that uses copied memory instead of mmap'd shared memory for class A containerized apps
+    https://bugs.webkit.org/show_bug.cgi?id=195511
+    <rdar://problem/44873269>
+    
+    Patch by Alex Christensen <achristensen@webkit.org> on 2019-03-11
+    Reviewed by Darin Adler.
+    
+    Source/WebKit:
+    
+    * NetworkProcess/NetworkContentRuleListManager.cpp:
+    (WebKit::NetworkContentRuleListManager::addContentRuleLists):
+    * NetworkProcess/NetworkContentRuleListManager.h:
+    * NetworkProcess/cache/NetworkCacheFileSystem.cpp:
+    (WebKit::NetworkCache::pathRegisteredAsUnsafeToMemoryMapForTesting):
+    (WebKit::NetworkCache::registerPathAsUnsafeToMemoryMapForTesting):
+    (WebKit::NetworkCache::isSafeToUseMemoryMapForPath):
+    * NetworkProcess/cache/NetworkCacheFileSystem.h:
+    * Shared/WebCompiledContentRuleList.cpp:
+    (WebKit::WebCompiledContentRuleList::usesCopiedMemory const):
+    (WebKit::WebCompiledContentRuleList::conditionsApplyOnlyToDomain const):
+    (WebKit::WebCompiledContentRuleList::filtersWithoutConditionsBytecode const):
+    (WebKit::WebCompiledContentRuleList::filtersWithConditionsBytecode const):
+    (WebKit::WebCompiledContentRuleList::topURLFiltersBytecode const):
+    (WebKit::WebCompiledContentRuleList::actions const):
+    * Shared/WebCompiledContentRuleList.h:
+    * Shared/WebCompiledContentRuleListData.cpp:
+    (WebKit::WebCompiledContentRuleListData::size const):
+    (WebKit::WebCompiledContentRuleListData::dataPointer const):
+    (WebKit::WebCompiledContentRuleListData::encode const):
+    (WebKit::WebCompiledContentRuleListData::decode):
+    * Shared/WebCompiledContentRuleListData.h:
+    (WebKit::WebCompiledContentRuleListData::WebCompiledContentRuleListData):
+    * UIProcess/API/APIContentRuleList.cpp:
+    (API::ContentRuleList::usesCopiedMemory const):
+    * UIProcess/API/APIContentRuleList.h:
+    * UIProcess/API/APIContentRuleListStore.cpp:
+    (API::getData):
+    (API::decodeContentRuleListMetaData):
+    (API::ContentRuleListStore::readContentsOfFile):
+    (API::MappedOrCopiedData::dataPointer const):
+    (API::openAndMapOrCopyContentRuleList):
+    (API::compiledToFile):
+    (API::createExtension):
+    (API::ContentRuleListStore::lookupContentRuleList):
+    (API::ContentRuleListStore::compileContentRuleList):
+    (API::ContentRuleListStore::getContentRuleListSource):
+    (API::openAndMapContentRuleList): Deleted.
+    * UIProcess/API/APIContentRuleListStore.h:
+    * UIProcess/API/Cocoa/APIContentRuleListStoreCocoa.mm:
+    (API::ContentRuleListStore::readContentsOfFile):
+    * UIProcess/API/Cocoa/WKContentRuleListStore.mm:
+    (+[WKContentRuleListStore _registerPathAsUnsafeToMemoryMapForTesting:]):
+    * UIProcess/API/Cocoa/WKContentRuleListStorePrivate.h:
+    * UIProcess/API/Cocoa/_WKUserContentFilter.mm:
+    (-[_WKUserContentFilter usesCopiedMemory]):
+    * UIProcess/API/Cocoa/_WKUserContentFilterPrivate.h:
+    * WebProcess/UserContent/WebUserContentController.cpp:
+    (WebKit::WebUserContentController::addContentRuleLists):
+    * WebProcess/UserContent/WebUserContentController.h:
+    * WebProcess/WebPage/WebPage.cpp:
+    (WebKit::m_hostFileDescriptor):
+    
+    Tools:
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/WKContentExtensionStore.mm:
+    (-[TestSchemeHandlerSubresourceShouldBeBlocked webView:startURLSchemeTask:]):
+    (-[TestSchemeHandlerSubresourceShouldBeBlocked webView:stopURLSchemeTask:]):
+    (TEST_F):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@242735 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-03-11  Alex Christensen  <achristensen@webkit.org>
+
+            Add a WKContentRuleList variant that uses copied memory instead of mmap'd shared memory for class A containerized apps
+            https://bugs.webkit.org/show_bug.cgi?id=195511
+            <rdar://problem/44873269>
+
+            Reviewed by Darin Adler.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/WKContentExtensionStore.mm:
+            (-[TestSchemeHandlerSubresourceShouldBeBlocked webView:startURLSchemeTask:]):
+            (-[TestSchemeHandlerSubresourceShouldBeBlocked webView:stopURLSchemeTask:]):
+            (TEST_F):
+
+2019-03-04  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r242302. rdar://problem/48572673
 
     Add setters on WKWebsiteDataStore for sourceApplicationBundleIdentifier and sourceApplicationSecondaryIdentifier
     https://bugs.webkit.org/show_bug.cgi?id=195229
@@ -51,6 +1951,15 @@
 
             * TestWebKitAPI/Tests/WebKitCocoa/WebsiteDataStoreCustomPaths.mm:
             (TEST):
+
+2019-02-28  Andy Estes  <aestes@apple.com>
+
+        [watchOS] Disable Parental Controls content filtering
+        <rdar://problem/48464986>
+
+        Rubber-stamped by Beth Dakin.
+
+        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
 
 2019-02-27  Babak Shafiei  <bshafiei@apple.com>
 
