@@ -57,11 +57,13 @@ protected:
     // Returns whether the pointer should be freed or not.
     bool derefBase() const
     {
-        return !--m_refCount;
+        bool f = false;
+        return !--m_refCount && m_destroyed.compare_exchange_strong(f, true);
     }
 
 private:
     mutable std::atomic<unsigned> m_refCount { 1 };
+    mutable std::atomic<bool> m_destroyed { false };
 };
 
 enum class DestructionThread { Any, Main };
