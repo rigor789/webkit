@@ -185,7 +185,7 @@ InspectorBackendClass = class InspectorBackendClass
 
     activateDomain(domainName, activationDebuggableTypes)
     {
-        let supportedDebuggableTypes = activationDebuggableTypes || Object.values(WI.DebuggableType);
+        let supportedDebuggableTypes = (activationDebuggableTypes && (Array.isArray(activationDebuggableTypes) ? activationDebuggableTypes : [activationDebuggableTypes])) || Object.values(WI.DebuggableType);
         for (let debuggableType of supportedDebuggableTypes)
             this._supportedDomainsForDebuggableType.get(debuggableType).push(domainName);
 
