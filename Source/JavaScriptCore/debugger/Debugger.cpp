@@ -163,8 +163,14 @@ void Debugger::attach(JSGlobalObject* globalObject)
         HeapIterationScope iterationScope(m_vm.heap);
         m_vm.heap.objectSpace().forEachLiveCell(iterationScope, gatherSourceProviders);
     }
-    for (auto* sourceProvider : gatherSourceProviders.sourceProviders)
-        sourceParsed(globalObject->globalExec(), sourceProvider, -1, String());
+
+    // Do not send source parsed events on attach. Here they are randomly ordered and this causes
+    // https://github.com/NativeScript/ios-runtime/issues/1158. All sources will be sent by
+    // NativeScript on debugger enable event in GlobalObjectDebuggerAgent::enable() and the
+    // order there will be the correct one because they are taken from module loader's registry.
+    
+    // for (auto* sourceProvider : gatherSourceProviders.sourceProviders)
+    //    sourceParsed(globalObject->globalExec(), sourceProvider, -1, String());
 }
 
 void Debugger::detach(JSGlobalObject* globalObject, ReasonForDetach reason)
