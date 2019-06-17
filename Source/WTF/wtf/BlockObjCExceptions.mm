@@ -28,6 +28,14 @@
 
 #import <wtf/Assertions.h>
 
+#if !USE(APPLE_INTERNAL_SDK)
+#include <objc/runtime.h>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+auto _NSConcreteMallocBlock = objc_getClass("__NSMallocBlock__");
+#pragma clang diagnostic pop
+#endif //USE(APPLE_INTERNAL_SDK)
+
 void ReportBlockedObjCException(NSException *exception)
 {
     // FIXME: This is probably going to be confusing when JavaScriptCore is used standalone. JSC

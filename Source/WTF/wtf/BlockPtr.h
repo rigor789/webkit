@@ -38,9 +38,14 @@
 #define WTF_INVOKE_FUNCTION_POINTER_QUALIFIER
 #endif
 
-namespace WTF {
 
+#if USE(APPLE_INTERNAL_SDK)
 extern "C" void* _NSConcreteMallocBlock[32];
+#else
+extern void* _NSConcreteMallocBlock[32];
+#endif
+
+namespace WTF {
 
 template<typename> class BlockPtr;
 

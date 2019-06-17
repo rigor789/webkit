@@ -2535,6 +2535,7 @@ URLParser::LCharBuffer URLParser::percentDecode(const LChar* input, size_t lengt
 
 template<typename CharacterType> Optional<URLParser::LCharBuffer> URLParser::domainToASCII(StringImpl& domain, const CodePointIterator<CharacterType>& iteratorForSyntaxViolationPosition)
 {
+#if USE(APPLE_INTERNAL_SDK)
     LCharBuffer ascii;
     if (domain.isAllASCII()) {
         size_t length = domain.length();
@@ -2575,6 +2576,11 @@ template<typename CharacterType> Optional<URLParser::LCharBuffer> URLParser::dom
             syntaxViolation(iteratorForSyntaxViolationPosition);
         return ascii;
     }
+#else
+    ASSERT(false);
+    UNUSED_PARAM(domain);
+    UNUSED_PARAM(iteratorForSyntaxViolationPosition);
+#endif // USE(APPLE_INTERNAL_SDK)
     return WTF::nullopt;
 }
 
@@ -2853,6 +2859,7 @@ String URLParser::serialize(const URLEncodedForm& tuples)
 const UIDNA& URLParser::internationalDomainNameTranscoder()
 {
     static UIDNA* encoder;
+#if USE(APPLE_INTERNAL_SDK)
     static std::once_flag onceFlag;
     std::call_once(onceFlag, [] {
         UErrorCode error = U_ZERO_ERROR;
@@ -2862,6 +2869,9 @@ const UIDNA& URLParser::internationalDomainNameTranscoder()
         RELEASE_ASSERT(U_SUCCESS(error));
         RELEASE_ASSERT(encoder);
     });
+#else
+    ASSERT(false);
+#endif // USE(APPLE_INTERNAL_SDK)
     return *encoder;
 }
 

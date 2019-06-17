@@ -48,8 +48,6 @@
 
 typedef void (* StringRangeApplierFunction)(NSString *, NSRange, RetainPtr<NSMutableArray>&);
 
-static uint32_t IDNScriptWhiteList[(USCRIPT_CODE_LIMIT + 31) / 32];
-
 namespace WTF {
 
 static bool isArmenianLookalikeCharacter(UChar32 codePoint)
@@ -249,6 +247,10 @@ static BOOL isLookalikeCharacter(Optional<UChar32> previousCodePoint, UChar32 ch
     }
 }
 
+#if USE(APPLE_INTERNAL_SDK)
+
+static uint32_t IDNScriptWhiteList[(USCRIPT_CODE_LIMIT + 31) / 32];
+    
 static void whiteListIDNScript(const char* scriptName)
 {
     int32_t script = u_getPropertyValueEnum(UCHAR_SCRIPT, scriptName);
@@ -553,12 +555,14 @@ static BOOL allCharactersAllowedByTLDRules(const UChar* buffer, int32_t length)
     // Not a known top level domain with special rules.
     return NO;
 }
+#endif // USE(APPLE_INTERNAL_SDK)
 
 // Return value of nil means no mapping is necessary.
 // If makeString is NO, then return value is either nil or self to indicate mapping is necessary.
 // If makeString is YES, then return value is either nil or the mapped string.
 static NSString *mapHostNameWithRange(NSString *string, NSRange range, BOOL encode, BOOL makeString, BOOL *error)
 {
+#if USE(APPLE_INTERNAL_SDK)
     if (range.length > HOST_NAME_BUFFER_LENGTH)
         return nil;
     
@@ -595,6 +599,15 @@ static NSString *mapHostNameWithRange(NSString *string, NSRange range, BOOL enco
         return nil;
     
     return makeString ? [NSString stringWithCharacters:destinationBuffer length:numCharactersConverted] : string;
+#else
+    UNUSED_PARAM(string);
+    UNUSED_PARAM(range);
+    UNUSED_PARAM(encode);
+    UNUSED_PARAM(makeString);
+    UNUSED_PARAM(error);
+    ASSERT(false);
+    return nil;
+#endif // USE(APPLE_INTERNAL_SDK)
 }
 
 static BOOL hostNameNeedsDecodingWithRange(NSString *string, NSRange range, BOOL *error)

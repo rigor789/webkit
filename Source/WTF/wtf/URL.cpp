@@ -389,18 +389,21 @@ bool URL::setProtocol(const String& s)
     return true;
 }
 
+#if USE(APPLE_INTERNAL_SDK)
 static bool isAllASCII(StringView string)
 {
     if (string.is8Bit())
         return charactersAreAllASCII(string.characters8(), string.length());
     return charactersAreAllASCII(string.characters16(), string.length());
 }
-    
+#endif // USE(APPLE_INTERNAL_SDK)
+
 // Appends the punycoded hostname identified by the given string and length to
 // the output buffer. The result will not be null terminated.
 // Return value of false means error in encoding.
 static bool appendEncodedHostname(UCharBuffer& buffer, StringView string)
 {
+#if USE(APPLE_INTERNAL_SDK)
     // Needs to be big enough to hold an IDN-encoded name.
     // For host names bigger than this, we won't do IDN encoding, which is almost certainly OK.
     const unsigned hostnameBufferLength = 2048;
@@ -420,6 +423,11 @@ static bool appendEncodedHostname(UCharBuffer& buffer, StringView string)
         buffer.append(hostnameBuffer, numCharactersConverted);
         return true;
     }
+#else
+    UNUSED_PARAM(buffer);
+    UNUSED_PARAM(string);
+    ASSERT(false);
+#endif // USE(APPLE_INTERNAL_SDK)
     return false;
 }
 
