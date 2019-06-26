@@ -28,7 +28,7 @@
 #include <dispatch/dispatch.h>
 #include <os/object.h>
 
-#if PLATFORM(MAC) || USE(APPLE_INTERNAL_SDK)
+#if PLATFORM(MAC) || TARGET_OS_UIKITFORMAC || USE(APPLE_INTERNAL_SDK)
 #include <xpc/xpc.h>
 #else
 

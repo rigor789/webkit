@@ -87,6 +87,10 @@ macro(WEBKIT_ADD_TARGET_CXX_FLAGS _target)
 endmacro()
 
 
+if (CMAKE_GENERATOR STREQUAL "Xcode")
+    WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS("$(inherited)")
+endif ()
+
 if (COMPILER_IS_GCC_OR_CLANG)
     WEBKIT_APPEND_GLOBAL_COMPILER_FLAGS(-fno-strict-aliasing)
 
