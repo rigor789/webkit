@@ -156,6 +156,7 @@
                 { "name": "lineNumber", "type": "integer", "description": "Line number to set breakpoint at." },
                 { "name": "url", "type": "string", "optional": true, "description": "URL of the resources to set breakpoint on." },
                 { "name": "urlRegex", "type": "string", "optional": true, "description": "Regex pattern for the URLs of the resources to set breakpoints on. Either <code>url</code> or <code>urlRegex</code> must be specified." },
+                { "name": "scriptHash", "type": "string", "optional": true, "description": "Script hash of the resources to set breakpoint on." },
                 { "name": "columnNumber", "type": "integer", "optional": true, "description": "Offset in the line to set breakpoint at." },
                 { "name": "options", "$ref": "BreakpointOptions", "optional": true, "description": "Options to apply to this breakpoint to modify its behavior." }
             ],
@@ -313,12 +314,13 @@
             "description": "Fired when virtual machine parses script. This event is also fired for all known and uncollected scripts upon enabling debugger.",
             "parameters": [
                 { "name": "scriptId", "$ref": "ScriptId", "description": "Identifier of the script parsed." },
-                { "name": "url", "type": "string", "description": "URL of the script parsed (if any)." },
+                { "name": "url", "type": "string", "description": "URL or name of the script parsed (if any)." },
                 { "name": "startLine", "type": "integer", "description": "Line offset of the script within the resource with given URL (for script tags)." },
                 { "name": "startColumn", "type": "integer", "description": "Column offset of the script within the resource with given URL." },
                 { "name": "endLine", "type": "integer", "description": "Last line of the script." },
                 { "name": "endColumn", "type": "integer", "description": "Length of the last line of the script." },
                 { "name": "isContentScript", "type": "boolean", "optional": true, "description": "Determines whether this script is a user extension script." },
+                { "name": "hash", "type": "string", "experimental": true, "description": "Content hash of the script."},
                 { "name": "sourceURL", "type": "string", "optional": true, "description": "sourceURL name of the script (if any)." },
                 { "name": "sourceMapURL", "type": "string", "optional": true, "description": "URL of source map associated with script (if any)." },
                 { "name": "module", "type": "boolean", "optional": true, "description": "True if this script was parsed as a module." }
@@ -328,9 +330,9 @@
             "name": "scriptFailedToParse",
             "description": "Fired when virtual machine fails to parse the script.",
             "parameters": [
-                { "name": "url", "type": "string", "description": "URL of the script that failed to parse." },
+                { "name": "url", "type": "string", "description": "URL or name of the script parsed (if any)." },
                 { "name": "scriptSource", "type": "string", "description": "Source text of the script that failed to parse." },
-                { "name": "startLine", "type": "integer", "description": "Line offset of the script within the resource." },
+                { "name": "startLine", "type": "integer", "description": "Line offset of the script within the resource with given URL (for script tags)." },
                 { "name": "errorLine", "type": "integer", "description": "Line with error." },
                 { "name": "errorMessage", "type": "string", "description": "Parse error message." }
             ]

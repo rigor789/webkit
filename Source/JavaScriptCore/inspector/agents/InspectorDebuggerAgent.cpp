@@ -43,6 +43,7 @@
 #include "ScriptObject.h"
 #include <wtf/JSONValues.h>
 #include <wtf/NeverDestroyed.h>
+#include <wtf/SHA1.h>
 #include <wtf/Stopwatch.h>
 #include <wtf/text/StringConcatenateNumbers.h>
 #include <wtf/text/WTFString.h>
@@ -341,6 +342,16 @@ static bool matches(const String& url, const String& pattern, bool isRegex)
     return url == pattern;
 }
 
+static bool matchesHash(const String& scriptSource, const String* scriptHash)
+{
+    if (scriptHash) {
+        SHA1 sha1;
+        sha1.addBytes(scriptSource.utf8());
+        return scriptHash->ascii() == sha1.computeHexDigest();
+    }
+    return false;
+}
+
 static bool breakpointActionTypeForString(const String& typeString, ScriptBreakpointActionType* output)
 {
     if (typeString == Protocol::InspectorHelpers::getEnumConstantValue(Protocol::Debugger::BreakpointAction::Type::Log)) {
@@ -435,19 +446,29 @@ static bool parseLocation(ErrorString& errorString, const JSON::Object& location
     return true;
 }
 
-void InspectorDebuggerAgent::setBreakpointByUrl(ErrorString& errorString, int lineNumber, const String* optionalURL, const String* optionalURLRegex, const int* optionalColumnNumber, const JSON::Object* options, Protocol::Debugger::BreakpointId* outBreakpointIdentifier, RefPtr<JSON::ArrayOf<Protocol::Debugger::Location>>& locations)
+void InspectorDebuggerAgent::setBreakpointByUrl(ErrorString& errorString, int lineNumber, const String* optionalURL, const String* optionalURLRegex, const String* optionalScriptHash, const int* optionalColumnNumber, const JSON::Object* options, Protocol::Debugger::BreakpointId* outBreakpointIdentifier, RefPtr<JSON::ArrayOf<Protocol::Debugger::Location>>& locations)
 {
     locations = JSON::ArrayOf<Protocol::Debugger::Location>::create();
-    if (!optionalURL == !optionalURLRegex) {
-        errorString = "Either url or urlRegex must be specified."_s;
+    int urlSpecs = 0;
+    if (optionalURL) {
+        urlSpecs++;
+    }
+    if (optionalURLRegex) {
+        urlSpecs++;
+    }
+    if (optionalScriptHash) {
+        urlSpecs++;
+    }
+    if (urlSpecs != 1) {
+        errorString = "Exactly one of [url, scriptHash, urlRegex] must be specified."_s;
         return;
     }
 
-    String url = optionalURL ? *optionalURL : *optionalURLRegex;
+    String url = optionalURL ? *optionalURL : optionalScriptHash ? *optionalScriptHash : *optionalURLRegex;
     int columnNumber = optionalColumnNumber ? *optionalColumnNumber : 0;
     bool isRegex = optionalURLRegex;
 
-    String breakpointIdentifier = (isRegex ? "/" + url + "/" : url) + ':' + String::number(lineNumber) + ':' + String::number(columnNumber);
+    String breakpointIdentifier = (isRegex ? "/" + url + "/" : optionalScriptHash ? "#" + url : url) + ':' + String::number(lineNumber) + ':' + String::number(columnNumber);
     if (m_javaScriptBreakpoints.contains(breakpointIdentifier)) {
         errorString = "Breakpoint at specified location already exists."_s;
         return;
@@ -473,7 +494,7 @@ void InspectorDebuggerAgent::setBreakpointByUrl(ErrorString& errorString, int li
     for (auto& entry : m_scripts) {
         Script& script = entry.value;
         String scriptURLForBreakpoints = !script.sourceURL.isEmpty() ? script.sourceURL : script.url;
-        if (!matches(scriptURLForBreakpoints, url, isRegex))
+        if (!matches(scriptURLForBreakpoints, url, isRegex) && !matchesHash(script.source, optionalScriptHash))
             continue;
 
         JSC::SourceID sourceID = entry.key;
@@ -916,7 +937,20 @@ void InspectorDebuggerAgent::didParseSource(JSC::SourceID sourceID, const Script
     String* sourceURLParam = hasSourceURL ? &sourceURL : nullptr;
     String* sourceMapURLParam = sourceMappingURL.isEmpty() ? nullptr : &sourceMappingURL;
 
-    m_frontendDispatcher->scriptParsed(scriptIDStr, script.url, script.startLine, script.startColumn, script.endLine, script.endColumn, isContentScript, sourceURLParam, sourceMapURLParam, isModule ? &isModule : nullptr);
+    SHA1 sha1;
+    sha1.addBytes(script.source.utf8());
+    m_frontendDispatcher->scriptParsed(
+                                       scriptIDStr,
+                                       script.url,
+                                       script.startLine,
+                                       script.startColumn,
+                                       script.endLine,
+                                       script.endColumn,
+                                       isContentScript,
+                                       sha1.computeHexDigest().data(),
+                                       sourceURLParam,
+                                       sourceMapURLParam,
+                                       isModule ? &isModule : nullptr);
 
     m_scripts.set(sourceID, script);
 
