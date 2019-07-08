@@ -91,11 +91,11 @@ namespace JSC {
     public:
         Interpreter(VM &);
         ~Interpreter();
-        
+
 #if ENABLE(C_LOOP)
         CLoopStack& cloopStack() { return m_cloopStack; }
 #endif
-        
+
         static inline Opcode getOpcode(OpcodeID);
 
         static inline OpcodeID getOpcodeID(Opcode);
@@ -115,7 +115,7 @@ namespace JSC {
         NEVER_INLINE HandlerInfo* unwind(VM&, CallFrame*&, Exception*);
         void notifyDebuggerOfExceptionToBeThrown(VM&, CallFrame*, Exception*);
         NEVER_INLINE void debug(CallFrame*, DebugHookType);
-        static String stackTraceAsString(VM&, const Vector<StackFrame>&);
+        static String stackTraceAsString(VM&, const Vector<StackFrame>&, JSObject*);
 
         static EncodedJSValue JSC_HOST_CALL constructWithErrorConstructor(ExecState*);
         static EncodedJSValue JSC_HOST_CALL callErrorConstructor(ExecState*);
@@ -125,14 +125,15 @@ namespace JSC {
         void getStackTrace(JSCell* owner, Vector<StackFrame>& results, size_t framesToSkip = 0, size_t maxStackSize = std::numeric_limits<size_t>::max());
 
     private:
+        static String getPreparedStackTrace(VM&, const Vector<StackFrame>&, JSObject*);
         enum ExecutionFlag { Normal, InitializeAndReturn };
-        
+
         static JSValue checkedReturn(JSValue returnValue)
         {
             ASSERT(returnValue);
             return returnValue;
         }
-        
+
         static JSObject* checkedReturn(JSObject* returnValue)
         {
             ASSERT(returnValue);
@@ -147,7 +148,7 @@ namespace JSC {
 #if ENABLE(C_LOOP)
         CLoopStack m_cloopStack;
 #endif
-        
+
 #if ENABLE(COMPUTED_GOTO_OPCODES)
 #if !USE(LLINT_EMBEDDED_OPCODE_ID) || !ASSERT_DISABLED
         static HashMap<Opcode, OpcodeID>& opcodeIDTable(); // Maps Opcode => OpcodeID.
@@ -181,7 +182,7 @@ namespace JSC {
     void setupVarargsFrameAndSetThis(CallFrame* execCaller, CallFrame* execCallee, JSValue thisValue, JSValue arguments, uint32_t firstVarArgOffset, uint32_t length);
     void setupForwardArgumentsFrame(CallFrame* execCaller, CallFrame* execCallee, uint32_t length);
     void setupForwardArgumentsFrameAndSetThis(CallFrame* execCaller, CallFrame* execCallee, JSValue thisValue, uint32_t length);
-    
+
 } // namespace JSC
 
 namespace WTF {

@@ -79,6 +79,7 @@
 #include "VMInlines.h"
 #include "VMInspector.h"
 #include "VirtualRegister.h"
+#include "CallSite.h"
 
 #include <limits.h>
 #include <stdio.h>
@@ -450,8 +451,50 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
     ASSERT(results.size() == results.capacity());
 }
 
-String Interpreter::stackTraceAsString(VM& vm, const Vector<StackFrame>& stackTrace)
+String Interpreter::getPreparedStackTrace(VM& vm, const Vector<StackFrame>& stackTrace, JSObject* errorObject) {
+    JSGlobalObject* globalObject = errorObject->globalObject(vm);
+    
+    auto error = globalObject->getDirect(vm, vm.propertyNames->Error).toObject(globalObject->globalExec());
+    auto function = error->getDirect(vm, JSC::Identifier::fromString(globalObject->globalExec(), "prepareStackTrace"));
+    
+    CallData callData;
+    CallType callType = JSC::getCallData(vm, function, callData);
+    
+    auto exec = globalObject->globalExec();
+    
+    if (callType != CallType::JS) {
+        return "";
+    }
+    
+    JSC::MarkedArgumentBuffer arguments;
+    arguments.append(errorObject);
+    
+    JSArray* frames = JSArray::create(vm, globalObject->originalArrayStructureForIndexingType(ArrayWithUndecided));
+    for (size_t i = 0; i < stackTrace.size() ; i++) {
+        Structure* callSiteStructure = CallSite::createStructure(vm, globalObject, globalObject->objectPrototype());
+        auto callSite = CallSite::create(globalObject->globalExec(), callSiteStructure, &stackTrace[i]);
+        frames->push(exec, callSite);
+    }
+    arguments.append(frames);
+    
+    NakedPtr<Exception> exception;
+    JSValue result = JSC::call(exec, function, callType, callData, errorObject, arguments, exception);
+    if (exception != nullptr) {
+        auto scope = DECLARE_THROW_SCOPE(vm);
+        scope.throwException(exec, exception);
+        return "";
+    } else {
+        return result.toObject(exec)->toString(exec)->value(exec);
+    }
+}
+    
+String Interpreter::stackTraceAsString(VM& vm, const Vector<StackFrame>& stackTrace, JSObject* errorObject)
 {
+    auto preparedStackTrace = getPreparedStackTrace(vm, stackTrace, errorObject);
+    if (preparedStackTrace != "") {
+        return preparedStackTrace;
+    }
+    
     // FIXME: JSStringJoiner could be more efficient than StringBuilder here.
     StringBuilder builder;
     for (unsigned i = 0; i < stackTrace.size(); i++) {
