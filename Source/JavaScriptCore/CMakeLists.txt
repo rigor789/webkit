@@ -689,6 +689,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     interpreter/CalleeBits.h
     interpreter/EntryFrame.h
     interpreter/FrameTracers.h
+    interpreter/Interpreter.h
     interpreter/Register.h
     interpreter/ShadowChicken.h
     interpreter/StackVisitor.h
@@ -774,6 +775,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/ButterflyInlines.h
     runtime/CagedBarrierPtr.h
     runtime/CallData.h
+    runtime/CallSite.h
     runtime/CatchScope.h
     runtime/ClassInfo.h
     runtime/CodeSpecializationKind.h

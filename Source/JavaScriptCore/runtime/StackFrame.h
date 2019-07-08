@@ -42,6 +42,7 @@ public:
     StackFrame(Wasm::IndexOrName);
 
     bool hasLineAndColumnInfo() const { return !!m_codeBlock; }
+    JSCell* callee() const { return m_callee.get(); }
     
     void computeLineAndColumn(unsigned& line, unsigned& column) const;
     String functionName(VM&) const;

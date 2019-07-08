@@ -57,7 +57,7 @@ static void appendSourceToError(CallFrame* callFrame, ErrorInstance* exception, 
 
     if (!callFrame->codeBlock()->hasExpressionInfo())
         return;
-    
+
     int startOffset = 0;
     int endOffset = 0;
     int divotPoint = 0;
@@ -72,19 +72,19 @@ static void appendSourceToError(CallFrame* callFrame, ErrorInstance* exception, 
         codeBlock = callFrame->codeBlock();
 
     codeBlock->expressionRangeForBytecodeOffset(bytecodeOffset, divotPoint, startOffset, endOffset, line, column);
-    
+
     int expressionStart = divotPoint - startOffset;
     int expressionStop = divotPoint + endOffset;
 
     StringView sourceString = codeBlock->source()->source();
     if (!expressionStop || expressionStart > static_cast<int>(sourceString.length()))
         return;
-    
+
     VM* vm = &callFrame->vm();
     JSValue jsMessage = exception->getDirect(*vm, vm->propertyNames->message);
     if (!jsMessage || !jsMessage.isString())
         return;
-    
+
     String message = asString(jsMessage)->value(callFrame);
     if (expressionStart < expressionStop)
         message = appender(message, codeBlock->source()->getRange(expressionStart, expressionStop).toString(), type, ErrorInstance::FoundExactSource);
@@ -225,7 +225,7 @@ void ErrorInstance::computeErrorInfo(VM& vm)
 
     if (m_stackTrace && !m_stackTrace->isEmpty()) {
         getLineColumnAndSource(m_stackTrace.get(), m_line, m_column, m_sourceURL);
-        m_stackString = Interpreter::stackTraceAsString(vm, *m_stackTrace.get());
+        m_stackString = Interpreter::stackTraceAsString(vm, *m_stackTrace.get(), this);
         m_stackTrace = nullptr;
     }
 }
