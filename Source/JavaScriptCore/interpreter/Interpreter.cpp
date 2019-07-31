@@ -116,7 +116,7 @@ JSValue eval(CallFrame* callFrame)
     }
     String programSource = asString(program)->value(callFrame);
     RETURN_IF_EXCEPTION(scope, JSValue());
-    
+
     CallFrame* callerFrame = callFrame->callerFrame();
     CallSiteIndex callerCallSiteIndex = callerFrame->callSiteIndex();
     CodeBlock* callerCodeBlock = callerFrame->codeBlock();
@@ -156,7 +156,7 @@ JSValue eval(CallFrame* callFrame)
             }
             RETURN_IF_EXCEPTION(scope, JSValue());
         }
-        
+
         VariableEnvironment variablesUnderTDZ;
         JSScope::collectClosureVariablesUnderTDZ(callerScopeChain, variablesUnderTDZ);
         eval = DirectEvalExecutable::create(callFrame, makeSource(programSource, callerCodeBlock->source()->sourceOrigin()), callerCodeBlock->isStrictMode(), derivedContextType, isArrowFunctionContext, evalContextType, &variablesUnderTDZ);
@@ -180,11 +180,11 @@ unsigned sizeOfVarargs(CallFrame* callFrame, JSValue arguments, uint32_t firstVa
     if (UNLIKELY(!arguments.isCell())) {
         if (arguments.isUndefinedOrNull())
             return 0;
-        
+
         throwException(callFrame, scope, createInvalidFunctionApplyParameterError(callFrame, arguments));
         return 0;
     }
-    
+
     JSCell* cell = arguments.asCell();
     unsigned length;
     switch (cell->type()) {
@@ -205,19 +205,19 @@ unsigned sizeOfVarargs(CallFrame* callFrame, JSValue arguments, uint32_t firstVa
     case BigIntType:
         throwException(callFrame, scope, createInvalidFunctionApplyParameterError(callFrame,  arguments));
         return 0;
-        
+
     default:
         RELEASE_ASSERT(arguments.isObject());
         length = clampToUnsigned(toLength(callFrame, jsCast<JSObject*>(cell)));
         break;
     }
     RETURN_IF_EXCEPTION(scope, 0);
-    
+
     if (length >= firstVarArgOffset)
         length -= firstVarArgOffset;
     else
         length = 0;
-    
+
     return length;
 }
 
@@ -245,7 +245,7 @@ unsigned sizeFrameForVarargs(CallFrame* callFrame, VM& vm, JSValue arguments, un
         throwStackOverflowError(callFrame, scope);
         return 0;
     }
-    
+
     return length;
 }
 
@@ -274,7 +274,7 @@ void loadVarargs(CallFrame* callFrame, VirtualRegister firstElementDest, JSValue
     case JSImmutableButterflyType:
         scope.release();
         jsCast<JSImmutableButterfly*>(cell)->copyToArguments(callFrame, firstElementDest, offset, length);
-        return; 
+        return;
     default: {
         ASSERT(arguments.isObject());
         JSObject* object = jsCast<JSObject*>(cell);
@@ -298,12 +298,12 @@ void loadVarargs(CallFrame* callFrame, VirtualRegister firstElementDest, JSValue
 void setupVarargsFrame(CallFrame* callFrame, CallFrame* newCallFrame, JSValue arguments, uint32_t offset, uint32_t length)
 {
     VirtualRegister calleeFrameOffset(newCallFrame - callFrame);
-    
+
     loadVarargs(
         callFrame,
         calleeFrameOffset + CallFrame::argumentOffset(0),
         arguments, offset, length);
-    
+
     newCallFrame->setArgumentCountIncludingThis(length + 1);
 }
 
@@ -327,7 +327,7 @@ void setupForwardArgumentsFrameAndSetThis(CallFrame* execCaller, CallFrame* exec
     execCallee->setThisValue(thisValue);
 }
 
-    
+
 
 Interpreter::Interpreter(VM& vm)
     : m_vm(vm)
@@ -410,7 +410,7 @@ public:
                 m_results.append(
                     StackFrame(m_vm, m_owner, visitor->callee().asCell()));
             }
-    
+
             m_remainingCapacityForFrameCapture--;
             return StackVisitor::Continue;
         }
@@ -453,22 +453,26 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
 
 String Interpreter::getPreparedStackTrace(VM& vm, const Vector<StackFrame>& stackTrace, JSObject* errorObject) {
     JSGlobalObject* globalObject = errorObject->globalObject(vm);
-    
+
     auto error = globalObject->getDirect(vm, vm.propertyNames->Error).toObject(globalObject->globalExec());
     auto function = error->getDirect(vm, JSC::Identifier::fromString(globalObject->globalExec(), "prepareStackTrace"));
-    
+
+    if (function.isEmpty() || !function.isFunction(vm)) {
+        return "";
+    }
+
     CallData callData;
     CallType callType = JSC::getCallData(vm, function, callData);
-    
+
     auto exec = globalObject->globalExec();
-    
+
     if (callType != CallType::JS) {
         return "";
     }
-    
+
     JSC::MarkedArgumentBuffer arguments;
     arguments.append(errorObject);
-    
+
     JSArray* frames = JSArray::create(vm, globalObject->originalArrayStructureForIndexingType(ArrayWithUndecided));
     for (size_t i = 0; i < stackTrace.size() ; i++) {
         Structure* callSiteStructure = CallSite::createStructure(vm, globalObject, globalObject->objectPrototype());
@@ -476,7 +480,7 @@ String Interpreter::getPreparedStackTrace(VM& vm, const Vector<StackFrame>& stac
         frames->push(exec, callSite);
     }
     arguments.append(frames);
-    
+
     NakedPtr<Exception> exception;
     JSValue result = JSC::call(exec, function, callType, callData, errorObject, arguments, exception);
     if (exception != nullptr) {
@@ -487,17 +491,20 @@ String Interpreter::getPreparedStackTrace(VM& vm, const Vector<StackFrame>& stac
         return result.toObject(exec)->toString(exec)->value(exec);
     }
 }
-    
+
 String Interpreter::stackTraceAsString(VM& vm, const Vector<StackFrame>& stackTrace, JSObject* errorObject)
 {
     auto preparedStackTrace = getPreparedStackTrace(vm, stackTrace, errorObject);
     if (preparedStackTrace != "") {
         return preparedStackTrace;
     }
-    
+
     // FIXME: JSStringJoiner could be more efficient than StringBuilder here.
     StringBuilder builder;
     for (unsigned i = 0; i < stackTrace.size(); i++) {
+        if (i > 0) {
+            builder.append("at ");
+        }
         builder.append(String(stackTrace[i].toString(vm)));
         if (i != stackTrace.size() - 1)
             builder.append('\n');
@@ -621,7 +628,7 @@ private:
             if (dontCopyRegisters.get(currentEntry.reg()))
                 continue;
             RegisterAtOffset* calleeSavesEntry = allCalleeSaves->find(currentEntry.reg());
-            
+
             record->calleeSaveRegistersBuffer[calleeSavesEntry->offsetAsIndex()] = *(frame + currentEntry.offsetAsIndex());
         }
 #else
@@ -1016,7 +1023,7 @@ CallFrameClosure Interpreter::prepareForRepeatCall(FunctionExecutable* functionE
     VM& vm = *scope->vm();
     auto throwScope = DECLARE_THROW_SCOPE(vm);
     throwScope.assertNoException();
-    
+
     if (vm.isCollectorBusyOnCurrentThread())
         return CallFrameClosure();
 
@@ -1066,7 +1073,7 @@ JSValue Interpreter::execute(EvalExecutable* eval, CallFrame* callFrame, JSValue
             if (node->isGlobalObject()) {
                 variableObject = node;
                 break;
-            } 
+            }
             if (node->isJSLexicalEnvironment()) {
                 JSLexicalEnvironment* lexicalEnvironment = jsCast<JSLexicalEnvironment*>(node);
                 if (lexicalEnvironment->symbolTable()->scopeType() == SymbolTable::ScopeType::VarScope) {
@@ -1127,7 +1134,7 @@ JSValue Interpreter::execute(EvalExecutable* eval, CallFrame* callFrame, JSValue
                 RETURN_IF_EXCEPTION(throwScope, checkedReturn(throwScope.exception()));
             }
         }
-        
+
         if (eval->isStrictMode()) {
             for (unsigned i = 0; i < numTopLevelFunctionDecls; ++i) {
                 FunctionExecutable* function = codeBlock->functionDecl(i);
