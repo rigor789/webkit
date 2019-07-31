@@ -74,10 +74,7 @@ public:
         
         if (lastLF) {
             *lastLF = 0;
-            asl_log(0, 0, ASL_LEVEL_NOTICE, "%s%s", m_prevLineBuffer.utf8().data(), buf);
-
-            //os_log is available since iOS 10.0 we can switch to it after we've dropped support for iOS 9.x
-            //os_log(OS_LOG_DEFAULT, "%s%s", m_prevLineBuffer.utf8().data(), buf);
+            WTFLogAlways("%s%s\n", m_prevLineBuffer.utf8().data(), buf);
             m_prevLineBuffer.truncate(0);
         } else {
             lastLF = buf - 1;
