@@ -126,7 +126,7 @@ String StackFrame::toString(VM& vm) const
     traceBuild.append(functionName);
     if (!sourceURL.isEmpty()) {
         if (!functionName.isEmpty())
-            traceBuild.append('@');
+            traceBuild.append('(');
         traceBuild.append(sourceURL);
         if (hasLineAndColumnInfo()) {
             unsigned line;
@@ -138,6 +138,8 @@ String StackFrame::toString(VM& vm) const
             traceBuild.append(':');
             traceBuild.appendNumber(column);
         }
+        if (!functionName.isEmpty())
+            traceBuild.append(')');
     }
     return traceBuild.toString().impl();
 }
