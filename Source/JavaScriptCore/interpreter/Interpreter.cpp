@@ -479,9 +479,9 @@ String Interpreter::getPreparedStackTrace(VM& vm, const Vector<StackFrame>& stac
         auto scope = DECLARE_THROW_SCOPE(vm);
         scope.throwException(exec, exception);
         return "";
-    } else {
-        return result.toObject(exec)->toString(exec)->value(exec);
     }
+    
+    return result.toWTFString(exec);
 }
 
 String Interpreter::stackTraceAsString(VM& vm, const Vector<StackFrame>& stackTrace, JSObject* errorObject, JSFunction* prepareStackTraceFunction)
@@ -499,7 +499,7 @@ String Interpreter::stackTraceAsString(VM& vm, const Vector<StackFrame>& stackTr
         if (i > 0) {
             builder.append("at ");
         }
-        builder.append(String(stackTrace[i].toString(vm)));
+        builder.append(stackTrace[i].toString(vm));
         if (i != stackTrace.size() - 1)
             builder.append('\n');
     }
