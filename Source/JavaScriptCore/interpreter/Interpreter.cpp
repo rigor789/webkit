@@ -451,24 +451,16 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
     ASSERT(results.size() == results.capacity());
 }
 
-String Interpreter::getPreparedStackTrace(VM& vm, const Vector<StackFrame>& stackTrace, JSObject* errorObject) {
-    JSGlobalObject* globalObject = errorObject->globalObject(vm);
-
-    auto error = globalObject->getDirect(vm, vm.propertyNames->Error).toObject(globalObject->globalExec());
-    auto function = error->getDirect(vm, JSC::Identifier::fromString(globalObject->globalExec(), "prepareStackTrace"));
-
-    if (function.isEmpty() || !function.isFunction(vm)) {
-        return "";
-    }
-
+String Interpreter::getPreparedStackTrace(VM& vm, const Vector<StackFrame>& stackTrace, JSObject* errorObject, JSFunction* prepareStackTraceFunction) {
     CallData callData;
-    CallType callType = JSC::getCallData(vm, function, callData);
-
-    auto exec = globalObject->globalExec();
+    CallType callType = prepareStackTraceFunction->getCallData(prepareStackTraceFunction, callData);
 
     if (callType != CallType::JS) {
         return "";
     }
+
+    JSGlobalObject* globalObject = errorObject->globalObject(vm);
+    auto exec = globalObject->globalExec();
 
     JSC::MarkedArgumentBuffer arguments;
     arguments.append(errorObject);
@@ -482,7 +474,7 @@ String Interpreter::getPreparedStackTrace(VM& vm, const Vector<StackFrame>& stac
     arguments.append(frames);
 
     NakedPtr<Exception> exception;
-    JSValue result = JSC::call(exec, function, callType, callData, errorObject, arguments, exception);
+    JSValue result = JSC::call(exec, prepareStackTraceFunction, callType, callData, errorObject, arguments, exception);
     if (exception != nullptr) {
         auto scope = DECLARE_THROW_SCOPE(vm);
         scope.throwException(exec, exception);
@@ -492,11 +484,13 @@ String Interpreter::getPreparedStackTrace(VM& vm, const Vector<StackFrame>& stac
     }
 }
 
-String Interpreter::stackTraceAsString(VM& vm, const Vector<StackFrame>& stackTrace, JSObject* errorObject)
+String Interpreter::stackTraceAsString(VM& vm, const Vector<StackFrame>& stackTrace, JSObject* errorObject, JSFunction* prepareStackTraceFunction)
 {
-    auto preparedStackTrace = getPreparedStackTrace(vm, stackTrace, errorObject);
-    if (preparedStackTrace != "") {
-        return preparedStackTrace;
+    if (prepareStackTraceFunction != nullptr) {
+        auto preparedStackTrace = getPreparedStackTrace(vm, stackTrace, errorObject, prepareStackTraceFunction);
+        if (preparedStackTrace != "") {
+            return preparedStackTrace;
+        }
     }
 
     // FIXME: JSStringJoiner could be more efficient than StringBuilder here.

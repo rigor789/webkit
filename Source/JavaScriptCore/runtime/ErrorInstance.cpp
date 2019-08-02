@@ -28,6 +28,7 @@
 #include "JSCInlines.h"
 #include "ParseInt.h"
 #include "StackFrame.h"
+#include "StrongInlines.h"
 #include <wtf/text/StringBuilder.h>
 
 namespace JSC {
@@ -109,6 +110,18 @@ static void appendSourceToError(CallFrame* callFrame, ErrorInstance* exception, 
 
 }
 
+JSFunction* ErrorInstance::getPrepareStackTraceFunction(ExecState* exec, VM& vm)
+{
+    JSGlobalObject* globalObject = exec->lexicalGlobalObject();
+    auto error = globalObject->getDirect(vm, vm.propertyNames->Error).toObject(exec);
+    JSValue functionValue = error->getDirect(vm, JSC::Identifier::fromString(&vm, "prepareStackTrace"));
+    if (functionValue.isEmpty() || !functionValue.isFunction(vm)) {
+        return nullptr;
+    } else {
+        return jsCast<JSFunction*>(functionValue);
+    }
+}
+
 void ErrorInstance::finishCreation(ExecState* exec, VM& vm, const String& message, bool useCurrentFrame)
 {
     Base::finishCreation(vm);
@@ -131,6 +144,11 @@ void ErrorInstance::finishCreation(ExecState* exec, VM& vm, const String& messag
             ASSERT(!callFrame->callee().isWasm());
             appendSourceToError(callFrame, this, bytecodeOffset);
         }
+    }
+
+    auto prepareStackTraceFunction = getPrepareStackTraceFunction(exec, vm);
+    if (prepareStackTraceFunction != nullptr) {
+        m_prepareStackTraceFunction.set(vm, prepareStackTraceFunction);
     }
 }
 
@@ -225,7 +243,7 @@ void ErrorInstance::computeErrorInfo(VM& vm)
 
     if (m_stackTrace && !m_stackTrace->isEmpty()) {
         getLineColumnAndSource(m_stackTrace.get(), m_line, m_column, m_sourceURL);
-        m_stackString = Interpreter::stackTraceAsString(vm, *m_stackTrace.get(), this);
+        m_stackString = Interpreter::stackTraceAsString(vm, *m_stackTrace.get(), this, m_prepareStackTraceFunction.get());
         m_stackTrace = nullptr;
     }
 }
