@@ -189,10 +189,10 @@ bool getLineColumnAndSource(Vector<StackFrame>* stackTrace, unsigned& line, unsi
     line = 0;
     column = 0;
     sourceURL = String();
-    
+
     if (!stackTrace)
         return false;
-    
+
     for (unsigned i = 0 ; i < stackTrace->size(); ++i) {
         StackFrame& frame = stackTrace->at(i);
         if (frame.hasLineAndColumnInfo()) {
@@ -201,7 +201,7 @@ bool getLineColumnAndSource(Vector<StackFrame>* stackTrace, unsigned& line, unsi
             return true;
         }
     }
-    
+
     return false;
 }
 
@@ -220,7 +220,9 @@ bool addErrorInfo(VM& vm, Vector<StackFrame>* stackTrace, JSObject* obj)
         if (!sourceURL.isEmpty())
             obj->putDirect(vm, vm.propertyNames->sourceURL, jsString(&vm, sourceURL));
 
-        obj->putDirect(vm, vm.propertyNames->stack, jsString(&vm, Interpreter::stackTraceAsString(vm, *stackTrace, obj)), static_cast<unsigned>(PropertyAttribute::DontEnum));
+        auto prepareStackTraceFunction = ErrorInstance::getPrepareStackTraceFunction(vm.topCallFrame, vm);
+        auto stackTraceContent = Interpreter::stackTraceAsString(vm, *stackTrace, obj, prepareStackTraceFunction);
+        obj->putDirect(vm, vm.propertyNames->stack, jsString(&vm, stackTraceContent), static_cast<unsigned>(PropertyAttribute::DontEnum));
 
         return true;
     }
@@ -240,7 +242,7 @@ JSObject* addErrorInfo(CallFrame* callFrame, JSObject* error, int line, const So
 {
     VM& vm = callFrame->vm();
     const String& sourceURL = source.provider()->url();
-    
+
     // The putDirect() calls below should really be put() so that they trigger materialization of
     // the line/sourceURL properties. Otherwise, what we set here will just be overwritten later.
     // But calling put() would be bad because we'd rather not do effectful things here. Luckily, we
@@ -250,7 +252,7 @@ JSObject* addErrorInfo(CallFrame* callFrame, JSObject* error, int line, const So
     // enough that if we're wrong in such corner cases, it's not the end of the world.
     if (ErrorInstance* errorInstance = jsDynamicCast<ErrorInstance*>(vm, error))
         errorInstance->materializeErrorInfoIfNeeded(vm);
-    
+
     // FIXME: This does not modify the column property, which confusingly continues to reflect
     // the column at which the exception was thrown.
     // https://bugs.webkit.org/show_bug.cgi?id=176673
@@ -355,7 +357,7 @@ JSObject* createOutOfMemoryError(ExecState* exec)
 
 JSObject* createOutOfMemoryError(ExecState* exec, const String& message)
 {
-    
+
     auto* error = createError(exec, makeString("Out of memory: ", message), nullptr);
     jsCast<ErrorInstance*>(error)->setOutOfMemoryError();
     return error;

@@ -51,6 +51,7 @@ public:
     }
 
     static ErrorInstance* create(ExecState*, Structure*, JSValue message, SourceAppender = nullptr, RuntimeType = TypeNothing, bool useCurrentFrame = true);
+    static JSFunction* getPrepareStackTraceFunction(ExecState* exec, VM& vm);
 
     bool hasSourceAppender() const { return !!m_sourceAppender; }
     SourceAppender sourceAppender() const { return m_sourceAppender; }
@@ -66,7 +67,7 @@ public:
     bool isOutOfMemoryError() const { return m_outOfMemoryError; }
 
     JS_EXPORT_PRIVATE String sanitizedToString(ExecState*);
-    
+
     Vector<StackFrame>* stackTrace() { return m_stackTrace.get(); }
 
     bool materializeErrorInfoIfNeeded(VM&);
@@ -102,6 +103,7 @@ protected:
     String m_sourceURL;
     String m_stackString;
     RuntimeType m_runtimeTypeForCause { TypeNothing };
+    Strong<JSFunction> m_prepareStackTraceFunction;
     bool m_stackOverflowError { false };
     bool m_outOfMemoryError { false };
     bool m_errorInfoMaterialized { false };

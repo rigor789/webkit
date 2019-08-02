@@ -115,7 +115,7 @@ namespace JSC {
         NEVER_INLINE HandlerInfo* unwind(VM&, CallFrame*&, Exception*);
         void notifyDebuggerOfExceptionToBeThrown(VM&, CallFrame*, Exception*);
         NEVER_INLINE void debug(CallFrame*, DebugHookType);
-        static String stackTraceAsString(VM&, const Vector<StackFrame>&, JSObject*);
+        static String stackTraceAsString(VM&, const Vector<StackFrame>&, JSObject*, JSFunction*);
 
         static EncodedJSValue JSC_HOST_CALL constructWithErrorConstructor(ExecState*);
         static EncodedJSValue JSC_HOST_CALL callErrorConstructor(ExecState*);
@@ -125,7 +125,7 @@ namespace JSC {
         void getStackTrace(JSCell* owner, Vector<StackFrame>& results, size_t framesToSkip = 0, size_t maxStackSize = std::numeric_limits<size_t>::max());
 
     private:
-        static String getPreparedStackTrace(VM&, const Vector<StackFrame>&, JSObject*);
+        static String getPreparedStackTrace(VM&, const Vector<StackFrame>&, JSObject*, JSFunction*);
         enum ExecutionFlag { Normal, InitializeAndReturn };
 
         static JSValue checkedReturn(JSValue returnValue)

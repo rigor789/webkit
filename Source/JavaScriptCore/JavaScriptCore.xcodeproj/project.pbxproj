@@ -3295,6 +3295,8 @@
 		412952761D2CF6AC00E78B89 /* builtins_generate_wrapper_implementation.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = builtins_generate_wrapper_implementation.py; sourceTree = "<group>"; };
 		41DEA1311B9F3154006D65DD /* BuiltinUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BuiltinUtils.h; sourceTree = "<group>"; };
 		425BA1337E4344E1B269A671 /* SourceOrigin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SourceOrigin.h; sourceTree = "<group>"; };
+		429E375B22F8869C00C564FF /* CallSite.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CallSite.cpp; sourceTree = "<group>"; };
+		429E375C22F8869D00C564FF /* CallSite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CallSite.h; sourceTree = "<group>"; };
 		4319DA011C1BE3C1001D260B /* B3LowerMacrosAfterOptimizations.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = B3LowerMacrosAfterOptimizations.cpp; path = b3/B3LowerMacrosAfterOptimizations.cpp; sourceTree = "<group>"; };
 		4319DA021C1BE3C1001D260B /* B3LowerMacrosAfterOptimizations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = B3LowerMacrosAfterOptimizations.h; path = b3/B3LowerMacrosAfterOptimizations.h; sourceTree = "<group>"; };
 		4340A4821A9051AF00D73CCA /* MathCommon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MathCommon.cpp; sourceTree = "<group>"; };
@@ -6505,6 +6507,8 @@
 		7EF6E0BB0EB7A1EC0079AFAF /* runtime */ = {
 			isa = PBXGroup;
 			children = (
+				429E375B22F8869C00C564FF /* CallSite.cpp */,
+				429E375C22F8869D00C564FF /* CallSite.h */,
 				AD4937C11DDBE60A0077C807 /* AbstractModuleRecord.cpp */,
 				AD4937C21DDBE60A0077C807 /* AbstractModuleRecord.h */,
 				BCF605110E203EF800B9A64D /* ArgList.cpp */,

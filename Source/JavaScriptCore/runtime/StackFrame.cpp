@@ -120,19 +120,25 @@ void StackFrame::computeLineAndColumn(unsigned& line, unsigned& column) const
 
 String StackFrame::toString(VM& vm) const
 {
-    StringBuilder traceBuild;
     String functionName = this->functionName(vm);
     String sourceURL = this->sourceURL();
+    unsigned line = 0;
+    unsigned column = 0;
+    if (hasLineAndColumnInfo()) {
+        computeLineAndColumn(line, column);
+    }
+    return StackFrame::formatStackFrame(functionName, sourceURL, line, column);
+}
+
+String StackFrame::formatStackFrame(String functionName, String source, unsigned line, unsigned column)
+{
+    StringBuilder traceBuild;
     traceBuild.append(functionName);
-    if (!sourceURL.isEmpty()) {
+    if (!source.isEmpty()) {
         if (!functionName.isEmpty())
             traceBuild.append('(');
-        traceBuild.append(sourceURL);
-        if (hasLineAndColumnInfo()) {
-            unsigned line;
-            unsigned column;
-            computeLineAndColumn(line, column);
-
+        traceBuild.append(source);
+        if (line > 0 && column > 0) {
             traceBuild.append(':');
             traceBuild.appendNumber(line);
             traceBuild.append(':');
