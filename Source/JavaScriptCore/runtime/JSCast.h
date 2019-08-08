@@ -152,7 +152,7 @@ template<typename To, typename From>
 To jsDynamicCast(VM& vm, From* from)
 {
     using Dispatcher = JSCastingHelpers::InheritsTraits<typename std::remove_cv<typename std::remove_pointer<To>::type>::type>;
-    if (LIKELY(Dispatcher::template inherits(vm, from)))
+    if (LIKELY(from != nullptr && Dispatcher::template inherits(vm, from)))
         return static_cast<To>(from);
     return nullptr;
 }
