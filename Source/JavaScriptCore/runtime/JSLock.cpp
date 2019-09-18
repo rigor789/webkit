@@ -68,14 +68,21 @@ JSLockHolder::JSLockHolder(VM& vm)
 
 void JSLockHolder::init()
 {
+    if (m_vm->isDestroyed()) {
+        m_vm = nullptr;
+        return;
+    }
+    
     m_vm->apiLock().lock();
 }
 
 JSLockHolder::~JSLockHolder()
 {
-    RefPtr<JSLock> apiLock(&m_vm->apiLock());
-    m_vm = nullptr;
-    apiLock->unlock();
+    if (m_vm) {
+        RefPtr<JSLock> apiLock(&m_vm->apiLock());
+        m_vm = nullptr;
+        apiLock->unlock();
+    }
 }
 
 JSLock::JSLock(VM* vm)
