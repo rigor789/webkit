@@ -497,6 +497,10 @@ public:
     RuntimeFlags m_runtimeFlags;
     ConsoleClient* m_consoleClient { nullptr };
 
+#if !ASSERT_DISABLED
+    const ExecState* m_callFrameAtDebuggerEntry { nullptr };
+#endif
+
     static JS_EXPORT_PRIVATE const GlobalObjectMethodTable s_globalObjectMethodTable;
     const GlobalObjectMethodTable* m_globalObjectMethodTable;
 
@@ -911,6 +915,11 @@ public:
         m_webAssemblyEnabled = enabled;
         m_webAssemblyDisabledErrorMessage = errorMessage;
     }
+
+#if !ASSERT_DISABLED
+    const ExecState* callFrameAtDebuggerEntry() const { return m_callFrameAtDebuggerEntry; }
+    void setCallFrameAtDebuggerEntry(const ExecState* callFrame) { m_callFrameAtDebuggerEntry = callFrame; }
+#endif
 
     void resetPrototype(VM&, JSValue prototype);
 
