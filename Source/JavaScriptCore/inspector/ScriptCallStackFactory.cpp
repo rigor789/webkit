@@ -37,6 +37,7 @@
 #include "CatchScope.h"
 #include "CodeBlock.h"
 #include "Exception.h"
+#include "FrameTracers.h"
 #include "JSCJSValue.h"
 #include "JSCInlines.h"
 #include "ScriptArguments.h"
@@ -125,7 +126,7 @@ Ref<ScriptCallStack> createScriptCallStackForConsole(JSC::ExecState* exec, size_
 static bool extractSourceInformationFromException(JSC::ExecState* exec, JSObject* exceptionObject, int* lineNumber, int* columnNumber, String* sourceURL)
 {
     VM& vm = exec->vm();
-    auto scope = DECLARE_CATCH_SCOPE(vm);
+    SuspendExceptionScope scope(&vm);
 
     // FIXME: <http://webkit.org/b/115087> Web Inspector: Should not need to evaluate JavaScript handling exceptions
     JSValue lineValue = exceptionObject->getDirect(vm, Identifier::fromString(exec, "line"));
@@ -150,7 +151,6 @@ static bool extractSourceInformationFromException(JSC::ExecState* exec, JSObject
     if (sourceURL->isEmpty())
         *sourceURL = "undefined"_s;
     
-    scope.clearException();
     return result;
 }
 
