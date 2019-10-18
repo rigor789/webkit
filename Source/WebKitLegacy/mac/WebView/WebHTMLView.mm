@@ -222,13 +222,13 @@ using namespace WTF;
 
 - (void)_setSubviewsIvar:(NSMutableArray<__kindof NSView *> *)subviews {
     ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    _subviews = subviews;
+    self._subviewsIvar = subviews;
     ALLOW_DEPRECATED_DECLARATIONS_END
 }
 
 - (NSMutableArray<__kindof NSView *> *)_subviewsIvar {
     ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    return (NSMutableArray *)_subviews;
+    return (NSMutableArray *)self._subviewsIvar;
     ALLOW_DEPRECATED_DECLARATIONS_END
 }
 
