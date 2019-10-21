@@ -30,11 +30,13 @@
 #include "ChromeClient.h"
 #include "DOMTimer.h"
 #include "Document.h"
+#include "FullscreenManager.h"
 #include "HTMLIFrameElement.h"
 #include "HTMLImageElement.h"
 #include "Logging.h"
 #include "NodeRenderStyle.h"
 #include "Page.h"
+#include "Quirks.h"
 #include "RenderDescendantIterator.h"
 #include "Settings.h"
 
@@ -42,6 +44,23 @@ namespace WebCore {
 
 static const Seconds maximumDelayForTimers { 400_ms };
 static const Seconds maximumDelayForTransitions { 300_ms };
+
+#if ENABLE(FULLSCREEN_API)
+static bool isHiddenBehindFullscreenElement(const Node& descendantCandidate)
+{
+    // Fullscreen status is propagated on the ancestor document chain all the way to the top document.
+    auto& document = descendantCandidate.document();
+    auto* topMostFullScreenElement = document.topDocument().fullscreenManager().fullscreenElement();
+    if (!topMostFullScreenElement)
+        return false;
+
+    // If the document where the node lives does not have an active fullscreen element, it is a sibling/nephew document -> not a descendant.
+    auto* fullscreenElement = document.fullscreenManager().fullscreenElement();
+    if (!fullscreenElement)
+        return true;
+    return !descendantCandidate.isDescendantOf(*fullscreenElement);
+}
+#endif
 
 bool ContentChangeObserver::isVisuallyHidden(const Node& node)
 {
@@ -88,6 +107,11 @@ bool ContentChangeObserver::isVisuallyHidden(const Node& node)
         if (!parent->renderStyle() || !parent->renderStyle()->opacity())
             return true;
     }
+
+#if ENABLE(FULLSCREEN_API)
+    if (isHiddenBehindFullscreenElement(node))
+        return true;
+#endif
     return false;
 }
 
@@ -148,6 +172,12 @@ static void willNotProceedWithClick(Frame& mainFrame)
         if (auto* document = frame->document())
             document->contentChangeObserver().willNotProceedWithClick();
     }
+}
+
+void ContentChangeObserver::didCancelPotentialTap(Frame& mainFrame)
+{
+    LOG(ContentObservation, "didCancelPotentialTap: cancel ongoing content change observing.");
+    WebCore::willNotProceedWithClick(mainFrame);
 }
 
 void ContentChangeObserver::didRecognizeLongPress(Frame& mainFrame)
@@ -393,7 +423,7 @@ void ContentChangeObserver::contentVisibilityDidChange()
 void ContentChangeObserver::touchEventDidStart(PlatformEvent::Type eventType)
 {
 #if ENABLE(TOUCH_EVENTS)
-    if (!m_document.settings().contentChangeObserverEnabled())
+    if (!m_document.settings().contentChangeObserverEnabled() || m_document.quirks().shouldDisableContentChangeObserverTouchEventAdjustment())
         return;
     if (eventType != PlatformEvent::Type::TouchStart)
         return;
@@ -567,7 +597,7 @@ void ContentChangeObserver::adjustObservedState(Event event)
 
 bool ContentChangeObserver::shouldObserveVisibilityChangeForElement(const Element& element)
 {
-    return isObservingContentChanges() && !hasVisibleChangeState() && !visibleRendererWasDestroyed(element);
+    return isObservingContentChanges() && !hasVisibleChangeState() && !visibleRendererWasDestroyed(element) && !element.document().quirks().shouldIgnoreContentChange(element);
 }
 
 ContentChangeObserver::StyleChangeScope::StyleChangeScope(Document& document, const Element& element)

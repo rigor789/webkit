@@ -34,6 +34,7 @@
 #import "AppKitSPI.h"
 #import "AttributedString.h"
 #import "ColorSpaceData.h"
+#import "FontInfo.h"
 #import "FullscreenClient.h"
 #import "GenericCallback.h"
 #import "InsertTextOptions.h"
@@ -2809,9 +2810,23 @@ void WebViewImpl::updateFontManagerIfNeeded()
     if (!fontPanelIsVisible && !m_page->editorState().isContentRichlyEditable)
         return;
 
-    m_page->fontAtSelection([](const String& fontName, double fontSize, bool selectionHasMultipleFonts, WebKit::CallbackBase::Error error) {
-        if (NSFont *font = [NSFont fontWithName:fontName size:fontSize])
-            [NSFontManager.sharedFontManager setSelectedFont:font isMultiple:selectionHasMultipleFonts];
+    m_page->fontAtSelection([](const FontInfo& fontInfo, double fontSize, bool selectionHasMultipleFonts, CallbackBase::Error error) {
+        if (error != CallbackBase::Error::None)
+            return;
+
+        NSDictionary *attributeDictionary = (__bridge NSDictionary *)fontInfo.fontAttributeDictionary.get();
+        if (!attributeDictionary)
+            return;
+
+        NSFontDescriptor *descriptor = [NSFontDescriptor fontDescriptorWithFontAttributes:attributeDictionary];
+        if (!descriptor)
+            return;
+
+        NSFont *font = [NSFont fontWithDescriptor:descriptor size:fontSize];
+        if (!font)
+            return;
+
+        [NSFontManager.sharedFontManager setSelectedFont:font isMultiple:selectionHasMultipleFonts];
     });
 }
 
@@ -4190,21 +4205,23 @@ void WebViewImpl::setPromisedDataForImage(WebCore::Image* image, NSString *filen
     m_promisedImage = image;
 }
 
-void WebViewImpl::pasteboardChangedOwner(NSPasteboard *pasteboard)
+void WebViewImpl::clearPromisedDragImage()
 {
     m_promisedImage = nullptr;
+}
+
+void WebViewImpl::pasteboardChangedOwner(NSPasteboard *pasteboard)
+{
+    clearPromisedDragImage();
     m_promisedFilename = emptyString();
     m_promisedURL = emptyString();
 }
 
 void WebViewImpl::provideDataForPasteboard(NSPasteboard *pasteboard, NSString *type)
 {
-    // FIXME: need to support NSRTFDPboardType
-
-    if ([type isEqual:WebCore::legacyTIFFPasteboardType()] && m_promisedImage) {
+    // FIXME: Need to support NSRTFDPboardType.
+    if ([type isEqual:WebCore::legacyTIFFPasteboardType()] && m_promisedImage)
         [pasteboard setData:(__bridge NSData *)m_promisedImage->tiffRepresentation() forType:WebCore::legacyTIFFPasteboardType()];
-        m_promisedImage = nullptr;
-    }
 }
 
 static BOOL fileExists(NSString *path)

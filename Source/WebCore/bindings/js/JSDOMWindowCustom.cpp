@@ -264,6 +264,25 @@ bool JSDOMWindow::getOwnPropertySlotByIndex(JSObject* object, ExecState* state, 
     return Base::getOwnPropertySlotByIndex(thisObject, state, index, slot);
 }
 
+void JSDOMWindow::doPutPropertySecurityCheck(JSObject* cell, ExecState* state, PropertyName propertyName, PutPropertySlot&)
+{
+    VM& vm = state->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    auto* thisObject = jsCast<JSDOMWindow*>(cell);
+    if (!thisObject->wrapped().frame())
+        return;
+
+    String errorMessage;
+    if (!BindingSecurity::shouldAllowAccessToDOMWindow(*state, thisObject->wrapped(), errorMessage)) {
+        // We only allow setting "location" attribute cross-origin.
+        if (propertyName == static_cast<JSVMClientData*>(vm.clientData)->builtinNames().locationPublicName())
+            return;
+        throwSecurityError(*state, scope, errorMessage);
+        return;
+    }
+}
+
 bool JSDOMWindow::put(JSCell* cell, ExecState* state, PropertyName propertyName, JSValue value, PutPropertySlot& slot)
 {
     VM& vm = state->vm();
@@ -617,6 +636,14 @@ JSValue JSDOMWindow::openDatabase(JSC::ExecState& state) const
         return JSFunction::create(vm, state.lexicalGlobalObject(), 4, name, jsDOMWindowInstanceFunctionOpenDatabase, NoIntrinsic);
 
     return JSFunction::createFunctionThatMasqueradesAsUndefined(vm, state.lexicalGlobalObject(), 4, name, jsDOMWindowInstanceFunctionOpenDatabase, NoIntrinsic);
+}
+
+void JSDOMWindow::setOpenDatabase(JSC::ExecState& state, JSC::JSValue value)
+{
+    if (!BindingSecurity::shouldAllowAccessToDOMWindow(&state, wrapped(), ThrowSecurityError))
+        return;
+
+    replaceStaticPropertySlot(state.vm(), this, Identifier::fromString(&state.vm(), "openDatabase"), value);
 }
 
 } // namespace WebCore

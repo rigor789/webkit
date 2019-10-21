@@ -52,8 +52,13 @@ static void collectDescendantViewsAtPoint(Vector<UIView *, 16>& viewsAtPoint, UI
             //        It is currently only needed for scroll views.
             if (!view.isUserInteractionEnabled)
                 return false;
+
+            if (CGRectIsEmpty([view frame]))
+                return false;
+
             if (![view pointInside:subviewPoint withEvent:event])
                 return false;
+
             if (![view isKindOfClass:[WKCompositingView class]])
                 return true;
             auto* node = RemoteLayerTreeNode::forCALayer(view.layer);
@@ -101,6 +106,11 @@ OptionSet<WebCore::TouchAction> touchActionsForPoint(UIView *rootView, const Web
 
     UIView *hitView = nil;
     for (auto *view : WTF::makeReversedRange(viewsAtPoint)) {
+        // We only hit WKChildScrollView directly if its content layer doesn't have an event region.
+        // We don't generate the region if there is nothing interesting in it, meaning the touch-action is auto.
+        if ([view isKindOfClass:[WKChildScrollView class]])
+            return WebCore::TouchAction::Auto;
+
         if ([view isKindOfClass:[WKCompositingView class]]) {
             hitView = view;
             break;
@@ -234,7 +244,7 @@ UIScrollView *findActingScrollParent(UIScrollView *scrollView, const RemoteLayer
         layer.allowsHitTesting = NO;
 #endif
     }
-    
+
     return self;
 }
 
@@ -247,6 +257,22 @@ UIScrollView *findActingScrollParent(UIScrollView *scrollView, const RemoteLayer
 
 #if USE(UIREMOTEVIEW_CONTEXT_HOSTING)
 @implementation WKUIRemoteView
+
+- (instancetype)initWithFrame:(CGRect)frame pid:(pid_t)pid contextID:(uint32_t)contextID
+{
+    self = [super initWithFrame:frame pid:pid contextID:contextID];
+    if (!self)
+        return nil;
+
+#if PLATFORM(MACCATALYST)
+    // When running iOS apps on macOS, kCAContextIgnoresHitTest isn't respected; instead, we avoid
+    // hit-testing to the remote context by disabling hit-testing on its host layer. See
+    // <rdar://problem/40591107> for more details.
+    self.layerHost.allowsHitTesting = NO;
+#endif
+
+    return self;
+}
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event
 {

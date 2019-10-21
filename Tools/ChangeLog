@@ -1,3 +1,2491 @@
+2019-08-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r248823. rdar://problem/54454713
+
+    Source/WebKit:
+    Use bundlePath SPI in AccessibilitySupport for WebProcessLoader
+    https://bugs.webkit.org/show_bug.cgi?id=200367
+    
+    Patch by Eric Liang <ericliang@apple.com> on 2019-08-17
+    Reviewed by Darin Adler.
+    
+    * Platform/spi/ios/AccessibilitySupportSPI.h:
+    * WebProcess/cocoa/WebProcessCocoa.mm:
+    (WebKit::accessibilityWebProcessLoaderBundlePath):
+    (WebKit::registerWithAccessibility):
+    
+    Source/WTF:
+    Added HAVE_ACCESSIBILITY_BUNDLES_PATH
+    https://bugs.webkit.org/show_bug.cgi?id=200367
+    
+    Patch by Eric Liang <ericliang@apple.com> on 2019-08-17
+    Reviewed by Darin Adler.
+    
+    * wtf/Platform.h:
+    
+    Tools:
+    Tested that accessibility WebProcessLoader bundle is loaded for the correct path.
+    https://bugs.webkit.org/show_bug.cgi?id=200367
+    
+    Patch by Eric Liang <ericliang@apple.com> on 2019-08-17
+    Reviewed by Darin Adler.
+    
+    Added AccessibilityTestPlugin on the web process to report whether a bundle is loaded and its path, so that it can be tested on WKContentView.
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/AccessibilityTestPlugin.mm: Added.
+    (-[AccessibilityTestPlugin webProcessPlugIn:didCreateBrowserContextController:]):
+    (-[AccessibilityTestPlugin checkAccessibilityWebProcessLoaderBundleIsLoaded:]):
+    * TestWebKitAPI/Tests/WebKitCocoa/AccessibilityTestSupportProtocol.h: Added.
+    * TestWebKitAPI/Tests/ios/AccessibilityTestsIOS.mm:
+    (TestWebKitAPI::TEST):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248823 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-17  Eric Liang  <ericliang@apple.com>
+
+            Tested that accessibility WebProcessLoader bundle is loaded for the correct path.
+            https://bugs.webkit.org/show_bug.cgi?id=200367
+
+            Reviewed by Darin Adler.
+
+            Added AccessibilityTestPlugin on the web process to report whether a bundle is loaded and its path, so that it can be tested on WKContentView.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKitCocoa/AccessibilityTestPlugin.mm: Added.
+            (-[AccessibilityTestPlugin webProcessPlugIn:didCreateBrowserContextController:]):
+            (-[AccessibilityTestPlugin checkAccessibilityWebProcessLoaderBundleIsLoaded:]):
+            * TestWebKitAPI/Tests/WebKitCocoa/AccessibilityTestSupportProtocol.h: Added.
+            * TestWebKitAPI/Tests/ios/AccessibilityTestsIOS.mm:
+            (TestWebKitAPI::TEST):
+
+2019-08-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r248776. rdar://problem/54455007
+
+    REGRESSION (r248436): WKWebView doesn’t respect isOpaque setting in NIB.
+    https://bugs.webkit.org/show_bug.cgi?id=200802
+    rdar://problem/54357818
+    
+    Reviewed by Tim Horton.
+    
+    Source/WebKit:
+    
+    Tests: WKWebView.IsOpaqueDefault, WKWebView.SetOpaqueYes, WKWebView.SetOpaqueNo, WKWebView.IsOpaqueYesSubclassOverridden,
+    WKWebView.IsOpaqueNoSubclassOverridden, WKWebView.IsOpaqueYesDecodedFromArchive, WKWebView.IsOpaqueNoDecodedFromArchive,
+    WKWebView.IsOpaqueDrawsBackgroundYesConfiguration, WKWebView.IsOpaqueDrawsBackgroundNoConfiguration.
+    
+    * UIProcess/API/Cocoa/WKWebView.mm:
+    (-[WKWebView _initializeWithConfiguration:]): Call _setOpaqueInternal:NO instead of self.opaque = NO.
+    (-[WKWebView _setOpaqueInternal:]): Added. Moved code from setOpaque:.
+    (-[WKWebView setOpaque:]): Call _setOpaqueInternal:.
+    
+    Tools:
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj: Added WKWebViewOpaque.mm.
+    * TestWebKitAPI/Tests/ios/WKWebViewOpaque.mm: Added.
+    (-[OpaqueTestWKWebView isOpaque]): Added.
+    (-[NonOpaqueTestWKWebView isOpaque]): Added.
+    (isOpaque): Added.
+    (TEST): Added WKWebView.IsOpaqueDefault, WKWebView.SetOpaqueYes, WKWebView.SetOpaqueNo, WKWebView.IsOpaqueYesSubclassOverridden,
+    WKWebView.IsOpaqueNoSubclassOverridden, WKWebView.IsOpaqueYesDecodedFromArchive, WKWebView.IsOpaqueNoDecodedFromArchive,
+    WKWebView.IsOpaqueDrawsBackgroundYesConfiguration, WKWebView.IsOpaqueDrawsBackgroundNoConfiguration.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248776 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-16  Timothy Hatcher  <timothy@apple.com>
+
+            REGRESSION (r248436): WKWebView doesn’t respect isOpaque setting in NIB.
+            https://bugs.webkit.org/show_bug.cgi?id=200802
+            rdar://problem/54357818
+
+            Reviewed by Tim Horton.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj: Added WKWebViewOpaque.mm.
+            * TestWebKitAPI/Tests/ios/WKWebViewOpaque.mm: Added.
+            (-[OpaqueTestWKWebView isOpaque]): Added.
+            (-[NonOpaqueTestWKWebView isOpaque]): Added.
+            (isOpaque): Added.
+            (TEST): Added WKWebView.IsOpaqueDefault, WKWebView.SetOpaqueYes, WKWebView.SetOpaqueNo, WKWebView.IsOpaqueYesSubclassOverridden,
+            WKWebView.IsOpaqueNoSubclassOverridden, WKWebView.IsOpaqueYesDecodedFromArchive, WKWebView.IsOpaqueNoDecodedFromArchive,
+            WKWebView.IsOpaqueDrawsBackgroundYesConfiguration, WKWebView.IsOpaqueDrawsBackgroundNoConfiguration.
+
+2019-08-15  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248717. rdar://problem/54360854
+
+    WKUIDelegate's webView:contextMenuDidEndForElement: should be called when context menus end
+    https://bugs.webkit.org/show_bug.cgi?id=200750
+    <rdar://problem/54232261> and <rdar://problem/52355829>
+    
+    Patch by Alex Christensen <achristensen@webkit.org> on 2019-08-15
+    Reviewed by Tim Horton.
+    
+    Source/WebKit:
+    
+    * UIProcess/ios/WKContentViewInteraction.mm:
+    (-[WKContentView contextMenuInteraction:willEndForConfiguration:animator:]):
+    
+    Tools:
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/ContextMenus.mm:
+    (-[TestContextMenuUIDelegate webView:contextMenuConfigurationForElement:completionHandler:]):
+    (-[TestContextMenuUIDelegate webView:contextMenuForElement:willCommitWithAnimator:]):
+    (-[TestContextMenuUIDelegate webView:contextMenuDidEndForElement:]):
+    (contextMenuWebViewDriver):
+    (TEST):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248717 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-15  Alex Christensen  <achristensen@webkit.org>
+
+            WKUIDelegate's webView:contextMenuDidEndForElement: should be called when context menus end
+            https://bugs.webkit.org/show_bug.cgi?id=200750
+            <rdar://problem/54232261> and <rdar://problem/52355829>
+
+            Reviewed by Tim Horton.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/ContextMenus.mm:
+            (-[TestContextMenuUIDelegate webView:contextMenuConfigurationForElement:completionHandler:]):
+            (-[TestContextMenuUIDelegate webView:contextMenuForElement:willCommitWithAnimator:]):
+            (-[TestContextMenuUIDelegate webView:contextMenuDidEndForElement:]):
+            (contextMenuWebViewDriver):
+            (TEST):
+
+2019-08-15  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248701. rdar://problem/54333796
+
+    [iOS](REGRESSION: r200487): WebKit.RequestActivatedElementInfoForRotatedImage fails on iOS 13
+    https://bugs.webkit.org/show_bug.cgi?id=200726
+    
+    Patch by Said Abou-Hallawa <sabouhallawa@apple.com> on 2019-08-14
+    Reviewed by Simon Fraser.
+    
+    To get the pixels as an array of colors, draw the image into a memory
+    context. The backing memory buffer can then be accessed to get the image
+    pixels' colors.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/WKRequestActivatedElementInfo.mm:
+    (TestWebKitAPI::TEST):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248701 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-14  Said Abou-Hallawa  <sabouhallawa@apple.com>
+
+            [iOS](REGRESSION: r200487): WebKit.RequestActivatedElementInfoForRotatedImage fails on iOS 13
+            https://bugs.webkit.org/show_bug.cgi?id=200726
+
+            Reviewed by Simon Fraser.
+
+            To get the pixels as an array of colors, draw the image into a memory
+            context. The backing memory buffer can then be accessed to get the image
+            pixels' colors.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/WKRequestActivatedElementInfo.mm:
+            (TestWebKitAPI::TEST):
+
+2019-08-13  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248598. rdar://problem/54282797
+
+    Crash under IPC::Connection::markCurrentlyDispatchedMessageAsInvalid()
+    https://bugs.webkit.org/show_bug.cgi?id=200674
+    <rdar://problem/50692748>
+    
+    Reviewed by Geoff Garen.
+    
+    Source/WebKit:
+    
+    When the client terminates a provisional process (e.g. via the [WKWebView _killWebContentProcessAndResetState]
+    SPI), the WebProcessProxy would notify its associated WebPageProxy objects that it had terminated but would fail
+    to notify its associated ProvisionalPageProxy objects. As a result, those objects would not get destroyed and
+    would still think that they were in the middle of a provisional load the next time a load started. This inconsistent
+    state would lead to crashes such as the one in the radar.
+    
+    * UIProcess/ProvisionalPageProxy.cpp:
+    (WebKit::ProvisionalPageProxy::cancel):
+    * UIProcess/WebProcessProxy.cpp:
+    (WebKit::WebProcessProxy::requestTermination):
+    
+    Tools:
+    
+    Add API test coverage.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/ProcessSwapOnNavigation.mm:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248598 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-13  Chris Dumez  <cdumez@apple.com>
+
+            Crash under IPC::Connection::markCurrentlyDispatchedMessageAsInvalid()
+            https://bugs.webkit.org/show_bug.cgi?id=200674
+            <rdar://problem/50692748>
+
+            Reviewed by Geoff Garen.
+
+            Add API test coverage.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/ProcessSwapOnNavigation.mm:
+
+2019-08-13  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Cherry-pick r248496. rdar://problem/54280310
+
+    KeyboardInputTests.CaretSelectionRectAfterRestoringFirstResponder API tests time out on iPad
+    https://bugs.webkit.org/show_bug.cgi?id=200604
+    <rdar://problem/51273130>
+    
+    Reviewed by Megan Gardner.
+    
+    Tweak some API tests so that they work on iPad simulator. These tests checked that the final caret rect was
+    {{16, 13}, {2, 15}}; however, this is only correct behavior on iPhone, where we will scale the page so that the
+    focused element's font size is legible. Note that when the page is scaled, we scale the height but not the
+    width of the caret, which is why the width of the caret (in content coordinates) decreases while the height
+    remains the same.
+    
+    We don't have the same behavior on iPad, so the expected caret rect is {{16, 13}, {3, 15}}, which is equal to
+    the caret rect at initial scale 1.
+    
+    * TestWebKitAPI/Tests/ios/KeyboardInputTestsIOS.mm:
+    
+    
+    git-svn-id: http://svn.webkit.org/repository/webkit/trunk@248496 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-09  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            KeyboardInputTests.CaretSelectionRectAfterRestoringFirstResponder API tests time out on iPad
+            https://bugs.webkit.org/show_bug.cgi?id=200604
+            <rdar://problem/51273130>
+
+            Reviewed by Megan Gardner.
+
+            Tweak some API tests so that they work on iPad simulator. These tests checked that the final caret rect was
+            {{16, 13}, {2, 15}}; however, this is only correct behavior on iPhone, where we will scale the page so that the
+            focused element's font size is legible. Note that when the page is scaled, we scale the height but not the
+            width of the caret, which is why the width of the caret (in content coordinates) decreases while the height
+            remains the same.
+
+            We don't have the same behavior on iPad, so the expected caret rect is {{16, 13}, {3, 15}}, which is equal to
+            the caret rect at initial scale 1.
+
+            * TestWebKitAPI/Tests/ios/KeyboardInputTestsIOS.mm:
+
+2019-08-13  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248548. rdar://problem/54237813
+
+    Fix Crash in Mail Search
+    https://bugs.webkit.org/show_bug.cgi?id=200589
+    Source/WebKit:
+    
+    <rdar://problem/53666720>
+    
+    Reviewed by Tim Horton.
+    
+    If we search in Mail backwards first, for AppKit reasons
+    we get a -1 for the index of the found item.
+    Do not try and insert data in this case.
+    
+    * UIProcess/mac/WKTextFinderClient.mm:
+    
+    Tools:
+    
+    Reviewed by Tim Horton.
+    
+    If you search backwards first in mail, we would crash,
+    this tests that codepath.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/FindInPage.mm:
+    (TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248548 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-12  Megan Gardner  <megan_gardner@apple.com>
+
+            Fix Crash in Mail Search
+            https://bugs.webkit.org/show_bug.cgi?id=200589
+
+            Reviewed by Tim Horton.
+
+            If you search backwards first in mail, we would crash,
+            this tests that codepath.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/FindInPage.mm:
+            (TEST):
+
+2019-08-13  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248166. rdar://problem/54237837
+
+    [macOS 10.15] Image dragged from Safari does not appear in Notes
+    https://bugs.webkit.org/show_bug.cgi?id=188490
+    <rdar://problem/39462717>
+    
+    Reviewed by Andy Estes.
+    
+    Source/WebKit:
+    
+    Removes some logic that clears out the cached promised drag image in the UI process when WebKit is asked to
+    provide TIFF image data. This prevents the drop destination from asking for promised image data, if anything
+    else (e.g. the system) also asks the web view to provide the same data. Additionally, this logic didn't
+    previously guarantee that the promised image would be cleared anyways, since it is dependent on the drop target
+    actually requesting the promised image in order to perform the cleanup.
+    
+    In lieu of clearing the promised drag image when it's requested, we instead clear it out upon mainframe
+    navigation, in PageClientImpl::didCommitLoadForMainFrame.
+    
+    Test: DragAndDropTests.MultiplePromisedImageDataRequests
+    
+    * UIProcess/Cocoa/WebViewImpl.h:
+    * UIProcess/Cocoa/WebViewImpl.mm:
+    (WebKit::WebViewImpl::clearPromisedDragImage):
+    (WebKit::WebViewImpl::pasteboardChangedOwner):
+    (WebKit::WebViewImpl::provideDataForPasteboard):
+    
+    Fix the bug by not immediately clearing out the promised drag image.
+    
+    * UIProcess/mac/PageClientImplMac.mm:
+    (WebKit::PageClientImpl::didCommitLoadForMainFrame):
+    
+    Tools:
+    
+    Add a test to verify that promised image data can be delivered to multiple pasteboards when performing a drop.
+    
+    * TestWebKitAPI/Tests/mac/DragAndDropTestsMac.mm:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248166 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-02  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [macOS 10.15] Image dragged from Safari does not appear in Notes
+            https://bugs.webkit.org/show_bug.cgi?id=188490
+            <rdar://problem/39462717>
+
+            Reviewed by Andy Estes.
+
+            Add a test to verify that promised image data can be delivered to multiple pasteboards when performing a drop.
+
+            * TestWebKitAPI/Tests/mac/DragAndDropTestsMac.mm:
+
+2019-08-13  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248541. rdar://problem/54237768
+
+    [iPadOS] Web pages sometimes load at half width in Safari
+    https://bugs.webkit.org/show_bug.cgi?id=200624
+    <rdar://problem/52694257>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebKit:
+    
+    Whenever WKWebView's size changes, it normally notifies the web content process by calling into WebPageProxy::
+    setViewportConfigurationViewLayoutSize, which remembers this view layout size using a member variable,
+    m_viewportConfigurationViewLayoutSize. Later, m_viewportConfigurationViewLayoutSize is consulted as a part of
+    constructing the creation parameters used to set up a new page.
+    
+    However, during animated resize, WKWebView avoids these calls to setViewportConfigurationViewLayoutSize via the
+    dynamic viewport update mode check in -[WKWebView _frameOrBoundsChanged]. Instead, the new view layout size is
+    pushed to the web process by calling WebPageProxy::dynamicViewportSizeUpdate.
+    
+    Since dynamicViewportSizeUpdate doesn't update m_viewportConfigurationViewLayoutSize, the next
+    WebPageCreationParameters that are created with this WebPageProxy (e.g. after a process swap, or after
+    reloading, if the process was terminated) will use the size of the WKWebView prior to the most recent animated
+    resize.
+    
+    To fix the bug, we simply make sure that m_viewportConfigurationViewLayoutSize is updated in the dynamic
+    viewport size update (i.e. animated resize) case as well.
+    
+    Test: WebKit.CreateWebPageAfterAnimatedResize
+    
+    * UIProcess/ios/WebPageProxyIOS.mm:
+    (WebKit::WebPageProxy::dynamicViewportSizeUpdate):
+    
+    Tools:
+    
+    Add an API test to verify that after performing an animated resize and killing the web process, the subsequent
+    web page is created using the post-animated-resize web view dimensions, rather than the original layout
+    dimensions.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/AnimatedResize.mm:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248541 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-12  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [iPadOS] Web pages sometimes load at half width in Safari
+            https://bugs.webkit.org/show_bug.cgi?id=200624
+            <rdar://problem/52694257>
+
+            Reviewed by Simon Fraser.
+
+            Add an API test to verify that after performing an animated resize and killing the web process, the subsequent
+            web page is created using the post-animated-resize web view dimensions, rather than the original layout
+            dimensions.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/AnimatedResize.mm:
+
+2019-08-13  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248487. rdar://problem/54237679
+
+    [iOS 13] Google Docs/Slides/Sheets: paste often doesn't work and sometimes produces an error
+    https://bugs.webkit.org/show_bug.cgi?id=200591
+    <rdar://problem/54102238>
+    
+    Reviewed by Ryosuke Niwa and Tim Horton.
+    
+    Source/WebKit:
+    
+    Adopts UIKit SPI to avoid incrementing the general pasteboard's change count whenever an editable element is
+    focused. This is due to how, in iOS 13, UIKit temporarily writes an image to the pasteboard when showing the
+    keyboard, to determine whether or not to show the Memojis in the input view.
+    
+    This causes UIPasteboard's changeCount to increment twice due to adding and then removing the image, which means
+    that the changeCount sanity checks in the web process will race against the pasteboard gaining and then losing
+    this temporary image.
+    
+    Instead, the new -supportsImagePaste SPI may be used to short-circuit this step, and avoid updating the
+    changeCount when UIKeyboardImpl's delegate changes.
+    
+    * UIProcess/ios/WKContentViewInteraction.mm:
+    (-[WKContentView supportsImagePaste]):
+    
+    Tools:
+    
+    Add a new API test to exercise -supportsImagePaste.
+    
+    * TestWebKitAPI/Tests/ios/KeyboardInputTestsIOS.mm:
+    (TestWebKitAPI::TEST):
+    * TestWebKitAPI/ios/UIKitSPI.h:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248487 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-09  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [iOS 13] Google Docs/Slides/Sheets: paste often doesn't work and sometimes produces an error
+            https://bugs.webkit.org/show_bug.cgi?id=200591
+            <rdar://problem/54102238>
+
+            Reviewed by Ryosuke Niwa and Tim Horton.
+
+            Add a new API test to exercise -supportsImagePaste.
+
+            * TestWebKitAPI/Tests/ios/KeyboardInputTestsIOS.mm:
+            (TestWebKitAPI::TEST):
+            * TestWebKitAPI/ios/UIKitSPI.h:
+
+2019-08-13  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248281. rdar://problem/54237787
+
+    iOS 13: Overflow:hidden on body prevents PDF scroll
+    https://bugs.webkit.org/show_bug.cgi?id=200435
+    rdar://problem/53942888
+    
+    Reviewed by Tim Horton.
+    Source/WebKit:
+    
+    When we navigate from an overflow:hidden HTML page to a custom view (like PDF), we need
+    to make sure that the scroll view is scrollable.
+    
+    * UIProcess/API/Cocoa/WKWebView.mm:
+    (-[WKWebView _setHasCustomContentView:loadedMIMEType:]):
+    
+    Tools:
+    
+    When we navigate from an overflow:hidden HTML page to a custom view (like PDF), we need
+    to make sure that the scroll view is scrollable.
+    
+    * TestWebKitAPI/Tests/ios/ScrollViewScrollabilityTests.mm:
+    (TestWebKitAPI::TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248281 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-05  Simon Fraser  <simon.fraser@apple.com>
+
+            iOS 13: Overflow:hidden on body prevents PDF scroll
+            https://bugs.webkit.org/show_bug.cgi?id=200435
+            rdar://problem/53942888
+
+            Reviewed by Tim Horton.
+
+            When we navigate from an overflow:hidden HTML page to a custom view (like PDF), we need
+            to make sure that the scroll view is scrollable.
+
+            * TestWebKitAPI/Tests/ios/ScrollViewScrollabilityTests.mm:
+            (TestWebKitAPI::TEST):
+
+2019-08-13  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248169. rdar://problem/54237663
+
+    Add accessibility object method to determine whether an element is inside a table cell. Needed for iOS accessibility client.
+    https://bugs.webkit.org/show_bug.cgi?id=200394
+    <rdar://problem/52914964>
+    
+    Patch by Andres Gonzalez <andresg_22@apple.com> on 2019-08-02
+    Reviewed by Chris Fleizach.
+    
+    Source/WebCore:
+    
+    Test: accessibility/ios-simulator/element-in-table-cell.html
+    
+    Added _accessibilityIsInTableCell needed for iOS accessibility client.
+    * accessibility/ios/WebAccessibilityObjectWrapperIOS.mm:
+    (-[WebAccessibilityObjectWrapper _accessibilityIsInTableCell]):
+    
+    Tools:
+    
+    Glue code to exercise new method [WebAccessibilityObjectWrapper _accessibilityIsInTableCell].
+    
+    * WebKitTestRunner/InjectedBundle/AccessibilityUIElement.cpp:
+    (WTR::AccessibilityUIElement::isInTableCell const):
+    * WebKitTestRunner/InjectedBundle/AccessibilityUIElement.h:
+    * WebKitTestRunner/InjectedBundle/Bindings/AccessibilityUIElement.idl:
+    * WebKitTestRunner/InjectedBundle/ios/AccessibilityUIElementIOS.mm:
+    (WTR::AccessibilityUIElement::isInTableCell const):
+    
+    LayoutTests:
+    
+    New test that exercises [WebAccessibilityObjectWrapper _accessibilityIsInTableCell].
+    
+    * accessibility/ios-simulator/element-in-table-cell-expected.txt: Added.
+    * accessibility/ios-simulator/element-in-table-cell.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248169 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-02  Andres Gonzalez  <andresg_22@apple.com>
+
+            Add accessibility object method to determine whether an element is inside a table cell. Needed for iOS accessibility client.
+            https://bugs.webkit.org/show_bug.cgi?id=200394
+            <rdar://problem/52914964>
+
+            Reviewed by Chris Fleizach.
+
+            Glue code to exercise new method [WebAccessibilityObjectWrapper _accessibilityIsInTableCell].
+
+            * WebKitTestRunner/InjectedBundle/AccessibilityUIElement.cpp:
+            (WTR::AccessibilityUIElement::isInTableCell const):
+            * WebKitTestRunner/InjectedBundle/AccessibilityUIElement.h:
+            * WebKitTestRunner/InjectedBundle/Bindings/AccessibilityUIElement.idl:
+            * WebKitTestRunner/InjectedBundle/ios/AccessibilityUIElementIOS.mm:
+            (WTR::AccessibilityUIElement::isInTableCell const):
+
+2019-08-12  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248491. rdar://problem/54130636
+
+    Don't allow cross-origin iframes to autofocus
+    https://bugs.webkit.org/show_bug.cgi?id=200515
+    <rdar://problem/54092988>
+    
+    Reviewed by Ryosuke Niwa.
+    
+    Source/WebCore:
+    
+    According to Step 6 in the WhatWG Spec (https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofocusing-a-form-control:-the-autofocus-attribute),
+    the 'autofocus' attribute shouldn't work for cross-origin iframes.
+    
+    This change is based on the Blink change (patch by <mustaq@chromium.org>):
+    <https://chromium-review.googlesource.com/c/chromium/src/+/1593026>
+    
+    Also disallow cross-origin iframes from focusing programmatically without ever having
+    had any user interaction.
+    
+    * dom/Element.cpp: Check if an invalid frame is trying to grab the focus.
+    (WebCore::Element::focus):
+    * html/HTMLFormControlElement.cpp: Check if the focus is moving to an invalid frame.
+    (WebCore::shouldAutofocus):
+    * page/DOMWindow.cpp: Check if an invalid frame is trying to grab the focus.
+    (WebCore::DOMWindow::focus):
+    
+    Tools:
+    
+    Make WebKit.FocusedFrameAfterCrash use same-origin iframes instead
+    of cross-origin iframes, since it depends on focusing one of the
+    frames.
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKit/ReloadPageAfterCrash.cpp:
+    (TestWebKitAPI::TEST):
+    * TestWebKitAPI/Tests/WebKit/many-same-origin-iframes.html: Added.
+    
+    LayoutTests:
+    
+    Add test coverage, and simulate user interaction in existing tests
+    that require focusing a cross-origin frame.
+    
+    * http/tests/security/clipboard/resources/copy-html.html:
+    * http/tests/security/clipboard/resources/copy-mso-list.html:
+    * http/tests/security/clipboard/resources/copy-url.html:
+    * http/wpt/html/interaction/focus/no-cross-origin-element-focus-expected.txt: Added.
+    * http/wpt/html/interaction/focus/no-cross-origin-element-focus.html: Added.
+    * http/wpt/html/interaction/focus/no-cross-origin-window-focus-expected.txt: Added.
+    * http/wpt/html/interaction/focus/no-cross-origin-window-focus.html: Added.
+    * http/wpt/html/interaction/focus/resources/child-focus-element.html: Added.
+    * http/wpt/html/interaction/focus/resources/child-focus-window.html: Added.
+    * http/wpt/html/semantics/forms/autofocus/no-cross-origin-autofocus.sub-expected.txt: Added.
+    * http/wpt/html/semantics/forms/autofocus/no-cross-origin-autofocus.sub.html: Added.
+    * http/wpt/html/semantics/forms/autofocus/resources/child-autofocus.html: Added.
+    * http/wpt/webauthn/resources/last-layer-frame.https.html:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248491 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-09  Ali Juma  <ajuma@chromium.org>
+
+            Don't allow cross-origin iframes to autofocus
+            https://bugs.webkit.org/show_bug.cgi?id=200515
+            <rdar://problem/54092988>
+
+            Reviewed by Ryosuke Niwa.
+
+            Make WebKit.FocusedFrameAfterCrash use same-origin iframes instead
+            of cross-origin iframes, since it depends on focusing one of the
+            frames.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKit/ReloadPageAfterCrash.cpp:
+            (TestWebKitAPI::TEST):
+            * TestWebKitAPI/Tests/WebKit/many-same-origin-iframes.html: Added.
+
+2019-08-12  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248438. rdar://problem/54093220
+
+    [iOS] Position image information should respect the image orientation
+    https://bugs.webkit.org/show_bug.cgi?id=200487
+    
+    Patch by Said Abou-Hallawa <sabouhallawa@apple.com> on 2019-08-08
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    Re-factor CachedImage::imageSizeForRenderer() into another overriding
+    function which does not scale the imageSize. Therefore the new function
+    returns FloatSize while the original function returns LayoutSize.
+    
+    * loader/cache/CachedImage.cpp:
+    (WebCore::CachedImage::imageSizeForRenderer const):
+    * loader/cache/CachedImage.h:
+    * rendering/RenderElement.h:
+    
+    Source/WebKit:
+    
+    imagePositionInformation() should respect the image orientation when
+    drawing an Image to a ShareableBitmap context.
+    
+    boundsPositionInformation() already takes care of the image orientation
+    because it gets RenderImage::enclosingBoundingBox().
+    
+    * WebProcess/WebPage/ios/WebPageIOS.mm:
+    (WebKit::imagePositionInformation):
+    
+    Tools:
+    
+    Add an API test to verify the position image information is drawn rotated
+    because of respecting its image orientation.
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/WKRequestActivatedElementInfo.mm:
+    (TestWebKitAPI::TEST):
+    * TestWebKitAPI/Tests/WebKitCocoa/exif-orientation-8-llo.jpg: Added.
+    * TestWebKitAPI/Tests/WebKitCocoa/img-with-rotated-image.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248438 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-08  Said Abou-Hallawa  <sabouhallawa@apple.com>
+
+            [iOS] Position image information should respect the image orientation
+            https://bugs.webkit.org/show_bug.cgi?id=200487
+
+            Reviewed by Simon Fraser.
+
+            Add an API test to verify the position image information is drawn rotated
+            because of respecting its image orientation.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKitCocoa/WKRequestActivatedElementInfo.mm:
+            (TestWebKitAPI::TEST):
+            * TestWebKitAPI/Tests/WebKitCocoa/exif-orientation-8-llo.jpg: Added.
+            * TestWebKitAPI/Tests/WebKitCocoa/img-with-rotated-image.html: Added.
+
+2019-08-12  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248410. rdar://problem/54084721
+
+    Do not allow navigations of frames about to get replaced by the result of evaluating javascript: URLs
+    <rdar://problem/53788893> and https://bugs.webkit.org/show_bug.cgi?id=198786
+    
+    Reviewed by Geoff Garen.
+    
+    Source/WebCore:
+    
+    Covered by API Test
+    
+    Add a "willReplaceWithResultOfExecutingJavascriptURL" flag which is respected inside FrameLoader::isNavigationAllowed
+    
+    * bindings/js/ScriptController.cpp:
+    (WebCore::ScriptController::executeIfJavaScriptURL):
+    * bindings/js/ScriptController.h:
+    (WebCore::ScriptController::willReplaceWithResultOfExecutingJavascriptURL const):
+    
+    * loader/FrameLoader.cpp:
+    (WebCore::FrameLoader::isNavigationAllowed const):
+    
+    Tools:
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/mac/JavascriptURLNavigation.mm: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248410 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-08  Brady Eidson  <beidson@apple.com>
+
+            Do not allow navigations of frames about to get replaced by the result of evaluating javascript: URLs
+            <rdar://problem/53788893> and https://bugs.webkit.org/show_bug.cgi?id=198786
+
+            Reviewed by Geoff Garen.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/mac/JavascriptURLNavigation.mm: Added.
+
+2019-08-12  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248265. rdar://problem/54017842
+
+    Ping loads should not prevent page caching
+    https://bugs.webkit.org/show_bug.cgi?id=200418
+    <rdar://problem/53901632>
+    
+    Reviewed by Darin Adler.
+    
+    Source/WebCore:
+    
+    We normally prevent page caching if there were any pending subresource loads when navigating,
+    to avoid caching partial / broken content. However, this should not apply to Ping / Beacon
+    loads since those do not impact page rendering and can outlive the page.
+    
+    Tests: http/tests/navigation/page-cache-pending-ping-load-cross-origin.html
+           http/tests/navigation/page-cache-pending-ping-load-same-origin.html
+    
+    * history/PageCache.cpp:
+    (WebCore::PageCache::addIfCacheable):
+    After we've fired the 'pagehide' event in each frame, stop all the loads again. This is needed
+    since pages are allowed to start ping / beacon loads in their 'pagehide' handlers. If we do not
+    stop those loads, then the next call to canCachePage() would fail because the DocumentLoader is
+    still loading. Note that we're not actually preventing these ping loads from hitting the server
+    since we never cancel page loads and those can outlive their page.
+    
+    * loader/DocumentLoader.cpp:
+    (WebCore::shouldPendingCachedResourceLoadPreventPageCache):
+    (WebCore::areAllLoadersPageCacheAcceptable):
+    Make sure that Ping / Beacon / Prefetches / Icon loads do not prevent page caching.
+    
+    (WebCore::DocumentLoader::addSubresourceLoader):
+    Tweak assertion that was incorrect since we actually allow ping / beacon loads when the
+    document is about to enter PageCache (while firing pagehide event).
+    
+    Tools:
+    
+    Add TestOption to enable PageCache at UIProcess-level so that we can test
+    page caching when navigating cross-origin with PSON enabled.
+    
+    * WebKitTestRunner/TestController.cpp:
+    (WTR::TestController::resetPreferencesToConsistentValues):
+    (WTR::updateTestOptionsFromTestHeader):
+    * WebKitTestRunner/TestOptions.h:
+    (WTR::TestOptions::hasSameInitializationOptions const):
+    
+    LayoutTests:
+    
+    Add layout test coverage.
+    
+    * http/tests/navigation/page-cache-pending-ping-load-cross-origin-expected.txt: Added.
+    * http/tests/navigation/page-cache-pending-ping-load-cross-origin.html: Added.
+    * http/tests/navigation/page-cache-pending-ping-load-same-origin-expected.txt: Added.
+    * http/tests/navigation/page-cache-pending-ping-load-same-origin.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248265 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-04  Chris Dumez  <cdumez@apple.com>
+
+            Ping loads should not prevent page caching
+            https://bugs.webkit.org/show_bug.cgi?id=200418
+            <rdar://problem/53901632>
+
+            Reviewed by Darin Adler.
+
+            Add TestOption to enable PageCache at UIProcess-level so that we can test
+            page caching when navigating cross-origin with PSON enabled.
+
+            * WebKitTestRunner/TestController.cpp:
+            (WTR::TestController::resetPreferencesToConsistentValues):
+            (WTR::updateTestOptionsFromTestHeader):
+            * WebKitTestRunner/TestOptions.h:
+            (WTR::TestOptions::hasSameInitializationOptions const):
+
+2019-08-12  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248104. rdar://problem/53836566
+
+    UserMediaPermissionRequestManagerProxy should not use audio+video denied requests to deny audio-only or video-only requests
+    https://bugs.webkit.org/show_bug.cgi?id=200317
+    
+    Reviewed by Eric Carlson.
+    
+    Source/WebKit:
+    
+    Only match audio+video denied requests with new audio+video requests.
+    That will ensure that audio can still be captured if user denied access to the camera through preferences
+    and website started with a getUserMedia({audio: true, video: true}) call.
+    Covered by added API test.
+    
+    * UIProcess/UserMediaPermissionRequestManagerProxy.cpp:
+    (WebKit::UserMediaPermissionRequestManagerProxy::wasRequestDenied):
+    
+    Tools:
+    
+    * TestWebKitAPI/Tests/WebKit/getUserMediaAudioVideoCapture.html: Added
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKit/GetUserMediaReprompt.mm:
+    (-[GetUserMediaOnlyAudioUIDelegate _webView:requestMediaCaptureAuthorization:decisionHandler:]):
+    (-[GetUserMediaOnlyAudioUIDelegate _webView:checkUserMediaPermissionForURL:mainFrameURL:frameIdentifier:decisionHandler:]):
+    (TestWebKitAPI::TEST):
+    
+    LayoutTests:
+    
+    Update existing test with new behavior.
+    Added new test for the case where video is blocked but not audio.
+    
+    * fast/mediastream/getUserMedia-deny-persistency3-expected.txt:
+    * fast/mediastream/getUserMedia-deny-persistency3.html:
+    * fast/mediastream/getUserMedia-deny-persistency4-expected.txt: Added.
+    * fast/mediastream/getUserMedia-deny-persistency4.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248104 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-01  Youenn Fablet  <youenn@apple.com>
+
+            UserMediaPermissionRequestManagerProxy should not use audio+video denied requests to deny audio-only or video-only requests
+            https://bugs.webkit.org/show_bug.cgi?id=200317
+
+            Reviewed by Eric Carlson.
+
+            * TestWebKitAPI/Tests/WebKit/getUserMediaAudioVideoCapture.html: Added
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKit/GetUserMediaReprompt.mm:
+            (-[GetUserMediaOnlyAudioUIDelegate _webView:requestMediaCaptureAuthorization:decisionHandler:]):
+            (-[GetUserMediaOnlyAudioUIDelegate _webView:checkUserMediaPermissionForURL:mainFrameURL:frameIdentifier:decisionHandler:]):
+            (TestWebKitAPI::TEST):
+
+2019-08-12  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248095. rdar://problem/53820658
+
+    REGRESSION (r240942): first visually non-empty layout milestone is not reached in media documents until after the video finishes loading
+    https://bugs.webkit.org/show_bug.cgi?id=200293
+    <rdar://problem/52937749>
+    
+    Reviewed by Alex Christensen.
+    
+    Source/WebCore:
+    
+    r240942 changed FrameView::qualifiesAsVisuallyNonEmpty() to consider only documents in the
+    Interactive or Complete ready states as "finished parsing". Documents considered finished
+    parsing can qualify as visually non-empty even without exceeding the visual character or
+    pixel thresholds, but documents considered not finished must first exceed one of these
+    thresholds in order to qualify as visually non-empty.
+    
+    HTMLDocuments are placed in the Interactive ready state by their HTMLDocumentParsers.
+    However, HTMLDocument subclasses like ImageDocument and MediaDocument use their own custom
+    parsers that never set the Interactive ready state on their documents; these documents go
+    from Loading directly to Complete.
+    
+    In order for these HTMLDocument subclasses to be considered visually non-empty before they
+    finish loading they must render something that exceeds the visual character or pixel
+    thresholds. For image documents, rendering the image is usually enough to cross the
+    threshold, but for media documents the visual pixel threshold was never crossed because
+    videos did not contribute to the visually non-empty pixel count.
+    
+    As a result, media documents are not considered visually non-empty until the main resource
+    finishes loading. On iOS this means that the layer tree remains frozen until this point,
+    even though the media might have started autoplaying with audio long before it finished
+    loading.
+    
+    Fix this by teaching RenderVideo to contribute the video player's size to FrameView's
+    visually non-empty pixel count once the video player has loaded enough data to determine its
+    intrinsic size. Videos that render more than 1024 pixels will qualify a media document as
+    visually non-empty even when it is still loading its main resource.
+    
+    Added a new API test.
+    
+    * rendering/RenderImage.cpp:
+    (WebCore::RenderImage::imageChanged):
+    (WebCore::RenderImage::incrementVisuallyNonEmptyPixelCountIfNeeded):
+    * rendering/RenderImage.h:
+    * rendering/RenderVideo.cpp:
+    (WebCore::RenderVideo::updateIntrinsicSize):
+    
+    Tools:
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/FirstVisuallyNonEmptyMilestone.mm: Renamed from Tools/TestWebKitAPI/Tests/WebKit/FirstVisuallyNonEmptyMilestoneWithDeferredScript.mm.
+    (-[FirstPaintMessageHandler userContentController:didReceiveScriptMessage:]):
+    (-[RenderingProgressNavigationDelegate _webView:renderingProgressDidChange:]):
+    (-[RenderingProgressNavigationDelegate webView:didFinishNavigation:]):
+    (TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248095 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-31  Andy Estes  <aestes@apple.com>
+
+            REGRESSION (r240942): first visually non-empty layout milestone is not reached in media documents until after the video finishes loading
+            https://bugs.webkit.org/show_bug.cgi?id=200293
+            <rdar://problem/52937749>
+
+            Reviewed by Alex Christensen.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKitCocoa/FirstVisuallyNonEmptyMilestone.mm: Renamed from Tools/TestWebKitAPI/Tests/WebKit/FirstVisuallyNonEmptyMilestoneWithDeferredScript.mm.
+            (-[FirstPaintMessageHandler userContentController:didReceiveScriptMessage:]):
+            (-[RenderingProgressNavigationDelegate _webView:renderingProgressDidChange:]):
+            (-[RenderingProgressNavigationDelegate webView:didFinishNavigation:]):
+            (TEST):
+
+2019-08-06  Alan Coon  <alancoon@apple.com>
+
+        Apply patch. rdar://problem/53992160
+
+    2019-08-06  Per Arne Vollan  <pvollan@apple.com>
+
+            [Win] Fix AppleWin build
+            https://bugs.webkit.org/show_bug.cgi?id=200414
+
+            Reviewed by Brent Fulgham.
+
+            * DumpRenderTree/CMakeLists.txt:
+            * DumpRenderTree/PlatformWin.cmake:
+            * MiniBrowser/win/CMakeLists.txt:
+            * TestWebKitAPI/CMakeLists.txt:
+            * TestWebKitAPI/PlatformGTK.cmake:
+            * TestWebKitAPI/PlatformMac.cmake:
+            * TestWebKitAPI/PlatformPlayStation.cmake:
+            * TestWebKitAPI/PlatformWPE.cmake:
+            * TestWebKitAPI/PlatformWin.cmake:
+            * TestWebKitAPI/glib/CMakeLists.txt:
+            * WebKitTestRunner/CMakeLists.txt:
+            * WebKitTestRunner/PlatformGTK.cmake:
+            * WebKitTestRunner/PlatformWin.cmake:
+
+2019-08-01  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Cherry-pick r248116. rdar://problem/53829168
+
+    Improve flakiness of SOAuthorizationRedirect tests
+    https://bugs.webkit.org/show_bug.cgi?id=200320
+    <rdar://problem/53767057>
+    
+    Reviewed by Alex Christensen.
+    
+    This patch replaces Util::sleep(0.5) in tests that expect a SOAuthorization session to wait when the corresponding WKWebView
+    is out of the window with a more precise boolean indicator: navigationPolicyDecided. The new boolean indicator is working and
+    better because the authorizationPerformed should be set in the same runloop when NavigationState::decidePolicyForNavigationAction
+    is executed.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/TestSOAuthorization.mm:
+    (-[TestSOAuthorizationDelegate webView:decidePolicyForNavigationAction:decisionHandler:]):
+    (resetState):
+    (TestWebKitAPI::TEST):
+    
+    
+    git-svn-id: http://svn.webkit.org/repository/webkit/trunk@248116 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-01  Jiewen Tan  <jiewen_tan@apple.com>
+
+            Improve flakiness of SOAuthorizationRedirect tests
+            https://bugs.webkit.org/show_bug.cgi?id=200320
+            <rdar://problem/53767057>
+
+            Reviewed by Alex Christensen.
+
+            This patch replaces Util::sleep(0.5) in tests that expect a SOAuthorization session to wait when the corresponding WKWebView
+            is out of the window with a more precise boolean indicator: navigationPolicyDecided. The new boolean indicator is working and
+            better because the authorizationPerformed should be set in the same runloop when NavigationState::decidePolicyForNavigationAction
+            is executed.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/TestSOAuthorization.mm:
+            (-[TestSOAuthorizationDelegate webView:decidePolicyForNavigationAction:decisionHandler:]):
+            (resetState):
+            (TestWebKitAPI::TEST):
+
+2019-08-01  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Cherry-pick r248072. rdar://problem/52355829
+
+    Unreviewed test gardening, disable failing test for rdar://52355829.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/ContextMenus.mm:
+    (TEST):
+    
+    git-svn-id: http://svn.webkit.org/repository/webkit/trunk@248072 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-31  Ryan Haddad  <ryanhaddad@apple.com>
+
+            Unreviewed test gardening, disable failing test for rdar://52355829.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/ContextMenus.mm:
+            (TEST):
+
+2019-08-01  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Cherry-pick r248082. rdar://problem/51752593
+
+    Unreviewed test gardening, disable failing test for rdar://51752593.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/WKAttachmentTests.mm:
+    
+    git-svn-id: http://svn.webkit.org/repository/webkit/trunk@248082 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-31  Ryan Haddad  <ryanhaddad@apple.com>
+
+            Unreviewed test gardening, disable failing test for rdar://51752593.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/WKAttachmentTests.mm:
+
+2019-07-31  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248039. rdar://problem/53788996
+
+    [iOS 13] Safari crashes when closing a tab with a focused element if the unified field has focus
+    https://bugs.webkit.org/show_bug.cgi?id=200291
+    <rdar://problem/53717946>
+    
+    Reviewed by Megan Gardner.
+    
+    Source/WebKit:
+    
+    Makes -requestAutocorrectionContextWithCompletionHandler: robust in the case where the web page has been closed,
+    and there is no Connection object to use when waiting for a sync IPC response.
+    
+    Test: AutocorrectionTests.RequestAutocorrectionContextAfterClosingPage
+    
+    * UIProcess/ios/WKContentViewInteraction.mm:
+    (-[WKContentView requestAutocorrectionContextWithCompletionHandler:]):
+    
+    Tools:
+    
+    Add an API test to exercise the scenario of synchronously requesting the autocorrection context immediately
+    after closing the web view, while the web view's content view isn't the first responder.
+    
+    * TestWebKitAPI/Tests/ios/AutocorrectionTestsIOS.mm:
+    * TestWebKitAPI/ios/UIKitSPI.h:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248039 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-31  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [iOS 13] Safari crashes when closing a tab with a focused element if the unified field has focus
+            https://bugs.webkit.org/show_bug.cgi?id=200291
+            <rdar://problem/53717946>
+
+            Reviewed by Megan Gardner.
+
+            Add an API test to exercise the scenario of synchronously requesting the autocorrection context immediately
+            after closing the web view, while the web view's content view isn't the first responder.
+
+            * TestWebKitAPI/Tests/ios/AutocorrectionTestsIOS.mm:
+            * TestWebKitAPI/ios/UIKitSPI.h:
+
+2019-07-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247673. rdar://problem/53449723
+
+    Speed up HashTable decoding by reserving capacity and avoiding rehashing
+    https://bugs.webkit.org/show_bug.cgi?id=199982
+    
+    Reviewed by Saam Barati.
+    
+    Source/WebKit:
+    
+    Use HashMap::reserveInitialCapacity() in the HashMap IPC decoder for
+    performance. I measured a ~35% improvement when decoding a very large
+    HashMap of Strings (~160k entries) in the context of the
+    StorageManager::GetValues IPC.
+    
+    * Platform/IPC/ArgumentCoders.h:
+    * Shared/API/c/WKDictionary.cpp:
+    (WKDictionaryCreate):
+    
+    Source/WTF:
+    
+    Introduce reserveInitialCapacity() on HashMap to reserve capacity on a
+    HashMap and cut down on rehashing cost when possible.
+    
+    * wtf/HashMap.h:
+    * wtf/HashTable.h:
+    (WTF::HashTable::reserveInitialCapacity):
+    
+    * wtf/persistence/PersistentCoders.h:
+    Use HashMap::reserveInitialCapacity() in the HashMap persistent decoder for
+    performance.
+    
+    Tools:
+    
+    Add API test coverage.
+    
+    * TestWebKitAPI/Tests/WTF/HashMap.cpp:
+    (TestWebKitAPI::TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247673 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-20  Chris Dumez  <cdumez@apple.com>
+
+            Speed up HashTable decoding by reserving capacity and avoiding rehashing
+            https://bugs.webkit.org/show_bug.cgi?id=199982
+
+            Reviewed by Saam Barati.
+
+            Add API test coverage.
+
+            * TestWebKitAPI/Tests/WTF/HashMap.cpp:
+            (TestWebKitAPI::TEST):
+
+2019-07-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247885. rdar://problem/53648025
+
+    NavigationSOAuthorizationSession should check the active URL of the responding page after waking up from waiting
+    https://bugs.webkit.org/show_bug.cgi?id=200150
+    <rdar://problem/53280170>
+    
+    Reviewed by Brent Fulgham.
+    
+    Source/WebKit:
+    
+    NavigationSOAuthorizationSession should check the active URL of the responding page after waking up from waiting
+    as the page might have already changed the location.
+    
+    * UIProcess/Cocoa/SOAuthorization/NavigationSOAuthorizationSession.h:
+    * UIProcess/Cocoa/SOAuthorization/NavigationSOAuthorizationSession.mm:
+    (WebKit::NavigationSOAuthorizationSession::shouldStartInternal):
+    (WebKit::NavigationSOAuthorizationSession::webViewDidMoveToWindow):
+    (WebKit::NavigationSOAuthorizationSession::pageActiveURLDidChangeDuringWaiting const):
+    * UIProcess/Cocoa/SOAuthorization/SubFrameSOAuthorizationSession.mm:
+    (WebKit::SubFrameSOAuthorizationSession::abortInternal):
+    
+    Tools:
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/TestSOAuthorization.mm:
+    (TestWebKitAPI::TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247885 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-26  Jiewen Tan  <jiewen_tan@apple.com>
+
+            NavigationSOAuthorizationSession should check the active URL of the responding page after waking up from waiting
+            https://bugs.webkit.org/show_bug.cgi?id=200150
+            <rdar://problem/53280170>
+
+            Reviewed by Brent Fulgham.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/TestSOAuthorization.mm:
+            (TestWebKitAPI::TEST):
+
+2019-07-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247851. rdar://problem/53648225
+
+    WebPageProxy::receivedPolicyDecision should check navigation ID before clear pendingAPIRequest
+    https://bugs.webkit.org/show_bug.cgi?id=200108
+    <rdar://problem/53521238>
+    
+    Reviewed by Chris Dumez.
+    
+    Source/WebKit:
+    
+    Assuming there are two loads happening one after another. There is an issue when clients save
+    the first decisionHandler and then call WKNavigationActionPolicyCancel for it right after the
+    second decisionHandler received, -[WKWebView URL] could return a null string even though it is
+    loading the second one.
+    
+    To solve that, this patch pairs a navigationID with the pendingAPIRequestURL such that
+    WebPageProxy::receivedPolicyDecision could clear the pendingAPIRequestURL only if
+    the passed navigation ID matches the current one.
+    
+    * UIProcess/PageLoadState.cpp:
+    (WebKit::PageLoadState::reset):
+    (WebKit::PageLoadState::activeURL):
+    (WebKit::PageLoadState::estimatedProgress):
+    (WebKit::PageLoadState::pendingAPIRequestURL const):
+    (WebKit::PageLoadState::pendingAPIRequest const):
+    (WebKit::PageLoadState::setPendingAPIRequest):
+    (WebKit::PageLoadState::clearPendingAPIRequest):
+    (WebKit::PageLoadState::isLoading):
+    (WebKit::PageLoadState::setPendingAPIRequestURL): Deleted.
+    (WebKit::PageLoadState::clearPendingAPIRequestURL): Deleted.
+    * UIProcess/PageLoadState.h:
+    (WebKit::PageLoadState::setPendingAPIRequest):
+    (WebKit::PageLoadState::setPendingAPIRequestURL): Deleted.
+    * UIProcess/WebPageProxy.cpp:
+    (WebKit::WebPageProxy::launchProcessForReload):
+    (WebKit::WebPageProxy::loadRequestWithNavigationShared):
+    (WebKit::WebPageProxy::loadFile):
+    (WebKit::WebPageProxy::loadDataWithNavigationShared):
+    (WebKit::WebPageProxy::loadAlternateHTML):
+    (WebKit::WebPageProxy::loadWebArchiveData):
+    (WebKit::WebPageProxy::reload):
+    (WebKit::WebPageProxy::goToBackForwardItem):
+    (WebKit::WebPageProxy::receivedPolicyDecision):
+    (WebKit::WebPageProxy::continueNavigationInNewProcess):
+    (WebKit::WebPageProxy::didStartProvisionalLoadForFrameShared):
+    (WebKit::WebPageProxy::didSameDocumentNavigationForFrame):
+    (WebKit::WebPageProxy::decidePolicyForNavigationAction):
+    
+    Tools:
+    
+    Added an API test.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/DecidePolicyForNavigationAction.mm:
+    (-[DecidePolicyForNavigationActionController webView:decidePolicyForNavigationAction:decisionHandler:]):
+    (TEST):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247851 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-24  Jiewen Tan  <jiewen_tan@apple.com>
+
+            WebPageProxy::receivedPolicyDecision should check navigation ID before clear pendingAPIRequest
+            https://bugs.webkit.org/show_bug.cgi?id=200108
+            <rdar://problem/53521238>
+
+            Reviewed by Chris Dumez.
+
+            Added an API test.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/DecidePolicyForNavigationAction.mm:
+            (-[DecidePolicyForNavigationActionController webView:decidePolicyForNavigationAction:decisionHandler:]):
+            (TEST):
+
+2019-07-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247780. rdar://problem/53647618
+
+    ASSERTION FAILED: settings().textAutosizingEnabled() && settings().textAutosizingUsesIdempotentMode() in WebCore::Page::recomputeTextAutoSizingInAllFrames()
+    https://bugs.webkit.org/show_bug.cgi?id=200079
+    <rdar://problem/53474325>
+    
+    Reviewed by Wenson Hsieh.
+    
+    Source/WebKit:
+    
+    Do not reset idempotent values when the text autosizing is off.
+    
+    * UIProcess/API/C/WKPreferences.cpp:
+    (WKPreferencesSetTextAutosizingUsesIdempotentMode):
+    (WKPreferencesGetTextAutosizingUsesIdempotentMode):
+    * UIProcess/API/C/WKPreferencesRef.h:
+    * WebProcess/WebPage/ios/WebPageIOS.mm:
+    (WebKit::WebPage::resetIdempotentTextAutosizingIfNeeded):
+    
+    Tools:
+    
+    Reset textAutosizingUsesIdempotentMode when transitioning to a new test.
+    
+    * WebKitTestRunner/ios/TestControllerIOS.mm:
+    (WTR::TestController::platformResetPreferencesToConsistentValues):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247780 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-24  Zalan Bujtas  <zalan@apple.com>
+
+            ASSERTION FAILED: settings().textAutosizingEnabled() && settings().textAutosizingUsesIdempotentMode() in WebCore::Page::recomputeTextAutoSizingInAllFrames()
+            https://bugs.webkit.org/show_bug.cgi?id=200079
+            <rdar://problem/53474325>
+
+            Reviewed by Wenson Hsieh.
+
+            Reset textAutosizingUsesIdempotentMode when transitioning to a new test.
+
+            * WebKitTestRunner/ios/TestControllerIOS.mm:
+            (WTR::TestController::platformResetPreferencesToConsistentValues):
+
+2019-07-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247722. rdar://problem/53647293
+
+    [macOS 10.15] Web process crashes when attempting to show the font panel via Font > Show Fonts
+    https://bugs.webkit.org/show_bug.cgi?id=200021
+    <rdar://problem/53301325>
+    
+    Reviewed by Ryosuke Niwa.
+    
+    Source/WebCore:
+    
+    In macOS 10.15, attempting to access ~/Library/FontCollections/ from the web process causes a Sandbox violation
+    and a subsequent crash. This can be triggered by trying to show the font panel via Font > Show Fonts in the
+    context menu after right clicking.
+    
+    In the (near) future, we should fix this by moving logic to show the font panel, color panel and styles panel
+    from the Editor in the web process to the UI process in WebKit2. However, for the time being, we can just work
+    around this by adding a new EditorClient hook to determine whether to allow the font panel to show; this returns
+    true in the legacy macOS WebKit port, and false everywhere else.
+    
+    Test: editing/mac/style/do-not-crash-when-showing-font-panel.html
+    
+    * editing/mac/EditorMac.mm:
+    (WebCore::Editor::showFontPanel):
+    * loader/EmptyClients.cpp:
+    * page/EditorClient.h:
+    
+    Source/WebKit:
+    
+    Always return false from canShowFontPanel in WebKit2.
+    
+    * WebProcess/WebCoreSupport/WebEditorClient.h:
+    
+    Source/WebKitLegacy/mac:
+    
+    Implement a new editing client hook. In WebKit1, this always returns true on macOS and false on iOS.
+    
+    * WebCoreSupport/WebEditorClient.h:
+    
+    Source/WebKitLegacy/win:
+    
+    Implement a new editing client hook.
+    
+    * WebCoreSupport/WebEditorClient.h:
+    
+    Tools:
+    
+    Add support for grabbing the child menu items of a context menu item.
+    
+    * WebKitTestRunner/InjectedBundle/EventSendingController.cpp:
+    (WTR::getMenuItemChildrenCallback):
+    
+    LayoutTests:
+    
+    Add a new layout test to verify that attempting to show the font panel doesn't crash the web process in WebKit2.
+    This test is skipped in WebKit1, since EventSender::contextClick() in WebKit1 only returns an array of strings
+    corresponding to the titles of each menu item.
+    
+    * editing/mac/style/do-not-crash-when-showing-font-panel-expected.txt: Added.
+    * editing/mac/style/do-not-crash-when-showing-font-panel.html: Added.
+    * platform/mac-wk1/TestExpectations:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247722 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-23  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [macOS 10.15] Web process crashes when attempting to show the font panel via Font > Show Fonts
+            https://bugs.webkit.org/show_bug.cgi?id=200021
+            <rdar://problem/53301325>
+
+            Reviewed by Ryosuke Niwa.
+
+            Add support for grabbing the child menu items of a context menu item.
+
+            * WebKitTestRunner/InjectedBundle/EventSendingController.cpp:
+            (WTR::getMenuItemChildrenCallback):
+
+2019-07-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247720. rdar://problem/53647897
+
+    WebKit should strip away system font names from the pasted content
+    https://bugs.webkit.org/show_bug.cgi?id=199975
+    <rdar://problem/53336353>
+    
+    Reviewed by Darin Adler.
+    
+    Source/WebCore:
+    
+    Cocoa HTML Writer sometimes generate system font names such as ".AppleSystemUIFont", ".SFUI-Regular", and ".SF UI Mono".
+    We need to strip away these font names upon paste to avoid these font names falling back to Times New Roman.
+    
+    Added the code to strip these font names away in EditingStyle::mergeStyleFromRulesForSerialization, which is used by
+    StylizedMarkupAccumulator to generate HTML during copy. This works because WebContentReader::readWebArchive invokes
+    sanitizeMarkupWithArchive which inserts the pasteboard content into a temporary document then re-serializes back to HTML
+    using StylizedMarkupAccumulator before the actual pasting happens.
+    
+    This approach has a few benefits over stripping away these font names in ReplaceSelectionCommand:
+    
+    1. It would only affect clients that opts-in to copy & paste sanitization. e.g. it won't affect legacy WebKit clients
+    and those that opt out of pasteboard content sanitization.
+    
+    2. It preserves font names such as ".SF Blah" that a website may insert as some kind of house keeping purposes if ever.
+    While we don't have any evidence that there is any such a website but it's a real risk nonetheless. The copy side fix would
+    only affect cross-site and cross-app pasting, which is rare and less likely to affect real user scenarios.
+    
+    3. It avoids exposing bogus .Apple* or .SF* font names to websites that directly use event.clipboardData.getData.
+    Indeed stripping away bogus markup like this is one of the key features / benefit of using copy & paste sanitization.
+    
+    Test: editing/pasteboard/paste-cocoa-writer-markup-with-system-fonts.html
+    
+    * editing/EditingStyle.cpp:
+    (WebCore::usesForbiddenSystemFontAsOnlyFontFamilyName): Added.
+    (WebCore::EditingStyle::mergeStyleFromRulesForSerialization): Added the code to remove font-family property when needed.
+    * platform/graphics/FontCache.h:
+    * platform/graphics/cocoa/FontCacheCoreText.cpp:
+    (WebCore::isSystemFont): Moved.
+    (WebCore::FontCache::isSystemFontForbiddenForEditing): Added.
+    * platform/graphics/freetype/FontCacheFreeType.cpp:
+    (WebCore::FontCache::isSystemFontForbiddenForEditing): Added. Always returns false.
+    * platform/graphics/win/FontCacheWin.cpp:
+    (WebCore::FontCache::isSystemFontForbiddenForEditing): Ditto.
+    
+    Tools:
+    
+    Added a test to strip away system font names such as ".AppleSystemUIFont", ".SFUI-Regular", and ".SF UI Mono".
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/PasteHTML.mm:
+    * TestWebKitAPI/Tests/WebKitCocoa/cocoa-writer-markup-with-system-fonts.html: Added.
+    
+    LayoutTests:
+    
+    Added a test for ClipboardData.getData returning the original markup and execCommand('insertHTML', ~)
+    not stripping away system font names.
+    
+    * editing/pasteboard/paste-cocoa-writer-markup-with-system-fonts-expected.txt: Added.
+    * editing/pasteboard/paste-cocoa-writer-markup-with-system-fonts.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247720 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-23  Ryosuke Niwa  <rniwa@webkit.org>
+
+            WebKit should strip away system font names from the pasted content
+            https://bugs.webkit.org/show_bug.cgi?id=199975
+            <rdar://problem/53336353>
+
+            Reviewed by Darin Adler.
+
+            Added a test to strip away system font names such as ".AppleSystemUIFont", ".SFUI-Regular", and ".SF UI Mono".
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKitCocoa/PasteHTML.mm:
+            * TestWebKitAPI/Tests/WebKitCocoa/cocoa-writer-markup-with-system-fonts.html: Added.
+
+2019-07-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247702. rdar://problem/53575409
+
+    [iOS] [WK1] UIWebView always jumps to the top left corner when scrolling to reveal the selection
+    https://bugs.webkit.org/show_bug.cgi?id=200013
+    <rdar://problem/52526901>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    After <https://trac.webkit.org/r244141>, we no longer attempt to scroll to reveal the text selection in
+    UIWebView after changing the selection, due to how we use the legacy document view rect in legacy WebKit when
+    computing the visual viewport. This causes the viewRect in RenderLayer::scrollRectToVisible to be the same size
+    as the content size, which then causes us to always scroll to the origin when revealing the selection.
+    
+    To make selection revealing work again in legacy WebKit, conditionally restore the old behavior of using the
+    unobscured content rect as the view rect, only in the case where scrolling is delegated and the platform widget
+    is present.
+    
+    Test: WebKitLegacy.ScrollToRevealSelection
+    
+    * page/FrameView.cpp:
+    (WebCore::FrameView::viewRectExpandedByContentInsets const):
+    (WebCore::FrameView::visualViewportRectExpandedByContentInsets const): Deleted.
+    
+    Additionally rename visualViewportRectExpandedByContentInsets to viewRectExpandedByContentInsets, to reflect the
+    fact that this may either be the visual viewport rect or unobscured content rect.
+    
+    * page/FrameView.h:
+    * rendering/RenderLayer.cpp:
+    (WebCore::RenderLayer::scrollRectToVisible):
+    
+    Tools:
+    
+    Add a new API test to verify that inserting text in UIWebView causes the document to scroll.
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitLegacy/ios/ScrollToRevealSelection.mm: Added.
+    (-[LegacyLoadingDelegate webViewDidFinishLoad:]):
+    (-[LegacyLoadingDelegate waitForDidFinishLoad]):
+    * TestWebKitAPI/ios/UIKitSPI.h:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247702 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-22  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [iOS] [WK1] UIWebView always jumps to the top left corner when scrolling to reveal the selection
+            https://bugs.webkit.org/show_bug.cgi?id=200013
+            <rdar://problem/52526901>
+
+            Reviewed by Simon Fraser.
+
+            Add a new API test to verify that inserting text in UIWebView causes the document to scroll.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKitLegacy/ios/ScrollToRevealSelection.mm: Added.
+            (-[LegacyLoadingDelegate webViewDidFinishLoad:]):
+            (-[LegacyLoadingDelegate waitForDidFinishLoad]):
+            * TestWebKitAPI/ios/UIKitSPI.h:
+
+2019-07-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247695. rdar://problem/53648210
+
+    REGRESSION(rUnknown): YouTube playback pauses when switching to a new tab
+    https://bugs.webkit.org/show_bug.cgi?id=199971
+    <rdar://problem/51951218>
+    
+    Reviewed by Alex Christensen.
+    
+    Source/WebKit:
+    
+    When we get a message notifying us that the view has been removed from the window, we unconditionally
+    ask the fullscreen manager to exit fullscreen, which has the side effect (on iOS) of pausing the video
+    unconditionally. Only ask the fullscreen manager to exit fullscreen if there is actually a video in
+    fullscreen mode.
+    
+    * UIProcess/WebPageProxy.cpp:
+    (WebKit::WebPageProxy::viewDidLeaveWindow):
+    
+    Tools:
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/NoPauseWhenSwitchingTabs.mm: Added.
+    (TestWebKitAPI::TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247695 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-22  Jer Noble  <jer.noble@apple.com>
+
+            REGRESSION(rUnknown): YouTube playback pauses when switching to a new tab
+            https://bugs.webkit.org/show_bug.cgi?id=199971
+            <rdar://problem/51951218>
+
+            Reviewed by Alex Christensen.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/WebKitCocoa/NoPauseWhenSwitchingTabs.mm: Added.
+            (TestWebKitAPI::TEST):
+
+2019-07-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247692. rdar://problem/53519917
+
+    Disable MediaRecorder for legacy WebKit
+    https://bugs.webkit.org/show_bug.cgi?id=200001
+    <rdar://problem/53400030>
+    
+    Reviewed by Eric Carlson.
+    
+    Source/WebKitLegacy/mac:
+    
+    Disable MediaRecorder by default in legacy WebKit.
+    Add SPI to set/get this preference.
+    
+    * WebView/WebPreferences.mm:
+    (+[WebPreferences initialize]):
+    (-[WebPreferences _mediaRecorderEnabled]):
+    (-[WebPreferences _setMediaRecorderEnabled:]):
+    * WebView/WebPreferencesPrivate.h:
+    
+    Tools:
+    
+    Enable MediaRecorder for testing purposes.
+    
+    * DumpRenderTree/mac/DumpRenderTree.mm:
+    (createWebViewAndOffscreenWindow):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247692 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-22  Youenn Fablet  <youenn@apple.com>
+
+            Disable MediaRecorder for legacy WebKit
+            https://bugs.webkit.org/show_bug.cgi?id=200001
+            <rdar://problem/53400030>
+
+            Reviewed by Eric Carlson.
+
+            Enable MediaRecorder for testing purposes.
+
+            * DumpRenderTree/mac/DumpRenderTree.mm:
+            (createWebViewAndOffscreenWindow):
+
+2019-07-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247679. rdar://problem/53648080
+
+    [iOS] [WebKit2] Add limited support for -isPosition:atBoundary:inDirection: in WKContentView
+    https://bugs.webkit.org/show_bug.cgi?id=199993
+    <rdar://problem/49523528>
+    
+    Reviewed by Beth Dakin.
+    
+    Source/WebKit:
+    
+    Add support for -isPosition:atBoundary:inDirection:, only in the cases where the given position is the start or
+    and position and the given granularity is UITextGranularityParagraph.
+    
+    Test: EditorStateTests.ParagraphBoundary
+    
+    * Shared/EditorState.cpp:
+    (WebKit::EditorState::PostLayoutData::encode const):
+    (WebKit::EditorState::PostLayoutData::decode):
+    * Shared/EditorState.h:
+    
+    Add a couple of bits to indicate whether the selection start or end positions are at paragraph boundaries.
+    
+    * UIProcess/ios/WKContentViewInteraction.mm:
+    (-[WKContentView isPosition:atBoundary:inDirection:]):
+    
+    Implement this to return selectionStartIsAtParagraphBoundary or selectionEndIsAtParagraphBoundary.
+    
+    * WebProcess/WebPage/ios/WebPageIOS.mm:
+    (WebKit::WebPage::platformEditorState const):
+    
+    Tools:
+    
+    Add a new API test to verify the behavior of -isPosition:atBoundary:inDirection:.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/EditorStateTests.mm:
+    (TestWebKitAPI::TEST):
+    * TestWebKitAPI/cocoa/TestWKWebView.h:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247679 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-21  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [iOS] [WebKit2] Add limited support for -isPosition:atBoundary:inDirection: in WKContentView
+            https://bugs.webkit.org/show_bug.cgi?id=199993
+            <rdar://problem/49523528>
+
+            Reviewed by Beth Dakin.
+
+            Add a new API test to verify the behavior of -isPosition:atBoundary:inDirection:.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/EditorStateTests.mm:
+            (TestWebKitAPI::TEST):
+            * TestWebKitAPI/cocoa/TestWKWebView.h:
+
+2019-07-24  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247671. rdar://problem/53501836
+
+    Add accessibilityInsertText for text insertion in edit fields.
+    https://bugs.webkit.org/show_bug.cgi?id=199973
+    
+    Patch by Andres Gonzalez <andresg_22@apple.com> on 2019-07-20
+    Reviewed by Chris Fleizach.
+    
+    Source/WebCore:
+    
+    Tests: accessibility/insert-newline.html
+           accessibility/ios-simulator/insert-newline.html
+    
+    Accessibility clients like VoiceOver and Voice Control were entering
+    text in text fields by replacing the entire content of the field
+    (SetValue) and then setting the insertion point to the appropriate
+    offset (SetSelectedTextRange). accessibilityInsertText gives a simpler
+    interface to clients to insert text at the insertion point location.
+    In addition, this provides a workaround for the issue encountered with
+    the previous method when inserting a linebreak.
+    
+    * accessibility/AccessibilityObject.cpp:
+    (WebCore::AccessibilityObject::insertText):
+    * accessibility/AccessibilityObject.h:
+    * accessibility/ios/WebAccessibilityObjectWrapperIOS.mm:
+    (-[WebAccessibilityObjectWrapper accessibilityInsertText:]):
+    * accessibility/mac/WebAccessibilityObjectWrapperMac.mm:
+    (-[WebAccessibilityObjectWrapper accessibilityInsertText:]):
+    
+    Tools:
+    
+    Glue code to run new LayoutTests.
+    * WebKitTestRunner/InjectedBundle/AccessibilityUIElement.h:
+    * WebKitTestRunner/InjectedBundle/Bindings/AccessibilityUIElement.idl:
+    * WebKitTestRunner/InjectedBundle/atk/AccessibilityUIElementAtk.cpp:
+    (WTR::AccessibilityUIElement::insertText):
+    * WebKitTestRunner/InjectedBundle/ios/AccessibilityUIElementIOS.mm:
+    (WTR::AccessibilityUIElement::insertText):
+    * WebKitTestRunner/InjectedBundle/mac/AccessibilityUIElementMac.mm:
+    (WTR::AccessibilityUIElement::insertText):
+    * WebKitTestRunner/InjectedBundle/win/AccessibilityUIElementWin.cpp:
+    (WTR::AccessibilityUIElement::insertText):
+    
+    LayoutTests:
+    
+    Tests for inserting a newline in the middle of a text line and checking
+    that the insertion point and text ranges are correct.
+    * accessibility/insert-newline-expected.txt: Added.
+    * accessibility/insert-newline.html: Added.
+    * accessibility/ios-simulator/insert-newline-expected.txt: Added.
+    * accessibility/ios-simulator/insert-newline.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247671 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-20  Andres Gonzalez  <andresg_22@apple.com>
+
+            Add accessibilityInsertText for text insertion in edit fields.
+            https://bugs.webkit.org/show_bug.cgi?id=199973
+
+            Reviewed by Chris Fleizach.
+
+            Glue code to run new LayoutTests.
+            * WebKitTestRunner/InjectedBundle/AccessibilityUIElement.h:
+            * WebKitTestRunner/InjectedBundle/Bindings/AccessibilityUIElement.idl:
+            * WebKitTestRunner/InjectedBundle/atk/AccessibilityUIElementAtk.cpp:
+            (WTR::AccessibilityUIElement::insertText):
+            * WebKitTestRunner/InjectedBundle/ios/AccessibilityUIElementIOS.mm:
+            (WTR::AccessibilityUIElement::insertText):
+            * WebKitTestRunner/InjectedBundle/mac/AccessibilityUIElementMac.mm:
+            (WTR::AccessibilityUIElement::insertText):
+            * WebKitTestRunner/InjectedBundle/win/AccessibilityUIElementWin.cpp:
+            (WTR::AccessibilityUIElement::insertText):
+
+2019-07-24  Alan Coon  <alancoon@apple.com>
+
+        Apply patch. rdar://problem/53483188
+
+    Disable ENABLE_LAYOUT_FORMATTING_CONTEXT https://bugs.webkit.org/show_bug.cgi?id=200038 <rdar://problem/53457282>
+    
+    Reviewed by Zalan Bujtas.
+    
+    This feature is not complete. It is enabled for the trunk, but needs
+    to be disabled in branches for shipping products.
+    
+    Source/JavaScriptCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore:
+    
+    No new tests -- this change does not add any new functionality.
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore/PAL:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKit:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKitLegacy/mac:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Tools:
+    
+    * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+
+    2019-07-23  Keith Rollin  <krollin@apple.com>
+
+            Disable ENABLE_LAYOUT_FORMATTING_CONTEXT
+            https://bugs.webkit.org/show_bug.cgi?id=200038
+            <rdar://problem/53457282>
+
+            Reviewed by Zalan Bujtas.
+
+            This feature is not complete. It is enabled for the trunk, but needs
+            to be disabled in branches for shipping products.
+
+            * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+
+2019-07-23  Alan Coon  <alancoon@apple.com>
+
+        Revert r247673. rdar://problem/53449723
+
+2019-07-23  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247673. rdar://problem/53449723
+
+    Speed up HashTable decoding by reserving capacity and avoiding rehashing
+    https://bugs.webkit.org/show_bug.cgi?id=199982
+    
+    Reviewed by Saam Barati.
+    
+    Source/WebKit:
+    
+    Use HashMap::reserveInitialCapacity() in the HashMap IPC decoder for
+    performance. I measured a ~35% improvement when decoding a very large
+    HashMap of Strings (~160k entries) in the context of the
+    StorageManager::GetValues IPC.
+    
+    * Platform/IPC/ArgumentCoders.h:
+    * Shared/API/c/WKDictionary.cpp:
+    (WKDictionaryCreate):
+    
+    Source/WTF:
+    
+    Introduce reserveInitialCapacity() on HashMap to reserve capacity on a
+    HashMap and cut down on rehashing cost when possible.
+    
+    * wtf/HashMap.h:
+    * wtf/HashTable.h:
+    (WTF::HashTable::reserveInitialCapacity):
+    
+    * wtf/persistence/PersistentCoders.h:
+    Use HashMap::reserveInitialCapacity() in the HashMap persistent decoder for
+    performance.
+    
+    Tools:
+    
+    Add API test coverage.
+    
+    * TestWebKitAPI/Tests/WTF/HashMap.cpp:
+    (TestWebKitAPI::TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247673 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-20  Chris Dumez  <cdumez@apple.com>
+
+            Speed up HashTable decoding by reserving capacity and avoiding rehashing
+            https://bugs.webkit.org/show_bug.cgi?id=199982
+
+            Reviewed by Saam Barati.
+
+            Add API test coverage.
+
+            * TestWebKitAPI/Tests/WTF/HashMap.cpp:
+            (TestWebKitAPI::TEST):
+
+2019-07-18  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247566. rdar://problem/53279081
+
+    Make sure to set kCTFontFallbackOptionAttribute to kCTFontFallbackOptionSystem for system fonts
+    https://bugs.webkit.org/show_bug.cgi?id=199769
+    <rdar://problem/49390297>
+    
+    Reviewed by Myles C. Maxfield.
+    
+    Source/WebCore:
+    
+    When getting a system font, set the appropriate attribute so that it
+    does not fallback to a user initiated font.
+    Add an ASSERT that checks that the font in use is not a user font if
+    policy is to not use user installed fonts.
+    
+    Tests: fast/text/user-installed-fonts/extended-character-with-user-font.html
+           fast/text/user-installed-fonts/extended-character.html
+    
+    * platform/graphics/Font.h:
+    * platform/graphics/FontCascadeFonts.cpp:
+    (WebCore::FontCascadeFonts::glyphDataForSystemFallback):
+    * platform/graphics/cocoa/FontCacheCoreText.cpp:
+    (WebCore::preparePlatformFont):
+    (WebCore::FontDatabase::singletonAllowingUserInstalledFonts):
+    (WebCore::FontDatabase::singletonDisallowingUserInstalledFonts):
+    (WebCore::addAttributesForInstalledFonts):
+    (WebCore::addAttributesForWebFonts):
+    (WebCore::installedFontMandatoryAttributes):
+    * platform/graphics/mac/SimpleFontDataCoreText.cpp:
+    (WebCore::Font::isUserInstalledFont const):
+    
+    Source/WTF:
+    
+    * wtf/Platform.h:
+    
+    Tools:
+    
+    Add a font containing one extended character not found in system fonts.
+    
+    * WebKitTestRunner/WebKitTestRunner.xcodeproj/project.pbxproj:
+    * WebKitTestRunner/fonts/FakeHelvetica-SingleExtendedCharacter.ttf: Added.
+    
+    LayoutTests:
+    
+    Tests require WTR and recent MacOS, hence why they are disabled elsewhere.
+    
+    * TestExpectations:
+    * platform/mac-wk2/TestExpectations:
+    * fast/text/user-installed-fonts/extended-character-expected.html: Added.
+    * fast/text/user-installed-fonts/extended-character-with-user-font-expected-mismatch.html: Added.
+    * fast/text/user-installed-fonts/extended-character-with-user-font.html: Added.
+    * fast/text/user-installed-fonts/extended-character.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247566 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-18  Youenn Fablet  <youenn@apple.com>
+
+            Make sure to set kCTFontFallbackOptionAttribute to kCTFontFallbackOptionSystem for system fonts
+            https://bugs.webkit.org/show_bug.cgi?id=199769
+            <rdar://problem/49390297>
+
+            Reviewed by Myles C. Maxfield.
+
+            Add a font containing one extended character not found in system fonts.
+
+            * WebKitTestRunner/WebKitTestRunner.xcodeproj/project.pbxproj:
+            * WebKitTestRunner/fonts/FakeHelvetica-SingleExtendedCharacter.ttf: Added.
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247536. rdar://problem/53229635
+
+    Remove the file superfluously added in r247535.
+    
+    * TestWebKitAPI/Tests/ios/SelectionModifyByParagraphBoundary.h: Removed.
+    * TestWebKitAPI/Tests/ios/SelectionModifyByParagraphBoundary.mm:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247536 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-17  Ryosuke Niwa  <rniwa@webkit.org>
+
+            Remove the file superfluously added in r247535.
+
+            * TestWebKitAPI/Tests/ios/SelectionModifyByParagraphBoundary.h: Removed.
+            * TestWebKitAPI/Tests/ios/SelectionModifyByParagraphBoundary.mm:
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247524. rdar://problem/53229635
+
+    [iOS] Option + Up or Down Arrow key doesn’t move cursor past paragraph boundaries in WebKit2
+    https://bugs.webkit.org/show_bug.cgi?id=199851
+    
+    Reviewed by Wenson Hsieh.
+    
+    Source/WebKit:
+    
+    The bug was caused by the difference in the way AppKit and UIKit responds to Option + Up / Down.
+    
+    On macOS, AppKit sends moveForward before sending moveToStartOfParagraph and moveBackward
+    before sending moveToEndOfParagraph. As a result, when Option + Down is pressed when we are at
+    the end of a line, we would first move to the beginning of the next line (i.e. after the line break)
+    before moving or extending selection with the paragraph boundary granurality.
+    
+    On iOS, UIKit only calls _moveToStartOfParagraph without moving forward by a character. As a result,
+    moving forward by the paragraph boundary granurality immediately stops when we're starting at the
+    end of a line when Option + Down is pressed. Option + Up case is similar.
+    
+    Fix the bug on iOS by emulating what happens on macOS. Namely, move the selection forward or backward
+    by the character granurality before moving by the paragraph boundary granurality.
+    
+    * UIProcess/ios/WKContentViewInteraction.mm:
+    (-[WKContentView _moveToStartOfParagraph:withHistory:]):
+    (-[WKContentView _moveToEndOfParagraph:withHistory:]):
+    
+    Tools:
+    
+    Added a regression test for iOS. Unfortunately, event sender, etc... doesn't work because
+    this code is getting directly triggered from UIKeyboard's code.
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/ios/SelectionModifyByParagraphBoundary.h: Added.
+    * TestWebKitAPI/Tests/ios/SelectionModifyByParagraphBoundary.mm: Added.
+    * TestWebKitAPI/ios/UIKitSPI.h:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247524 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-17  Ryosuke Niwa  <rniwa@webkit.org>
+
+            [iOS] Option + Up or Down Arrow key doesn’t move cursor past paragraph boundaries in WebKit2
+            https://bugs.webkit.org/show_bug.cgi?id=199851
+
+            Reviewed by Wenson Hsieh.
+
+            Added a regression test for iOS. Unfortunately, event sender, etc... doesn't work because
+            this code is getting directly triggered from UIKeyboard's code.
+
+            * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+            * TestWebKitAPI/Tests/ios/SelectionModifyByParagraphBoundary.h: Added.
+            * TestWebKitAPI/Tests/ios/SelectionModifyByParagraphBoundary.mm: Added.
+            * TestWebKitAPI/ios/UIKitSPI.h:
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247490. rdar://problem/53229559
+
+    NSTextFinder holes don't scroll with the page
+    https://bugs.webkit.org/show_bug.cgi?id=199815
+    <rdar://problem/52280514>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    * rendering/ScrollAlignment.h:
+    
+    Source/WebKit:
+    
+    * UIProcess/API/Cocoa/WKWebView.mm:
+    (-[WKWebView _usePlatformFindUI]):
+    (-[WKWebView _setUsePlatformFindUI:]):
+    (-[WKWebView _ensureTextFinderClient]):
+    Add a bit so that clients can choose whether they want our find UI,
+    which respects scrolling, or the system find UI, which works when
+    doing multi-document searches. Right now you can't have both.
+    
+    (-[WKWebView scrollFindMatchToVisible:]):
+    Implement and plumb scrollFindMatchToVisible.
+    
+    * UIProcess/API/Cocoa/WKWebViewPrivate.h:
+    * UIProcess/WebPageProxy.cpp:
+    (WebKit::WebPageProxy::indicateFindMatch):
+    * UIProcess/WebPageProxy.h:
+    * WebProcess/WebPage/WebPage.cpp:
+    (WebKit::WebPage::indicateFindMatch):
+    * WebProcess/WebPage/WebPage.h:
+    * WebProcess/WebPage/WebPage.messages.in:
+    Plumb indicateFindMatch to FindController.
+    
+    * UIProcess/mac/WKTextFinderClient.h:
+    * UIProcess/mac/WKTextFinderClient.mm:
+    (-[WKTextFinderClient initWithPage:view:usePlatformFindUI:]):
+    Store whether or not we are using the platform find UI.
+    
+    (-[WKTextFinderClient findMatchesForString:relativeToMatch:findOptions:maxResults:resultCollector:]):
+    If using WebKit find UI, turn on our UI in the options passed to findString[Matches].
+    
+    (-[WKTextFinderClient scrollFindMatchToVisible:]):
+    If using WebKit find UI, when the platform tells us to reveal a find match, indicate it.
+    
+    (-[WKTextFinderClient didFindStringMatchesWithRects:didWrapAround:]):
+    If using WebKit find UI, lie to the platform and return no rects so that it doesn't paint a yellow rectangle.
+    
+    (-[WKTextFinderClient getImageForMatchResult:completionHandler:]):
+    If using WebKit find UI, lie to the platform and return no image so that it doesn't paint a yellow rectangle.
+    
+    (-[WKTextFinderClient initWithPage:view:]): Deleted.
+    
+    * WebProcess/WebPage/FindController.cpp:
+    (WebKit::FindController::updateFindUIAfterPageScroll):
+    Make it possible to use our find UI with 'findStringMatches'; since the platform
+    find infrastrucutre depends on knowing about all matches up front, we need
+    to use 'findStringMatches' instead of 'findString', but we had never combined
+    that with our UI. Don't throw away the other matches when we indicate one, and
+    don't send DidFindString in the case we are coming from 'findStringMatches'.
+    This all needs a bit of cleanup in the future.
+    
+    (WebKit::FindController::findString):
+    Tell updateFindUIAfterPageScroll that we are 'findString' so that it uses its normal behavior.
+    
+    (WebKit::FindController::findStringMatches):
+    Tell updateFindUIAfterPageScroll that we are 'findStringMatches' so that it uses the adjusted behavior.
+    
+    (WebKit::FindController::indicateFindMatch):
+    Add 'indicateFindMatch', which both selects the match and moves the indicator there.
+    
+    * WebProcess/WebPage/FindController.h:
+    
+    Tools:
+    
+    * MiniBrowser/mac/WK2BrowserWindowController.m:
+    (-[MiniBrowserNSTextFinder performAction:]):
+    (-[WK2BrowserWindowController awakeFromNib]):
+    Adopt the WebKit UI in MiniBrowser. Also, override NSTextFinder's
+    -performAction: so that we can intercept the close action and
+    hide our own find UI, since there is no delegate for that action yet.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/FindInPage.mm:
+    (TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247490 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-16  Tim Horton  <timothy_horton@apple.com>
+
+            NSTextFinder holes don't scroll with the page
+            https://bugs.webkit.org/show_bug.cgi?id=199815
+            <rdar://problem/52280514>
+
+            Reviewed by Simon Fraser.
+
+            * MiniBrowser/mac/WK2BrowserWindowController.m:
+            (-[MiniBrowserNSTextFinder performAction:]):
+            (-[WK2BrowserWindowController awakeFromNib]):
+            Adopt the WebKit UI in MiniBrowser. Also, override NSTextFinder's
+            -performAction: so that we can intercept the close action and
+            hide our own find UI, since there is no delegate for that action yet.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/FindInPage.mm:
+            (TEST):
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247474. rdar://problem/53229615
+
+    JSGlobalObject type macros should support feature flags and WeakRef should have one
+    https://bugs.webkit.org/show_bug.cgi?id=199601
+    
+    Reviewed by Mark Lam.
+    
+    Source/JavaScriptCore:
+    
+    This patch refactors the various builtin type macros to have a
+    parameter, which is the feature flag enabling it.  Since most
+    builtin types are enabled by default this patch adds a new global
+    bool typeExposedByDefault for clarity. Note, because static hash
+    tables have no concept of feature flags we can't use feature flags
+    with lazy properties. This is probably not a big deal as features
+    that are off by default won't be allocated anywhere we care about
+    memory usage anyway.
+    
+    * runtime/CommonIdentifiers.h:
+    * runtime/JSGlobalObject.cpp:
+    (JSC::JSGlobalObject::init):
+    (JSC::JSGlobalObject::visitChildren):
+    * runtime/JSGlobalObject.h:
+    (JSC::JSGlobalObject::stringObjectStructure const):
+    (JSC::JSGlobalObject::bigIntObjectStructure const): Deleted.
+    * runtime/Options.h:
+    * wasm/js/JSWebAssembly.cpp:
+    
+    Tools:
+    
+    JSC options need to be set before the window is created for the test.
+    
+    * DumpRenderTree/mac/DumpRenderTree.mm:
+    (resetWebViewToConsistentStateBeforeTesting):
+    * DumpRenderTree/win/DumpRenderTree.cpp:
+    (setJSCOptions):
+    (resetWebViewToConsistentStateBeforeTesting):
+    
+    LayoutTests:
+    
+    Add JSC option requirements for WeakRef tests.
+    
+    * js/script-tests/weakref-async-is-collected.js:
+    * js/script-tests/weakref-eventually-collects-values.js:
+    * js/script-tests/weakref-microtasks-dont-collect.js:
+    * js/script-tests/weakref-weakset-consistency.js:
+    * js/weakref-async-is-collected.html:
+    * js/weakref-eventually-collects-values.html:
+    * js/weakref-microtasks-dont-collect.html:
+    * js/weakref-weakset-consistency.html:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247474 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-15  Keith Miller  <keith_miller@apple.com>
+
+            JSGlobalObject type macros should support feature flags and WeakRef should have one
+            https://bugs.webkit.org/show_bug.cgi?id=199601
+
+            Reviewed by Mark Lam.
+
+            JSC options need to be set before the window is created for the test.
+
+            * DumpRenderTree/mac/DumpRenderTree.mm:
+            (resetWebViewToConsistentStateBeforeTesting):
+            * DumpRenderTree/win/DumpRenderTree.cpp:
+            (setJSCOptions):
+            (resetWebViewToConsistentStateBeforeTesting):
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247466. rdar://problem/53228860
+
+    [ Mojave WK1 ] Some Image tests are flakey failures and are failing in tandem with zoomed in or blank image results
+    https://bugs.webkit.org/show_bug.cgi?id=193108
+    
+    Patch by Said Abou-Hallawa <sabouhallawa@apple.com> on 2019-07-15
+    Reviewed by Simon Fraser.
+    
+    Add a workaround for <rdar://problem/17084993> in createBitmapContextFromWebView().
+    Re-request the snapshot at kCGWindowImageNominalResolution if it was captured
+    at the wrong scale.
+    
+    * DumpRenderTree/mac/PixelDumpSupportMac.mm:
+    (takeWindowSnapshot):
+    (createBitmapContextFromWebView):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247466 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-15  Said Abou-Hallawa  <sabouhallawa@apple.com>
+
+            [ Mojave WK1 ] Some Image tests are flakey failures and are failing in tandem with zoomed in or blank image results
+            https://bugs.webkit.org/show_bug.cgi?id=193108
+
+            Reviewed by Simon Fraser.
+
+            Add a workaround for <rdar://problem/17084993> in createBitmapContextFromWebView().
+            Re-request the snapshot at kCGWindowImageNominalResolution if it was captured
+            at the wrong scale.
+
+            * DumpRenderTree/mac/PixelDumpSupportMac.mm:
+            (takeWindowSnapshot):
+            (createBitmapContextFromWebView):
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247461. rdar://problem/53229637
+
+    Make WKURLSchemeTask thread safe.
+    <rdar://problem/50471863> and https://bugs.webkit.org/show_bug.cgi?id=199764
+    
+    Reviewed by Alex Christensen.
+    
+    Source/WebKit:
+    
+    Punt most of the WKURLSchemeTask operations back to the main thread.
+    Make accessing the NSURLRequest be thread safe with lock protection.
+    
+    * UIProcess/API/Cocoa/WKURLSchemeTask.mm:
+    (getExceptionTypeFromMainRunLoop):
+    (-[WKURLSchemeTaskImpl dealloc]):
+    (-[WKURLSchemeTaskImpl request]):
+    (-[WKURLSchemeTaskImpl _requestOnlyIfCached]):
+    (-[WKURLSchemeTaskImpl didReceiveResponse:]):
+    (-[WKURLSchemeTaskImpl didReceiveData:]):
+    (-[WKURLSchemeTaskImpl didFinish]):
+    (-[WKURLSchemeTaskImpl didFailWithError:]):
+    (-[WKURLSchemeTaskImpl _didPerformRedirection:newRequest:]):
+    
+    * UIProcess/WebURLSchemeTask.cpp:
+    (WebKit::WebURLSchemeTask::WebURLSchemeTask):
+    (WebKit::WebURLSchemeTask::~WebURLSchemeTask):
+    (WebKit::WebURLSchemeTask::didPerformRedirection):
+    (WebKit::WebURLSchemeTask::didReceiveResponse):
+    (WebKit::WebURLSchemeTask::didReceiveData):
+    (WebKit::WebURLSchemeTask::didComplete):
+    (WebKit::WebURLSchemeTask::pageDestroyed):
+    (WebKit::WebURLSchemeTask::stop):
+    (WebKit::WebURLSchemeTask::nsRequest const):
+    
+    * UIProcess/WebURLSchemeTask.h:
+    (WebKit::WebURLSchemeTask::identifier const):
+    (WebKit::WebURLSchemeTask::pageID const):
+    (WebKit::WebURLSchemeTask::process):
+    (WebKit::WebURLSchemeTask::process const): Deleted.
+    (WebKit::WebURLSchemeTask::request const): Deleted.
+    
+    Source/WTF:
+    
+    * wtf/MainThread.cpp:
+    (WTF::callOnMainAndWait):
+    (WTF::callOnMainRunLoopAndWait):
+    (WTF::callOnMainThreadAndWait):
+    * wtf/MainThread.h:
+    
+    Tools:
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/WKURLSchemeHandler-1.mm:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247461 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-15  Brady Eidson  <beidson@apple.com>
+
+            Make WKURLSchemeTask thread safe.
+            <rdar://problem/50471863> and https://bugs.webkit.org/show_bug.cgi?id=199764
+
+            Reviewed by Alex Christensen.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/WKURLSchemeHandler-1.mm:
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247458. rdar://problem/53229545
+
+    Unreviewed, a build fix after r247437
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/TestSOAuthorization.mm:
+    Added platform guard towards -[WKUIDelegate _presentingViewControllerForWebView:].
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247458 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-15  Jiewen Tan  <jiewen_tan@apple.com>
+
+            Unreviewed, a build fix after r247437
+
+            * TestWebKitAPI/Tests/WebKitCocoa/TestSOAuthorization.mm:
+            Added platform guard towards -[WKUIDelegate _presentingViewControllerForWebView:].
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247439. rdar://problem/53229628
+
+    [macOS 10.15] Cannot unbold selected text when the system font is used
+    https://bugs.webkit.org/show_bug.cgi?id=199788
+    <rdar://problem/52142570>
+    
+    Reviewed by Tim Horton.
+    
+    Source/WebKit:
+    
+    In macOS 10.15, +[NSFont fontWithName:size:] no longer recognizes system fonts (of name
+    ".SFNS-*") and returns nil instead. However, our existing implementation of
+    WebPageProxy::fontAtSelection works by grabbing the font name in the web process, and
+    sending it over to the UI process, where it is mapped to an NSFont. As a result, this always
+    results in a nil font in macOS 10.15, which causes us to never update NSFontManager's
+    selected font. In turn, this means that once selected text is bolded, it can't be unbolded
+    via NSFontManager, since NSFontManager thinks that the text is still not bold.
+    
+    To fix this, we simply encode and send a platform FontInfo instead of sending the font name.
+    This allows the UI process to reconstruct NSFonts from font attribute dictionaries instead,
+    and update the font manager.
+    
+    * UIProcess/Cocoa/WebViewImpl.mm:
+    (WebKit::WebViewImpl::updateFontManagerIfNeeded):
+    * UIProcess/WebPageProxy.h:
+    * UIProcess/WebPageProxy.messages.in:
+    * UIProcess/mac/WebPageProxyMac.mm:
+    (WebKit::WebPageProxy::fontAtSelection):
+    
+    Refactor this to send a FontInfo (containing a font attribute dictionary) instead of a font
+    name.
+    
+    (WebKit::WebPageProxy::fontAtSelectionCallback): Deleted.
+    * WebProcess/WebPage/WebPage.h:
+    * WebProcess/WebPage/WebPage.messages.in:
+    
+    Change FontAtSelection to use sendWithAsyncReply instead of sending a callback ID. This also
+    allows us to remove FontAtSelectionCallback.
+    
+    * WebProcess/WebPage/mac/WebPageMac.mm:
+    (WebKit::WebPage::fontAtSelection):
+    
+    Tools:
+    
+    Add a new API test to verify that bolding and unbolding updates the
+    shared font manager's selected font.
+    
+    * TestWebKitAPI/Tests/mac/FontManagerTests.mm:
+    (TestWebKitAPI::TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247439 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-15  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [macOS 10.15] Cannot unbold selected text when the system font is used
+            https://bugs.webkit.org/show_bug.cgi?id=199788
+            <rdar://problem/52142570>
+
+            Reviewed by Tim Horton.
+
+            Add a new API test to verify that bolding and unbolding updates the
+            shared font manager's selected font.
+
+            * TestWebKitAPI/Tests/mac/FontManagerTests.mm:
+            (TestWebKitAPI::TEST):
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247437. rdar://problem/53229545
+
+    [iOS] SOAuthorizationSession should tell AppSSO whether the UIClient is capable of showing the extension UI
+    https://bugs.webkit.org/show_bug.cgi?id=199790
+    <rdar://problem/52790112>
+    
+    Reviewed by Brent Fulgham.
+    
+    Source/WebKit:
+    
+    On iOS, WebKit relies on a SPI -[WKUIDelegatePrivate _presentingViewControllerForWebView:] to present the
+    extension UI. However, third party clients often don't implement this SPI. Therefore, WebKit will not be
+    able to present the extension UI for them.
+    
+    To be able to show the extension UI for third party WebKit clients, WebKit should unset SOAuthorization.enableEmbeddedAuthorizationViewController
+    whenever clients don't implement the above SPI such that AppSSO could show the UI in their UI process.
+    
+    * UIProcess/Cocoa/SOAuthorization/SOAuthorizationSession.mm:
+    (WebKit::SOAuthorizationSession::start):
+    
+    Tools:
+    
+    Add tests to check SOAuthorization.enableEmbeddedAuthorizationViewController accordingly.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/TestSOAuthorization.mm:
+    (-[TestSOAuthorizationDelegate _presentingViewControllerForWebView:]):
+    (configureSOAuthorizationWebView):
+    (TestWebKitAPI::TEST):
+    (-[TestSOAuthorizationNavigationDelegate init]): Deleted.
+    (-[TestSOAuthorizationNavigationDelegate webView:didFinishNavigation:]): Deleted.
+    (-[TestSOAuthorizationNavigationDelegate webView:decidePolicyForNavigationAction:decisionHandler:]): Deleted.
+    (-[TestSOAuthorizationNavigationDelegate webView:createWebViewWithConfiguration:forNavigationAction:windowFeatures:]): Deleted.
+    (-[TestSOAuthorizationNavigationDelegate _webView:decidePolicyForSOAuthorizationLoadWithCurrentPolicy:forExtension:completionHandler:]): Deleted.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247437 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-15  Jiewen Tan  <jiewen_tan@apple.com>
+
+            [iOS] SOAuthorizationSession should tell AppSSO whether the UIClient is capable of showing the extension UI
+            https://bugs.webkit.org/show_bug.cgi?id=199790
+            <rdar://problem/52790112>
+
+            Reviewed by Brent Fulgham.
+
+            Add tests to check SOAuthorization.enableEmbeddedAuthorizationViewController accordingly.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/TestSOAuthorization.mm:
+            (-[TestSOAuthorizationDelegate _presentingViewControllerForWebView:]):
+            (configureSOAuthorizationWebView):
+            (TestWebKitAPI::TEST):
+            (-[TestSOAuthorizationNavigationDelegate init]): Deleted.
+            (-[TestSOAuthorizationNavigationDelegate webView:didFinishNavigation:]): Deleted.
+            (-[TestSOAuthorizationNavigationDelegate webView:decidePolicyForNavigationAction:decisionHandler:]): Deleted.
+            (-[TestSOAuthorizationNavigationDelegate webView:createWebViewWithConfiguration:forNavigationAction:windowFeatures:]): Deleted.
+            (-[TestSOAuthorizationNavigationDelegate _webView:decidePolicyForSOAuthorizationLoadWithCurrentPolicy:forExtension:completionHandler:]): Deleted.
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247434. rdar://problem/53229565
+
+    window.openDatabase is not writable
+    https://bugs.webkit.org/show_bug.cgi?id=199737
+    <rdar://problem/52551332>
+    
+    Reviewed by Chris Dumez.
+    
+    Source/WebCore:
+    
+    In r246707 we made openDatabase an undetectable attribute of window, and it was set to be read-only. This broke
+    some sites which replace window.openDatabase with their own implementation when window.openDatabase does not
+    exists or WebSQL is not implemented.
+    
+    This patch removes the readonly property and adds a setter for openDatabase.
+    
+    * Modules/webdatabase/DOMWindowWebDatabase.idl:
+    * bindings/js/JSDOMWindowCustom.cpp:
+    (WebCore::JSDOMWindow::setOpenDatabase):
+    
+    Tools:
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/WebSQLBasics.mm:
+    (TEST):
+    * TestWebKitAPI/Tests/WebKitCocoa/opendatabase-always-exists.html:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247434 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-15  Sihui Liu  <sihui_liu@apple.com>
+
+            window.openDatabase is not writable
+            https://bugs.webkit.org/show_bug.cgi?id=199737
+            <rdar://problem/52551332>
+
+            Reviewed by Chris Dumez.
+
+            * TestWebKitAPI/Tests/WebKitCocoa/WebSQLBasics.mm:
+            (TEST):
+            * TestWebKitAPI/Tests/WebKitCocoa/opendatabase-always-exists.html:
+
 2019-07-15  Aakash Jain  <aakash_jain@apple.com>
 
         [ews-build] Parse and display layout test failures

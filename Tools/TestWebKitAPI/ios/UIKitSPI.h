@@ -32,6 +32,7 @@
 #import <UIKit/UIApplication_Private.h>
 #import <UIKit/UIBarButtonItemGroup_Private.h>
 #import <UIKit/UICalloutBar.h>
+#import <UIKit/UIKeyboardImpl.h>
 #import <UIKit/UIKeyboard_Private.h>
 #import <UIKit/UIResponder_Private.h>
 #import <UIKit/UITextInputMultiDocument.h>
@@ -40,6 +41,11 @@
 #import <UIKit/UIViewController_Private.h>
 #import <UIKit/UIWKTextInteractionAssistant.h>
 #import <UIKit/UIWebFormAccessory.h>
+
+IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+#import <UIKit/UIWebBrowserView.h>
+#import <UIKit/UIWebView_Private.h>
+IGNORE_WARNINGS_END
 
 #if PLATFORM(IOS)
 @protocol UIDragSession;
@@ -76,6 +82,8 @@ WTF_EXTERN_C_END
 @end
 
 @class WebEvent;
+
+@class UITextInputArrowKeyHistory;
 
 @protocol UITextInputPrivate <UITextInput, UITextInputTraits_Private>
 - (UITextInputTraits *)textInputTraits;
@@ -148,9 +156,24 @@ typedef NS_OPTIONS(NSInteger, UIWKDocumentRequestFlags) {
 @property (nonatomic) CGRect lastRect;
 @end
 
+@interface UIWKAutocorrectionContext : NSObject
+@end
+
 @protocol UIWKInteractionViewProtocol
 - (void)requestAutocorrectionRectsForString:(NSString *)input withCompletionHandler:(void (^)(UIWKAutocorrectionRects *rectsForInput))completionHandler;
+- (void)requestAutocorrectionContextWithCompletionHandler:(void (^)(UIWKAutocorrectionContext *autocorrectionContext))completionHandler;
 @end
+
+IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+
+@interface UIWebBrowserView : UIView <UIKeyInput>
+@end
+
+@interface UIWebView (Private)
+- (UIWebBrowserView *)_browserView;
+@end
+
+IGNORE_WARNINGS_END
 
 #endif
 
@@ -187,6 +210,10 @@ typedef NS_OPTIONS(NSInteger, UIWKDocumentRequestFlags) {
 
 @protocol UIWKInteractionViewProtocol_Staging_49236384 <UIWKInteractionViewProtocol>
 - (void)pasteWithCompletionHandler:(void (^)(void))completionHandler;
+@end
+
+@protocol UITextInputPrivate_Staging_54140418 <UITextInputPrivate>
+@property (nonatomic, readonly) BOOL supportsImagePaste;
 @end
 
 @interface UIWebFormAccessory (Staging_49666643)

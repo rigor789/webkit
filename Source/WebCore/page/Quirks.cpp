@@ -27,12 +27,15 @@
 #include "Quirks.h"
 
 #include "CustomHeaderFields.h"
+#include "DOMTokenList.h"
 #include "Document.h"
 #include "DocumentLoader.h"
+#include "FrameLoader.h"
 #include "HTMLMetaElement.h"
 #include "HTMLObjectElement.h"
 #include "LayoutUnit.h"
 #include "Settings.h"
+#include "UserAgent.h"
 
 namespace WebCore {
 
@@ -55,37 +58,6 @@ Quirks::~Quirks() = default;
 inline bool Quirks::needsQuirks() const
 {
     return m_document && m_document->settings().needsSiteSpecificQuirks();
-}
-
-bool Quirks::shouldIgnoreShrinkToFitContent() const
-{
-#if PLATFORM(IOS_FAMILY)
-    if (!needsQuirks())
-        return false;
-
-    auto host = m_document->topDocument().url().host();
-    if (equalLettersIgnoringASCIICase(host, "outlook.live.com"))
-        return true;
-#endif
-    return false;
-}
-
-Optional<LayoutUnit> Quirks::overriddenViewLayoutWidth(LayoutUnit currentViewLayoutWidth) const
-{
-#if PLATFORM(IOS_FAMILY)
-    if (!needsQuirks())
-        return { };
-
-    auto host = m_document->topDocument().url().host();
-    if (equalLettersIgnoringASCIICase(host, "outlook.live.com")) {
-        if (currentViewLayoutWidth <= 989 || currentViewLayoutWidth >= 1132)
-            return { };
-        return { 989 };
-    }
-#else
-    UNUSED_PARAM(currentViewLayoutWidth);
-#endif
-    return { };
 }
 
 bool Quirks::shouldIgnoreInvalidSignal() const
@@ -132,7 +104,8 @@ bool Quirks::needsPerDocumentAutoplayBehavior() const
     ASSERT(m_document == &m_document->topDocument());
     return needsQuirks() && allowedAutoplayQuirks(*m_document).contains(AutoplayQuirk::PerDocumentAutoplayBehavior);
 #else
-    return false;
+    auto host = m_document->topDocument().url().host();
+    return equalLettersIgnoringASCIICase(host, "netflix.com") || host.endsWithIgnoringASCIICase(".netflix.com");
 #endif
 }
 
@@ -163,6 +136,29 @@ bool Quirks::hasBrokenEncryptedMediaAPISupportQuirk() const
         || domain.endsWith("hulu.com");
 
     return m_hasBrokenEncryptedMediaAPISupportQuirk.value();
+}
+
+bool Quirks::shouldDisableContentChangeObserverTouchEventAdjustment() const
+{
+    if (!needsQuirks())
+        return false;
+
+    auto& topDocument = m_document->topDocument();
+    auto* topDocumentLoader = topDocument.loader();
+    if (!topDocumentLoader || !topDocumentLoader->allowContentChangeObserverQuirk())
+        return false;
+
+    auto host = m_document->topDocument().url().host();
+    return host.endsWith(".youtube.com") || host == "youtube.com";
+}
+
+bool Quirks::shouldStripQuotationMarkInFontFaceSetFamily() const
+{
+    if (!needsQuirks())
+        return false;
+
+    auto host = m_document->topDocument().url().host();
+    return equalLettersIgnoringASCIICase(host, "docs.google.com");
 }
 
 bool Quirks::isTouchBarUpdateSupressedForHiddenContentEditable() const
@@ -249,6 +245,19 @@ bool Quirks::needsYouTubeMouseOutQuirk() const
 #endif
 }
 
+bool Quirks::shouldAvoidUsingIOS13ForGmail() const
+{
+#if PLATFORM(IOS_FAMILY)
+    if (!needsQuirks())
+        return false;
+
+    auto& url = m_document->topDocument().url();
+    return equalLettersIgnoringASCIICase(url.host(), "mail.google.com");
+#else
+    return false;
+#endif
+}
+
 bool Quirks::shouldSuppressAutocorrectionAndAutocaptializationInHiddenEditableAreas() const
 {
     if (!needsQuirks())
@@ -258,6 +267,17 @@ bool Quirks::shouldSuppressAutocorrectionAndAutocaptializationInHiddenEditableAr
 }
 
 #if ENABLE(TOUCH_EVENTS)
+bool Quirks::isAmazon() const
+{
+    return topPrivatelyControlledDomain(m_document->topDocument().url().host().toString()).startsWith("amazon.");
+}
+
+bool Quirks::isGoogleMaps() const
+{
+    auto& url = m_document->topDocument().url();
+    return topPrivatelyControlledDomain(url.host().toString()).startsWith("google.") && url.path().startsWithIgnoringASCIICase("/maps/");
+}
+
 bool Quirks::shouldDispatchSimulatedMouseEvents() const
 {
     if (!needsQuirks())
@@ -267,13 +287,18 @@ bool Quirks::shouldDispatchSimulatedMouseEvents() const
     if (!loader || loader->simulatedMouseEventsDispatchPolicy() != SimulatedMouseEventsDispatchPolicy::Allow)
         return false;
 
+    if (isAmazon())
+        return true;
+    if (isGoogleMaps())
+        return true;
+
     auto& url = m_document->topDocument().url();
     auto host = url.host();
 
-    if (equalLettersIgnoringASCIICase(host, "amazon.com") || host.endsWithIgnoringASCIICase(".amazon.com"))
-        return true;
-    if (equalLettersIgnoringASCIICase(host, "wix.com") || host.endsWithIgnoringASCIICase(".wix.com"))
-        return true;
+    if (equalLettersIgnoringASCIICase(host, "wix.com") || host.endsWithIgnoringASCIICase(".wix.com")) {
+        // Disable simulated mouse dispatching for template selection.
+        return !url.path().startsWithIgnoringASCIICase("/website/templates/");
+    }
     if ((equalLettersIgnoringASCIICase(host, "desmos.com") || host.endsWithIgnoringASCIICase(".desmos.com")) && url.path().startsWithIgnoringASCIICase("/calculator/"))
         return true;
     if (equalLettersIgnoringASCIICase(host, "figma.com") || host.endsWithIgnoringASCIICase(".figma.com"))
@@ -286,15 +311,48 @@ bool Quirks::shouldDispatchSimulatedMouseEvents() const
         return true;
     if (equalLettersIgnoringASCIICase(host, "flipkart.com") || host.endsWithIgnoringASCIICase(".flipkart.com"))
         return true;
-    if (equalLettersIgnoringASCIICase(host, "www.google.com") && url.path().startsWithIgnoringASCIICase("/maps/"))
+    if (equalLettersIgnoringASCIICase(host, "iqiyi.com") || host.endsWithIgnoringASCIICase(".iqiyi.com"))
         return true;
     if (equalLettersIgnoringASCIICase(host, "trailers.apple.com"))
         return true;
+    if (equalLettersIgnoringASCIICase(host, "soundcloud.com"))
+        return true;
     if (equalLettersIgnoringASCIICase(host, "naver.com"))
         return true;
-    // Disable the quirk for tv.naver.com subdomain to be able to simulate hover on videos.
-    if (host.endsWithIgnoringASCIICase(".naver.com"))
-        return !equalLettersIgnoringASCIICase(host, "tv.naver.com");
+    if (host.endsWithIgnoringASCIICase(".naver.com")) {
+        // Disable the quirk for tv.naver.com subdomain to be able to simulate hover on videos.
+        if (equalLettersIgnoringASCIICase(host, "tv.naver.com"))
+            return false;
+        // Disable the quirk for mail.naver.com subdomain to be able to tap on mail subjects.
+        if (equalLettersIgnoringASCIICase(host, "mail.naver.com"))
+            return false;
+        // Disable the quirk on the mobile site.
+        // FIXME: Maybe this quirk should be disabled for "m." subdomains on all sites? These are generally mobile sites that don't need mouse events.
+        if (equalLettersIgnoringASCIICase(host, "m.naver.com"))
+            return false;
+        return true;
+    }
+    return false;
+}
+
+bool Quirks::shouldDispatchedSimulatedMouseEventsAssumeDefaultPrevented(EventTarget* target) const
+{
+    if (!needsQuirks() || !shouldDispatchSimulatedMouseEvents())
+        return false;
+
+    if (isAmazon() && is<Element>(target)) {
+        // When panning on an Amazon product image, we're either touching on the #magnifierLens element
+        // or its previous sibling.
+        auto& element = downcast<Element>(*target);
+        if (element.getIdAttribute() == "magnifierLens")
+            return true;
+        if (auto* sibling = element.nextElementSibling())
+            return sibling->getIdAttribute() == "magnifierLens";
+    }
+
+    if (equalLettersIgnoringASCIICase(m_document->topDocument().url().host(), "soundcloud.com") && is<Element>(target))
+        return downcast<Element>(*target).classList().contains("sceneLayer");
+
     return false;
 }
 
@@ -304,19 +362,38 @@ Optional<Event::IsCancelable> Quirks::simulatedMouseEventTypeForTarget(EventTarg
         return { };
 
     // On Google Maps, we want to limit simulated mouse events to dragging the little man that allows entering into Street View.
-    auto& url = m_document->topDocument().url();
-    auto host = url.host();
-    if (equalLettersIgnoringASCIICase(host, "www.google.com") && url.path().startsWithIgnoringASCIICase("/maps/")) {
+    if (isGoogleMaps()) {
         if (is<Element>(target) && downcast<Element>(target)->getAttribute("class") == "widget-expand-button-pegman-icon")
             return Event::IsCancelable::Yes;
         return { };
     }
 
+    auto host = m_document->topDocument().url().host();
     if (equalLettersIgnoringASCIICase(host, "desmos.com") || host.endsWithIgnoringASCIICase(".desmos.com"))
         return Event::IsCancelable::No;
 
     return Event::IsCancelable::Yes;
-}   
+}
+
+bool Quirks::shouldMakeTouchEventNonCancelableForTarget(EventTarget* target) const
+{
+    if (!needsQuirks())
+        return false;
+
+    auto host = m_document->topDocument().url().host();
+
+    if (equalLettersIgnoringASCIICase(host, "www.youtube.com")) {
+        if (is<Element>(target)) {
+            unsigned depth = 3;
+            for (auto* element = downcast<Element>(target); element && depth; element = element->parentElement(), --depth) {
+                if (element->localName() == "paper-item" && element->classList().contains("yt-dropdown-menu"))
+                    return true;
+            }
+        }
+    }
+
+    return false;
+}
 #endif
 
 bool Quirks::shouldAvoidResizingWhenInputViewBoundsChange() const
@@ -346,6 +423,62 @@ bool Quirks::shouldDisablePointerEventsQuirk() const
         return true;
 #endif
     return false;
+}
+
+bool Quirks::needsDeferKeyDownAndKeyPressTimersUntilNextEditingCommand() const
+{
+#if PLATFORM(IOS_FAMILY)
+    if (m_document->settings().needsDeferKeyDownAndKeyPressTimersUntilNextEditingCommandQuirk())
+        return true;
+
+    if (!needsQuirks())
+        return false;
+
+    auto& url = m_document->topDocument().url();
+    return equalLettersIgnoringASCIICase(url.host(), "docs.google.com") && url.path().startsWithIgnoringASCIICase("/spreadsheets/");
+#else
+    return false;
+#endif
+}
+
+bool Quirks::shouldLightenJapaneseBoldSansSerif() const
+{
+#if USE(HIRAGINO_SANS_WORKAROUND)
+    if (!needsQuirks())
+        return false;
+
+    // lang="ja" style="font: bold sans-serif;" content would naturally get HiraginoSans-W8 here, but that's visually
+    // too bold. Instead, we should pick HiraginoSans-W6 instead.
+    // FIXME: webkit.org/b/200047 Remove this quirk.
+    auto host = m_document->topDocument().url().host();
+    return equalLettersIgnoringASCIICase(host, "m.yahoo.co.jp");
+#else
+    return false;
+#endif
+}
+
+bool Quirks::shouldIgnoreContentChange(const Element& element) const
+{
+#if PLATFORM(IOS_FAMILY)
+    if (!needsQuirks())
+        return false;
+
+    auto* parentElement = element.parentElement();
+    if (!parentElement || !parentElement->hasClass())
+        return false;
+
+    DOMTokenList& classList = parentElement->classList();
+    if (!classList.contains("feedback") || !classList.contains("feedback-mid"))
+        return false;
+
+    if (!equalLettersIgnoringASCIICase(topPrivatelyControlledDomain(m_document->url().host().toString()), "united.com"))
+        return false;
+
+    return true;
+#else
+    UNUSED_PARAM(element);
+    return false;
+#endif
 }
 
 // FIXME(<rdar://problem/50394969>): Remove after desmos.com adopts inputmode="none".
@@ -409,6 +542,38 @@ bool Quirks::needsYouTubeOverflowScrollQuirk() const
 
     return *m_needsYouTubeOverflowScrollQuirk;
 #else
+    return false;
+#endif
+}
+
+bool Quirks::shouldAvoidScrollingWhenFocusedContentIsVisible() const
+{
+    if (!needsQuirks())
+        return false;
+
+    return equalLettersIgnoringASCIICase(m_document->url().host(), "www.zillow.com");
+}
+
+bool Quirks::shouldOpenAsAboutBlank(const String& stringToOpen) const
+{
+#if PLATFORM(IOS_FAMILY)
+    if (!needsQuirks())
+        return false;
+
+    auto openerURL = m_document->url();
+    if (!equalLettersIgnoringASCIICase(openerURL.host(), "docs.google.com"))
+        return false;
+
+    if (!m_document->frame() || !m_document->frame()->loader().userAgentForJavaScript(openerURL).contains("Macintosh"))
+        return false;
+
+    URL urlToOpen { URL { }, stringToOpen };
+    if (!urlToOpen.protocolIsAbout())
+        return false;
+
+    return !equalLettersIgnoringASCIICase(urlToOpen.host(), "blank") && !equalLettersIgnoringASCIICase(urlToOpen.host(), "srcdoc");
+#else
+    UNUSED_PARAM(stringToOpen);
     return false;
 #endif
 }

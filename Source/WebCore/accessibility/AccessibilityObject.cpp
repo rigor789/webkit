@@ -540,15 +540,22 @@ AccessibilityObject* AccessibilityObject::nextSiblingUnignored(int limit) const
 
 AccessibilityObject* AccessibilityObject::firstAccessibleObjectFromNode(const Node* node)
 {
+    return WebCore::firstAccessibleObjectFromNode(node, [] (const AccessibilityObject& accessible) {
+        return !accessible.accessibilityIsIgnored();
+    });
+}
+
+AccessibilityObject* firstAccessibleObjectFromNode(const Node* node, const WTF::Function<bool(const AccessibilityObject&)>& isAccessible)
+{
     if (!node)
         return nullptr;
 
     AXObjectCache* cache = node->document().axObjectCache();
     if (!cache)
         return nullptr;
-    
+
     AccessibilityObject* accessibleObject = cache->getOrCreate(node->renderer());
-    while (accessibleObject && accessibleObject->accessibilityIsIgnored()) {
+    while (accessibleObject && !isAccessible(*accessibleObject)) {
         node = NodeTraversal::next(*node);
 
         while (node && !node->renderer())
@@ -2275,6 +2282,22 @@ bool AccessibilityObject::replaceTextInRange(const String& replacementString, co
     }
 
     return false;
+}
+
+bool AccessibilityObject::insertText(const String& text)
+{
+    if (!renderer() || !is<Element>(node()))
+        return false;
+
+    auto& element = downcast<Element>(*renderer()->node());
+
+    // Only try to insert text if the field is in editing mode.
+    if (!element.shouldUseInputMethod())
+        return false;
+
+    // Use Editor::insertText to mimic typing into the field.
+    auto& editor = renderer()->frame().editor();
+    return editor.insertText(text, nullptr);
 }
 
 // Lacking concrete evidence of orientation, horizontal means width > height. vertical is height > width;

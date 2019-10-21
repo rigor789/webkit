@@ -37,6 +37,7 @@ perf/accessibility-title-ui-element.html
 fullscreen
 http/tests/fullscreen
 compositing/no-compositing-when-fulll-screen-is-present.html
+webkit.org/b/200308 fast/events/touch/ios/content-observation/non-visible-content-change-in-fullscreen-mode.html [ Skip ]
 
 # WebGPU is not enabled on iOS Simulator.
 webgpu [ Skip ]
@@ -3219,8 +3220,6 @@ fast/events/touch/ios/pointer-events-with-modifiers.html [ Skip ]
 webkit.org/b/191707 imported/w3c/web-platform-tests/webrtc/simplecall-no-ssrcs.https.html [ Skip ]
 webkit.org/b/191707 imported/w3c/web-platform-tests/webrtc/simplecall.https.html [ Skip ]
 
-webkit.org/b/191711 quicklook/numbers.html [ ImageOnlyFailure ]
-
 webkit.org/b/197473 imported/w3c/web-platform-tests/resource-timing/resource-timing-level1.sub.html [ Pass Failure ]
 
 webkit.org/b/175678 media/W3C/video/events/event_progress.html [ Pass Failure ]
@@ -3255,10 +3254,6 @@ fast/images/animated-heics-verify.html [ Pass ]
 # <rdar://problem/40172428> REGRESSION: LayoutTests fast/text/font-collection.html and fast/text/woff2.html are failing
 fast/text/font-collection.html [ ImageOnlyFailure ]
 
-# <rdar://problem/40952038> quicklook/keynote.html and quicklook/pages.html are failing with a 0.09% image diff
-quicklook/keynote.html [ ImageOnlyFailure ]
-quicklook/pages.html [ ImageOnlyFailure ]
-
 # <rdar://problem/41546587> REGRESSION: LayoutTest compositing/contents-scale/non-decomposable-matrix.html is failing
 compositing/contents-scale/non-decomposable-matrix.html [ ImageOnlyFailure ]
 
@@ -3291,14 +3286,6 @@ media/video-ended-event-negative-playback.html [ Failure ]
 media/video-played-collapse.html [ Failure ]
 media/video-played-ranges-1.html [ Failure ]
 media/video-played-reset.html [ Failure ]
-
-# <rdar://problem/47898237> REGRESSION (iOS 13): Multiple quicklook tests failing
-quicklook/powerpoint-legacy.html [ Failure ]
-quicklook/powerpoint.html [ Failure ]
-
-# Skip tests timing out for <rdar://problem/48616298>
-fast/viewport/ios/constant-width-viewport-after-changing-view-scale.html [ Skip ]
-fast/viewport/ios/ignore-minimum-device-width-for-page-with-viewport-device-width.html [ Skip ]
 
 # <rdar://problem/51055223> (iOS 13): jsc-layout-tests.yaml/js/script-tests/intl-numberformat.js.layout is failing
 js/intl-numberformat.html [ Failure ]
@@ -3354,3 +3341,25 @@ fast/text/international/system-language/han-quotes.html [ ImageOnlyFailure ]
 
 # <rdar://problem/52689856> storage/websql/test-authorizer.html is failing
 storage/websql/test-authorizer.html [ Failure ]
+
+# rdar://53551736 (Layout Test editing/pasteboard/paste-and-sanitize.html is a Flaky Failure on iOS 13)
+editing/pasteboard/paste-and-sanitize.html [ Pass Failure ]
+
+# rdar://53866783 (REGRESSION: Layout Test fast/shadow-dom/click-text-inside-linked-slot.html is Failing)
+fast/shadow-dom/click-text-inside-linked-slot.html [ Pass Failure ]
+
+# rdar://53946482 (REGRESSION: Multiple Layout Tests (*-using-open-panel.html) are Timing Out)
+fast/files/apply-blob-url-to-xhr-using-open-panel.html [ Pass Timeout ]
+fast/files/file-reader-abort-using-open-panel.html [ Pass Timeout ]
+http/tests/local/formdata/send-form-data-with-empty-file-filename-using-open-panel.html [ Pass Timeout ]
+http/tests/local/fileapi/file-last-modified-using-open-panel.html [ Pass Timeout ]
+
+# rdar://53957264 (REGRESSION: Layout Tests http/tests/misc/iframe-beforeunload-dialog-not-matching-ancestor-securityorigin.html and http/tests/misc/iframe-beforeunload-dialog-block-modals.html Timing Out)
+http/tests/misc/iframe-beforeunload-dialog-not-matching-ancestor-securityorigin.html [ Pass Timeout ]
+http/tests/misc/iframe-beforeunload-dialog-block-modals.html [ Pass Timeout ]
+
+# rdar://52961406 (scrollingcoordinator/ios/scroll-position-after-reattach.html is a flaky image failure on iOS)
+scrollingcoordinator/ios/scroll-position-after-reattach.html [ Pass ImageOnlyFailure ]
+
+# rdar://54561673 (REGRESSION: Layout test http/tests/security/frameNavigation/sandbox-ALLOWED-top-navigation-with-user-gesture-2.html is a flaky timeout)
+http/tests/security/frameNavigation/sandbox-ALLOWED-top-navigation-with-user-gesture-2.html [ Pass Timeout ]

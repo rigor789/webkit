@@ -90,6 +90,7 @@
 #import <UIKit/UIPreviewAction_Private.h>
 #import <UIKit/UIPreviewItemController.h>
 #if USE(UICONTEXTMENU)
+#import <UIKit/UIContextMenuInteraction_ForSpringBoardOnly.h>
 #import <UIKit/UIContextMenuInteraction_ForWebKitOnly.h>
 #endif
 #endif
@@ -110,6 +111,10 @@
 #import <UIKit/UIPreviewInteraction.h>
 #import <UIKit/UIURLDragPreviewView.h>
 #import <UIKit/_UITextDragCaretView.h>
+#endif
+
+#if __has_include(<UIKit/UITargetedPreview_Private.h>)
+#import <UIKit/UITargetedPreview_Private.h>
 #endif
 
 #else // USE(APPLE_INTERNAL_SDK)
@@ -265,6 +270,7 @@ typedef enum {
 
 @interface UIKeyboardImpl : UIView <UIKeyboardCandidateListDelegate>
 - (BOOL)smartInsertDeleteIsEnabled;
+- (void)updateForChangedSelection;
 @end
 
 @interface UIKeyboardImpl ()
@@ -1117,6 +1123,9 @@ typedef NS_OPTIONS(NSInteger, UIWKDocumentRequestFlags) {
 - (void)_setContentOffsetWithDecelerationAnimation:(CGPoint)contentOffset;
 - (CGPoint)_adjustedContentOffsetForContentOffset:(CGPoint)contentOffset;
 - (void)_flashScrollIndicatorsPersistingPreviousFlashes:(BOOL)persisting;
+
+@property (nonatomic) BOOL tracksImmediatelyWhileDecelerating;
+@property (nonatomic, getter=_avoidsJumpOnInterruptedBounce, setter=_setAvoidsJumpOnInterruptedBounce:) BOOL _avoidsJumpOnInterruptedBounce;
 @end
 
 @interface UIPeripheralHost (IPI)
@@ -1133,8 +1142,11 @@ typedef NS_OPTIONS(NSInteger, UIWKDocumentRequestFlags) {
 @property (nonatomic, readonly) UIKeyboardInputMode *currentInputModeInPreference;
 @end
 
+@class CALayerHost;
+
 @interface _UILayerHostView : UIView
 - (instancetype)initWithFrame:(CGRect)frame pid:(pid_t)pid contextID:(uint32_t)contextID;
+@property (nonatomic, readonly, retain) CALayerHost *layerHost;
 @end
 
 @interface _UIRemoteView : _UILayerHostView
@@ -1150,6 +1162,12 @@ typedef NS_OPTIONS(NSInteger, UIWKDocumentRequestFlags) {
 - (void)_preserveFocusWithToken:(id <NSCopying, NSSecureCoding>)token destructively:(BOOL)destructively;
 @end
 #endif
+
+#if USE(UICONTEXTMENU)
+@interface UITargetedPreview (Radar54086338)
+@property (nonatomic, strong, setter=_setOverridePositionTrackingView:) UIView *overridePositionTrackingView;
+@end
+#endif // USE(UICONTEXTMENU)
 
 @interface UIResponder ()
 - (UIResponder *)firstResponder;

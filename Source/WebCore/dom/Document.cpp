@@ -262,6 +262,7 @@
 #if PLATFORM(IOS_FAMILY)
 #include "ContentChangeObserver.h"
 #include "CSSFontSelector.h"
+#include "DOMTimerHoldingTank.h"
 #include "DeviceMotionClientIOS.h"
 #include "DeviceMotionController.h"
 #include "DeviceOrientationClientIOS.h"
@@ -2490,6 +2491,7 @@ void Document::prepareForDestruction()
         NavigationDisabler navigationDisabler(m_frame);
         disconnectDescendantFrames();
     }
+    RELEASE_ASSERT_WITH_SECURITY_IMPLICATION(!m_frame || !m_frame->tree().childCount());
 
     if (m_domWindow && m_frame)
         m_domWindow->willDetachDocumentFromFrame();
@@ -8186,12 +8188,22 @@ void Document::setPaintWorkletGlobalScopeForName(const String& name, Ref<PaintWo
 #endif
 
 #if PLATFORM(IOS_FAMILY)
+
 ContentChangeObserver& Document::contentChangeObserver()
 {
     if (!m_contentChangeObserver)
         m_contentChangeObserver = std::make_unique<ContentChangeObserver>(*this);
     return *m_contentChangeObserver; 
 }
+
+DOMTimerHoldingTank& Document::domTimerHoldingTank()
+{
+    if (m_domTimerHoldingTank)
+        return *m_domTimerHoldingTank;
+    m_domTimerHoldingTank = std::make_unique<DOMTimerHoldingTank>();
+    return *m_domTimerHoldingTank;
+}
+
 #endif
 
 bool Document::hasEvaluatedUserAgentScripts() const

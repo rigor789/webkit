@@ -69,6 +69,8 @@
 
 @interface AVSampleBufferDisplayLayer (WebCoreAVSampleBufferDisplayLayerQueueManagementPrivate)
 - (void)prerollDecodeWithCompletionHandler:(void (^)(BOOL success))block;
+- (void)expectMinimumUpcomingSampleBufferPresentationTime: (CMTime)minimumUpcomingPresentationTime;
+- (void)resetUpcomingSampleBufferPresentationTimeExpectations;
 @end
 
 #pragma mark -
@@ -176,9 +178,9 @@
     });
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (void)streamDataParserWillProvideContentKeyRequestInitializationData:(AVStreamDataParser *)streamDataParser forTrackID:(CMPersistentTrackID)trackID
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     ASSERT_UNUSED(streamDataParser, streamDataParser == _parser);
 
@@ -202,9 +204,9 @@ IGNORE_WARNINGS_END
     }
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (void)streamDataParser:(AVStreamDataParser *)streamDataParser didProvideContentKeyRequestInitializationData:(NSData *)initData forTrackID:(CMPersistentTrackID)trackID
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     ASSERT_UNUSED(streamDataParser, streamDataParser == _parser);
 
@@ -1256,6 +1258,28 @@ void SourceBufferPrivateAVFObjC::notifyClientWhenReadyForMoreSamples(const AtomS
                 weakThis->didBecomeReadyForMoreSamples(trackID);
         }];
     }
+}
+
+bool SourceBufferPrivateAVFObjC::canSetMinimumUpcomingPresentationTime(const AtomString& trackIDString) const
+{
+    int trackID = trackIDString.toInt();
+    if (trackID == m_enabledVideoTrackID)
+        return [getAVSampleBufferDisplayLayerClass() instancesRespondToSelector:@selector(expectMinimumUpcomingSampleBufferPresentationTime:)];
+    return false;
+}
+
+void SourceBufferPrivateAVFObjC::setMinimumUpcomingPresentationTime(const AtomString& trackIDString, const MediaTime& presentationTime)
+{
+    ASSERT(canSetMinimumUpcomingPresentationTime(trackIDString));
+    if (canSetMinimumUpcomingPresentationTime(trackIDString))
+        [m_displayLayer expectMinimumUpcomingSampleBufferPresentationTime:toCMTime(presentationTime)];
+}
+
+void SourceBufferPrivateAVFObjC::clearMinimumUpcomingPresentationTime(const AtomString& trackIDString)
+{
+    ASSERT(canSetMinimumUpcomingPresentationTime(trackIDString));
+    if (canSetMinimumUpcomingPresentationTime(trackIDString))
+        [m_displayLayer resetUpcomingSampleBufferPresentationTimeExpectations];
 }
 
 bool SourceBufferPrivateAVFObjC::canSwitchToType(const ContentType& contentType)

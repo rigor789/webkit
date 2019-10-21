@@ -423,6 +423,29 @@ void DOMWindow::didSecureTransitionTo(Document& document)
     m_performance = nullptr;
 }
 
+void DOMWindow::prewarmLocalStorageIfNecessary()
+{
+    auto* page = this->page();
+
+    // No need to prewarm for ephemeral sessions since the data is in memory only.
+    if (!page || page->usesEphemeralSession())
+        return;
+
+    if (!page->mainFrame().mayPrewarmLocalStorage())
+        return;
+
+    auto localStorageResult = this->localStorage();
+    if (localStorageResult.hasException())
+        return;
+
+    auto* localStorage = localStorageResult.returnValue();
+    if (!localStorage)
+        return;
+
+    if (localStorage->prewarm())
+        page->mainFrame().didPrewarmLocalStorage();
+}
+
 DOMWindow::~DOMWindow()
 {
     if (m_suspendedForDocumentSuspension)
@@ -973,6 +996,9 @@ void DOMWindow::focus(bool allowFocus)
         page->chrome().focus();
 
     if (!frame())
+        return;
+
+    if (!frame()->hasHadUserInteraction() && !isSameSecurityOriginAsMainFrame())
         return;
 
     // Clear the current frame's focused node if a new frame is about to be focused.
@@ -2372,7 +2398,7 @@ ExceptionOr<RefPtr<Frame>> DOMWindow::createWindow(const String& urlString, cons
     return noopener ? RefPtr<Frame> { nullptr } : newFrame;
 }
 
-ExceptionOr<RefPtr<WindowProxy>> DOMWindow::open(DOMWindow& activeWindow, DOMWindow& firstWindow, const String& urlString, const AtomString& frameName, const String& windowFeaturesString)
+ExceptionOr<RefPtr<WindowProxy>> DOMWindow::open(DOMWindow& activeWindow, DOMWindow& firstWindow, const String& urlStringToOpen, const AtomString& frameName, const String& windowFeaturesString)
 {
     if (!isCurrentlyDisplayedInFrame())
         return RefPtr<WindowProxy> { nullptr };
@@ -2384,6 +2410,10 @@ ExceptionOr<RefPtr<WindowProxy>> DOMWindow::open(DOMWindow& activeWindow, DOMWin
     auto* firstFrame = firstWindow.frame();
     if (!firstFrame)
         return RefPtr<WindowProxy> { nullptr };
+
+    auto urlString = urlStringToOpen;
+    if (activeDocument->quirks().shouldOpenAsAboutBlank(urlStringToOpen))
+        urlString = "about:blank"_s;
 
 #if ENABLE(CONTENT_EXTENSIONS)
     if (firstFrame->document()

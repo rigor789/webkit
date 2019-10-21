@@ -31,6 +31,7 @@
 namespace WebCore {
 
 class Document;
+class Element;
 class EventTarget;
 class HTMLElement;
 class LayoutUnit;
@@ -42,34 +43,49 @@ public:
     ~Quirks();
 
     bool shouldIgnoreInvalidSignal() const;
-    WEBCORE_EXPORT bool shouldIgnoreShrinkToFitContent() const;
-    WEBCORE_EXPORT Optional<LayoutUnit> overriddenViewLayoutWidth(LayoutUnit currentViewLayoutWidth) const;
     bool needsFormControlToBeMouseFocusable() const;
     bool needsAutoplayPlayPauseEvents() const;
     bool needsSeekingSupportDisabled() const;
     bool needsPerDocumentAutoplayBehavior() const;
     bool shouldAutoplayForArbitraryUserGesture() const;
     bool hasBrokenEncryptedMediaAPISupportQuirk() const;
+    bool shouldStripQuotationMarkInFontFaceSetFamily() const;
 #if ENABLE(TOUCH_EVENTS)
     bool shouldDispatchSimulatedMouseEvents() const;
+    bool shouldDispatchedSimulatedMouseEventsAssumeDefaultPrevented(EventTarget*) const;
     Optional<Event::IsCancelable> simulatedMouseEventTypeForTarget(EventTarget*) const;
+    bool shouldMakeTouchEventNonCancelableForTarget(EventTarget*) const;
 #endif
     bool shouldDisablePointerEventsQuirk() const;
+    bool shouldIgnoreContentChange(const Element&) const;
     bool needsInputModeNoneImplicitly(const HTMLElement&) const;
+    bool needsDeferKeyDownAndKeyPressTimersUntilNextEditingCommand() const;
+    bool shouldLightenJapaneseBoldSansSerif() const;
+    bool shouldDisableContentChangeObserverTouchEventAdjustment() const;
 
     WEBCORE_EXPORT bool shouldDispatchSyntheticMouseEventsWhenModifyingSelection() const;
     WEBCORE_EXPORT bool shouldSuppressAutocorrectionAndAutocaptializationInHiddenEditableAreas() const;
     WEBCORE_EXPORT bool isTouchBarUpdateSupressedForHiddenContentEditable() const;
     WEBCORE_EXPORT bool isNeverRichlyEditableForTouchBar() const;
     WEBCORE_EXPORT bool shouldAvoidResizingWhenInputViewBoundsChange() const;
+    WEBCORE_EXPORT bool shouldAvoidScrollingWhenFocusedContentIsVisible() const;
 
     WEBCORE_EXPORT bool needsYouTubeMouseOutQuirk() const;
+    
+    WEBCORE_EXPORT bool shouldAvoidUsingIOS13ForGmail() const;
 
     bool needsGMailOverflowScrollQuirk() const;
     bool needsYouTubeOverflowScrollQuirk() const;
 
+    bool shouldOpenAsAboutBlank(const String&) const;
+
 private:
     bool needsQuirks() const;
+
+#if ENABLE(TOUCH_EVENTS)
+    bool isAmazon() const;
+    bool isGoogleMaps() const;
+#endif
 
     WeakPtr<Document> m_document;
 

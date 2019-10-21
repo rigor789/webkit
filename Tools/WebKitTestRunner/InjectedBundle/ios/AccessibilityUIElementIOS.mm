@@ -58,6 +58,7 @@ typedef void (*AXPostedNotificationCallback)(id element, NSString* notification,
 - (NSRange)_accessibilitySelectedTextRange;
 - (void)_accessibilitySetSelectedTextRange:(NSRange)range;
 - (BOOL)accessibilityReplaceRange:(NSRange)range withText:(NSString *)string;
+- (BOOL)accessibilityInsertText:(NSString *)text;
 - (void)accessibilitySetPostedNotificationCallback:(AXPostedNotificationCallback)function withContext:(void*)context;
 - (CGFloat)_accessibilityMinValue;
 - (CGFloat)_accessibilityMaxValue;
@@ -102,6 +103,7 @@ typedef void (*AXPostedNotificationCallback)(id element, NSString* notification,
 - (id)lineStartMarkerForMarker:(id)marker;
 - (id)lineEndMarkerForMarker:(id)marker;
 - (NSArray *)textMarkerRangeFromMarkers:(NSArray *)markers withText:(NSString *)text;
+- (BOOL)_accessibilityIsInTableCell;
 @end
 
 @interface NSObject (WebAccessibilityObjectWrapperPrivate)
@@ -793,6 +795,11 @@ int AccessibilityUIElement::columnCount()
     return [m_element accessibilityColumnCount];
 }
 
+bool AccessibilityUIElement::isInTableCell() const
+{
+    return [m_element _accessibilityIsInTableCell];
+}
+
 int AccessibilityUIElement::indexInTable()
 {
     return -1;
@@ -1161,6 +1168,11 @@ RefPtr<AccessibilityTextMarker> AccessibilityUIElement::startTextMarkerForBounds
 bool AccessibilityUIElement::replaceTextInRange(JSStringRef string, int location, int length)
 {
     return [m_element accessibilityReplaceRange:NSMakeRange(location, length) withText:[NSString stringWithJSStringRef:string]];
+}
+
+bool AccessibilityUIElement::insertText(JSStringRef text)
+{
+    return [m_element accessibilityInsertText:[NSString stringWithJSStringRef:text]];
 }
 
 RefPtr<AccessibilityTextMarker> AccessibilityUIElement::textMarkerForPoint(int x, int y)

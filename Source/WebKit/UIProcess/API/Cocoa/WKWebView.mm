@@ -273,6 +273,8 @@ static Optional<WebCore::ScrollbarOverlayStyle> toCoreScrollbarStyle(_WKOverlayS
     Optional<BOOL> _resolutionForShareSheetImmediateCompletionForTesting;
     RetainPtr<WKSafeBrowsingWarning> _safeBrowsingWarning;
 
+    BOOL _usePlatformFindUI;
+
 #if PLATFORM(IOS_FAMILY)
     RetainPtr<_WKRemoteObjectRegistry> _remoteObjectRegistry;
 
@@ -688,6 +690,11 @@ static void validate(WKWebViewConfiguration *configuration)
     [_scrollView setInternalDelegate:self];
     [_scrollView setBouncesZoom:YES];
 
+    if ([_scrollView respondsToSelector:@selector(_setAvoidsJumpOnInterruptedBounce:)]) {
+        [_scrollView setTracksImmediatelyWhileDecelerating:NO];
+        [_scrollView _setAvoidsJumpOnInterruptedBounce:YES];
+    }
+
     if ([_configuration _editableImagesEnabled])
         [_scrollView panGestureRecognizer].allowedTouchTypes = @[ @(UITouchTypeDirect) ];
 
@@ -703,8 +710,9 @@ static void validate(WKWebViewConfiguration *configuration)
 
     _page = [_contentView page];
     [self _dispatchSetDeviceOrientation:deviceOrientation()];
-    if (!self.opaque)
-        _page->setBackgroundColor(WebCore::Color(WebCore::Color::transparent));
+
+    if (!self.opaque || !pageConfiguration->drawsBackground())
+        [self _setOpaqueInternal:NO];
 
     [_contentView layer].anchorPoint = CGPointZero;
     [_contentView setFrame:bounds];
@@ -769,6 +777,8 @@ static void validate(WKWebViewConfiguration *configuration)
     _page->setDiagnosticLoggingClient(std::make_unique<WebKit::DiagnosticLoggingClient>(self));
 
     _iconLoadingDelegate = std::make_unique<WebKit::IconLoadingDelegate>(self);
+
+    _usePlatformFindUI = YES;
 
     [self _setUpSQLiteDatabaseTrackerClient];
 
@@ -1457,7 +1467,7 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
 
 - (BOOL)_isBackground
 {
-    if ([self _isDisplayingPDF])
+    if (![self usesStandardContentView] && [_customContentView respondsToSelector:@selector(web_isBackground)])
         return [_customContentView web_isBackground];
     return [_contentView isBackground];
 }
@@ -1621,6 +1631,7 @@ static CGSize roundScrollViewContentSize(const WebKit::WebPageProxy& page, CGSiz
 
         _scrollViewBackgroundColor = WebCore::Color();
         [_scrollView setContentOffset:[self _initialContentOffsetForScrollView]];
+        [_scrollView _setScrollEnabledInternal:YES];
 
         [self _setAvoidsUnsafeArea:NO];
     } else if (_customContentView) {
@@ -2413,7 +2424,8 @@ static WebCore::FloatPoint constrainContentOffset(WebCore::FloatPoint contentOff
     focusedElementRectInNewScale.moveBy([_contentView frame].origin);
 
     BOOL selectionRectIsNotNull = !selectionRectInDocumentCoordinates.isZero();
-    if (!forceScroll) {
+    BOOL doNotScrollWhenContentIsAlreadyVisible = !forceScroll || [_contentView _shouldAvoidScrollingWhenFocusedContentIsVisible];
+    if (doNotScrollWhenContentIsAlreadyVisible) {
         CGRect currentlyVisibleRegionInWebViewCoordinates;
         currentlyVisibleRegionInWebViewCoordinates.origin = unobscuredScrollViewRectInWebViewCoordinates.origin;
         currentlyVisibleRegionInWebViewCoordinates.origin.y += visibleOffsetFromTop;
@@ -2565,15 +2577,11 @@ static WebCore::FloatPoint constrainContentOffset(WebCore::FloatPoint contentOff
     _page->webViewDidMoveToWindow();
 }
 
-- (void)setOpaque:(BOOL)opaque
+- (void)_setOpaqueInternal:(BOOL)opaque
 {
-    BOOL oldOpaque = self.opaque;
-
     [super setOpaque:opaque];
-    [_contentView setOpaque:opaque];
 
-    if (oldOpaque == opaque)
-        return;
+    [_contentView setOpaque:opaque];
 
     if (!_page)
         return;
@@ -2582,7 +2590,16 @@ static WebCore::FloatPoint constrainContentOffset(WebCore::FloatPoint contentOff
     if (!opaque)
         backgroundColor = WebCore::Color(WebCore::Color::transparent);
     _page->setBackgroundColor(backgroundColor);
+
     [self _updateScrollViewBackground];
+}
+
+- (void)setOpaque:(BOOL)opaque
+{
+    if (opaque == self.opaque)
+        return;
+
+    [self _setOpaqueInternal:opaque];
 }
 
 - (void)setBackgroundColor:(UIColor *)backgroundColor
@@ -3325,6 +3342,9 @@ static int32_t activeOrientation(WKWebView *webView)
         SetForScope<BOOL> insetAdjustmentGuard(_currentlyAdjustingScrollViewInsetsForKeyboard, YES);
         [_scrollView _adjustForAutomaticKeyboardInfo:keyboardInfo animated:YES lastAdjustment:&_lastAdjustmentForScroller];
         CGFloat bottomInsetAfterAdjustment = [_scrollView contentInset].bottom;
+        // FIXME: This "total bottom content inset adjustment" mechanism hasn't worked since iOS 11, since -_adjustForAutomaticKeyboardInfo:animated:lastAdjustment:
+        // no longer sets -[UIScrollView contentInset] for apps linked on or after iOS 11. We should consider removing this logic, since the original bug this was
+        // intended to fix, <rdar://problem/23202254>, remains fixed through other means.
         if (bottomInsetBeforeAdjustment != bottomInsetAfterAdjustment)
             _totalScrollViewBottomInsetAdjustmentForKeyboard += bottomInsetAfterAdjustment - bottomInsetBeforeAdjustment;
     }
@@ -3367,10 +3387,7 @@ static int32_t activeOrientation(WKWebView *webView)
 
 - (void)_keyboardWillHide:(NSNotification *)notification
 {
-    // Ignore keyboard will hide notifications sent during rotation. They're just there for
-    // backwards compatibility reasons and processing the will hide notification would
-    // temporarily screw up the unobscured view area.
-    if ([[UIPeripheralHost sharedInstance] rotationState])
+    if ([_contentView shouldIgnoreKeyboardWillHideNotification])
         return;
 
     [self _keyboardChangedWithInfo:notification.userInfo adjustScrollView:YES];
@@ -3562,9 +3579,9 @@ static void hardwareKeyboardAvailabilityChangedCallback(CFNotificationCenterRef,
     _impl->setFrameSize(NSSizeToCGSize(size));
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (void)renewGState
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     _impl->renewGState();
     [super renewGState];
@@ -4058,9 +4075,9 @@ WEBCORE_COMMAND(yankAndSelect)
 }
 
 #if ENABLE(DRAG_SUPPORT)
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (void)draggedImage:(NSImage *)image endedAt:(NSPoint)endPoint operation:(NSDragOperation)operation
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     _impl->draggedImage(image, NSPointToCGPoint(endPoint), operation);
 }
@@ -4151,9 +4168,9 @@ IGNORE_WARNINGS_END
     return _impl->accessibilityFocusedUIElement();
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (BOOL)accessibilityIsIgnored
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     return _impl->accessibilityIsIgnored();
 }
@@ -4163,23 +4180,23 @@ IGNORE_WARNINGS_END
     return _impl->accessibilityHitTest(NSPointToCGPoint(point));
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (id)accessibilityAttributeValue:(NSString *)attribute
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     return _impl->accessibilityAttributeValue(attribute);
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (id)accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     return _impl->accessibilityAttributeValue(attribute, parameter);
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (NSArray<NSString *> *)accessibilityParameterizedAttributeNames
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     NSArray<NSString *> *names = [super accessibilityParameterizedAttributeNames];
     return [names arrayByAddingObject:@"AXConvertRelativeFrame"];
@@ -4250,9 +4267,9 @@ IGNORE_WARNINGS_END
     _impl->provideDataForPasteboard(pasteboard, type);
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (NSArray *)namesOfPromisedFilesDroppedAtDestination:(NSURL *)dropDestination
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     return _impl->namesOfPromisedFilesDroppedAtDestination(dropDestination);
 }
@@ -4319,10 +4336,24 @@ IGNORE_WARNINGS_END
 }
 #endif
 
+- (BOOL)_usePlatformFindUI
+{
+    return _usePlatformFindUI;
+}
+
+- (void)_setUsePlatformFindUI:(BOOL)usePlatformFindUI
+{
+    _usePlatformFindUI = usePlatformFindUI;
+
+    if (_textFinderClient)
+        [self _hideFindUI];
+    _textFinderClient = nil;
+}
+
 - (WKTextFinderClient *)_ensureTextFinderClient
 {
     if (!_textFinderClient)
-        _textFinderClient = adoptNS([[WKTextFinderClient alloc] initWithPage:*_page view:self]);
+        _textFinderClient = adoptNS([[WKTextFinderClient alloc] initWithPage:*_page view:self usePlatformFindUI:_usePlatformFindUI]);
     return _textFinderClient.get();
 }
 
@@ -4334,6 +4365,11 @@ IGNORE_WARNINGS_END
 - (void)replaceMatches:(NSArray *)matches withString:(NSString *)replacementString inSelectionOnly:(BOOL)selectionOnly resultCollector:(void (^)(NSUInteger replacementCount))resultCollector
 {
     [[self _ensureTextFinderClient] replaceMatches:matches withString:replacementString inSelectionOnly:selectionOnly resultCollector:resultCollector];
+}
+
+- (void)scrollFindMatchToVisible:(id<NSTextFinderAsynchronousDocumentFindMatch>)match
+{
+    [[self _ensureTextFinderClient] scrollFindMatchToVisible:match];
 }
 
 - (NSView *)documentContainerView
@@ -4643,7 +4679,7 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(FORWARD_ACTION_TO_WKCONTENTVIEW)
 
 - (BOOL)_isEditable
 {
-    return _page->isEditable();
+    return _page && _page->isEditable();
 }
 
 - (void)_setEditable:(BOOL)editable

@@ -17,6 +17,7 @@ list(APPEND WebCore_UNIFIED_SOURCE_LIST_FILES
 )
 
 set(WebCore_INCLUDE_DIRECTORIES
+    "${JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS_DIR}"
     "${PAL_FRAMEWORK_HEADERS_DIR}"
 )
 
@@ -167,6 +168,7 @@ set(WebCore_PRIVATE_INCLUDE_DIRECTORIES
 )
 
 set(WebCore_SYSTEM_INCLUDE_DIRECTORIES
+    ${ICU_INCLUDE_DIRS}
     ${LIBXML2_INCLUDE_DIR}
     ${LIBXSLT_INCLUDE_DIR}
     ${SQLITE_INCLUDE_DIR}
@@ -480,11 +482,9 @@ set(WebCore_NON_SVG_IDL_FILES
     Modules/webgpu/GPUColorWriteBits.idl
     Modules/webgpu/GPUCompareFunction.idl
     Modules/webgpu/GPUDepthStencilStateDescriptor.idl
-    Modules/webgpu/GPUErrorFilter.idl
     Modules/webgpu/GPUExtent3D.idl
     Modules/webgpu/GPULoadOp.idl
     Modules/webgpu/GPUOrigin3D.idl
-    Modules/webgpu/GPUOutOfMemoryError.idl
     Modules/webgpu/GPURequestAdapterOptions.idl
     Modules/webgpu/GPUSamplerDescriptor.idl
     Modules/webgpu/GPUShaderStageBit.idl
@@ -492,7 +492,6 @@ set(WebCore_NON_SVG_IDL_FILES
     Modules/webgpu/GPUTextureDescriptor.idl
     Modules/webgpu/GPUTextureFormat.idl
     Modules/webgpu/GPUTextureUsage.idl
-    Modules/webgpu/GPUValidationError.idl
     Modules/webgpu/GPUVertexAttributeDescriptor.idl
     Modules/webgpu/GPUVertexBufferDescriptor.idl
     Modules/webgpu/GPUVertexInputDescriptor.idl
@@ -511,7 +510,6 @@ set(WebCore_NON_SVG_IDL_FILES
     Modules/webgpu/WebGPUComputePipeline.idl
     Modules/webgpu/WebGPUComputePipelineDescriptor.idl
     Modules/webgpu/WebGPUDevice.idl
-    Modules/webgpu/WebGPUDeviceErrorScopes.idl
     Modules/webgpu/WebGPUPipelineDescriptorBase.idl
     Modules/webgpu/WebGPUPipelineLayout.idl
     Modules/webgpu/WebGPUPipelineLayoutDescriptor.idl
@@ -1202,6 +1200,7 @@ set(WebCore_PLUG_INS_RESOURCES
 )
 
 set(WebCore_LIBRARIES
+    ${ICU_LIBRARIES}
     ${LIBXML2_LIBRARIES}
     ${LIBXSLT_LIBRARIES}
     ${SQLITE_LIBRARIES}
@@ -1210,7 +1209,7 @@ set(WebCore_LIBRARIES
 )
 
 set(WebCoreTestSupport_LIBRARIES
-    WebKit::JavaScriptCore
+    JavaScriptCore${DEBUG_SUFFIX}
 )
 
 if (ENABLE_LEGACY_ENCRYPTED_MEDIA)

@@ -714,6 +714,7 @@ public:
     virtual void setSelectedTextRange(const PlainTextRange&) { }
     virtual void setValue(const String&) { }
     bool replaceTextInRange(const String&, const PlainTextRange&);
+    bool insertText(const String&);
 
     virtual void setValue(float) { }
     virtual void setSelected(bool) { }
@@ -1067,6 +1068,8 @@ inline const String& AccessibilityObject::actionVerb() const { return emptyStrin
 inline int AccessibilityObject::lineForPosition(const VisiblePosition&) const { return -1; }
 inline void AccessibilityObject::updateBackingStore() { }
 #endif
+
+AccessibilityObject* firstAccessibleObjectFromNode(const Node*, const WTF::Function<bool(const AccessibilityObject&)>& isAccessible);
 
 } // namespace WebCore
 

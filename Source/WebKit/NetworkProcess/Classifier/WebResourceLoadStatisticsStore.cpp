@@ -180,7 +180,15 @@ WebResourceLoadStatisticsStore::WebResourceLoadStatisticsStore(NetworkSession& n
 WebResourceLoadStatisticsStore::~WebResourceLoadStatisticsStore()
 {
     ASSERT(RunLoop::isMain());
+    ASSERT(!m_statisticsStore);
+    ASSERT(!m_persistentStorage);
+}
 
+void WebResourceLoadStatisticsStore::didDestroyNetworkSession()
+{
+    ASSERT(RunLoop::isMain());
+
+    m_networkSession = nullptr;
     flushAndDestroyPersistentStore();
 }
 
@@ -201,9 +209,6 @@ inline void WebResourceLoadStatisticsStore::postTaskReply(WTF::Function<void()>&
 void WebResourceLoadStatisticsStore::flushAndDestroyPersistentStore()
 {
     ASSERT(RunLoop::isMain());
-
-    if (!m_persistentStorage && !m_statisticsStore)
-        return;
 
     // Make sure we destroy the persistent store on the background queue and wait for it to die
     // synchronously since it has a C++ reference to us. Blocking nature of this task allows us
@@ -335,6 +340,9 @@ void WebResourceLoadStatisticsStore::requestStorageAccess(const RegistrableDomai
             return;
         case StorageAccessStatus::RequiresUserPrompt:
             {
+            if (!m_networkSession)
+                return completionHandler(StorageAccessWasGranted::No, StorageAccessPromptWasShown::No);
+
             CompletionHandler<void(bool)> requestConfirmationCompletionHandler = [this, protectedThis = protectedThis.copyRef(), subFrameDomain, topFrameDomain, frameID, pageID, completionHandler = WTFMove(completionHandler)] (bool userDidGrantAccess) mutable {
                 if (userDidGrantAccess)
                     grantStorageAccess(subFrameDomain, topFrameDomain, frameID, pageID, StorageAccessPromptWasShown::Yes, WTFMove(completionHandler));
@@ -358,13 +366,11 @@ void WebResourceLoadStatisticsStore::requestStorageAccess(const RegistrableDomai
             return;
         }
 
-        if (m_statisticsStore) {
-            m_statisticsStore->requestStorageAccess(WTFMove(subFrameDomain), WTFMove(topFrameDomain), frameID, pageID, [statusHandler = WTFMove(statusHandler)](StorageAccessStatus status) mutable {
-                postTaskReply([statusHandler = WTFMove(statusHandler), status]() mutable {
-                    statusHandler(status);
-                });
+        m_statisticsStore->requestStorageAccess(WTFMove(subFrameDomain), WTFMove(topFrameDomain), frameID, pageID, [statusHandler = WTFMove(statusHandler)](StorageAccessStatus status) mutable {
+            postTaskReply([statusHandler = WTFMove(statusHandler), status]() mutable {
+                statusHandler(status);
             });
-        }
+        });
     });
 }
 
@@ -579,7 +585,7 @@ void WebResourceLoadStatisticsStore::clearUserInteraction(const RegistrableDomai
 
 void WebResourceLoadStatisticsStore::hasHadUserInteraction(const RegistrableDomain& domain, CompletionHandler<void(bool)>&& completionHandler)
 {
-    postTask([this, domain, completionHandler = WTFMove(completionHandler)]() mutable {
+    postTask([this, domain = domain.isolatedCopy(), completionHandler = WTFMove(completionHandler)]() mutable {
         bool hadUserInteraction = m_statisticsStore ? m_statisticsStore->hasHadUserInteraction(domain, OperatingDatesWindow::Long) : false;
         postTaskReply([hadUserInteraction, completionHandler = WTFMove(completionHandler)]() mutable {
             completionHandler(hadUserInteraction);

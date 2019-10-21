@@ -131,6 +131,10 @@
 #include "RuntimeEnabledFeatures.h"
 #endif
 
+#if PLATFORM(IOS_FAMILY)
+#include "DOMTimerHoldingTank.h"
+#endif
+
 namespace WebCore {
 
 using namespace HTMLNames;
@@ -694,12 +698,8 @@ bool EventHandler::handleMousePressEventSingleClick(const MouseEventWithHitTestR
     VisibleSelection newSelection = m_frame.selection().selection();
     TextGranularity granularity = CharacterGranularity;
 
-#if PLATFORM(IOS_FAMILY)
-    // The text selection assistant will handle selection in the case where we are already editing the node
-    auto* editableRoot = newSelection.rootEditableElement();
-    if (editableRoot && editableRoot == targetNode->rootEditableElement())
+    if (!m_frame.editor().client()->shouldAllowSingleClickToChangeSelection(*targetNode, newSelection))
         return true;
-#endif
 
     if (extendSelection && newSelection.isCaretOrRange()) {
         VisibleSelection selectionInUserSelectAll = expandSelectionToRespectSelectOnMouseDown(*targetNode, VisibleSelection(pos));
@@ -3340,6 +3340,10 @@ bool EventHandler::internalKeyEvent(const PlatformKeyboardEvent& initialKeyEvent
     
     if (accessibilityPreventsEventPropagation(keydown))
         keydown->stopPropagation();
+
+#if PLATFORM(IOS_FAMILY)
+    DeferDOMTimersForScope deferralScope { m_frame.document()->quirks().needsDeferKeyDownAndKeyPressTimersUntilNextEditingCommand() };
+#endif
 
     element->dispatchEvent(keydown);
     if (handledByInputMethod)
