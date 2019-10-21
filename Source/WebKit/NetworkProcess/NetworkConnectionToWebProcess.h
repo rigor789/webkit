@@ -198,7 +198,6 @@ private:
     void resetOriginAccessWhitelists();
 
     struct ResourceNetworkActivityTracker {
-        ResourceNetworkActivityTracker() = default;
         ResourceNetworkActivityTracker(const ResourceNetworkActivityTracker&) = default;
         ResourceNetworkActivityTracker(ResourceNetworkActivityTracker&&) = default;
         ResourceNetworkActivityTracker(uint64_t pageID)
