@@ -53,6 +53,10 @@ public:
         return m_refCount;
     }
 
+    bool isDestroyed() const {
+        return m_destroyed;
+    }
+    
 protected:
     // Returns whether the pointer should be freed or not.
     bool derefBase() const

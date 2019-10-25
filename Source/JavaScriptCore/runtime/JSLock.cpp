@@ -68,14 +68,21 @@ JSLockHolder::JSLockHolder(VM& vm)
 
 void JSLockHolder::init()
 {
+    if (m_vm->isDestroyed()) {
+        m_vm = nullptr;
+        return;
+    }
+    
     m_vm->apiLock().lock();
 }
 
 JSLockHolder::~JSLockHolder()
 {
-    RefPtr<JSLock> apiLock(&m_vm->apiLock());
-    m_vm = nullptr;
-    apiLock->unlock();
+    if (m_vm) {
+        RefPtr<JSLock> apiLock(&m_vm->apiLock());
+        m_vm = nullptr;
+        apiLock->unlock();
+    }
 }
 
 JSLock::JSLock(VM* vm)
@@ -236,10 +243,12 @@ unsigned JSLock::dropAllLocks(DropAllLocks* dropper)
 
     dropper->setDropDepth(m_lockDropDepth);
 
-    Thread& thread = Thread::current();
-    thread.setSavedStackPointerAtVMEntry(m_vm->stackPointerAtVMEntry());
-    thread.setSavedLastStackTop(m_vm->lastStackTop());
-
+    if (m_vm != nullptr) {
+        Thread& thread = Thread::current();
+        thread.setSavedStackPointerAtVMEntry(m_vm->stackPointerAtVMEntry());
+        thread.setSavedLastStackTop(m_vm->lastStackTop());
+    }
+    
     unsigned droppedLockCount = m_lockCount;
     unlock(droppedLockCount);
 
@@ -263,9 +272,11 @@ void JSLock::grabAllLocks(DropAllLocks* dropper, unsigned droppedLockCount)
 
     --m_lockDropDepth;
 
-    Thread& thread = Thread::current();
-    m_vm->setStackPointerAtVMEntry(thread.savedStackPointerAtVMEntry());
-    m_vm->setLastStackTop(thread.savedLastStackTop());
+    if (m_vm != nullptr) {
+        Thread& thread = Thread::current();
+        m_vm->setStackPointerAtVMEntry(thread.savedStackPointerAtVMEntry());
+        m_vm->setLastStackTop(thread.savedLastStackTop());
+    }
 }
 
 JSLock::DropAllLocks::DropAllLocks(VM* vm)

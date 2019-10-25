@@ -158,6 +158,7 @@
                 { "name": "urlRegex", "type": "string", "optional": true, "description": "Regex pattern for the URLs of the resources to set breakpoints on. Either <code>url</code> or <code>urlRegex</code> must be specified." },
                 { "name": "scriptHash", "type": "string", "optional": true, "description": "Script hash of the resources to set breakpoint on." },
                 { "name": "columnNumber", "type": "integer", "optional": true, "description": "Offset in the line to set breakpoint at." },
+                { "name": "condition", "type": "string", "optional": true, "description": "Condition expression if the breakpoint is conditional." },
                 { "name": "options", "$ref": "BreakpointOptions", "optional": true, "description": "Options to apply to this breakpoint to modify its behavior." }
             ],
             "returns": [
@@ -170,6 +171,7 @@
             "description": "Sets JavaScript breakpoint at a given location.",
             "parameters": [
                 { "name": "location", "$ref": "Location", "description": "Location to set breakpoint in." },
+                { "name": "condition", "type": "string", "optional": true, "description": "Condition expression if the breakpoint is conditional." },
                 { "name": "options", "$ref": "BreakpointOptions", "optional": true, "description": "Options to apply to this breakpoint to modify its behavior." }
             ],
             "returns": [

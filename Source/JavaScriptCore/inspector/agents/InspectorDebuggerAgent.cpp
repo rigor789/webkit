@@ -446,7 +446,7 @@ static bool parseLocation(ErrorString& errorString, const JSON::Object& location
     return true;
 }
 
-void InspectorDebuggerAgent::setBreakpointByUrl(ErrorString& errorString, int lineNumber, const String* optionalURL, const String* optionalURLRegex, const String* optionalScriptHash, const int* optionalColumnNumber, const JSON::Object* options, Protocol::Debugger::BreakpointId* outBreakpointIdentifier, RefPtr<JSON::ArrayOf<Protocol::Debugger::Location>>& locations)
+void InspectorDebuggerAgent::setBreakpointByUrl(ErrorString& errorString, int lineNumber, const String* optionalURL, const String* optionalURLRegex, const String* optionalScriptHash, const int* optionalColumnNumber, const String* cond, const JSON::Object* options, Protocol::Debugger::BreakpointId* outBreakpointIdentifier, RefPtr<JSON::ArrayOf<Protocol::Debugger::Location>>& locations)
 {
     locations = JSON::ArrayOf<Protocol::Debugger::Location>::create();
     int urlSpecs = 0;
@@ -483,6 +483,8 @@ void InspectorDebuggerAgent::setBreakpointByUrl(ErrorString& errorString, int li
         options->getBoolean("autoContinue"_s, autoContinue);
         options->getArray("actions"_s, actions);
         options->getInteger("ignoreCount"_s, ignoreCount);
+    } else if (cond) {
+        condition = *cond;
     }
 
     BreakpointActions breakpointActions;
@@ -516,7 +518,7 @@ void InspectorDebuggerAgent::setBreakpointByUrl(ErrorString& errorString, int li
     *outBreakpointIdentifier = breakpointIdentifier;
 }
 
-void InspectorDebuggerAgent::setBreakpoint(ErrorString& errorString, const JSON::Object& location, const JSON::Object* options, Protocol::Debugger::BreakpointId* outBreakpointIdentifier, RefPtr<Protocol::Debugger::Location>& actualLocation)
+void InspectorDebuggerAgent::setBreakpoint(ErrorString& errorString, const JSON::Object& location, const String* cond, const JSON::Object* options, Protocol::Debugger::BreakpointId* outBreakpointIdentifier, RefPtr<Protocol::Debugger::Location>& actualLocation)
 {
     JSC::SourceID sourceID;
     unsigned lineNumber;
@@ -533,6 +535,8 @@ void InspectorDebuggerAgent::setBreakpoint(ErrorString& errorString, const JSON:
         options->getBoolean("autoContinue"_s, autoContinue);
         options->getArray("actions"_s, actions);
         options->getInteger("ignoreCount"_s, ignoreCount);
+    } else if (cond) {
+        condition = *cond;
     }
 
     BreakpointActions breakpointActions;
