@@ -41,6 +41,31 @@ this.currentReject = null;
 const defaultIterationCount = 120;
 const defaultWorstCaseCount = 4;
 
+let showScoreDetails = false;
+let categoryScores = null;
+
+function displayCategoryScores() {
+    if (!categoryScores)
+        return;
+
+    let summaryElement = document.getElementById("result-summary");
+    for (let [category, scores] of categoryScores)
+        summaryElement.innerHTML += `<p> ${category}: ${uiFriendlyNumber(geomean(scores))}</p>`
+
+    categoryScores = null;
+}
+
+if (isInBrowser) {
+    document.onkeydown = (keyboardEvent) => {
+        let key = keyboardEvent.key;
+        if (key === "d" || key === "D") {
+            showScoreDetails = true;
+
+            displayCategoryScores();
+        }
+    };
+}
+
 function assert(b, m = "") {
     if (!b)
         throw new Error("Bad assertion: " + m);
@@ -82,8 +107,12 @@ function toScore(timeValue) {
     return 5000 / timeValue;
 }
 
+function toTimeValue(score) {
+    return 5000 / score;
+}
+
 function updateUI() {
-    return new Promise((resolve) => { 
+    return new Promise((resolve) => {
         if (isInBrowser)
             requestAnimationFrame(() => setTimeout(resolve, 0));
         else
@@ -151,10 +180,15 @@ class Driver {
     }
 
     async start() {
-        if (isInBrowser)
-            document.getElementById("status").innerHTML = `Running...`;
-        else
+        let statusElement = false;
+        let summaryElement = false;
+        if (isInBrowser) {
+            statusElement = document.getElementById("status");
+            summaryElement = document.getElementById("result-summary");
+            statusElement.innerHTML = `<label>Running...</label>`;
+        } else {
             console.log("Starting JetStream2");
+        }
 
         await updateUI();
 
@@ -165,7 +199,6 @@ class Driver {
             await updateUI();
 
             try {
-
                 await benchmark.run();
             } catch(e) {
                 JetStream.reportError(benchmark);
@@ -174,6 +207,7 @@ class Driver {
 
             benchmark.updateUIAfterRun();
         }
+
         let totalTime = Date.now() - start;
         if (measureTotalTimeAsSubtest) {
             if (isInBrowser)
@@ -187,11 +221,33 @@ class Driver {
         for (let benchmark of this.benchmarks)
             allScores.push(benchmark.score);
 
+        categoryScores = new Map;
+        for (let benchmark of this.benchmarks) {
+            for (let category of Object.keys(benchmark.subTimes()))
+                categoryScores.set(category, []);
+        }
+
+        for (let benchmark of this.benchmarks) {
+            for (let [category, value] of Object.entries(benchmark.subTimes())) {
+                let arr = categoryScores.get(category);
+                arr.push(value);
+            }
+        }
+
         if (isInBrowser) {
-            document.getElementById("result-summary").innerHTML = "<label>Score</label><br><span class=\"score\">" + uiFriendlyNumber(geomean(allScores)) + "</span>";
-            document.getElementById("status").innerHTML = `Done`;
-        } else
+            summaryElement.classList.add('done');
+            summaryElement.innerHTML = "<div class=\"score\">" + uiFriendlyNumber(geomean(allScores)) + "</div><label>Score</label>";
+            summaryElement.onclick = displayCategoryScores;
+            if (showScoreDetails)
+                displayCategoryScores();
+            statusElement.innerHTML = '';
+        } else {
+            console.log("\n");
+            for (let [category, scores] of categoryScores)
+                console.log(`${category}: ${uiFriendlyNumber(geomean(scores))}`);
+
             console.log("\nTotal Score: ", uiFriendlyNumber(geomean(allScores)), "\n");
+        }
 
         this.reportScoreToRunBenchmarkRunner();
     }
@@ -226,59 +282,46 @@ class Driver {
     {
         this.benchmarks.sort((a, b) => a.plan.name.toLowerCase() < b.plan.name.toLowerCase() ? 1 : -1);
 
-        let groups = new Map;
-        let names = new Set;
-        for (let benchmark of this.benchmarks) {
-            names.add(benchmark.name);
-            let identifier = JSON.stringify(benchmark.constructor.scoreDescription());
-            if (!groups.has(identifier))
-                groups.set(identifier, []);
-            groups.get(identifier).push(benchmark);
-        }
-
-        if (names.size !== this.benchmarks.length)
-            throw new Error("Names of benchmarks must be unique");
-
         let text = "";
         let newBenchmarks = [];
-        for (let [id, benchmarks] of groups) {
+        for (let benchmark of this.benchmarks) {
+            let id = JSON.stringify(benchmark.constructor.scoreDescription());
             let description = JSON.parse(id);
-            if (isInBrowser) {
-                text += `<tr> <th> Benchmark </th>`;
-                for (let score of description)
-                    text += `<th> ${score} </th>`;
-            }
-            for (let benchmark of benchmarks) {
-                newBenchmarks.push(benchmark);
 
-                if (isInBrowser) {
-                    text +=
-                        `<tr id="row-for-${benchmark.name}">
-                        <!-- FIXME: link to benchmark explanation -->
-                        <td class="benchmark-name"> ${benchmark.name} </td>`;
-                    for (let id of benchmark.scoreIdentifiers())
-                        text += `<td class="result" id="${id}">&mdash;</td>`
-                    text += `</tr>`;
+            newBenchmarks.push(benchmark);
+            let scoreIds = benchmark.scoreIdentifiers()
+            let overallScoreId = scoreIds.pop();
+
+            if (isInBrowser) {
+                text +=
+                    `<div class="benchmark" id="benchmark-${benchmark.name}">
+                    <h3 class="benchmark-name"><a href="in-depth.html#${benchmark.name}">${benchmark.name}</a></h3>
+                    <h4 class="score" id="${overallScoreId}">___</h4><p>`;
+                for (let i = 0; i < scoreIds.length; i++) {
+                    let id = scoreIds[i];
+                    let label = description[i];
+                    text += `<span class="result"><span id="${id}">___</span><label>${label}</label></span>`
                 }
+                text += `</p></div>`;
             }
         }
 
-        if (measureTotalTimeAsSubtest) {
-            if (isInBrowser) {
-                text += 
-                    `<tr>
-                        <td class="benchmark-name"> Total time </td>
-                        <td class="result" id="benchmark-total-time-score">&mdash;</td>
-                    </tr>`;
-            }
-        }
+        if (!isInBrowser)
+            return;
 
-        if (isInBrowser) {
-            let resultsTable = document.getElementById("results");
-            resultsTable.innerHTML = text;
+        for (let f = 0; f < 5; f++)
+            text += `<div class="benchmark fill"></div>`;
 
-            document.getElementById("magic").textContent = "";
-        }
+        let timestamp = Date.now();
+        document.getElementById('jetstreams').style.backgroundImage = `url('jetstreams.svg?${timestamp}')`;
+        let resultsTable = document.getElementById("results");
+        resultsTable.innerHTML = text;
+
+        document.getElementById("magic").textContent = "";
+        document.addEventListener('keypress', function (e) {
+            if (e.which === 13)
+                JetStream.start();
+        });
     }
 
     reportError(benchmark)
@@ -291,7 +334,7 @@ class Driver {
         await this.fetchResources();
         this.prepareToRun();
         if (isInBrowser && window.location.search == '?report=true') {
-            setTimeout(() => this.start(), 1000);
+            setTimeout(() => this.start(), 4000);
         }
     }
 
@@ -302,10 +345,11 @@ class Driver {
         if (!isInBrowser)
             return;
 
-        let status = document.getElementById("status");
-        status.innerHTML = `<a href="javascript:JetStream.start()">Start Test</a>`;
-        status.onclick = () => {
-            status.onclick = null;
+        let statusElement = document.getElementById("status");
+        statusElement.classList.remove('loading');
+        statusElement.innerHTML = `<a href="javascript:JetStream.start()" class="button">Start Test</a>`;
+        statusElement.onclick = () => {
+            statusElement.onclick = null;
             JetStream.start();
             return false;
         }
@@ -324,7 +368,7 @@ class Driver {
             const subResults = {}
             const subTimes = benchmark.subTimes();
             for (const name in subTimes) {
-                subResults[name] = {"metrics": {"Time": {"current": [subTimes[name]]}}};
+                subResults[name] = {"metrics": {"Time": {"current": [toTimeValue(subTimes[name])]}}};
             }
             results[benchmark.name] = {
                 "metrics" : {
@@ -332,7 +376,7 @@ class Driver {
                     "Time": ["Geometric"],
                 },
                 "tests": subResults,
-            };;
+            };
         }
 
         results = {"JetStream2.0": {"metrics" : {"Score" : ["Geometric"]}, "tests" : results}};
@@ -351,7 +395,7 @@ class Driver {
 };
 
 class Benchmark {
-    constructor(plan) 
+    constructor(plan)
     {
         this.plan = plan;
         this.iterations = testIterationCount || plan.iterations || defaultIterationCount;
@@ -536,7 +580,7 @@ class Benchmark {
                     blob = new Blob([item], {type : 'application/octet-stream'});
                 } else
                     throw new Error("Unexpected item!");
-                
+
                 this.blobs.push(blob);
                 this.preloads.push([preloadVariableNames[i], URL.createObjectURL(blob)]);
             }
@@ -555,7 +599,10 @@ class Benchmark {
             return;
         }
 
-        document.getElementById(`row-for-${this.name}`).classList.add("benchmark-running");
+        let containerUI = document.getElementById("results");
+        let resultsBenchmarkUI = document.getElementById(`benchmark-${this.name}`);
+        containerUI.insertBefore(resultsBenchmarkUI, containerUI.firstChild);
+        resultsBenchmarkUI.classList.add("benchmark-running");
 
         for (let id of this.scoreIdentifiers())
             document.getElementById(id).innerHTML = "...";
@@ -565,7 +612,10 @@ class Benchmark {
         if (!isInBrowser)
             return;
 
-        document.getElementById(`row-for-${this.name}`).classList.remove("benchmark-running");
+        let benchmarkResultsUI = document.getElementById(`benchmark-${this.name}`);
+        benchmarkResultsUI.classList.remove("benchmark-running");
+        benchmarkResultsUI.classList.add("benchmark-done");
+
     }
 };
 
@@ -588,7 +638,7 @@ class DefaultBenchmark extends Benchmark {
         }
         results = copyArray(results);
 
-        this.firstIteration = results[0];
+        this.firstIteration = toScore(results[0]);
 
         results = results.slice(1);
         results.sort((a, b) => a < b ? 1 : -1);
@@ -598,12 +648,12 @@ class DefaultBenchmark extends Benchmark {
         let worstCase = [];
         for (let i = 0; i < this.worstCaseCount; ++i)
             worstCase.push(results[i]);
-        this.worst4 = mean(worstCase);
-        this.average = mean(results);
+        this.worst4 = toScore(mean(worstCase));
+        this.average = toScore(mean(results));
     }
 
     get score() {
-        return toScore(geomean([this.firstIteration, this.worst4, this.average]));
+        return geomean([this.firstIteration, this.worst4, this.average]);
     }
 
     subTimes() {
@@ -615,7 +665,7 @@ class DefaultBenchmark extends Benchmark {
     }
 
     static scoreDescription() {
-        return ["First (ms)", "Worst (ms)", "Average (ms)", "Score"];
+        return ["First", "Worst", "Average", "Score"];
     }
 
     scoreIdentifiers() {
@@ -633,9 +683,9 @@ class DefaultBenchmark extends Benchmark {
             return;
         }
 
-        print("    Startup:", uiFriendlyNumber(this.firstIteration), "ms");
-        print("    Worst Case:", uiFriendlyNumber(this.worst4), "ms");
-        print("    Average:", uiFriendlyNumber(this.average), "ms");
+        print("    Startup:", uiFriendlyNumber(this.firstIteration));
+        print("    Worst Case:", uiFriendlyNumber(this.worst4));
+        print("    Average:", uiFriendlyNumber(this.average));
         print("    Score:", uiFriendlyNumber(this.score));
         if (RAMification) {
             print("    Current Footprint:", uiFriendlyNumber(this.currentFootprint));
@@ -674,12 +724,12 @@ class WSLBenchmark extends Benchmark {
     }
 
     processResults(results) {
-        this.stdlib = results[0];
-        this.mainRun = results[1];
+        this.stdlib = toScore(results[0]);
+        this.mainRun = toScore(results[1]);
     }
 
     get score() {
-        return toScore(geomean([this.stdlib, this.mainRun]));
+        return geomean([this.stdlib, this.mainRun]);
     }
 
     get runnerCode() {
@@ -710,7 +760,7 @@ class WSLBenchmark extends Benchmark {
     }
 
     static scoreDescription() {
-        return ["Stdlib (ms)", "MainRun (ms)", "Score"];
+        return ["Stdlib", "MainRun", "Score"];
     }
 
     scoreIdentifiers() {
@@ -727,8 +777,8 @@ class WSLBenchmark extends Benchmark {
             return;
         }
 
-        print("    Stdlib:", uiFriendlyNumber(this.stdlib), "ms");
-        print("    Tests:", uiFriendlyNumber(this.mainRun), "ms");
+        print("    Stdlib:", uiFriendlyNumber(this.stdlib));
+        print("    Tests:", uiFriendlyNumber(this.mainRun));
         print("    Score:", uiFriendlyNumber(this.score));
         if (RAMification) {
             print("    Current Footprint:", uiFriendlyNumber(this.currentFootprint));
@@ -747,12 +797,12 @@ class WasmBenchmark extends Benchmark {
     }
 
     processResults(results) {
-        this.startupTime = results[0];
-        this.runTime = results[1];
+        this.startupTime = toScore(results[0]);
+        this.runTime = toScore(results[1]);
     }
 
     get score() {
-        return toScore(geomean([this.startupTime, this.runTime]));
+        return geomean([this.startupTime, this.runTime]);
     }
 
     get wasmPath() {
@@ -812,7 +862,7 @@ class WasmBenchmark extends Benchmark {
         return str;
     }
 
-    get runnerCode() { 
+    get runnerCode() {
         let str = "";
         if (isInBrowser) {
             str += `
@@ -857,7 +907,7 @@ class WasmBenchmark extends Benchmark {
     }
 
     static scoreDescription() {
-        return ["Startup (ms)", "Runtime (ms)", "Score"];
+        return ["Startup", "Runtime", "Score"];
     }
 
     get startupID() {
@@ -883,8 +933,8 @@ class WasmBenchmark extends Benchmark {
             document.getElementById(this.scoreID).innerHTML = uiFriendlyNumber(this.score);
             return;
         }
-        print("    Startup:", uiFriendlyNumber(this.startupTime), "ms");
-        print("    Run time:", uiFriendlyNumber(this.runTime), "ms");
+        print("    Startup:", uiFriendlyNumber(this.startupTime));
+        print("    Run time:", uiFriendlyNumber(this.runTime));
         if (RAMification) {
             print("    Current Footprint:", uiFriendlyNumber(this.currentFootprint));
             print("    Peak Footprint:", uiFriendlyNumber(this.peakFootprint));
@@ -1294,7 +1344,7 @@ let testPlans = [
             "./wasm/tsf.js"
         ],
         preload: {
-            wasmBlobURL: "./wasm/tsf.wasm" 
+            wasmBlobURL: "./wasm/tsf.wasm"
         },
         benchmarkClass: WasmBenchmark,
         testGroup: WasmGroup

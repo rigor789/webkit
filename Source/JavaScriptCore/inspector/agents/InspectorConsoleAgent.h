@@ -52,12 +52,14 @@ class JS_EXPORT_PRIVATE InspectorConsoleAgent : public InspectorAgentBase, publi
     WTF_MAKE_NONCOPYABLE(InspectorConsoleAgent);
     WTF_MAKE_FAST_ALLOCATED;
 public:
-    InspectorConsoleAgent(AgentContext&, InspectorHeapAgent*);
-    virtual ~InspectorConsoleAgent();
+    InspectorConsoleAgent(AgentContext&);
+    virtual ~InspectorConsoleAgent() = default;
 
     void didCreateFrontendAndBackend(FrontendRouter*, BackendDispatcher*) override;
     void willDestroyFrontendAndBackend(DisconnectReason) override;
     void discardValues() override;
+
+    void setInspectorHeapAgent(InspectorHeapAgent* agent) { m_heapAgent = agent; }
 
     void enable(ErrorString&) override;
     void disable(ErrorString&) override;
@@ -68,11 +70,13 @@ public:
 
     void addMessageToConsole(std::unique_ptr<ConsoleMessage>);
 
-    std::unique_ptr<ConsoleMessage> startTiming(const String& title);
-    std::unique_ptr<ConsoleMessage> stopTiming(const String& title, Ref<ScriptCallStack>&&);
+    std::unique_ptr<ConsoleMessage> startTiming(JSC::ExecState*, const String& label);
+    void logTiming(JSC::ExecState*, const String& label, Ref<ScriptArguments>&&);
+    std::unique_ptr<ConsoleMessage> stopTiming(JSC::ExecState*, const String& label);
     
     void takeHeapSnapshot(const String& title);
-    void count(JSC::ExecState*, Ref<ScriptArguments>&&);
+    void count(JSC::ExecState*, const String& label);
+    void countReset(JSC::ExecState*, const String& label);
 
     void getLoggingChannels(ErrorString&, RefPtr<JSON::ArrayOf<Protocol::Console::Channel>>&) override;
     void setLoggingChannelLevel(ErrorString&, const String& channel, const String& level) override;
@@ -83,7 +87,7 @@ protected:
     InjectedScriptManager& m_injectedScriptManager;
     std::unique_ptr<ConsoleFrontendDispatcher> m_frontendDispatcher;
     RefPtr<ConsoleBackendDispatcher> m_backendDispatcher;
-    InspectorHeapAgent* m_heapAgent;
+    InspectorHeapAgent* m_heapAgent { nullptr };
 
     Vector<std::unique_ptr<ConsoleMessage>> m_consoleMessages;
     int m_expiredConsoleMessageCount { 0 };

@@ -1,4 +1,4 @@
-# Copyright (C) 2018 Apple Inc. All rights reserved.
+# Copyright (C) 2018-2019 Apple Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -21,22 +21,30 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from buildbot.process import factory, properties
+from buildbot.process import factory
 from buildbot.steps import trigger
 
-from steps import *
-
-Property = properties.Property
+from steps import (ApplyPatch, CheckOutSource, CheckOutSpecificRevision, CheckPatchRelevance,
+                   CheckStyle, CompileJSCOnly, CompileJSCOnlyToT, CompileWebKit, ConfigureBuild,
+                   DownloadBuiltProduct, ExtractBuiltProduct, InstallGtkDependencies, InstallWpeDependencies, KillOldProcesses,
+                   PrintConfiguration, ReRunJavaScriptCoreTests, RunAPITests, RunBindingsTests,
+                   RunJavaScriptCoreTests, RunJavaScriptCoreTestsToT, RunWebKit1Tests, RunWebKitPerlTests,
+                   RunWebKitPyTests, RunWebKitTests, UnApplyPatchIfRequired, ValidatePatch)
 
 
 class Factory(factory.BuildFactory):
-    def __init__(self, platform, configuration=None, architectures=None, buildOnly=True, additionalArguments=None, checkRelevance=False, **kwargs):
+    def __init__(self, platform, configuration=None, architectures=None, buildOnly=True, triggers=None, additionalArguments=None, checkRelevance=False, **kwargs):
         factory.BuildFactory.__init__(self)
-        self.addStep(ConfigureBuild(platform, configuration, architectures, buildOnly, additionalArguments))
+        self.addStep(ConfigureBuild(platform, configuration, architectures, buildOnly, triggers, additionalArguments))
         if checkRelevance:
             self.addStep(CheckPatchRelevance())
         self.addStep(ValidatePatch())
+        self.addStep(PrintConfiguration())
         self.addStep(CheckOutSource())
+        # CheckOutSource step pulls the latest revision, since we use alwaysUseLatest=True. Without alwaysUseLatest Buildbot will
+        # automatically apply the patch to the repo, and that doesn't handle ChangeLogs well. See https://webkit.org/b/193138
+        # Therefore we add CheckOutSpecificRevision step to checkout required revision.
+        self.addStep(CheckOutSpecificRevision())
         self.addStep(ApplyPatch())
 
 
@@ -65,26 +73,10 @@ class WebKitPyFactory(Factory):
 
 
 class BuildFactory(Factory):
-    def __init__(self, platform, configuration=None, architectures=None, additionalArguments=None, triggers=None, **kwargs):
-        Factory.__init__(self, platform, configuration, architectures, False, additionalArguments)
+    def __init__(self, platform, configuration=None, architectures=None, triggers=None, additionalArguments=None, **kwargs):
+        Factory.__init__(self, platform, configuration, architectures, False, triggers, additionalArguments)
         self.addStep(KillOldProcesses())
-        self.addStep(CleanBuild())
         self.addStep(CompileWebKit())
-        self.addStep(UnApplyPatchIfRequired())
-        self.addStep(CompileWebKitToT())
-        if triggers:
-            self.addStep(ArchiveBuiltProduct())
-            self.addStep(UploadBuiltProduct())
-            self.addStep(trigger.Trigger(schedulerNames=triggers, set_properties=self.propertiesToPassToTriggers() or {}))
-
-    def propertiesToPassToTriggers(self):
-        return {
-            "ewspatchid": Property("ewspatchid"),
-            "configuration": Property("configuration"),
-            "platform": Property("platform"),
-            "fullPlatform": Property("fullPlatform"),
-            "architecture": Property("architecture"),
-        }
 
 
 class TestFactory(Factory):
@@ -98,6 +90,7 @@ class TestFactory(Factory):
     def __init__(self, platform, configuration=None, architectures=None, additionalArguments=None, **kwargs):
         Factory.__init__(self, platform, configuration, architectures, False, additionalArguments)
         self.getProduct()
+        self.addStep(KillOldProcesses())
         if self.LayoutTestClass:
             self.addStep(self.LayoutTestClass())
         if self.APITestClass:
@@ -118,10 +111,6 @@ class JSCTestsFactory(Factory):
 
 class APITestsFactory(TestFactory):
     APITestClass = RunAPITests
-
-
-class GTKFactory(Factory):
-    pass
 
 
 class iOSBuildFactory(BuildFactory):
@@ -149,8 +138,23 @@ class WindowsFactory(Factory):
 
 
 class WinCairoFactory(Factory):
-    pass
+    def __init__(self, platform, configuration=None, architectures=None, triggers=None, additionalArguments=None, **kwargs):
+        Factory.__init__(self, platform, configuration, architectures, True, triggers, additionalArguments)
+        self.addStep(KillOldProcesses())
+        self.addStep(CompileWebKit(skipUpload=True))
+
+
+class GTKFactory(Factory):
+    def __init__(self, platform, configuration=None, architectures=None, triggers=None, additionalArguments=None, **kwargs):
+        Factory.__init__(self, platform, configuration, architectures, True, triggers, additionalArguments)
+        self.addStep(KillOldProcesses())
+        self.addStep(InstallGtkDependencies())
+        self.addStep(CompileWebKit(skipUpload=True))
 
 
 class WPEFactory(Factory):
-    pass
+    def __init__(self, platform, configuration=None, architectures=None, triggers=None, additionalArguments=None, **kwargs):
+        Factory.__init__(self, platform, configuration, architectures, True, triggers, additionalArguments)
+        self.addStep(KillOldProcesses())
+        self.addStep(InstallWpeDependencies())
+        self.addStep(CompileWebKit(skipUpload=True))

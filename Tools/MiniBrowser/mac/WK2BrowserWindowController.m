@@ -25,8 +25,6 @@
 
 #import "WK2BrowserWindowController.h"
 
-#if WK_API_ENABLED
-
 #import "AppDelegate.h"
 #import "AppKitCompatibilityDeclarations.h"
 #import "SettingsController.h"
@@ -49,6 +47,24 @@ static void* keyValueObservingContext = &keyValueObservingContext;
 static const int testHeaderBannerHeight = 42;
 static const int testFooterBannerHeight = 58;
 
+@interface MiniBrowserNSTextFinder : NSTextFinder
+
+@property (nonatomic, copy) dispatch_block_t hideInterfaceCallback;
+
+@end
+
+@implementation MiniBrowserNSTextFinder
+
+- (void)performAction:(NSTextFinderAction)op
+{
+    [super performAction:op];
+
+    if (op == NSTextFinderActionHideFindInterface && _hideInterfaceCallback)
+        _hideInterfaceCallback();
+}
+
+@end
+
 @interface WK2BrowserWindowController () <NSTextFinderBarContainer, WKNavigationDelegate, WKUIDelegate, _WKIconLoadingDelegate>
 @end
 
@@ -60,7 +76,7 @@ static const int testFooterBannerHeight = 58;
 
     BOOL _useShrinkToFit;
 
-    NSTextFinder *_textFinder;
+    MiniBrowserNSTextFinder *_textFinder;
     NSView *_textFindBarView;
     BOOL _findBarVisible;
 }
@@ -99,11 +115,16 @@ static const int testFooterBannerHeight = 58;
 
     _zoomTextOnly = NO;
 
-    _textFinder = [[NSTextFinder alloc] init];
+    _webView._usePlatformFindUI = NO;
+
+    _textFinder = [[MiniBrowserNSTextFinder alloc] init];
     _textFinder.incrementalSearchingEnabled = YES;
-    _textFinder.incrementalSearchingShouldDimContentView = YES;
+    _textFinder.incrementalSearchingShouldDimContentView = NO;
     _textFinder.client = _webView;
     _textFinder.findBarContainer = self;
+    _textFinder.hideInterfaceCallback = ^{
+        [_webView _hideFindUI];
+    };
 }
 
 - (instancetype)initWithConfiguration:(WKWebViewConfiguration *)configuration
@@ -135,9 +156,9 @@ static const int testFooterBannerHeight = 58;
 
 - (IBAction)fetch:(id)sender
 {
-    [urlText setStringValue:[self addProtocolIfNecessary:[urlText stringValue]]];
-
-    [_webView loadRequest:[NSURLRequest requestWithURL:[NSURL _webkit_URLWithUserTypedString:[urlText stringValue]]]];
+    [urlText setStringValue:[self addProtocolIfNecessary:urlText.stringValue]];
+    NSURL *url = [NSURL _webkit_URLWithUserTypedString:urlText.stringValue];
+    [_webView loadRequest:[NSURLRequest requestWithURL:url]];
 }
 
 - (IBAction)setPageScale:(id)sender
@@ -406,7 +427,6 @@ static BOOL areEssentiallyEqual(double a, double b)
     preferences._resourceUsageOverlayVisible = settings.resourceUsageOverlayVisible;
     preferences._displayListDrawingEnabled = settings.displayListDrawingEnabled;
     preferences._subpixelAntialiasedLayerTextEnabled = settings.subpixelAntialiasedLayerTextEnabled;
-    preferences._visualViewportEnabled = settings.visualViewportEnabled;
     preferences._largeImageAsyncDecodingEnabled = settings.largeImageAsyncDecodingEnabled;
     preferences._animatedImageAsyncDecodingEnabled = settings.animatedImageAsyncDecodingEnabled;
     preferences._colorFilterEnabled = settings.appleColorFilterEnabled;
@@ -674,12 +694,6 @@ static NSSet *dataTypes()
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation
 {
     LOG(@"didFinishNavigation: %@", navigation);
-    
-    // Banner heights don't persist across page loads (oddly, since Page stores them), so reset on every page load.
-    if ([[SettingsController shared] isSpaceReservedForBanners]) {
-        [_webView _setHeaderBannerHeight:testHeaderBannerHeight];
-        [_webView _setFooterBannerHeight:testFooterBannerHeight];
-    }
 }
 
 - (void)webView:(WKWebView *)webView didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential *__nullable credential))completionHandler
@@ -791,16 +805,14 @@ static NSSet *dataTypes()
 {
 }
 
-- (void)_webView:(WKWebView *)webView requestUserMediaAuthorizationForDevices:(_WKCaptureDevices)devices url:(NSURL *)url mainFrameURL:(NSURL *)mainFrameURL decisionHandler:(void (^)(BOOL authorized))decisionHandler
+- (void)_webView:(WKWebView *)webView requestMediaCaptureAuthorization: (_WKCaptureDevices)devices decisionHandler:(void (^)(BOOL authorized))decisionHandler
 {
     decisionHandler(true);
 }
 
-- (void)_webView:(WKWebView *)webView checkUserMediaPermissionForURL:(NSURL *)url mainFrameURL:(NSURL *)mainFrameURL frameIdentifier:(NSUInteger)frameIdentifier decisionHandler:(void (^)(NSString *salt, BOOL authorized))decisionHandler
+- (void)_webView:(WKWebView *)webView includeSensitiveMediaDeviceDetails:(void (^)(BOOL includeSensitiveDetails))decisionHandler
 {
-    decisionHandler(@"", false);
+    decisionHandler(false);
 }
 
 @end
-
-#endif // WK_API_ENABLED

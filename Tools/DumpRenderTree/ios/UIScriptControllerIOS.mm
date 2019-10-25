@@ -63,6 +63,11 @@ void UIScriptController::doAfterNextStablePresentationUpdate(JSValueRef callback
     doAsyncTask(callback);
 }
 
+void UIScriptController::ensurePositionInformationIsUpToDateAt(long x, long y, JSValueRef callback)
+{
+    return doAsyncTask(callback);
+}
+
 void UIScriptController::doAfterVisibleContentRectUpdate(JSValueRef callback)
 {
     doAsyncTask(callback);
@@ -94,6 +99,10 @@ void UIScriptController::setMinimumEffectiveWidth(double)
 {
 }
 
+void UIScriptController::setAllowsViewportShrinkToFit(bool)
+{
+}
+
 void UIScriptController::simulateAccessibilitySettingsChangeNotification(JSValueRef)
 {
 }
@@ -112,6 +121,10 @@ void UIScriptController::liftUpAtPoint(long x, long y, long touchCount, JSValueR
 }
 
 void UIScriptController::singleTapAtPoint(long x, long y, JSValueRef callback)
+{
+}
+
+void UIScriptController::singleTapAtPointWithModifiers(long x, long y, JSValueRef modifierArray, JSValueRef callback)
 {
 }
 
@@ -143,6 +156,10 @@ void UIScriptController::stylusTapAtPoint(long x, long y, float azimuthAngle, fl
 {
 }
 
+void UIScriptController::stylusTapAtPointWithModifiers(long x, long y, float azimuthAngle, float altitudeAngle, float pressure, JSValueRef modifierArray, JSValueRef callback)
+{
+}
+
 void UIScriptController::sendEventStream(JSStringRef eventsJSON, JSValueRef callback)
 {
 }
@@ -163,6 +180,10 @@ void UIScriptController::dismissFormAccessoryView()
 {
 }
 
+void UIScriptController::dismissFilePicker(JSValueRef)
+{
+}
+
 void UIScriptController::setTimePickerValue(long, long)
 {
 }
@@ -173,6 +194,11 @@ void UIScriptController::setShareSheetCompletesImmediatelyWithResolution(bool)
 
 void UIScriptController::selectFormAccessoryPickerRow(long rowIndex)
 {
+}
+
+bool UIScriptController::isPresentingModally() const
+{
+    return false;
 }
 
 JSRetainPtr<JSStringRef> UIScriptController::textContentType() const
@@ -211,6 +237,25 @@ static CGPoint contentOffsetBoundedInValidRange(UIScrollView *scrollView, CGPoin
     return contentOffset;
 }
 
+double UIScriptController::contentOffsetX() const
+{
+    return [gWebScrollView contentOffset].x;
+}
+
+double UIScriptController::contentOffsetY() const
+{
+    return [gWebScrollView contentOffset].y;
+}
+
+bool UIScriptController::scrollUpdatesDisabled() const
+{
+    return false;
+}
+
+void UIScriptController::setScrollUpdatesDisabled(bool)
+{
+}
+
 void UIScriptController::scrollToOffset(long x, long y)
 {
     [gWebScrollView setContentOffset:contentOffsetBoundedInValidRange(gWebScrollView, CGPointMake(x, y)) animated:YES];
@@ -219,6 +264,10 @@ void UIScriptController::scrollToOffset(long x, long y)
 void UIScriptController::immediateScrollToOffset(long x, long y)
 {
     [gWebScrollView setContentOffset:contentOffsetBoundedInValidRange(gWebScrollView, CGPointMake(x, y)) animated:NO];
+}
+
+void UIScriptController::immediateScrollElementAtContentPointToOffset(long x, long y, long xScrollOffset, long yScrollOffset)
+{
 }
 
 void UIScriptController::immediateZoomToScale(double scale)
@@ -239,6 +288,11 @@ void UIScriptController::applyAutocorrection(JSStringRef, JSStringRef, JSValueRe
 }
 
 bool UIScriptController::isShowingKeyboard() const
+{
+    return false;
+}
+
+bool UIScriptController::hasInputSession() const
 {
     return false;
 }
@@ -299,6 +353,47 @@ void UIScriptController::platformSetDidShowKeyboardCallback()
 
 void UIScriptController::platformSetDidHideKeyboardCallback()
 {
+}
+
+void UIScriptController::platformSetDidShowMenuCallback()
+{
+}
+
+void UIScriptController::platformSetDidHideMenuCallback()
+{
+}
+
+bool UIScriptController::isShowingPopover() const
+{
+    return false;
+}
+
+void UIScriptController::platformSetWillPresentPopoverCallback()
+{
+}
+
+void UIScriptController::platformSetDidDismissPopoverCallback()
+{
+}
+
+JSObjectRef UIScriptController::rectForMenuAction(JSStringRef) const
+{
+    return nullptr;
+}
+
+JSObjectRef UIScriptController::menuRect() const
+{
+    return nullptr;
+}
+
+bool UIScriptController::isShowingMenu() const
+{
+    return false;
+}
+
+bool UIScriptController::isDismissingMenu() const
+{
+    return false;
 }
 
 void UIScriptController::platformSetDidEndScrollingCallback()
@@ -437,6 +532,25 @@ JSObjectRef UIScriptController::attachmentInfo(JSStringRef)
 }
 
 void UIScriptController::setKeyboardInputModeIdentifier(JSStringRef)
+{
+}
+
+JSRetainPtr<JSStringRef> UIScriptController::lastUndoLabel() const
+{
+    return nullptr;
+}
+
+JSRetainPtr<JSStringRef> UIScriptController::firstRedoLabel() const
+{
+    return nullptr;
+}
+
+NSUndoManager *UIScriptController::platformUndoManager() const
+{
+    return nil;
+}
+
+void UIScriptController::setHardwareKeyboardAttached(bool)
 {
 }
 

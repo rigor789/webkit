@@ -6,6 +6,9 @@
 # Platform-specific directories. Skipped here, then re-enabled on the appropriate platform.
 #//////////////////////////////////////////////////////////////////////////////////////////
 
+# No Accessibility support yet for WK2
+accessibility [ Skip ]
+
 # ACCELERATED_OVERFLOW_SCROLLING is disabled
 fast/repaint/overflow-scroll-touch-repaint.html [ Skip ]
 
@@ -46,9 +49,6 @@ fast/css/image-resolution [ Skip ]
 
 # CSS_SCROLL_SNAP is disabled
 css3/scroll-snap [ Skip ]
-
-# CUSTOM_SCHEME_HANDLER is disabled
-fast/dom/NavigatorContentUtils/is-protocol-handler-registered.html [ Skip ]
 
 # DEVICE_ORIENTATION is disabled
 fast/dom/DeviceOrientation [ Skip ]
@@ -287,16 +287,17 @@ fast/canvas/webgl/webgl2-texStorage.html [ Skip ]
 fast/canvas/webgl/webgl2-texture-upload-enums.html [ Skip ]
 inspector/canvas/requestContent-webgl2.html [ Skip ]
 inspector/canvas/create-context-webgl2.html [ Skip ]
+inspector/canvas/recording-webgl2.html [ Skip ]
+inspector/canvas/recording-webgl2-snapshots.html [ Skip ]
 inspector/canvas/resolveCanvasContext-webgl2.html [ Skip ]
 inspector/canvas/shaderProgram-add-remove-webgl2.html [ Skip ]
 webgl/webgl2-rendering-context-defined.html [ Skip ]
 webgl/webgl2-rendering-context-obtain.html [ Skip ]
 
-# WEBMETAL and WEBGPU are disabled
-fast/canvas/webmetal [ Skip ]
-inspector/canvas/create-context-webmetal.html [ Skip ]
-inspector/canvas/resolveCanvasContext-webmetal.html [ Skip ]
+# WEBGPU is disabled
 webgpu [ Skip ]
+inspector/canvas/create-context-webgpu.html [ Skip ]
+inspector/canvas/resolveCanvasContext-webgpu.html [ Skip ]
 
 # WIRELESS_PLAYBACK_TARGET is disabled
 media/airplay-target-availability.html [ Skip ]
@@ -390,6 +391,7 @@ webkit.org/b/98696 plugins/snapshotting [ Skip ]
 webkit.org/b/35013 svg/zoom/text/ [ Skip ]
 
 # We don't support Wasm.
+workers/wasm-references.html [ Skip ]
 workers/wasm-hashset-many-2.html [ Skip ]
 workers/wasm-hashset-many.html [ Skip ]
 workers/wasm-hashset.html [ Skip ]
@@ -408,24 +410,12 @@ media/controls [ Skip ]
 # These are Mac specific for now.
 fast/url/user-visible [ Skip ]
 
-# This test relies on Mac-specific quirks
-media/document-level-media-user-gesture-quirk.html [ Skip ]
-
 # These tests reference specific fonts on Mac port.
 Bug(GTK) fast/text/font-weights.html [ WontFix ]
 Bug(GTK) fast/text/font-weights-zh.html [ WontFix ]
 
 # This requires a specific font on Mac
 fast/text/hidpi-text-selection-gap-between-words.html [ Skip ]
-
-# DASHBOARD_SUPPORT is mac only
-http/tests/xmlhttprequest/default-content-type-dashboard.html [ Skip ]
-http/tests/xmlhttprequest/svg-created-by-xhr-allowed-in-dashboard.html [ Skip ]
-svg/custom/embedded-svg-allowed-in-dashboard.xml [ Skip ]
-svg/custom/manually-parsed-svg-allowed-in-dashboard.html [ Skip ]
-svg/custom/manually-parsed-embedded-svg-allowed-in-dashboard.html [ Skip ]
-svg/custom/svg-allowed-in-dashboard-object.html [ Skip ]
-mathml/mathml-in-dashboard.html [ Skip ]
 
 # This test relies on iOS-specific font fallback.
 fast/text/arabic-blacklisted-expected.html [ Pass ImageOnlyFailure ]
@@ -781,6 +771,7 @@ fast/files/filereader-zip-bundle-using-open-panel.html [ Timeout ]
 fast/forms/file/file-input-reset-using-open-panel.html [ Timeout ]
 fast/forms/file/entries-api/webkitdirectory-open-panel.html [ Timeout ]
 fast/forms/file/file-reset-in-change-using-open-panel.html [ Timeout ]
+fast/forms/file/file-reset-in-change-using-open-panel-with-icon.html [ Timeout ]
 fast/forms/file/get-file-upload-using-open-panel.html [ Timeout ]
 fast/forms/file/input-file-value-using-open-panel.html [ Timeout ]
 fast/forms/file/input-file-write-files-using-open-panel.html [ Timeout ]
@@ -865,6 +856,7 @@ http/tests/cookies/double-quoted-value-with-semi-colon.html [ Failure ]
 http/tests/cookies/http-get-cookie-set-in-js.html [ Pass Failure ]
 http/tests/cookies/multiple-cookies.html [ Pass Failure ]
 http/tests/cookies/multiple-redirect-and-set-cookie.php [ Pass Failure ]
+http/tests/cookies/only-accept-first-party-cookies.html [ Pass ]
 http/tests/cookies/private-cookie-storage.html [ Skip ]
 http/tests/cookies/same-site [ Skip ]
 http/tests/cookies/set-cookie-on-redirect.html [ Pass Failure ]
@@ -872,7 +864,6 @@ http/tests/cookies/simple-cookies-expired.html [ Pass Failure ]
 http/tests/cookies/simple-cookies-max-age.html [ Pass Failure ]
 http/tests/cookies/single-quoted-value.html [ Pass Failure ]
 http/tests/cookies/sync-xhr-set-cookie-invalidates-cache.html [ Pass Failure ]
-http/tests/cookies/third-party-cookie-relaxing.html [ Failure ]
 
 [ Debug ] http/tests/cookies/js-get-and-set-http-only-cookie.html [ Skip ]
 
@@ -893,6 +884,8 @@ http/tests/history [ Skip ]
 http/tests/images [ Skip ]
 http/tests/incremental [ Skip ]
 http/tests/inspector [ Skip ]
+http/tests/inspector/page/get-cookies.html [ Pass ]
+
 http/tests/loading [ Skip ]
 http/tests/local/blob [ Skip ]
 http/tests/local/fileapi [ Skip ]
@@ -906,6 +899,7 @@ http/tests/mime/mime-type-sniff.html [ Skip ]
 http/tests/misc/authentication-redirect-2/authentication-sent-to-redirect-same-origin.html [ Failure ]
 http/tests/misc/authentication-redirect-3/authentication-sent-to-redirect-same-origin-with-location-credentials.html [ Failure ]
 http/tests/misc/authentication-redirect-4/authentication-sent-to-redirect-same-origin-url.html [ Failure ]
+http/tests/misc/bubble-drag-events.html [ Crash Pass ]
 http/tests/misc/favicon-loads-with-icon-loading-override.html [ Failure ]
 http/tests/misc/form-submit-file-cross-site.html [ Skip ]
 http/tests/misc/link-rel-icon-beforeload.html [ Failure ]
@@ -913,6 +907,9 @@ http/tests/misc/object-embedding-svg-delayed-size-negotiation.xhtml [ Failure ]
 http/tests/misc/slow-loading-animated-image.html [ ImageOnlyFailure ]
 http/tests/misc/submit-post-keygen.html [ Skip ]
 http/tests/misc/timer-vs-loading.html [ Skip ]
+http/tests/misc/webtiming-cross-origin-and-back1.html [ Failure Pass ]
+http/tests/misc/webtiming-cross-origin-redirect.php [ Failure Pass ]
+http/tests/misc/webtiming-no-origin.html [ Failure Pass ]
 http/tests/misc/willCacheResponse-delegate-callback.html [ Failure ]
 
 [ Release ] http/tests/misc/acid3.html [ Failure ]
@@ -926,6 +923,12 @@ http/tests/misc/willCacheResponse-delegate-callback.html [ Failure ]
 [ Debug ] http/tests/multipart [ Skip ]
 
 http/tests/navigation [ Skip ]
+http/tests/navigation/post-301-response.html [ Pass ]
+http/tests/navigation/post-302-response.html [ Pass ]
+http/tests/navigation/post-303-response.html [ Pass ]
+http/tests/navigation/post-307-response.html [ Pass ]
+http/tests/navigation/post-308-response.html [ Pass ]
+
 http/tests/notifications [ Skip ]
 http/tests/paymentrequest [ Skip ]
 http/tests/plugins [ Skip ]
@@ -933,8 +936,20 @@ http/tests/pointer-lock [ Skip ]
 http/tests/preconnect [ Skip ]
 http/tests/preload [ Skip ]
 http/tests/quicklook [ Skip ]
+http/tests/referrer-policy-iframe [ Skip ]
+
+# All timing out
+http/tests/resourceLoadStatistics [ Skip ]
+
 http/tests/security [ Skip ]
-http/tests/ssl [ Skip ]
+http/tests/security/401-logout/401-logout.php [ Pass ]
+http/tests/security/cookies/third-party-cookie-blocking.html [ Pass ]
+http/tests/security/cookies/third-party-cookie-blocking-redirect.html [ Pass ]
+http/tests/security/cookies/third-party-cookie-blocking-user-action.html [ Pass ]
+http/tests/security/cookies/third-party-cookie-blocking-xslt.xml [ Pass ]
+
+http/tests/ssl/curl/certificate-and-authentication.html [ Pass ]
+http/tests/ssl/media-stream [ Skip ]
 
 [ Debug ] http/tests/storage/callbacks-are-called-in-correct-context.html [ Skip ]
 
@@ -947,6 +962,7 @@ http/tests/websocket/tests/hybi/contentextensions [ Failure ]
 http/tests/websocket/tests/hybi/contentextensions/block-cookies.php [ Pass Failure ]
 http/tests/websocket/tests/hybi/contentextensions/block-cookies-worker.php [ Pass Failure ]
 http/tests/websocket/tests/hybi/deflate-frame-parameter.html [ Failure ]
+http/tests/websocket/tests/hybi/frame-lengths.html [ Pass Timeout ]
 http/tests/websocket/tests/hybi/httponly-cookie.pl [ Pass Failure ]
 http/tests/websocket/tests/hybi/inspector [ Skip ]
 http/tests/websocket/tests/hybi/secure-cookie-insecure-connection.pl [ Pass Failure ]
@@ -955,11 +971,7 @@ http/tests/websocket/tests/hybi/upgrade-simple-ws.html [ Pass Failure ]
 http/tests/websocket/tests/hybi/websocket-allowed-setting-cookie-as-third-party.html [ Pass Failure ]
 http/tests/websocket/tests/hybi/websocket-blocked-from-setting-cookie-as-third-party.html [ Pass Failure ]
 http/tests/websocket/tests/hybi/websocket-cookie-overwrite-behavior.html [ Pass Failure ]
-http/tests/websocket/tests/hybi/workers/close.html [ Pass Failure ]
 http/tests/websocket/tests/hybi/workers/worker-reload.html [ Timeout Pass ]
-
-# There is not NetworkProcess in WK1, so it can't crash.
-http/tests/websocket/tests/hybi/network-process-crash-error.html [ Skip ]
 
 http/tests/workers/service [ Skip ]
 http/tests/workers/worker-redirect.html [ Failure ]
@@ -997,287 +1009,20 @@ http/tests/xmlhttprequest/upload-onloadend-event-after-abort.html [ Skip ]
 http/tests/xmlhttprequest/upload-onloadend-event-after-load.html [ Failure ]
 http/tests/xmlhttprequest/upload-onprogress-event.html [ Failure ]
 http/tests/xmlhttprequest/upload-progress-events.html [ Failure ]
+http/tests/xmlhttprequest/xmlhttprequest-overridemimetype-content-type-header.html [ Timeout Pass ]
 
 [ Debug ] http/tests/xmlhttprequest/on-network-timeout-error-during-preflight.html [ Skip ]
 [ Debug ] http/tests/xmlhttprequest/simple-cross-origin-progress-events.html [ Skip ]
 
 http/tests/xmlviewer [ Skip ]
 
-webkit.org/b/191498 http/tests/inspector/network/resource-response-security.html [ Skip ]
+webkit.org/b/192406 http/tests/inspector/network/resource-security-connection.html [ Skip ]
+webkit.org/b/191498 http/tests/inspector/network/resource-security-certificate.html [ Skip ]
 webkit.org/b/191498 http/tests/inspector/network/getSerializedCertificate.html [ Skip ]
 
 #///////////////////////////////////////////////////////////////////////////////
 # Issue categories below are shared with other platforms (primarily AppleWin)
 #///////////////////////////////////////////////////////////////////////////////
-
-################################################################################
-###########################   Accessibility Issues   ###########################
-################################################################################
-
-accessibility/win [ Pass ]
-
-accessibility/media-emits-object-replacement.html [ Failure ]
-accessibility/aria-liveregions-attributes.html [ Failure ]
-accessibility/aria-liveregion-marquee-default.html [ Failure ]
-
-# TODO aria-current is not supported
-webkit.org/b/149018 accessibility/aria-current.html [ Skip ]
-
-# TODO ARIA 1.1 table related attributes are not supported
-webkit.org/b/148967 accessibility/aria-table-attributes.html [ Skip ]
-
-# AccessibilityUIElement::clearSelectedChildren() is not implemented
-accessibility/aria-listbox-clear-selection-crash.html [ Skip ]
-accessibility/listbox-clear-selection.html [ Skip ]
-
-# Missing 'press' support
-accessibility/axpress-on-aria-button.html [ Skip ]
-accessibility/svg-element-press.html [ Skip ]
-
-# Missing cellForColumnAndRow implementation in DRT
-webkit.org/b/143081 accessibility/table-cell-display-block.html [ Skip ]
-accessibility/aria-table-with-presentational-elements.html [ Skip ]
-
-# stringValue is not implemented.
-webkit.org/b/149177 accessibility/ax-value-with-search.html [ Skip ]
-
-# Accessibility tests for notifications that don't exist or aren't needed on Mac OS X (or Windows)
-accessibility/aria-checkbox-sends-notification.html [ Skip ]
-accessibility/combo-box-collapsed-selection-changed.html [ Skip ]
-accessibility/children-changed-sends-notification.html [ Skip ]
-accessibility/menu-list-sends-change-notification.html [ Skip ]
-accessibility/multiselect-list-reports-active-option.html [ Skip ]
-
-# The Windows Accessibility implementation is unable to recurse through the document to
-# find elements (in some cases). The following failures are due to this. The maddening
-# thing is that these do not consistently fail:
-webkit.org/b/140798 accessibility/aria-checked-mixed-value.html [ Failure ]
-webkit.org/b/140798 accessibility/aria-controls.html [ Failure ]
-webkit.org/b/140798 accessibility/auto-filled-value.html [ Skip ]
-webkit.org/b/140798 accessibility/aria-flowto.html [ Failure ]
-webkit.org/b/140798 [ Release ] accessibility/aria-hidden-negates-no-visibility.html [ Failure ]
-webkit.org/b/140798 [ Debug ] accessibility/aria-hidden-negates-no-visibility.html [ Skip ]
-webkit.org/b/140798 accessibility/aria-hidden-with-elements.html [ Failure ]
-webkit.org/b/140798 accessibility/aria-sort.html [ Failure ]
-webkit.org/b/140798 accessibility/aria-tables.html [ Failure ]
-webkit.org/b/140798 accessibility/aria-text-role.html [ Failure ]
-webkit.org/b/140798 accessibility/box-styled-lists.html [ Failure ]
-webkit.org/b/140798 [ Release ] accessibility/canvas-fallback-content-2.html [ Failure ]
-webkit.org/b/140798 [ Debug ] accessibility/canvas-fallback-content-2.html [ Skip ]
-webkit.org/b/140798 accessibility/fieldset-element.html [ Failure ]
-webkit.org/b/140798 accessibility/legend-children-are-visible.html [ Failure ]
-webkit.org/b/145271 accessibility/list-detection2.html [ Failure ]
-webkit.org/b/140798 accessibility/math-multiscript-attributes.html [ Failure ]
-webkit.org/b/140798 accessibility/poorly-formed-aria-table.html [ Failure ]
-webkit.org/b/140798 accessibility/radio-button-group-members.html [ Failure ]
-webkit.org/b/140798 accessibility/radio-button-title-label.html [ Failure ]
-webkit.org/b/140798 accessibility/range-alter-by-percent.html [ Failure ]
-webkit.org/b/140798 accessibility/secure-textfield-title-ui.html [ Failure ]
-webkit.org/b/140798 accessibility/select-element-at-index.html [ Failure ]
-webkit.org/b/140798 accessibility/svg-bounds.html [ Failure ]
-webkit.org/b/140798 accessibility/svg-group-element-with-title.html [ Failure ]
-webkit.org/b/140798 accessibility/tabindex-elements-are-accessible.html [ Failure ]
-webkit.org/b/140798 accessibility/table-cell-for-column-and-row-crash.html [ Failure ]
-webkit.org/b/140798 accessibility/table-cell-spans.html [ Failure ]
-webkit.org/b/140798 accessibility/table-cells-roles.html [ Failure ]
-webkit.org/b/140798 accessibility/table-cells.html [ Failure ]
-webkit.org/b/140798 accessibility/table-column-headers-with-captions.html [ Failure ]
-webkit.org/b/140798 accessibility/table-fallback-roles-expose-element-attributes.html [ Failure ]
-webkit.org/b/140798 accessibility/table-headers.html [ Failure ]
-webkit.org/b/140798 accessibility/table-incorrect-colspan-cell.html [ Failure ]
-webkit.org/b/140798 accessibility/table-with-footer-section-above-body.html [ Failure ]
-webkit.org/b/140798 accessibility/table-with-hidden-head-section.html [ Failure ]
-webkit.org/b/140798 accessibility/table-with-mismatch-column-count-in-initial-section.html [ Failure ]
-webkit.org/b/140798 accessibility/table-with-missing-aria-role-rows.html [ Failure ]
-webkit.org/b/140798 accessibility/textarea-insertion-point-line-number.html [ Failure ]
-webkit.org/b/140798 accessibility/th-as-title-ui.html [ Failure ]
-webkit.org/b/140798 accessibility/title-ui-element-correctness.html [ Failure ]
-
-webkit.org/b/126066 accessibility/loading-iframe-updates-axtree.html [ Failure ]
-
-webkit.org/b/140798 [ Debug ] accessibility/aria-hidden-false-works-in-subtrees.html [ Skip ]
-
-# The following fail because of missing numerical output support.
-webkit.org/b/140832 accessibility/aria-slider-value-change.html [ Failure ]
-webkit.org/b/140832 accessibility/aria-slider-value.html [ Failure ]
-webkit.org/b/140832 accessibility/progressbar.html [ Failure ]
-webkit.org/b/140832 accessibility/range-alter-by-step.html [ Failure ]
-webkit.org/b/140832 accessibility/aria-scrollbar-role.html [ Failure ]
-webkit.org/b/140832 accessibility/notification-listeners.html [ Failure ]
-webkit.org/b/140832 accessibility/spinbutton-value.html [ Failure ]
-webkit.org/b/140832 accessibility/svg-remote-element.html [ Failure ]
-webkit.org/b/140832 accessibility/textarea-line-for-index.html [ Failure ]
-webkit.org/b/140832 accessibility/textarea-selected-text-range.html [ Timeout ]
-
-# TODO Need to implement global addNotificationListener in Windows DRT
-accessibility/content-editable-as-textarea.html [ Skip ]
-accessibility/content-editable-set-inner-text-generates-axvalue-notification.html [ Skip ]
-accessibility/loading-iframe-sends-notification.html [ Skip ]
-accessibility/win/single-select-children-changed.html [ Skip ]
-accessibility/aria-switch-sends-notification.html [ Skip ]
-
-webkit.org/b/130011 accessibility/aria-setsize-posinset.html [ Skip ]
-
-accessibility/file-upload-button-stringvalue.html [ Failure ]
-
-# Test times out
-webkit.org/b/95405 accessibility/win/single-select-children.html [ Timeout ]
-webkit.org/b/97026 accessibility/file-upload-button-with-axpress.html [ Timeout ]
-
-# Color Well is not implemented:
-accessibility/color-well.html
-
-webkit.org/b/127485 accessibility/win/parent-element.html [ Failure ]
-
-# Skipping on windows, missing implementation of cellForColumnAndRow
-webkit.org/b/129250 accessibility/table-scope.html [ Skip ]
-
-# Exclude media element for the time being
-accessibility/media-element.html [ Skip ]
-
-# Timeouts -- not investigated
-accessibility/aria-invalid.html [ Skip ]
-
-# The following have not been investigated:
-accessibility/aria-readonly.html [ Failure ]
-accessibility/aria-required.html [ Failure ]
-accessibility/content-editable.html [ Failure ]
-accessibility/content-changed-notification-causes-crash.html [ Skip ]
-legacy-animation-engine/accessibility/content-changed-notification-causes-crash.html [ Skip ]
-accessibility/document-attributes.html [ Failure ]
-accessibility/element-haspopup.html [ Failure ]
-accessibility/frame-disconnect-textmarker-cache-crash.html [ Failure ]
-
-# Missing support for scrollTo* methods.
-accessibility/scroll-to-global-point-iframe-nested.html [ Skip ]
-accessibility/scroll-to-global-point-iframe.html [ Skip ]
-accessibility/scroll-to-global-point-main-window.html [ Skip ]
-accessibility/scroll-to-global-point-nested.html [ Skip ]
-accessibility/scroll-to-make-visible-div-overflow.html [ Skip ]
-accessibility/scroll-to-make-visible-iframe.html [ Skip ]
-accessibility/scroll-to-make-visible-iframe-offscreen.html [ Skip ]
-accessibility/scroll-to-make-visible-nested-2.html [ Skip ]
-accessibility/scroll-to-make-visible-nested.html [ Skip ]
-accessibility/scroll-to-make-visible-with-subfocus.html [ Skip ]
-
-# Apparently missing support for roleDescription on Windows.
-accessibility/aria-roledescription.html [ Failure ]
-
-webkit.org/b/140867 accessibility/aria-option-role.html [ Failure ]
-
-# Asserts because it does not have a popup menu:
-webkit.org/b/140869 [ Release ] accessibility/aria-combobox.html [ Failure ]
-webkit.org/b/140869 [ Debug ] accessibility/aria-combobox.html [ Skip ]
-
-# Attempt to add a text element that claims NOT to be an accessibility element:
-webkit.org/b/140870 [ Release ] accessibility/canvas-fallback-content.html [ Failure ]
-webkit.org/b/140870 [ Debug ] accessibility/canvas-fallback-content.html [ Skip ]
-webkit.org/b/140870 [ Release ] accessibility/canvas-accessibilitynodeobject.html [ Failure ]
-webkit.org/b/140870 [ Debug ] accessibility/canvas-accessibilitynodeobject.html [ Skip ]
-
-# The following failures have not been investigated.
-accessibility/aria-list-and-listitem.html [ Failure ]
-accessibility/aria-mappings.html [ Failure ]
-accessibility/aria-roles.html [ Failure ]
-accessibility/canvas-description-and-role.html [ Failure ]
-accessibility/disabled-controls-not-focusable.html [ Failure ]
-accessibility/heading-level.html [ Failure ]
-accessibility/help-text.html [ Failure ]
-accessibility/html5-required-attribute.html [ Failure ]
-accessibility/image-link.html [ Failure ]
-accessibility/image-map1.html [ Failure ]
-accessibility/image-map2.html [ Failure ]
-accessibility/internal-link-anchors2.html [ Failure ]
-accessibility/lists.html [ Failure ]
-accessibility/onclick-handlers.html [ Failure ]
-accessibility/paragraph-with-linebreaks.html [ Failure ]
-accessibility/parent-delete.html [ Failure ]
-[ Release ] accessibility/placeholder.html [ Failure ]
-[ Debug ] accessibility/placeholder.html [ Skip ]
-accessibility/plugin.html [ Failure ]
-accessibility/press-targets-center-point.html [ Failure ]
-accessibility/roles-computedRoleString.html [ Failure ]
-accessibility/roles-exposed.html [ Failure ]
-accessibility/table-attributes.html [ Failure ]
-accessibility/table-detection.html [ Failure ]
-accessibility/table-one-cell.html [ Failure ]
-accessibility/table-roles-hierarchy.html [ Failure ]
-accessibility/table-sections.html [ Failure ]
-accessibility/table-with-rules.html [ Failure ]
-accessibility/transformed-element.html [ Failure ]
-accessibility/visible-elements.html [ Failure ]
-
-webkit.org/b/146903 accessibility/aria-table-hierarchy.html [ Skip ]
-webkit.org/b/146903 accessibility/roles-table-and-cell.html [ Skip ]
-
-# Skip aria-modal tests for win
-webkit.org/b/138566 accessibility/aria-modal.html [ Skip ]
-webkit.org/b/138566 accessibility/aria-modal-multiple-dialogs.html [ Skip ]
-
-# Text marker tests are not supported
-webkit.org/b/153292 accessibility/text-marker [ Skip ]
-
-# TestRunner::cellForColumnAndRow() not implemented
-webkit.org/b/148354 accessibility/aria-table-content.html [ Skip ]
-
-# Failures tracked in webkit.org/b/160447.
-accessibility/heading-crash-after-hidden.html [ Crash Failure ]
-accessibility/adjacent-continuations-cause-assertion-failure.html [ Failure ]
-accessibility/aria-busy.html [ Failure ]
-accessibility/attachment-element.html [ Failure ]
-accessibility/auto-fill-types.html [ Failure ]
-accessibility/checkbox-mixed-value.html [ Failure ]
-accessibility/div-within-anchors-causes-crash.html [ Failure ]
-accessibility/hidden-th-still-column-header.html [ Failure ]
-accessibility/set-selected-text-range-contenteditable.html [ Timeout ]
-accessibility/spinbutton-crash.html [ Failure ]
-accessibility/spinbutton-implicit-values.html [ Failure ]
-accessibility/win/select-element-valuechange-event.html [ Failure ]
-
-# Unexpected text-only failures tracked in webkit.org/b/172437.
-accessibility/aria-cellspans-with-native-cellspans.html [ Failure ]
-accessibility/aria-grid-column-span.html [ Failure ]
-accessibility/aria-orientation.html [ Failure ]
-accessibility/aria-owns.html [ Failure ]
-accessibility/button-with-aria-haspopup-role.html [ Failure ]
-accessibility/deleting-iframe-destroys-axcache.html [ Failure ]
-accessibility/double-nested-inline-element-missing-from-tree.html [ Failure ]
-accessibility/inline-continuations.html [ Failure ]
-accessibility/list-detection.html [ Failure ]
-accessibility/minimal-table-with-aria-is-data-table.html [ Failure ]
-accessibility/presentation-role-iframe.html [ Failure ]
-accessibility/separator-values.html [ Failure ]
-accessibility/win/bstr-elements-role.html [ Failure ]
-accessibility/win/detached-object-notification-crash.html [ Failure ]
-accessibility/win/heading-elements.html [ Failure ]
-accessibility/win/img-alt-attribute.html [ Failure ]
-accessibility/win/linked-elements.html [ Failure ]
-accessibility/win/list-item-role.html [ Failure ]
-accessibility/win/list-marker-role.html [ Failure ]
-accessibility/win/list-role.html [ Failure ]
-accessibility/win/multiple-select-element-role.html [ Failure ]
-accessibility/win/option-element-position-and-size.html [ Failure ]
-accessibility/win/option-element-selection-and-focus-events.html [ Failure ]
-accessibility/win/select-element-role.html [ Failure ]
-accessibility/win/selection-and-focus.html [ Failure ]
-accessibility/win/text-role.html [ Failure ]
-
-accessibility/add-children-pseudo-element.html [ Failure ]
-
-webkit.org/b/181501 accessibility/table-header-calculation-for-header-rows.html [ Failure ]
-
-webkit.org/b/182132 accessibility/aria-combobox-control-owns-elements.html [ Timeout ]
-
-webkit.org/b/182626 accessibility/aria-hidden-updates-alldescendants.html [ Failure ]
-
-webkit.org/b/183955 accessibility/row-with-aria-role-in-native-table.html [ Failure ]
-
-[ Debug ] accessibility/win/focus-events.html [ Skip ]
-
-################################################################################
-########################    End Accessibility Issues    ########################
-################################################################################
-
 
 ################################################################################
 #############################   Animation Issues   #############################
@@ -1291,13 +1036,6 @@ legacy-animation-engine/animations/cross-fade-background-image.html [ ImageOnlyF
 
 animations/animation-delay-changed.html [ Pass Failure ]
 legacy-animation-engine/animations/animation-delay-changed.html [ Pass Failure ]
-
-animations/font-variations/font-variation-settings-order.html [ Failure ]
-legacy-animation-engine/animations/font-variations/font-variation-settings-order.html [ Failure ]
-animations/font-variations/font-variation-settings-unlike.html [ Failure ]
-legacy-animation-engine/animations/font-variations/font-variation-settings-unlike.html [ Failure ]
-animations/font-variations/font-variation-settings.html [ Failure ]
-legacy-animation-engine/animations/font-variations/font-variation-settings.html [ Failure ]
 
 # Unexpected timeouts tracked in webkit.org/b/172437.
 animations/font-variations/font-stretch.html [ Skip ]
@@ -1454,10 +1192,12 @@ css3/flexbox/csswg/ttwf-reftest-flex-wrap.html [ Pass ]
 
 css3/flexbox/flex-item-contains-strict.html [ Failure ]
 
+fast/css/apple-system-colors.html [ Failure ]
 fast/css/image-rendering-parsing.html [ Failure ]
 fast/css/paint-order-shadow.html [ ImageOnlyFailure ]
-fast/css/getComputedStyle/computed-style-without-renderer.html [ Failure ]
 fast/css/getComputedStyle/computed-style.html [ Failure ]
+fast/css/getComputedStyle/computed-style-font-family.html [ Failure ]
+fast/css/getComputedStyle/computed-style-without-renderer.html [ Failure ]
 fast/css-generated-content/initial-letter-pagination-raised-rl.html [ ImageOnlyFailure ]
 fast/css-generated-content/initial-letter-pagination-raised.html [ ImageOnlyFailure ]
 fast/css-generated-content/initial-letter-pagination-sunken-rl.html [ ImageOnlyFailure ]
@@ -1491,7 +1231,7 @@ css3/filters/blur-various-radii.html [ Pass ImageOnlyFailure ]
 
 fast/css/sticky/sticky-top.html [ Pass ImageOnlyFailure ]
 
-css-custom-properties-api/ [ Failure ImageOnlyFailure ]
+css-custom-properties-api/ [ Pass Failure ImageOnlyFailure ]
 fast/css-custom-paint/ [ Skip ]
 css-typedom [ Skip ]
 
@@ -1565,6 +1305,7 @@ fast/dom/HTMLInputElement/change-type-in-input-event-listener.html [ Skip ]
 editing/pasteboard/ [ Pass Failure ImageOnlyFailure ]
 editing/pasteboard/copy-paste-across-shadow-boundaries-with-style-2.html [ Skip ]
 editing/pasteboard/drag-and-drop-color-input-events.html [ Skip ]
+editing/pasteboard/ios/ [ Skip ]
 editing/pasteboard/paste-image-as-blob-url.html [ Skip ]
 # TODO eventSender.contextClick() needs to return a JS array of the context menu items.
 webkit.org/b/62597 editing/pasteboard/copy-standalone-image-crash.html [ Skip ]
@@ -1584,18 +1325,8 @@ editing/pasteboard/datatransfer-items-drop-plaintext-file-promise.html [ Skip ]
 editing/pasteboard/datatransfer-items-paste-plaintext.html [ Skip ]
 editing/pasteboard/datatransfer-types-dropping-text-file-promise.html [ Skip ]
 editing/pasteboard/drag-end-crash-accessing-item-list.html [ Skip ]
+editing/pasteboard/entries-api/ [ Skip ]
 editing/pasteboard/file-input-files-access-promise.html [ Skip ]
-editing/pasteboard/entries-api/datatransfer-items-drop-directoryReader-error.html [ Skip ]
-editing/pasteboard/entries-api/datatransfer-items-drop-directoryReader-root.html [ Skip ]
-editing/pasteboard/entries-api/datatransfer-items-drop-directoryReader.html [ Skip ]
-editing/pasteboard/entries-api/datatransfer-items-drop-fileEntry-file.html [ Skip ]
-editing/pasteboard/entries-api/datatransfer-items-drop-getAsEntry.html [ Skip ]
-editing/pasteboard/entries-api/datatransfer-items-drop-getDirectory.html [ Skip ]
-editing/pasteboard/entries-api/datatransfer-items-drop-getFile.html [ Skip ]
-editing/pasteboard/entries-api/datatransfer-items-drop-getParent-root.html [ Skip ]
-editing/pasteboard/entries-api/datatransfer-items-drop-getParent.html [ Skip ]
-editing/pasteboard/entries-api/datatransfer-items-drop-getParent2.html [ Skip ]
-editing/pasteboard/entries-api/datatransfer-items-drop-hidden-file.html [ Skip ]
 
 ###### Selection
 editing/selection/5354455-1.html [ Failure ]
@@ -1681,6 +1412,10 @@ editing/secure-input [ Skip ]
 editing/deleting/delete-ligature-001.html [ Failure ]
 editing/deleting/delete-ligature-002.html [ Failure ]
 editing/deleting/skip-virama-001.html [ Failure ]
+editing/deleting/smart-delete-001.html [ Failure ]
+editing/deleting/smart-delete-002.html [ Failure ]
+editing/deleting/smart-delete-003.html [ Failure ]
+editing/deleting/smart-delete-004.html [ Failure ]
 
 webkit.org/b/179613 editing/execCommand/underline-selection-containing-image.html [ Failure ]
 
@@ -1710,14 +1445,32 @@ editing/undo/undo-deleteWord.html [ Pass Failure ]
 
 # TODO These tests failures need to be investigated
 
+resize-observer/element-leak.html [ Pass Timeout ]
+resize-observer/resize-observer-entry-keeps-js-wrapper-of-target-alive.html [ Pass Timeout ]
+
 # Text diff failures
 storage/domstorage/localstorage/blocked-file-access.html [ Failure ]
+storage/indexeddb/exceptions.html [ Failure Pass ]
+storage/indexeddb/index-cursor.html [ Pass Timeout ]
+storage/indexeddb/intversion-revert-on-abort.html [ Failure Pass ]
+storage/indexeddb/key-type-array-private.html [ Pass Timeout ]
+storage/indexeddb/key-type-array.html [ Pass Timeout ]
+storage/indexeddb/metadata.html [ Failure Pass ]
 storage/indexeddb/modern/date-basic-private.html [ Failure ]
 storage/indexeddb/modern/date-basic.html [ Failure ]
 storage/indexeddb/modern/get-keyrange-private.html [ Failure ]
 storage/indexeddb/modern/get-keyrange.html [ Failure ]
+storage/indexeddb/modern/idbindex-getall-1.html [ Failure Pass ]
+storage/indexeddb/modern/idbindex-getallkeys-1.html [ Failure Pass ]
 storage/indexeddb/modern/idbobjectstore-delete-1-private.html [ Failure ]
 storage/indexeddb/modern/idbobjectstore-delete-1.html [ Failure ]
+storage/indexeddb/modern/idbtransaction-objectstore-failures-private.html [ Failure Pass ]
+storage/indexeddb/modern/idbtransaction-objectstore-failures.html [ Failure Pass ]
+storage/indexeddb/objectstore-basics-workers.html [ Failure ]
+storage/indexeddb/objectstore-basics.html [ Failure Pass ]
+storage/indexeddb/objectstore-cursor.html [ Pass Timeout ]
+storage/indexeddb/structured-clone.html [ Pass Timeout ]
+storage/indexeddb/version-change-abort.html [ Failure Pass ]
 storage/indexeddb/wasm-exceptions.html [ Failure ]
 
 # TODO Exclude WebSQL tests:
@@ -1731,11 +1484,6 @@ storage/indexeddb/modern/multiple-objectstore-index-cursor-collision.html [ Cras
 storage/indexeddb/modern/objectstore-cursor-advance-failures-private.html [ Crash Pass ]
 storage/indexeddb/modern/workers-disabled.html [ Crash Pass ]
 storage/indexeddb/modern/workers-enable.html [ Crash Pass ]
-[ Debug ] storage/indexeddb/key-generator.html [ Crash ]
-[ Debug ] storage/indexeddb/key-type-array-private.html [ Crash ]
-[ Debug ] storage/indexeddb/key-type-array.html [ Crash ]
-[ Debug ] storage/indexeddb/modern/blob-simple-workers.html [ Crash ]
-[ Debug ] storage/indexeddb/opencursor-key.html [ Crash ]
 
 # Flaky timeouts
 storage/indexeddb/clone-exception.html [ Timeout Pass ]
@@ -1744,20 +1492,7 @@ storage/websql/open-database-creation-callback.html [ Timeout Pass ]
 storage/websql/statement-error-callback.html [ Timeout Pass ]
 storage/websql/transaction-error-callback-isolated-world.html [ Timeout Pass ]
 storage/indexeddb/modern/aborted-put.html [ Timeout Pass ]
-
-# Flaky tests
-storage/indexeddb/modern/leak-1.html [ Skip ]
-storage/indexeddb/modern/index-rename-1.html [ Skip ]
-storage/indexeddb/objectstore-basics.html [ Skip ]
-storage/indexeddb/objectstore-basics-workers.html [ Skip ]
-storage/indexeddb/modern/idbtransaction-objectstore-failures.html [ Skip ]
-storage/indexeddb/modern/idbtransaction-objectstore-failures-private.html [ Skip ]
-storage/indexeddb/metadata.html [ Skip ]
-storage/indexeddb/database-odd-names.html [ Skip ]
-storage/indexeddb/lazy-index-population.html [ Skip ]
-storage/indexeddb/transaction-basics.html [ Skip ]
-storage/indexeddb/intversion-revert-on-abort.html [ Skip ]
-storage/indexeddb/version-change-abort.html [ Skip ]
+[ Debug ] storage/indexeddb/modern/index-rename-1.html [ Skip ]
 
 ################################################################################
 ############################   End Storage Issues   ############################
@@ -1767,6 +1502,8 @@ storage/indexeddb/version-change-abort.html [ Skip ]
 # TEMPORARY SKIPS -- these areas still need to be addressed individually
 #//////////////////////////////////////////////////////////////////////////////////////////
 
+animations/3d [ Skip ]
+compositing [ Skip ]
 fast/attachment [ Skip ]
 fast/backgrounds [ Skip ]
 fast/block [ Skip ]
@@ -1820,7 +1557,7 @@ fast/writing-mode [ Skip ]
 fast/xmlhttprequest [ Skip ]
 fast/xpath [ Skip ]
 fast/xsl [ Skip ]
-fonts/use-typo-metrics-1.html [ Skip ]
+webkit.org/b/199186 fonts/use-typo-metrics-1.html [ Skip ]
 fullscreen [ Skip ]
 html5lib [ Skip ]
 http/wpt [ Skip ]
@@ -1828,11 +1565,13 @@ imported/blink [ Skip ]
 imported/mozilla [ Skip ]
 imported/w3c [ Skip ]
 inspector [ Skip ]
+inspector/memory/ [ Pass ]
+inspector/cpu-profiler/ [ Pass ]
+inspector/cpu-profiler/threads.html [ Failure ]
 js/dom/deep-recursion-test.html [ Failure ]
 js/dom/dom-static-property-for-in-iteration.html [ Failure ]
 js/dom/regress-157246.html [ Failure ]
 js/dom/webidl-type-mapping.html [ Failure ]
-js/intl-numberformat.html [ Failure ]
 legacy-animation-engine/fast/layers [ Skip ]
 legacy-animation-engine/fast/shadow-dom [ Skip ]
 legacy-animation-engine/imported/blink/transitions/unprefixed-transform.html [ Skip ]
@@ -1850,7 +1589,6 @@ printing [ Skip ]
 scrollbars [ Skip ]
 scrollingcoordinator [ Skip ]
 security [ Skip ]
-sputnik [ Skip ]
 svg [ Skip ]
 tables [ Skip ]
 transitions [ Skip ]

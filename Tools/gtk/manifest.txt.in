@@ -77,7 +77,6 @@ file Source/WebCore/Resources/panIcon.png
 file Source/WebCore/Resources/plugIns.js
 file Source/WebCore/Resources/textAreaResizeCorner.png
 file Source/WebCore/Resources/textAreaResizeCorner@2x.png
-file Source/WebCore/Resources/urlIcon.png
 file Source/WebCore/platform/audio/resources/Composite.wav
 
 directory Tools/gtk
@@ -90,6 +89,7 @@ exclude Tools/gtk/ycm_extra_conf.py
 file Tools/glib/common.py
 file Tools/glib/generate-inspector-gresource-manifest.py
 
+directory Tools/gtkdoc
 directory Tools/MiniBrowser
 directory Tools/TestWebKitAPI
 

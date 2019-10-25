@@ -385,7 +385,7 @@ class RunTest(unittest.TestCase, StreamTestingMixin):
 
         # Test that we wrap around if the number of tests is not evenly divisible by the chunk size
         tests_to_run = ['passes/error.html', 'passes/image.html', 'passes/platform_image.html', 'passes/text.html']
-        chunk_tests_run = get_tests_run(['--run-chunk', '1:3'] + tests_to_run)
+        chunk_tests_run = get_tests_run(['--run-chunk', '1:3', '--skipped', 'always'] + tests_to_run)
         self.assertEqual(['passes/text.html', 'passes/error.html', 'passes/image.html'], chunk_tests_run)
 
     def test_run_force(self):
@@ -397,13 +397,13 @@ class RunTest(unittest.TestCase, StreamTestingMixin):
     def test_run_part(self):
         # Test that we actually select the right part
         tests_to_run = ['passes/error.html', 'passes/image.html', 'passes/platform_image.html', 'passes/text.html']
-        tests_run = get_tests_run(['--run-part', '1:2'] + tests_to_run)
+        tests_run = get_tests_run(['--run-part', '1:2', '--skipped', 'always'] + tests_to_run)
         self.assertEqual(['passes/error.html', 'passes/image.html'], tests_run)
 
         # Test that we wrap around if the number of tests is not evenly divisible by the chunk size
         # (here we end up with 3 parts, each with 2 tests, and we only have 4 tests total, so the
         # last part repeats the first two tests).
-        chunk_tests_run = get_tests_run(['--run-part', '3:3'] + tests_to_run)
+        chunk_tests_run = get_tests_run(['--run-part', '3:3', '--skipped', 'always'] + tests_to_run)
         self.assertEqual(['passes/error.html', 'passes/image.html'], chunk_tests_run)
 
     def test_run_singly(self):
@@ -977,7 +977,7 @@ class RebaselineTest(unittest.TestCase, StreamTestingMixin):
             tests_included=True, host=host, new_results=True)
         file_list = host.filesystem.written_files.keys()
         self.assertEqual(details.exit_code, 0)
-        self.assertEqual(len(file_list), 8)
+        self.assertEqual(len(file_list), 9)
         self.assertBaselines(file_list, "passes/image", [".txt", ".png"], err)
         self.assertBaselines(file_list, "failures/expected/missing_image", [".txt", ".png"], err)
 
@@ -993,7 +993,7 @@ class RebaselineTest(unittest.TestCase, StreamTestingMixin):
             tests_included=True, host=host, new_results=True)
         file_list = host.filesystem.written_files.keys()
         self.assertEqual(details.exit_code, 0)
-        self.assertEqual(len(file_list), 10)
+        self.assertEqual(len(file_list), 11)
         self.assertBaselines(file_list, "failures/unexpected/missing_text", [".txt"], err)
         self.assertBaselines(file_list, "platform/test/failures/unexpected/missing_image", [".png"], err)
         self.assertBaselines(file_list, "platform/test/failures/unexpected/missing_render_tree_dump", [".txt"], err)
@@ -1007,7 +1007,7 @@ class RebaselineTest(unittest.TestCase, StreamTestingMixin):
             tests_included=True, host=host, new_results=True)
         file_list = host.filesystem.written_files.keys()
         self.assertEqual(details.exit_code, 0)
-        self.assertEqual(len(file_list), 8)
+        self.assertEqual(len(file_list), 9)
         self.assertBaselines(file_list,
             "platform/test-mac-leopard/passes/image", [".txt", ".png"], err)
         self.assertBaselines(file_list,

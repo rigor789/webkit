@@ -23,8 +23,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if WK_API_ENABLED
-
 #import <WebKit/WebKit.h>
 #import <wtf/RetainPtr.h>
 
@@ -32,8 +30,10 @@
 
 #if PLATFORM(IOS_FAMILY)
 @class _WKActivatedElementInfo;
+@protocol UITextInputInternal;
 @protocol UITextInputMultiDocument;
 @protocol UITextInputPrivate;
+@protocol UIWKInteractionViewProtocol;
 #endif
 
 @interface WKWebView (AdditionalDeclarations)
@@ -49,6 +49,10 @@
 
 @interface WKWebView (TestWebKitAPI)
 @property (nonatomic, readonly) NSArray<NSString *> *tagsInBody;
+- (void)loadTestPageNamed:(NSString *)pageName;
+- (void)synchronouslyLoadHTMLString:(NSString *)html;
+- (void)synchronouslyLoadHTMLString:(NSString *)html baseURL:(NSURL *)url;
+- (void)synchronouslyLoadTestPageNamed:(NSString *)pageName;
 - (BOOL)_synchronouslyExecuteEditCommand:(NSString *)command argument:(NSString *)argument;
 - (void)expectElementTagsInOrder:(NSArray<NSString *> *)tagNames;
 - (void)expectElementCount:(NSInteger)count querySelector:(NSString *)querySelector;
@@ -67,10 +71,6 @@
 - (instancetype)initWithFrame:(CGRect)frame configuration:(WKWebViewConfiguration *)configuration addToWindow:(BOOL)addToWindow;
 - (void)clearMessageHandlers:(NSArray *)messageNames;
 - (void)performAfterReceivingMessage:(NSString *)message action:(dispatch_block_t)action;
-- (void)loadTestPageNamed:(NSString *)pageName;
-- (void)synchronouslyLoadHTMLString:(NSString *)html;
-- (void)synchronouslyLoadHTMLString:(NSString *)html baseURL:(NSURL *)url;
-- (void)synchronouslyLoadTestPageNamed:(NSString *)pageName;
 - (void)waitForMessage:(NSString *)message;
 - (void)performAfterLoading:(dispatch_block_t)actions;
 - (void)waitForNextPresentationUpdate;
@@ -78,16 +78,21 @@
 - (NSString *)stylePropertyAtSelectionEnd:(NSString *)propertyName;
 - (void)collapseToStart;
 - (void)collapseToEnd;
+- (void)addToTestWindow;
 @end
 
 #if PLATFORM(IOS_FAMILY)
+@interface WKContentView : UIView
+@end
+
 @interface TestWKWebView (IOSOnly)
-@property (nonatomic, readonly) UIView <UITextInputPrivate, UITextInputMultiDocument> *textInputContentView;
+@property (nonatomic, readonly) UIView <UITextInputPrivate, UITextInputInternal, UITextInputMultiDocument, UIWKInteractionViewProtocol, UITextInputTokenizer> *textInputContentView;
 @property (nonatomic, readonly) RetainPtr<NSArray> selectionRectsAfterPresentationUpdate;
 @property (nonatomic, readonly) CGRect caretViewRectInContentCoordinates;
 @property (nonatomic, readonly) NSArray<NSValue *> *selectionViewRectsInContentCoordinates;
 - (_WKActivatedElementInfo *)activatedElementAtPosition:(CGPoint)position;
 - (void)evaluateJavaScriptAndWaitForInputSessionToChange:(NSString *)script;
+- (WKContentView *)wkContentView;
 @end
 #endif
 
@@ -104,6 +109,4 @@
 - (void)typeCharacter:(char)character;
 @end
 #endif
-
-#endif // WK_API_ENABLED
 

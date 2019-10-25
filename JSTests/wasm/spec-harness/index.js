@@ -82,7 +82,7 @@ function reinitializeRegistry() {
         spectest: {
             print: print,
             global: 666,
-            table: new WebAssembly.Table({initial: 10, maximum: 20, element: 'anyfunc'}),
+            table: new WebAssembly.Table({initial: 10, maximum: 20, element: 'funcref'}),
             memory: new WebAssembly.Memory({initial: 1, maximum: 2})
         }
     };
@@ -190,6 +190,7 @@ function instance(bytes, imports = registry, valid = true) {
     if (valid) {
         uniqueTest(() => {
             let instantiated = err === null;
+            if (!instantiated) print(err);
             assert_true(instantiated, err);
         }, "module successfully instantiated");
     }

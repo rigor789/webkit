@@ -1,3 +1,308 @@
+2019-07-03  Dewei Zhu  <dewei_zhu@apple.com>
+
+        Test freshness page should expose revision information for latest build on tooltip.
+        https://bugs.webkit.org/show_bug.cgi?id=199483
+
+        Reviewed by Ryosuke Niwa.
+
+        Added latest build revision information on test freshness page tooltip.
+
+        * public/v3/pages/test-freshness-page.js: Add build revision information on tooltip.
+        (TestFreshnessPage.prototype.didConstructShadowTree):
+        (TestFreshnessPage.prototype._fetchTestResults):
+        (TestFreshnessPage.prototype.render):
+        (TestFreshnessPage.prototype._renderTooltip):
+        (TestFreshnessPage.cssTemplate):
+
+2019-06-26  Dewei Zhu  <dewei_zhu@apple.com>
+
+        commit api should not return 'AmbiguousRevisionPrefix' if there is an exact revision match
+        https://bugs.webkit.org/show_bug.cgi?id=199227
+
+        Reviewed by Ryosuke Niwa.
+
+        When prefix match is specified, api should check whether there is an exact match when multiple commits
+        match the prefix.
+
+        * public/include/commit-log-fetcher.php: Added the logic to check if there is an exact match when multiple matches are found.
+        * server-tests/api-commits-tests.js: Added an unit test.
+
+2019-06-24  Dean Johnson  <dean_johnson@apple.com>
+
+        [perf.webkit.org] Update summary page calculations to use mean instead of median
+        https://bugs.webkit.org/show_bug.cgi?id=199050
+
+        Reviewed by Dewei Zhu.
+
+        * public/v3/pages/summary-page.js:
+        (SummaryPageConfigurationGroup): Updated 'median' references to 'mean'.
+        (SummaryPageConfigurationGroup.set _startAndEndPointForTimeRange): Factored out logic for finding data
+        points in a timeSeries, within a specified timeRange.
+        (SummaryPageConfigurationGroup.set _meanForTimeRange): New. Returns the mean of a timeSeries across a
+        given timeRange.
+
+2019-06-20  Dewei Zhu  <dewei_zhu@apple.com>
+
+        Fix a bug that 'test_metrics' and 'tests' tables are not joined correctly in CommitLogFetcher.fetch_latest_for_platform
+        https://bugs.webkit.org/show_bug.cgi?id=199062
+
+        Reviewed by Ryosuke Niwa.
+
+        'test_metrics' and 'tests' should be joined based on 'metric_test' and 'test_id'.
+
+        * public/include/commit-log-fetcher.php: Fix the typo in the query.
+        * server-tests/api-commits-tests.js: Added a unit test for this change.
+
+2019-06-17  Dewei Zhu  <dewei_zhu@apple.com>
+
+        Customizable test group form should allow user to supply a revision prefix of a commit and revision starts with 'r'.
+        https://bugs.webkit.org/show_bug.cgi?id=198940
+
+        Reviewed by Ryosuke Niwa.
+
+        Customizable test group form should adapt prefix matching when fetching for a commit.
+
+        * browser-tests/customizable-test-group-form-tests.js: Updated and added unit tests.
+        * public/v3/components/customizable-test-group-form.js: Removed loggings those a unintentionally committed.
+        * public/v3/models/commit-set.js: Adapted prefix matching API when fetching a commit.
+        (IntermediateCommitSet.prototype._fetchCommitLogAndOwnedCommits):
+        * unit-tests/commit-set-tests.js: Updated unit tests accordingly.
+
+2019-06-13  Dewei Zhu  <dewei_zhu@apple.com>
+
+        Custom analysis task configurator should allow supplying commit prefix and revision starts 'r'.
+        https://bugs.webkit.org/show_bug.cgi?id=198847
+
+        Reviewed by Ryosuke Niwa.
+
+        Custom analysis task configurator should not require full SHA to start an A/B test.
+        Custom analysis task configurator should accept svn revision starts with 'r'.
+
+        * browser-tests/custom-analysis-task-configurator-tests.js: Added a unit test for this change.
+        * public/api/commits.php: Extend this API to allow prefix matching when fethcing a single commit.
+        * public/include/commit-log-fetcher.php: Added a function to fetch a commit with prefix.
+        * public/v3/components/custom-analysis-task-configurator.js: Add UI support for accepting partial revision.
+        (CustomAnalysisTaskConfigurator.prototype._computeCommitSet):
+        (CustomAnalysisTaskConfigurator.prototype.async._resolveRevision):
+        (CustomAnalysisTaskConfigurator.prototype._buildTestabilityList):
+        * public/v3/models/commit-log.js:
+        (CommitLog.async.fetchForSingleRevision): Added third argument to specify prefix matching which defaults to false.
+        * server-tests/api-commits-tests.js: Added unit tests.
+        * unit-tests/commit-log-tests.js: Added a unit test.
+
+2019-05-15  Dewei Zhu  <dewei_zhu@apple.com>
+
+        Perf dashboard erroneously rejects a build request to build owned components when there are no patches.
+        https://bugs.webkit.org/show_bug.cgi?id=197928
+
+        Reviewed by Ryosuke Niwa.
+
+        Fix a bug that build type build request that only builds owned components failed to pass sanity check when there
+        is no repository accepts patch in triggerable repository group.
+        Add a sanity check to throw an error when build request type is build but there is no repository group template.
+
+        * tools/js/buildbot-syncer.js:
+        (BuildbotSyncer.prototype._propertiesForBuildRequest): Changed sanity check the always requires repository accepts patch when there is a build to make it also works for build request only builds owned components.
+        (BuildbotSyncer._parseRepositoryGroup): Added check for repository group templates not null  when build requiest type is build.
+        * unit-tests/buildbot-syncer-tests.js: Added unit tests for this change.
+        * unit-tests/resources/mock-v3-models.js: Added mock date for unit tests.
+
+2019-05-14  Dewei Zhu  <dewei_zhu@apple.com>
+
+        Pruning old file logic should not stop after removing 10 files if there are more files to be removed.
+        https://bugs.webkit.org/show_bug.cgi?id=197870
+
+        Reviewed by Ryosuke Niwa.
+
+        Pruning old file logic should keep removing removable files to make enough space for a new file upload.
+        It should only attempt to remve the files that have not been removed.
+
+        * public/include/uploaded-file-helpers.php: Modified 'prune_old_files' to allow to remove more than 10 files.
+        Fixed a bug that a removed file keep getting removed but never free up new space.
+        * server-tests/privileged-api-upload-file-tests.js:
+        (makeRandomAlnumStringForLength): Helper function to generate random content for a given length.
+        * server-tests/resources/test-server.js: Update total file size limit for this change.
+        (TestServer.prototype.testConfig):
+
+2019-03-25  Dewei Zhu  <dewei_zhu@apple.com>
+
+        Primary cluster of measurement set should always contain latest point.
+        https://bugs.webkit.org/show_bug.cgi?id=196243
+
+        Reviewed by Ryosuke Niwa.
+
+        Fix a bug in measurement-set api that primary cluster may not contain latest data point as
+        'carry_over' row may not be updated.
+
+        * public/api/measurement-set.php: Should always keep 'carry_over' data points up to date.
+        * server-tests/api-measurement-set-tests.js: Added an unit test for this change.
+        Fixed a typo.
+
+2019-03-21  Dewei Zhu  <dewei_zhu@apple.com>
+
+        'custom-configuration-test-group-form' should update test name when selected test or platform changes.
+        https://bugs.webkit.org/show_bug.cgi?id=196114
+
+        Reviewed by Ryosuke Niwa.
+
+        r240104 fixes commit sets unnecessarily get updated even there is no change.
+        However, this made changing test or platform no longer triggers 'commitSetChange' action.
+        Test name should change not only when 'commitSet' gets change, but also platform or test changes.
+        Renaming the action name from 'commitSetChange' to a more accurate description 'testConfigChange'.
+        Dispatch 'testConfigChange' when platform or test changes.
+
+        * browser-tests/custom-analysis-task-configurator-tests.js: Changed action name to 'commitSetChange'.
+        * public/v3/components/custom-analysis-task-configurator.js:
+        (CustomAnalysisTaskConfigurator.prototype._didUpdateSelectedPlatforms): Should dispatch 'commitSetChange' action.
+        (CustomAnalysisTaskConfigurator.prototype._updateCommitSetMap): Changed action name to 'commitSetChange'.
+        * public/v3/components/custom-configuration-test-group-form.js: Added a unit test for this change.
+        (CustomConfigurationTestGroupForm.prototype.didConstructShadowTree):
+
+2019-03-18  Dewei Zhu  <dewei_zhu@apple.com>
+
+        Fix a bug from r226303 that latest build time is not correctly calculated.
+        https://bugs.webkit.org/show_bug.cgi?id=195912
+
+        Reviewed by Ryosuke Niwa.
+
+        Time series is ordered by revision time which does not grantee the build time is
+        monotonically increasing.
+
+        * public/v3/pages/test-freshness-page.js: Use the latest build time instead of the build time of
+        last point on the chart.
+
+2019-03-13  Dewei Zhu  <dewei_zhu@apple.com>
+
+        Test freshness page should improve the ability to correlating issues from same builder.
+        https://bugs.webkit.org/show_bug.cgi?id=195242
+
+        Reviewed by Ryosuke Niwa.
+
+        Added the ability to highlight indicators with same builder when mouse is hovering over one indicator.
+        This is a very useful visualization for correlating issues specific to a builder.
+        Added tooltip with latest build link when hovering over an indicator.
+
+        * public/v3/components/freshness-indicator.js:
+        (FreshnessIndicator): Removed 'summary' field as it's no longer needed.
+        Added 'highlighted' field.
+        (FreshnessIndicator.prototype.update): Added 'highlighted' argument.
+        (FreshnessIndicator.prototype.didConstructShadowTree): Make indicator to dispatch mouse enter and leave
+        messages so that UI can highlight corresponding cells.
+        (FreshnessIndicator.prototype.render):
+        (FreshnessIndicator.cssTemplate):
+        * public/v3/pages/test-freshness-page.js: Added tooltip to show latest build time and build link.
+        Added logic to manually compute table body height.
+        (TestFreshnessPage):
+        (TestFreshnessPage.prototype.didConstructShadowTree):
+        (TestFreshnessPage.prototype._fetchTestResults):
+        (TestFreshnessPage.prototype.render):
+        (TestFreshnessPage.prototype._renderTooltip):
+        (TestFreshnessPage.prototype._constructTableCell):
+        (TestFreshnessPage.cssTemplate):
+
+2019-02-26  Dewei Zhu  <dewei_zhu@apple.com>
+
+        The table head of test freshness page should not scroll with the page.
+        https://bugs.webkit.org/show_bug.cgi?id=195092
+
+        Reviewed by Ryosuke Niwa.
+
+        Fix the location of the freshness table head to make it easier to corelate cell with test.
+
+        * public/v3/pages/test-freshness-page.js: Changed some style rules to make the table head fixed.
+        (TestFreshnessPage.prototype._renderTable):
+        (TestFreshnessPage.cssTemplate):
+
+2019-01-17  Dewei Zhu  <dewei_zhu@apple.com>
+
+        Analyzing a chart that does not exist should not halt whole run-analysis script.
+        https://bugs.webkit.org/show_bug.cgi?id=193563
+
+        Reviewed by Ryosuke Niwa.
+
+        Halting whole run-analysis script while there is any invalid chart specified in Manifest makes the script fragile.
+        Run-analysis is also responsible for adding retry and sending notification which should not be block by this error.
+        Skipping analyzing the corresponding configuration seems reasonable.
+
+        * public/v3/models/measurement-set.js:
+        (MeasurementSet.prototype._ensureClusterPromise): Only add callback when callback is specified.
+        This will help to fix 'UnhandledPromiseRejectionWarning' while running the test.
+        * tools/js/measurement-set-analyzer.js:
+        (MeasurementSetAnalyzer.prototype.async._analyzeMeasurementSet): Catch the exception while failing to fetch a measurement set and skip the analysis for this config.
+        * unit-tests/measurement-set-analyzer-tests.js: Added unit tests for this.
+
+2019-01-17  Dewei Zhu  <dewei_zhu@apple.com>
+
+        Updating commit in OSBuildFetcher should respect revision range in config.
+        https://bugs.webkit.org/show_bug.cgi?id=193558
+
+        Reviewed by Ryosuke Niwa.
+
+        OSBuildFetcher._fetchAvailableBuilds should filter out commits those are not in
+        revision range specified by cofnig.
+
+        * server-tests/tools-os-build-fetcher-tests.js: Added a unit test for this change.
+        * tools/js/os-build-fetcher.js:
+        (prototype.async._fetchAvailableBuilds): Filter out commits from update list if commit
+        revision is out of range.
+
+2018-12-31  Dewei Zhu  <dewei_zhu@apple.com>
+
+        Test group results notification should not say a build request to build had failed even when it had successfully completed.
+        https://bugs.webkit.org/show_bug.cgi?id=193064
+
+        Reviewed by Ryosuke Niwa.
+
+        Should show 'Build completed' or 'Build failed' for build type build requests.
+
+        * browser-tests/test-group-result-page-tests.js: Added a unit test to guard this bug.
+        * tools/js/test-group-result-page.js: Show 'Build completed' or 'Build failed' for build type build requests.
+
+2018-12-21  Dewei Zhu  <dewei_zhu@apple.com>
+
+        Add UI in analysis task page to show commit testability information.
+        https://bugs.webkit.org/show_bug.cgi?id=192972
+
+        Reviewed by Ryosuke Niwa.
+
+        Add UI in custom analysis task configuration and customizable test group form to show testability information.
+        Fix a bug in 'CustomAnalysisTaskConfigurator._updateCommitSetMap' that 'currentComparison' is incorrectly set.
+        SQL to update existing database:
+            ALTER TABLE commits ADD COLUMN IF NOT EXISTS commit_testability varchar(128) DEFAULT NULL;
+
+        * browser-tests/custom-analysis-task-configurator-tests.js: Added a unit test for the bug in
+        'CustomAnalysisTaskConfigurator._updateCommitSetMap'.
+        Added a unit test to make sure 'CustomAnalysisTaskConfigurator' still works when commit fetching never returns.
+        * browser-tests/index.html: Imported ''custom-analysis-task-configurator-tests.js'.
+        * init-database.sql: Increase 'commit_testability' field length from 64 characters to 128.
+        * public/v3/components/custom-analysis-task-configurator.js: Added UI to show testability information.
+        (CustomAnalysisTaskConfigurator):
+        (CustomAnalysisTaskConfigurator.prototype._didUpdateSelectedPlatforms): Should reset related field for corresponding
+        repositories that user does not specify revision.
+        (CustomAnalysisTaskConfigurator.prototype._updateMapFromSpecifiedRevisionsForConfiguration): A helper function
+        to update '_specifiedCommits' and '_invalidRevisionsByConfiguration' per '_specifiedRevisions'.
+        (CustomAnalysisTaskConfigurator.prototype.render):
+        (CustomAnalysisTaskConfigurator.prototype._updateCommitSetMap): Fixed a bug that 'currentComparison' is incorrectly set.
+        (CustomAnalysisTaskConfigurator.prototype._computeCommitSet):
+        (CustomAnalysisTaskConfigurator.prototype.async._fetchCommitsForConfiguration):
+        (CustomAnalysisTaskConfigurator.prototype.async._resolveRevision):
+        (CustomAnalysisTaskConfigurator.prototype._buildRevisionTable):
+        (CustomAnalysisTaskConfigurator.prototype._buildTestabilityList):
+        (CustomAnalysisTaskConfigurator.prototype._selectRepositoryGroup):
+        (CustomAnalysisTaskConfigurator.prototype._buildRevisionInput):
+        (CustomAnalysisTaskConfigurator.cssTemplate):
+        * public/v3/components/customizable-test-group-form.js: Added UI to show testability information.
+        (CustomizableTestGroupForm.prototype._renderCustomRevisionTable):
+        (CustomizableTestGroupForm.prototype._constructTestabilityRows.):
+        (CustomizableTestGroupForm.prototype._constructTestabilityRows):
+        (CustomizableTestGroupForm.prototype._constructRevisionRadioButtons):
+        Changing either revision editor or radio button should trigger a re-render as testability
+        information for updated revision may change.
+        (CustomizableTestGroupForm.cssTemplate):
+        * public/v3/models/commit-set.js:
+        (IntermediateCommitSet.prototype.commitsWithTestability): Renamed from 'commitsWithTestabilityWarnings'.
+        (IntermediateCommitSet.prototype.commitsWithTestabilityWarnings): Deleted.
+
 2018-12-14  Dewei Zhu  <dewei_zhu@apple.com>
 
         Extend commits table to contain testability information.

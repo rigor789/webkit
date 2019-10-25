@@ -27,30 +27,50 @@
 
 #include <thread>
 #include <wtf/Function.h>
+#include <wtf/Vector.h>
+
+#if HAVE(SSL)
+struct SSL;
+#endif // HAVE(SSL)
 
 namespace TestWebKitAPI {
 
 class TCPServer {
 public:
     using Socket = int;
-    static constexpr Socket InvalidSocket = -1;
     using Port = uint16_t;
     static constexpr Port InvalidPort = 0;
     
-    TCPServer(Function<void(Socket)>&&);
+    TCPServer(Function<void(Socket)>&&, size_t connections = 1);
+#if HAVE(SSL)
+    enum class Protocol : uint8_t {
+        HTTPS, HTTPSProxy, HTTPSWithClientCertificateRequest
+    };
+    TCPServer(Protocol, Function<void(SSL*)>&&);
+#endif // HAVE(SSL)
     ~TCPServer();
     
     Port port() const { return m_port; }
     
+#if HAVE(SSL)
+    static void respondWithOK(SSL*);
+#endif
+    static void respondWithChallengeThenOK(Socket);
+
+    template<typename T> static Vector<uint8_t> read(T);
+    template<typename T> static void write(T, const void*, size_t);
+    
+    static Vector<uint8_t> testPrivateKey();
+    static Vector<uint8_t> testCertificate();
+    
 private:
-    void socketBindListen();
-    void waitForAndReplyToRequests();
+    Optional<Socket> socketBindListen(size_t connections);
+    void listenForConnections(size_t connections);
 
     Port m_port { InvalidPort };
-    Socket m_listeningSocket { InvalidSocket };
-    Socket m_connectionSocket { InvalidSocket };
-    std::thread m_thread;
-    Function<void(Socket)> m_socketHandler;
+    std::thread m_listeningThread;
+    Vector<std::thread> m_connectionThreads;
+    Function<void(Socket)> m_connectionHandler;
 };
 
 } // namespace TestWebKitAPI

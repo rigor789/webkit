@@ -61,6 +61,11 @@ void UIScriptController::doAfterNextStablePresentationUpdate(JSValueRef callback
     doAsyncTask(callback);
 }
 
+void UIScriptController::ensurePositionInformationIsUpToDateAt(long x, long y, JSValueRef callback)
+{
+    doAsyncTask(callback);
+}
+
 void UIScriptController::doAfterVisibleContentRectUpdate(JSValueRef callback)
 {
     doAsyncTask(callback);
@@ -98,6 +103,10 @@ void UIScriptController::setViewScale(double)
 }
 
 void UIScriptController::setMinimumEffectiveWidth(double)
+{
+}
+
+void UIScriptController::setAllowsViewportShrinkToFit(bool)
 {
 }
 
@@ -213,6 +222,21 @@ void UIScriptController::setDefaultCalendarType(JSStringRef calendarIdentifier)
 void UIScriptController::toggleCapsLock(JSValueRef callback)
 {
     doAsyncTask(callback);
+}
+
+JSRetainPtr<JSStringRef> UIScriptController::lastUndoLabel() const
+{
+    return nullptr;
+}
+
+JSRetainPtr<JSStringRef> UIScriptController::firstRedoLabel() const
+{
+    return nullptr;
+}
+
+NSUndoManager *UIScriptController::platformUndoManager() const
+{
+    return nil;
 }
 
 }

@@ -1,234 +1,362 @@
-2019-04-24  Babak Shafiei  <bshafiei@apple.com>
+2019-07-12  Caio Lima  <ticaiolima@gmail.com>
 
-        Cherry-pick r244174. rdar://problem/28160396
+        [BigInt] Add ValueBitLShift into DFG
+        https://bugs.webkit.org/show_bug.cgi?id=192664
 
-    Cherry-pick r243841. rdar://problem/49725678
-    
+        Reviewed by Saam Barati.
+
+        * BigIntBench/big-int-simple-lshift.js: Added.
+
+2019-06-28  Konstantin Tokarev  <annulen@yandex.ru>
+
+        Remove traces of ENABLE_ICONDATABASE remaining after its removal in 219733
+        https://bugs.webkit.org/show_bug.cgi?id=199317
+
+        Reviewed by Michael Catanzaro.
+
+        While IconDatabase and all code using it was removed,
+        ENABLE_ICONDATABASE still exists as build option and C++ macro.
+
+        * StitchMarker/wtf/FeatureDefines.h:
+
+2019-06-27  Beth Dakin  <bdakin@apple.com>
+
+        Upstream use of MACCATALYST
+        https://bugs.webkit.org/show_bug.cgi?id=199245
+        rdar://problem/51687723
+
+        Reviewed by Tim Horton.
+
+        * MediaTime/Configurations/SDKVariant.xcconfig:
+
+2019-06-20  Carlos Garcia Campos  <cgarcia@igalia.com>
+
+        [GTK] Remove support for GTK2 plugins
+        https://bugs.webkit.org/show_bug.cgi?id=199065
+
+        Reviewed by Sergio Villar Senin.
+
+        * StitchMarker/wtf/Platform.h:
+
+2019-05-08  Caio Lima  <ticaiolima@gmail.com>
+
+        [BigInt] Add ValueMod into DFG
+        https://bugs.webkit.org/show_bug.cgi?id=186174
+
+        Reviewed by Saam Barati.
+
+        * BigIntBench/big-int-simple-mod.js: Added.
+
+2019-05-06  Saam Barati  <sbarati@apple.com>
+
+        JS2 should print scores for different categories
+        https://bugs.webkit.org/show_bug.cgi?id=197605
+
+        Reviewed by Yusuke Suzuki.
+
+        * JetStream2/JetStreamDriver.js:
+        (displayCategoryScores):
+        (isInBrowser.document.onkeydown):
+        (Driver.prototype.async.start):
+        (Driver.prototype.async.reportScoreToRunBenchmarkRunner):
+
+2019-04-16  Jon Lee  <jonlee@apple.com>
+
+        [MotionMark] The text "kkkj" is causing Firefox console warning: `unreachable code after return statement`
+        https://bugs.webkit.org/show_bug.cgi?id=196814
+
+        Reviewed by Wenson Hsieh.
+
+        * MotionMark/resources/extensions.js:
+        (subtract.subtract.sampleY):
+
+2019-04-15  Myles C. Maxfield  <mmaxfield@apple.com>
+
+        [Cocoa] FontPlatformData objects aren't cached at all when using font-family:system-ui
+        https://bugs.webkit.org/show_bug.cgi?id=196846
+        <rdar://problem/49499971>
+
+        Reviewed by Simon Fraser and Darin Adler.
+
+        * Layout/system-ui-rebuild-emoji.html: Added.
+
+2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+
         -apple-trailing-word is needed for browser detection
         https://bugs.webkit.org/show_bug.cgi?id=196575
-    
-        Unreviewed.
-    
-        PerformanceTests:
-    
-        * MotionMark/resources/debug-runner/motionmark.css:
-        (#intro .start-benchmark p):
-    
-        Source/JavaScriptCore:
-    
-        * Configurations/FeatureDefines.xcconfig:
-    
-        Source/WebCore:
-    
-        This is an unreviewed partial revert of r243819. Turns out there are some websites
-        which use this property to do browser detection. So, we need to continue to parse
-        the property, but we don't need the property to do anything.
-    
-        Test: fast/text/trailing-word-detection.html
-    
-        * Configurations/FeatureDefines.xcconfig:
-        * css/CSSComputedStyleDeclaration.cpp:
-        (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
-        * css/CSSPrimitiveValueMappings.h:
-        (WebCore::CSSPrimitiveValue::CSSPrimitiveValue):
-        (WebCore::CSSPrimitiveValue::operator TrailingWord const):
-        * css/CSSProperties.json:
-        * css/CSSValueKeywords.in:
-        * css/parser/CSSParserFastPaths.cpp:
-        (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
-        (WebCore::CSSParserFastPaths::isKeywordPropertyID):
-        * rendering/style/RenderStyle.h:
-        (WebCore::RenderStyle::trailingWord const):
-        (WebCore::RenderStyle::setTrailingWord):
-        (WebCore::RenderStyle::initialTrailingWord):
-        * rendering/style/RenderStyleConstants.h:
-    
-        Source/WebCore/PAL:
-    
-        * Configurations/FeatureDefines.xcconfig:
-    
-        Source/WebKit:
-    
-        * Configurations/FeatureDefines.xcconfig:
-    
-        Source/WebKitLegacy/mac:
-    
-        * Configurations/FeatureDefines.xcconfig:
-    
-        Tools:
-    
-        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
-    
-        LayoutTests:
-    
-        * fast/text/trailing-word-detection-expected.txt: Added.
-        * fast/text/trailing-word-detection.html: Added.
-        * platform/gtk/TestExpectations:
-        * platform/win/TestExpectations:
-    
-        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243841 268f45cc-cd09-0410-ab3c-d52691b4dbfc
-    
-    git-svn-id: https://svn.webkit.org/repository/webkit/branches/safari-607-branch@244174 268f45cc-cd09-0410-ab3c-d52691b4dbfc
-
-    2019-04-10  Alan Coon  <alancoon@apple.com>
-
-            Cherry-pick r243841. rdar://problem/49725678
-
-        -apple-trailing-word is needed for browser detection
-        https://bugs.webkit.org/show_bug.cgi?id=196575
 
         Unreviewed.
-
-        PerformanceTests:
 
         * MotionMark/resources/debug-runner/motionmark.css:
         (#intro .start-benchmark p):
 
-        Source/JavaScriptCore:
+2019-03-27  Ryan Haddad  <ryanhaddad@apple.com>
 
-        * Configurations/FeatureDefines.xcconfig:
+        REGRESSION (r242911?): High Sierra Release WK2 Perf bot timing out while running IndexedDB/large-number-of-inserts.html
+        https://bugs.webkit.org/show_bug.cgi?id=195952
 
-        Source/WebCore:
+        Unreviewed test gardening.
 
-        This is an unreviewed partial revert of r243819. Turns out there are some websites
-        which use this property to do browser detection. So, we need to continue to parse
-        the property, but we don't need the property to do anything.
+        * Skipped: Skip the affected test so the bot will finish the run.
 
-        Test: fast/text/trailing-word-detection.html
+2019-03-27  Saam Barati  <sbarati@apple.com>
 
-        * Configurations/FeatureDefines.xcconfig:
-        * css/CSSComputedStyleDeclaration.cpp:
-        (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
-        * css/CSSPrimitiveValueMappings.h:
-        (WebCore::CSSPrimitiveValue::CSSPrimitiveValue):
-        (WebCore::CSSPrimitiveValue::operator TrailingWord const):
-        * css/CSSProperties.json:
-        * css/CSSValueKeywords.in:
-        * css/parser/CSSParserFastPaths.cpp:
-        (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
-        (WebCore::CSSParserFastPaths::isKeywordPropertyID):
-        * rendering/style/RenderStyle.h:
-        (WebCore::RenderStyle::trailingWord const):
-        (WebCore::RenderStyle::setTrailingWord):
-        (WebCore::RenderStyle::initialTrailingWord):
-        * rendering/style/RenderStyleConstants.h:
+        JetStream 2 should not report time values as scores
+        https://bugs.webkit.org/show_bug.cgi?id=196334
 
-        Source/WebCore/PAL:
+        Reviewed by Yusuke Suzuki.
 
-        * Configurations/FeatureDefines.xcconfig:
+        * JetStream2/JetStreamDriver.js:
+        (toTimeValue):
+        (Driver.prototype.async.reportScoreToRunBenchmarkRunner):
 
-        Source/WebKit:
+2019-03-27  Saam barati  <sbarati@apple.com>
 
-        * Configurations/FeatureDefines.xcconfig:
+        Unreviewed. Fix individual benchmark description urls to go to in-depth.html instead of about.html
 
-        Source/WebKitLegacy/mac:
+        * JetStream2/JetStreamDriver.js:
+        (Driver.prototype.prepareToRun.text.div.id.string_appeared_here.h3):
 
-        * Configurations/FeatureDefines.xcconfig:
+2019-03-25  Saam barati  <sbarati@apple.com>
 
-        Tools:
+        Update the blurb describing JetStream2 and fix a broken link in the in-depth page.
 
-        * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+        Rubber-stamped by Filip Pizlo.
 
-        LayoutTests:
+        * JetStream2/in-depth.html:
+        * JetStream2/index.html:
 
-        * fast/text/trailing-word-detection-expected.txt: Added.
-        * fast/text/trailing-word-detection.html: Added.
-        * platform/gtk/TestExpectations:
-        * platform/win/TestExpectations:
+2019-03-18  Saam Barati  <sbarati@apple.com>
 
-        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243841 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+        Add a plan file for JetStream 2
+        https://bugs.webkit.org/show_bug.cgi?id=190734
 
-        2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+        Reviewed by Mark Lam.
 
-                -apple-trailing-word is needed for browser detection
-                https://bugs.webkit.org/show_bug.cgi?id=196575
+        Make the delay when starting via run-benchmark longer to allow
+        the page's animation to finish.
 
-                Unreviewed.
+        * JetStream2/JetStreamDriver.js:
+        (Driver.prototype.async.initialize):
 
-                * MotionMark/resources/debug-runner/motionmark.css:
-                (#intro .start-benchmark p):
+2019-03-15  Jon Davis  <jond@apple.com>
 
-2019-04-24  Alan Coon  <alancoon@apple.com>
+        Fixed a bug preventing the overall sore to be displayed on JetStream2
+        https://bugs.webkit.org/show_bug.cgi?id=195817
 
-        Revert r244174. rdar://problem/28160396
+        Rubber-stamped by Saam Barati.
 
-2019-04-10  Alan Coon  <alancoon@apple.com>
+        * JetStream2/JetStreamDriver.js:
+        (Driver.prototype.async.start):
 
-        Cherry-pick r243841. rdar://problem/49725678
+2019-03-14  Jon Davis  <jond@apple.com>
 
-    -apple-trailing-word is needed for browser detection
-    https://bugs.webkit.org/show_bug.cgi?id=196575
-    
-    Unreviewed.
-    
-    PerformanceTests:
-    
-    * MotionMark/resources/debug-runner/motionmark.css:
-    (#intro .start-benchmark p):
-    
-    Source/JavaScriptCore:
-    
-    * Configurations/FeatureDefines.xcconfig:
-    
-    Source/WebCore:
-    
-    This is an unreviewed partial revert of r243819. Turns out there are some websites
-    which use this property to do browser detection. So, we need to continue to parse
-    the property, but we don't need the property to do anything.
-    
-    Test: fast/text/trailing-word-detection.html
-    
-    * Configurations/FeatureDefines.xcconfig:
-    * css/CSSComputedStyleDeclaration.cpp:
-    (WebCore::ComputedStyleExtractor::valueForPropertyinStyle):
-    * css/CSSPrimitiveValueMappings.h:
-    (WebCore::CSSPrimitiveValue::CSSPrimitiveValue):
-    (WebCore::CSSPrimitiveValue::operator TrailingWord const):
-    * css/CSSProperties.json:
-    * css/CSSValueKeywords.in:
-    * css/parser/CSSParserFastPaths.cpp:
-    (WebCore::CSSParserFastPaths::isValidKeywordPropertyAndValue):
-    (WebCore::CSSParserFastPaths::isKeywordPropertyID):
-    * rendering/style/RenderStyle.h:
-    (WebCore::RenderStyle::trailingWord const):
-    (WebCore::RenderStyle::setTrailingWord):
-    (WebCore::RenderStyle::initialTrailingWord):
-    * rendering/style/RenderStyleConstants.h:
-    
-    Source/WebCore/PAL:
-    
-    * Configurations/FeatureDefines.xcconfig:
-    
-    Source/WebKit:
-    
-    * Configurations/FeatureDefines.xcconfig:
-    
-    Source/WebKitLegacy/mac:
-    
-    * Configurations/FeatureDefines.xcconfig:
-    
-    Tools:
-    
-    * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
-    
-    LayoutTests:
-    
-    * fast/text/trailing-word-detection-expected.txt: Added.
-    * fast/text/trailing-word-detection.html: Added.
-    * platform/gtk/TestExpectations:
-    * platform/win/TestExpectations:
-    
-    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@243841 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+        Implement a new design for JetStream2
+        https://bugs.webkit.org/show_bug.cgi?id=195492
 
-    2019-04-03  Myles C. Maxfield  <mmaxfield@apple.com>
+        Reviewed by Saam Barati.
 
-            -apple-trailing-word is needed for browser detection
-            https://bugs.webkit.org/show_bug.cgi?id=196575
+        * JetStream2/JetStream.css:
+        (html):
+        (body):
+        (::selection):
+        (main):
+        (.logo):
+        (.logo .logo-image):
+        (#jetstreams):
+        (#jetstreams svg):
+        (.summary):
+        (.summary + .summary):
+        (.summary:empty):
+        (article, .summary):
+        (h1):
+        (h2, h3, h4, h5, h6):
+        (h4, h5, h6):
+        (p):
+        (h5, h6):
+        (h6):
+        (a:link,):
+        (a:hover,):
+        (#status):
+        (#status label,):
+        (a.button):
+        (#status.loading):
+        (#status.error):
+        (.error h2, .error p):
+        (.error h2):
+        (#result-summary):
+        (#result-summary label):
+        (#result-summary .score):
+        (#result-summary .score .interval):
+        (#results):
+        (.benchmark):
+        (.benchmark h3, .benchmark h4, .benchmark .result, .benchmark label):
+        (.benchmark-running h4, .benchmark-running .result, .benchmark-running label):
+        (.benchmark-done h3, .benchmark-done h4, .benchmark-done .result, .benchmark-done label):
+        (.benchmark h3):
+        (.benchmark-running h3):
+        (.benchmark-done h3):
+        (.benchmark h3 a,):
+        (.benchmark-done h3 a:hover):
+        (.benchmark h4):
+        (.benchmark-done h4):
+        (.benchmark p,):
+        (.benchmark .result):
+        (.benchmark-done .result):
+        (.benchmark label):
+        (.benchmark-done label):
+        (@keyframes fadein):
+        (to):
+        (@keyframes scaledown):
+        (@keyframes shine):
+        (100%):
+        (@keyframes swingin):
+        (@media (max-width: 415px)):
+        (#logo): Deleted.
+        (p.summary): Deleted.
+        (p.summary + p.summary): Deleted.
+        (p.summary:empty): Deleted.
+        (p:first-of-type): Deleted.
+        (#status a:link): Deleted.
+        (.interval): Deleted.
+        (a:link, a:visited): Deleted.
+        (a:link:hover): Deleted.
+        (table): Deleted.
+        (td, th): Deleted.
+        (th): Deleted.
+        (tr:first-child > th:nth-child(even)): Deleted.
+        (tr:nth-child(even):not(:first-child, .benchmark-running)): Deleted.
+        (.result): Deleted.
+        (.benchmark-running): Deleted.
+        (:not(.benchmark-running) .result): Deleted.
+        (.benchmark-running .result): Deleted.
+        (.benchmark-name): Deleted.
+        (.result.category,): Deleted.
+        (.benchmark-name:not(.category):not(.geometric-mean)): Deleted.
+        (.geometric-mean): Deleted.
+        (.benchmark-name:not(:first-child)): Deleted.
+        (.benchmark-name a:link,): Deleted.
+        (.highlighted-result): Deleted.
+        * JetStream2/JetStream2Logo.svg: Added.
+        * JetStream2/JetStreamDriver.js:
+        (updateUI):
+        (Driver.prototype.async.start):
+        (Driver.prototype.prepareToRun.text.div.id.string_appeared_here.h3):
+        (Driver.prototype.prepareToRun.text.span):
+        (Driver.prototype.prepareToRun.a.h3.h4):
+        (Driver.prototype.prepareToRun.text.div):
+        (Driver.prototype.async.initialize):
+        (Driver.prototype.async.fetchResources.prototype.statusElement.onclick):
+        (prototype.fetchResources):
+        (prototype.updateUIBeforeRun):
+        (prototype.updateUIAfterRun):
+        (Driver.prototype.async.fetchResources.statusElement.innerHTML.a.href.string_appeared_here):
+        (Driver.prototype.async.fetchResources):
+        (Driver.prototype.prepareToRun.text.tr.id.string_appeared_here.FIXME.link.to.benchmark.explanation.td): Deleted.
+        * JetStream2/clouds.svg: Added.
+        * JetStream2/in-depth.html:
+        * JetStream2/index.html:
+        * JetStream2/jetstreams.svg: Added.
 
-            Unreviewed.
+2019-03-11  Caio Lima  <ticaiolima@gmail.com>
 
-            * MotionMark/resources/debug-runner/motionmark.css:
-            (#intro .start-benchmark p):
+        [ESNext][BigInt] Implement "~" unary operation
+        https://bugs.webkit.org/show_bug.cgi?id=182216
+
+        Reviewed by Keith Miller.
+
+        * BigIntBench/big-int-simple-bit-not.js: Added.
+
+2019-03-04  Saam Barati  <sbarati@apple.com>
+
+        Add a detailed summary page for JetStream 2
+        https://bugs.webkit.org/show_bug.cgi?id=195014
+
+        Rubber-stamped by Darin Adler.
+
+        * JetStream2/JetStream.css:
+        (a:link, a:visited):
+        * JetStream2/in-depth.html: Added.
+
+2019-02-08  Saam barati  <sbarati@apple.com>
+
+        Update JetStream2 CLI to not print "ms" since we now just print the score values
+        https://bugs.webkit.org/show_bug.cgi?id=193981
+
+        Reviewed by Yusuke Suzuki.
+
+        * JetStream2/JetStreamDriver.js:
+        (DefaultBenchmark.prototype.updateUIAfterRun):
+        (DefaultBenchmark):
+        (WSLBenchmark.prototype.updateUIAfterRun):
+        (WSLBenchmark):
+        (WasmBenchmark.prototype.updateUIAfterRun):
+        (WasmBenchmark):
+
+2019-01-31  Sihui Liu  <sihui_liu@apple.com>
+
+        REGRESSION (r240358): IndexedDB/large-binary-keys.html and IndexedDB/large-string-keys.html perf tests failing
+        https://bugs.webkit.org/show_bug.cgi?id=193956
+        <rdar://problem/47623109>
+
+        Reviewed by Ryosuke Niwa.
+
+        r240358 sets default IDB quota as 50 MB for single test, we need to increase that for big tests. 
+
+        * IndexedDB/large-binary-keys.html:
+        * IndexedDB/large-string-keys.html:
+
+2019-01-18  Saam Barati  <sbarati@apple.com>
+
+        Use scores everywhere in JetStream2's UI
+        https://bugs.webkit.org/show_bug.cgi?id=193593
+
+        Reviewed by Keith Miller.
+
+        * JetStream2/JetStreamDriver.js:
+        (DefaultBenchmark.prototype.processResults):
+        (DefaultBenchmark.prototype.get score):
+        (DefaultBenchmark.scoreDescription):
+        (WSLBenchmark.prototype.processResults):
+        (WSLBenchmark.prototype.get score):
+        (WSLBenchmark.scoreDescription):
+        (WasmBenchmark.prototype.processResults):
+        (WasmBenchmark.prototype.get score):
+        (WasmBenchmark.scoreDescription):
+        * JetStream2/index.html:
+
+2019-01-18  Jer Noble  <jer.noble@apple.com>
+
+        SDK_VARIANT build destinations should be separate from non-SDK_VARIANT builds
+        https://bugs.webkit.org/show_bug.cgi?id=189553
+
+        Reviewed by Tim Horton.
+
+        * MediaTime/Configurations/Base.xcconfig:
+        * MediaTime/Configurations/SDKVariant.xcconfig: Added.
+
+2019-01-17  Truitt Savell  <tsavell@apple.com>
+
+        Unreviewed, rolling out r240124.
+
+        This commit broke an internal build.
+
+        Reverted changeset:
+
+        "SDK_VARIANT build destinations should be separate from non-
+        SDK_VARIANT builds"
+        https://bugs.webkit.org/show_bug.cgi?id=189553
+        https://trac.webkit.org/changeset/240124
+
+2019-01-17  Jer Noble  <jer.noble@apple.com>
+
+        SDK_VARIANT build destinations should be separate from non-SDK_VARIANT builds
+        https://bugs.webkit.org/show_bug.cgi?id=189553
+
+        Reviewed by Tim Horton.
+
+        * MediaTime/Configurations/Base.xcconfig:
+        * MediaTime/Configurations/SDKVariant.xcconfig: Added.
 
 2018-12-20  Caio Lima  <ticaiolima@gmail.com>
 

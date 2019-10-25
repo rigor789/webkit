@@ -26,8 +26,6 @@
 #import "config.h"
 #import <WebKit/WKFoundation.h>
 
-#if WK_API_ENABLED
-
 #import <WebKit/_WKProcessPoolConfiguration.h>
 #import <wtf/RetainPtr.h>
 
@@ -36,14 +34,10 @@ TEST(WKProcessPoolConfiguration, Copy)
     auto configuration = adoptNS([[_WKProcessPoolConfiguration alloc] init]);
 
     [configuration setInjectedBundleURL:[NSURL fileURLWithPath:@"/path/to/injected.wkbundle"]];
-    [configuration setMaximumProcessCount:42];
     [configuration setCustomWebContentServiceBundleIdentifier:@"org.webkit.WebContent.custom"];
     [configuration setIgnoreSynchronousMessagingTimeoutsForTesting:YES];
     [configuration setAttrStyleEnabled:YES];
     [configuration setAdditionalReadAccessAllowedURLs:@[ [NSURL fileURLWithPath:@"/path/to/allow/read/access/"] ]];
-#if PLATFORM(IOS_FAMILY) && !PLATFORM(IOS_FAMILY_SIMULATOR)
-    [configuration setWirelessContextIdentifier:25];
-#endif
     [configuration setDiskCacheSizeOverride:42000];
     [configuration setCachePartitionedURLSchemes:@[ @"ssh", @"vnc" ]];
     [configuration setAlwaysRevalidatedURLSchemes:@[ @"afp", @"smb" ]];
@@ -65,14 +59,10 @@ TEST(WKProcessPoolConfiguration, Copy)
     auto copy = adoptNS([configuration copy]);
 
     EXPECT_TRUE([[configuration injectedBundleURL] isEqual:[copy injectedBundleURL]]);
-    EXPECT_EQ([configuration maximumProcessCount], [copy maximumProcessCount]);
     EXPECT_TRUE([[configuration customWebContentServiceBundleIdentifier] isEqual:[copy customWebContentServiceBundleIdentifier]]);
     EXPECT_EQ([configuration ignoreSynchronousMessagingTimeoutsForTesting], [copy ignoreSynchronousMessagingTimeoutsForTesting]);
     EXPECT_EQ([configuration attrStyleEnabled], [copy attrStyleEnabled]);
     EXPECT_TRUE([[configuration additionalReadAccessAllowedURLs] isEqual:[copy additionalReadAccessAllowedURLs]]);
-#if PLATFORM(IOS_FAMILY) && !PLATFORM(IOS_FAMILY_SIMULATOR)
-    EXPECT_EQ([configuration wirelessContextIdentifier], [copy wirelessContextIdentifier]);
-#endif
     EXPECT_EQ([configuration diskCacheSizeOverride], [copy diskCacheSizeOverride]);
     EXPECT_TRUE([[configuration cachePartitionedURLSchemes] isEqual:[copy cachePartitionedURLSchemes]]);
     EXPECT_TRUE([[configuration alwaysRevalidatedURLSchemes] isEqual:[copy alwaysRevalidatedURLSchemes]]);
@@ -91,5 +81,3 @@ TEST(WKProcessPoolConfiguration, Copy)
     EXPECT_EQ([configuration pageCacheEnabled], [copy pageCacheEnabled]);
     EXPECT_EQ([configuration suppressesConnectionTerminationOnSystemChange], [copy suppressesConnectionTerminationOnSystemChange]);
 }
-
-#endif

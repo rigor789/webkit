@@ -152,6 +152,45 @@ function test()
     });
 
     suite.addTestCase({
+        name: "Array.diffArrays",
+        test() {
+            function diff(initial, current) {
+                let actual = [];
+                Array.diffArrays(initial, current, (value, changed) => {
+                    actual.push([value, changed]);
+                });
+
+                InspectorTest.log(JSON.stringify(initial) + ", " + JSON.stringify(current) + " => " + JSON.stringify(actual));
+            }
+
+            diff(["a"], []);
+            diff([], ["a"]);
+            diff(["a"], ["b"]);
+            diff(["a"], ["a"]);
+            diff(["a"], ["a", "b"]);
+            diff(["a"], ["b", "a"]);
+            diff(["a", "b"], ["a"]);
+            diff(["b", "a"], ["a"]);
+            diff(["b", "a"], ["a", "c"]);
+            diff(["b", "a"], ["a", "c"]);
+            diff(["b", "a"], ["a", "b"]);
+            diff(["a", "b", "c"], ["a", "d", "c"]);
+            diff(["a", "b", "c"], ["c", "b", "a"]);
+
+            InspectorTest.log("\nRepeating items:");
+            diff(["a"], ["a", "a"]);
+            diff(["a", "a"], ["a"]);
+            diff(["a", "a"], ["a", "a"]);
+            diff(["b", "a", "b"], ["a", "b", "a"]);
+            diff(["a", "b", "b", "c"], ["c", "b", "b", "b", "a"]);
+            diff(["a", "b", "b", "b", "c"], ["c", "b", "b", "a"]);
+            diff(["a", "a", "b", "b", "c", "c"], ["b", "b", "c", "c", "a", "a"]);
+
+            return true;
+        }
+    });
+
+    suite.addTestCase({
         name: "Array.prototype.lastValue",
         test() {
             let object1 = {};
@@ -184,15 +223,18 @@ function test()
         name: "Array.prototype.remove",
         test() {
             let arr1 = [1, 2, 3, 1];
-            arr1.remove(1);
+            InspectorTest.expectThat(arr1.remove(1), "remove should return true when removing a value that exists.");
             InspectorTest.expectShallowEqual(arr1, [2, 3, 1], "remove should only remove the first matching value.");
 
             let arr2 = ["1", "2", 3, 1];
-            arr2.remove("1");
-            arr2.remove(2);
+            InspectorTest.expectThat(arr2.remove("1"), "remove should return true when removing a value that exists.");
+            InspectorTest.expectFalse(arr2.remove(2), "remove should return false when removing a value that does not exist.");
             InspectorTest.expectShallowEqual(arr2, ["2", 3, 1], "remove should only remove values that strictly match.");
 
-            return true;
+            let arr3 = [1, 2, 3];
+            InspectorTest.expectFalse(arr3.remove("1"), "remove should return false when removing a value that does not exist.");
+            InspectorTest.expectFalse(arr3.remove(4), "remove should return false when removing a value that does not exist.");
+            InspectorTest.expectShallowEqual(arr3, [1, 2, 3], "remove should not affect the array if the value does not exist.");
         }
     });
 

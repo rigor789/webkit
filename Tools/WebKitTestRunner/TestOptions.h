@@ -33,6 +33,28 @@
 namespace WTR {
 
 struct TestOptions {
+    struct ContextOptions {
+        Vector<String> overrideLanguages;
+        bool ignoreSynchronousMessagingTimeouts { false };
+        bool enableProcessSwapOnNavigation { true };
+        bool enableProcessSwapOnWindowOpen { false };
+
+        bool hasSameInitializationOptions(const ContextOptions& options) const
+        {
+            if (ignoreSynchronousMessagingTimeouts != options.ignoreSynchronousMessagingTimeouts
+                || overrideLanguages != options.overrideLanguages
+                || enableProcessSwapOnNavigation != options.enableProcessSwapOnNavigation
+                || enableProcessSwapOnWindowOpen != options.enableProcessSwapOnWindowOpen)
+                return false;
+            return true;
+        }
+
+        bool shouldEnableProcessSwapOnNavigation() const
+        {
+            return enableProcessSwapOnNavigation || enableProcessSwapOnWindowOpen;
+        }
+    };
+
     bool useThreadedScrolling { false };
     bool useAcceleratedDrawing { false };
     bool useRemoteLayerTree { false };
@@ -57,8 +79,7 @@ struct TestOptions {
     bool shouldShowTouches { false };
     bool dumpJSConsoleLogInStdErr { false };
     bool allowCrossOriginSubresourcesToAskForCredentials { false };
-    bool enableProcessSwapOnNavigation { true };
-    bool enableProcessSwapOnWindowOpen { false };
+    bool domPasteAllowed { true };
     bool enableColorFilter { false };
     bool punchOutWhiteBackgroundsInDarkMode { false };
     bool runSingly { false };
@@ -67,13 +88,23 @@ struct TestOptions {
     bool shouldShowSpellCheckingDots { false };
     bool enableEditableImages { false };
     bool editable { false };
+    bool enableUndoManagerAPI { false };
+    bool shouldHandleRunOpenPanel { true };
+    bool shouldPresentPopovers { true };
+    bool enableAppNap { false };
+    bool enablePageCache { false };
+
+    double contentInsetTop { 0 };
 
     float deviceScaleFactor { 1 };
-    Vector<String> overrideLanguages;
     std::string applicationManifest;
     std::string jscOptions;
+    std::string additionalSupportedImageTypes;
     HashMap<String, bool> experimentalFeatures;
     HashMap<String, bool> internalDebugFeatures;
+    String contentMode;
+
+    ContextOptions contextOptions;
 
     TestOptions(const std::string& pathOrURL);
 
@@ -85,7 +116,6 @@ struct TestOptions {
     {
         if (useThreadedScrolling != options.useThreadedScrolling
             || useAcceleratedDrawing != options.useAcceleratedDrawing
-            || overrideLanguages != options.overrideLanguages
             || useMockScrollbars != options.useMockScrollbars
             || needsSiteSpecificQuirks != options.needsSiteSpecificQuirks
             || useCharacterSelectionGranularity != options.useCharacterSelectionGranularity
@@ -101,17 +131,27 @@ struct TestOptions {
             || dumpJSConsoleLogInStdErr != options.dumpJSConsoleLogInStdErr
             || applicationManifest != options.applicationManifest
             || allowCrossOriginSubresourcesToAskForCredentials != options.allowCrossOriginSubresourcesToAskForCredentials
-            || enableProcessSwapOnNavigation != options.enableProcessSwapOnNavigation
-            || enableProcessSwapOnWindowOpen != options.enableProcessSwapOnWindowOpen
+            || domPasteAllowed != options.domPasteAllowed
             || enableColorFilter != options.enableColorFilter
             || punchOutWhiteBackgroundsInDarkMode != options.punchOutWhiteBackgroundsInDarkMode
             || jscOptions != options.jscOptions
+            || additionalSupportedImageTypes != options.additionalSupportedImageTypes
             || runSingly != options.runSingly
             || checkForWorldLeaks != options.checkForWorldLeaks
             || shouldShowSpellCheckingDots != options.shouldShowSpellCheckingDots
             || shouldIgnoreMetaViewport != options.shouldIgnoreMetaViewport
             || enableEditableImages != options.enableEditableImages
-            || editable != options.editable)
+            || editable != options.editable
+            || enableUndoManagerAPI != options.enableUndoManagerAPI
+            || shouldHandleRunOpenPanel != options.shouldHandleRunOpenPanel
+            || shouldPresentPopovers != options.shouldPresentPopovers
+            || contentInsetTop != options.contentInsetTop
+            || contentMode != options.contentMode
+            || enableAppNap != options.enableAppNap
+            || enablePageCache != options.enablePageCache)
+            return false;
+
+        if (!contextOptions.hasSameInitializationOptions(options.contextOptions))
             return false;
 
         if (experimentalFeatures != options.experimentalFeatures)
@@ -121,11 +161,6 @@ struct TestOptions {
             return false;
 
         return true;
-    }
-    
-    bool shouldEnableProcessSwapOnNavigation() const
-    {
-        return enableProcessSwapOnNavigation || enableProcessSwapOnWindowOpen;
     }
 };
 

@@ -7,90 +7,103 @@
 <canvas width="400" height="400"></canvas>
 <script src="js/webgpu-functions.js"></script>
 <script>
+if (window.testRunner)
+    testRunner.waitUntilDone();
+
 const shaderCode = `
 #include <metal_stdlib>
     
 using namespace metal;
 
-struct Vertex
+struct VertexIn
 {
-    float4 position [[position]];
+    float4 position [[attribute(0)]];
+    float green [[attribute(1)]];
 };
 
-vertex Vertex vertex_main(const device Vertex* vertex_array [[buffer(0)]], uint vid [[vertex_id]])
+struct VertexOut
 {
-    return vertex_array[vid];
+    float4 position [[position]];
+    float4 color;
+};
+
+vertex VertexOut vertex_main(VertexIn vertexIn [[stage_in]])
+{
+    VertexOut vOut;
+    vOut.position = vertexIn.position;
+    vOut.color = float4(0, vertexIn.green, 0, 1);
+    return vOut;
 }
 
-fragment float4 fragment_main(Vertex vertexIn [[stage_in]])
+fragment float4 fragment_main(VertexOut v [[stage_in]])
 {
-    return float4(0.0, 1.0, 0.0, 1.0);
+    return v.color;
 }
 `
 
 function createVertexBuffer(device) {
-    const bufferSize = 4 * 4 * 4;
-    const buffer = device.createBuffer({ size: bufferSize, usage: WebGPUBufferUsage.MAP_WRITE });
-    
-    let arrayBuffer = buffer.mapping;
-    let floatArray = new Float32Array(arrayBuffer);
+    const vertexArray = new Float32Array([
+        // float4 xyzw, float g
+        -1, 1, 0, 1, 1,
+        -1, -1, 0, 1, 1,
+        1, 1, 0, 1, 1,
+        1, -1, 0, 1, 1
+    ]);
 
-    floatArray[0] = -1;
-    floatArray[1] = 1;
-    floatArray[2] = 0;
-    floatArray[3] = 1;
-
-    floatArray[4] = -1;
-    floatArray[5] = -1;
-    floatArray[6] = 0;
-    floatArray[7] = 1;
-
-    floatArray[8] = 1;
-    floatArray[9] = 1;
-    floatArray[10] = 0;
-    floatArray[11] = 1;
-
-    floatArray[12] = 1;
-    floatArray[13] = -1;
-    floatArray[14] = 0;
-    floatArray[15] = 1;
-
-    return buffer;
+    return createBufferWithData(
+        device, 
+        { 
+            size: vertexArray.byteLength, 
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.MAP_WRITE
+        },
+        vertexArray.buffer
+    );
 }
 
-function createInputStateDescriptor() {
+function createVertexInputDescriptor() {
     return {
-        indexFormat: WebGPUIndexFormat.UINT32,
-        attributes: [{
-            shaderLocation: 0,
-            inputSlot: 0,
-            offset: 0,
-            format: WebGPUVertexFormat.FLOAT_R32_G32_B32_A32
-        }],
-        inputs: [{
-            stride: 4 * 4,
-            stepMode: WebGPUInputStepMode.VERTEX
+        vertexBuffers: [{
+            stride: 4 * 5,
+            attributeSet: [{
+                format: "float4",
+                shaderLocation: 0
+            }, {
+                offset: 4 * 4,
+                format: "float",
+                shaderLocation: 1
+            }]
         }]
     }
 }
 
-async function test() {
-    const device = await getBasicDevice();
-    const canvas = document.querySelector("canvas");
-    const context = createBasicContext(canvas, device);
+const canvas = document.querySelector("canvas");
+
+async function test(device) {
+    const swapChain = createBasicSwapChain(canvas, device);
     // FIXME: Replace with non-MSL shaders.
     const shaderModule = device.createShaderModule({ code: shaderCode });
     const vertexBuffer = createVertexBuffer(device);
-    const inputStateDescriptor = createInputStateDescriptor();
-    const pipeline = createBasicPipeline(shaderModule, device, inputStateDescriptor);
-    const commandBuffer = device.createCommandBuffer();
-    const passEncoder = beginBasicRenderPass(context, commandBuffer);
-    const endCommandBuffer = encodeBasicCommands(passEncoder, pipeline, vertexBuffer);
+    const vertexInputDescriptor = createVertexInputDescriptor();
+    const pipeline = createBasicPipeline(shaderModule, device, null, null, vertexInputDescriptor);
+    const commandEncoder = device.createCommandEncoder();
+    const passEncoder = beginBasicRenderPass(swapChain, commandEncoder);
+    encodeBasicCommands(passEncoder, pipeline, vertexBuffer);
     const queue = device.getQueue();
-
-    queue.submit([endCommandBuffer]);
-    context.present();
+    queue.submit([commandEncoder.finish()]);
+    vertexBuffer.destroy();
 }
 
-test();
+getBasicDevice().then(function(device) {
+    test(device).then(function() {
+        if (window.testRunner)
+            testRunner.notifyDone();
+    }, function() {
+        if (window.testRunner)
+            testRunner.notifyDone();
+    });
+}, function() {
+    drawGreenSquareInSoftware(canvas);
+    if (window.testRunner)
+        testRunner.notifyDone();
+});
 </script>

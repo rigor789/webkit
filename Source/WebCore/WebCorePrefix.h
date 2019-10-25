@@ -41,12 +41,14 @@
 #endif
 #endif
 
-#if OS(WINDOWS)
+#if PLATFORM(WIN)
 #undef WEBCORE_EXPORT
 #define WEBCORE_EXPORT WTF_EXPORT_DECLARATION
+#undef WEBCORE_TESTSUPPORT_EXPORT
+#define WEBCORE_TESTSUPPORT_EXPORT WTF_EXPORT_DECLARATION
 #else
 #include <pthread.h>
-#endif // OS(WINDOWS)
+#endif // PLATFORM(WIN)
 
 #include <sys/types.h>
 #include <fcntl.h>
@@ -174,7 +176,7 @@
 #import <wtf/FastMalloc.h>
 #import <wtf/Optional.h>
 #import <wtf/StdLibExtras.h>
-#import <wtf/text/AtomicString.h>
+#import <wtf/text/AtomString.h>
 #import <wtf/text/WTFString.h>
 #endif
 

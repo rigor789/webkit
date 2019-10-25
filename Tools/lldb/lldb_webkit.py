@@ -44,8 +44,9 @@ def addSummaryAndSyntheticFormattersForRawBitmaskType(debugger, type_name, enume
 
     # Add the provider class and summary function to the global scope so that LLDB
     # can find them.
-    synthetic_provider_class_name = type_name + 'Provider'
-    summary_provider_function_name = type_name + '_SummaryProvider'
+    python_type_name = type_name.replace('::', '')  # Remove qualifications (e.g. WebCore::X becomes WebCoreX)
+    synthetic_provider_class_name = python_type_name + 'Provider'
+    summary_provider_function_name = python_type_name + '_SummaryProvider'
     globals()[synthetic_provider_class_name] = GeneratedRawBitmaskProvider
     globals()[summary_provider_function_name] = raw_bitmask_summary_provider
 
@@ -58,7 +59,7 @@ def __lldb_init_module(debugger, dict):
     debugger.HandleCommand('type summary add --expand -F lldb_webkit.WTFString_SummaryProvider WTF::String')
     debugger.HandleCommand('type summary add --expand -F lldb_webkit.WTFStringImpl_SummaryProvider WTF::StringImpl')
     debugger.HandleCommand('type summary add --expand -F lldb_webkit.WTFStringView_SummaryProvider WTF::StringView')
-    debugger.HandleCommand('type summary add --expand -F lldb_webkit.WTFAtomicString_SummaryProvider WTF::AtomicString')
+    debugger.HandleCommand('type summary add --expand -F lldb_webkit.WTFAtomString_SummaryProvider WTF::AtomString')
     debugger.HandleCommand('type summary add --expand -F lldb_webkit.WTFVector_SummaryProvider -x "^WTF::Vector<.+>$"')
     debugger.HandleCommand('type summary add --expand -F lldb_webkit.WTFHashTable_SummaryProvider -x "^WTF::HashTable<.+>$"')
     debugger.HandleCommand('type summary add --expand -F lldb_webkit.WTFHashMap_SummaryProvider -x "^WTF::HashMap<.+>$"')
@@ -84,7 +85,9 @@ def __lldb_init_module(debugger, dict):
 
     debugger.HandleCommand('type summary add -F lldb_webkit.WebCoreSecurityOrigin_SummaryProvider WebCore::SecurityOrigin')
     debugger.HandleCommand('type summary add -F lldb_webkit.WebCoreFrame_SummaryProvider WebCore::Frame')
-    debugger.HandleCommand('type summary add -F lldb_webkit.WebCoreDocument_SummaryProvider WebCore::Document')
+
+    for className in ['Document', 'FTPDirectoryDocument', 'HTMLDocument', 'ImageDocument', 'MediaDocument', 'PluginDocument', 'SVGDocument', 'SinkDocument', 'TextDocument', 'XMLDocument']:
+        debugger.HandleCommand('type summary add -F lldb_webkit.WebCoreDocument_SummaryProvider WebCore::' + className)
 
     # synthetic types (see <https://lldb.llvm.org/varformats.html>)
     debugger.HandleCommand('type synthetic add -x "^WTF::Vector<.+>$" --python-class lldb_webkit.WTFVectorProvider')
@@ -121,7 +124,7 @@ def WTFStringView_SummaryProvider(valobj, dict):
     return "{ length = %d, contents = '%s' }" % (provider.get_length(), provider.to_string())
 
 
-def WTFAtomicString_SummaryProvider(valobj, dict):
+def WTFAtomString_SummaryProvider(valobj, dict):
     return WTFString_SummaryProvider(valobj.GetChildMemberWithName('m_string'), dict)
 
 
@@ -393,7 +396,7 @@ class WTFStringImplProvider:
     def is_8bit(self):
         # FIXME: find a way to access WTF::StringImpl::s_hashFlag8BitBuffer
         return bool(self.valobj.GetChildMemberWithName('m_hashAndFlags').GetValueAsUnsigned(0) \
-            & 1 << 3)
+            & 1 << 2)
 
     def is_initialized(self):
         return self.valobj.GetValueAsUnsigned() != 0
@@ -690,7 +693,7 @@ class WebCoreSecurityOriginProvider:
             return 'file://'
         result = '{}://{}'.format(scheme, host)
         if port:
-            result += ':' + port
+            result += ':' + str(port)
         return result
 
 
