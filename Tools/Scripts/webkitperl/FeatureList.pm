@@ -192,7 +192,7 @@ my @features = (
       define => "ENABLE_ACCELERATED_2D_CANVAS", value => \$accelerated2DCanvasSupport },
 
     { option => "accelerated-overflow-scrolling", desc => "Toggle accelerated scrolling support",
-      define => "ENABLE_ACCELERATED_OVERFLOW_SCROLLING", value => \$acceleratedOverflowScrollingSupport },
+      define => "ENABLE_OVERFLOW_SCROLLING_TOUCH", value => \$acceleratedOverflowScrollingSupport },
 
     { option => "apple-pay", desc => "Toggle Apply Pay support",
       define => "ENABLE_APPLE_PAY", value => \$applePaySupport },

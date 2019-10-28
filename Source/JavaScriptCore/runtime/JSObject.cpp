@@ -795,8 +795,8 @@ bool JSObject::putInlineSlow(ExecState* exec, PropertyName propertyName, JSValue
             obj->methodTable(vm)->doPutPropertySecurityCheck(obj, exec, propertyName, slot);
             RETURN_IF_EXCEPTION(scope, false);
         }
+
         unsigned attributes;
-        PropertyOffset offset = obj->structure(vm)->get(vm, propertyName, attributes);
         auto getOwnPropertySlotPtr = obj->methodTable(vm)->getOwnPropertySlot;
         if (getOwnPropertySlotPtr != JSObject::getOwnPropertySlot && getOwnPropertySlotPtr != JSFunction::getOwnPropertySlot) {
             auto scope = DECLARE_CATCH_SCOPE(vm);
@@ -807,7 +807,8 @@ bool JSObject::putInlineSlow(ExecState* exec, PropertyName propertyName, JSValue
                 scope.clearException();
             }
         }
-        PropertyOffset offset = structure->get(vm, propertyName, attributes);
+
+        PropertyOffset offset = obj->structure(vm)->get(vm, propertyName, attributes);
         if (isValidOffset(offset)) {
             if (attributes & PropertyAttribute::ReadOnly) {
                 ASSERT(this->prototypeChainMayInterceptStoreTo(vm, propertyName) || obj == this);

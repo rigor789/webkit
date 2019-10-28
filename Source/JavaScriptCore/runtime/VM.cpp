@@ -327,7 +327,6 @@ VM::VM(VMType vmType, HeapType heapType)
     , functionSpace ISO_SUBSPACE_INIT(heap, cellHeapCellType.get(), JSFunction)
     , internalFunctionSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), InternalFunction)
     , nativeExecutableSpace ISO_SUBSPACE_INIT(heap, destructibleCellHeapCellType.get(), NativeExecutable)
-    , nativeStdFunctionSpace ISO_SUBSPACE_INIT(heap, cellJSValueOOBHeapCellType.get(), JSNativeStdFunction)
 
     , tnsFunctionWrapperSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_FunctionWrapper)
     , tnsCFunctionWrapperSpace ISO_SUBSPACE_INIT(heap, destructibleObjectHeapCellType.get(), _TNS_CFunctionWrapper)

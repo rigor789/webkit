@@ -4,7 +4,6 @@ WEBKIT_OPTION_BEGIN()
 # Private options shared with other WebKit ports. Add options here only if
 # we need a value different from the default defined in WebKitFeatures.cmake.
 # FIXME: Many of these defaults differ from the XCode build.
-WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_ACCELERATED_OVERFLOW_SCROLLING PRIVATE ON)
 WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_OVERFLOW_SCROLLING_TOUCH PRIVATE ON)
 
 #TODO: DELETE IF UNUSED

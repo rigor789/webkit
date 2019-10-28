@@ -514,10 +514,6 @@ public:
     const ExecState* m_callFrameAtDebuggerEntry { nullptr };
 #endif
 
-#if !ASSERT_DISABLED
-    const ExecState* m_callFrameAtDebuggerEntry { nullptr };
-#endif
-
     static JS_EXPORT_PRIVATE const GlobalObjectMethodTable s_globalObjectMethodTable;
     const GlobalObjectMethodTable* m_globalObjectMethodTable;
 

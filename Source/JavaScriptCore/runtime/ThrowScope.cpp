@@ -56,9 +56,6 @@ Exception* ThrowScope::throwException(ExecState* exec, JSValue error)
 
 Exception* ThrowScope::throwException(ExecState* exec, JSObject* obj)
 {
-    if (!jsDynamicCast<Exception*>(m_vm, obj))
-        m_vm.verifyExceptionCheckNeedIsSatisfied(m_recursionDepth, m_location);
-    
 #ifndef NDEBUG
     m_vm.verifyExceptionCheckNeedIsSatisfied(m_recursionDepth, m_location);
 #endif // NDEBUG

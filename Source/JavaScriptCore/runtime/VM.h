@@ -373,13 +373,6 @@ public:
     CompleteSubspace destructibleObjectSpace;
     CompleteSubspace eagerlySweptDestructibleObjectSpace;
 
-    IsoSubspace arrayBufferConstructorSpace;
-    IsoSubspace asyncFunctionSpace;
-    IsoSubspace asyncGeneratorFunctionSpace;
-    IsoSubspace boundFunctionSpace;
-    IsoSubspace callbackFunctionSpace;
-    IsoSubspace customGetterSetterFunctionSpace;
-    IsoSubspace errorConstructorSpace;
     IsoSubspace executableToCodeBlockEdgeSpace;
     IsoSubspace functionSpace;
     IsoSubspace internalFunctionSpace;

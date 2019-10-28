@@ -467,7 +467,7 @@ void InspectorDebuggerAgent::setBreakpointByUrl(ErrorString& errorString, int li
     int columnNumber = optionalColumnNumber ? *optionalColumnNumber : 0;
     bool isRegex = optionalURLRegex;
 
-    String breakpointIdentifier = makeString(isRegex ? "/" + url + "/" : optionalScriptHash ? "#" + url : url), ':', String::number(lineNumber), ':', String::number(columnNumber);
+    String breakpointIdentifier = makeString(isRegex ? "/" + url + "/" : optionalScriptHash ? "#" + url : url, ':', String::number(lineNumber), ':', String::number(columnNumber));
     if (m_javaScriptBreakpoints.contains(breakpointIdentifier)) {
         errorString = "Breakpoint at specified location already exists."_s;
         return;

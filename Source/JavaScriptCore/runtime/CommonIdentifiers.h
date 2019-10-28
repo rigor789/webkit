@@ -39,6 +39,7 @@
     macro(Function) \
     macro(Infinity) \
     macro(Intl) \
+    macro(JSON) \
     macro(Loader) \
     macro(Map) \
     macro(NaN) \
