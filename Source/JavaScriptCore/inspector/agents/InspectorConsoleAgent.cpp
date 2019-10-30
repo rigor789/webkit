@@ -147,14 +147,14 @@ std::unique_ptr<ConsoleMessage> InspectorConsoleAgent::startTiming(JSC::ExecStat
     return nullptr;
 }
 
-void InspectorConsoleAgent::logTiming(JSC::ExecState* exec, const String& label, Ref<ScriptArguments>&& arguments)
+std::unique_ptr<ConsoleMessage> InspectorConsoleAgent::logTiming(JSC::ExecState* exec, const String& label, Ref<ScriptArguments>&& arguments)
 {
     if (!m_injectedScriptManager.inspectorEnvironment().developerExtrasEnabled())
-        return;
+        return nullptr;
 
     ASSERT(!label.isNull());
     if (label.isNull())
-        return;
+        return nullptr;
 
     auto callStack = createScriptCallStackForConsole(exec, 1);
 
@@ -162,14 +162,13 @@ void InspectorConsoleAgent::logTiming(JSC::ExecState* exec, const String& label,
     if (it == m_times.end()) {
         // FIXME: Send an enum to the frontend for localization?
         String warning = makeString("Timer \"", label, "\" does not exist");
-        addMessageToConsole(std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Warning, warning, WTFMove(callStack)));
-        return;
+        return std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Warning, warning, WTFMove(callStack));
     }
 
     MonotonicTime startTime = it->value;
     Seconds elapsed = MonotonicTime::now() - startTime;
     String message = makeString(label, ": ", FormattedNumber::fixedWidth(elapsed.milliseconds(), 3), "ms");
-    addMessageToConsole(std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, WTFMove(arguments), WTFMove(callStack)));
+    return std::make_unique<ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Timing, MessageLevel::Debug, message, WTFMove(arguments), WTFMove(callStack));
 }
 
 std::unique_ptr<ConsoleMessage> InspectorConsoleAgent::stopTiming(JSC::ExecState* exec, const String& label)

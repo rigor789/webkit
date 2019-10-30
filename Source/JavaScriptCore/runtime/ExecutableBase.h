@@ -177,11 +177,6 @@ public:
     bool hasJITCodeForCall() const;
     bool hasJITCodeForConstruct() const;
 
-
-    void clearNumParametersForCall() {
-        m_numParametersForCall = -1;
-    }
-
     bool hasJITCodeFor(CodeSpecializationKind kind) const
     {
         if (kind == CodeForCall)

@@ -71,7 +71,7 @@ public:
     void addMessageToConsole(std::unique_ptr<ConsoleMessage>);
 
     std::unique_ptr<ConsoleMessage> startTiming(JSC::ExecState*, const String& label);
-    void logTiming(JSC::ExecState*, const String& label, Ref<ScriptArguments>&&);
+    std::unique_ptr<ConsoleMessage> logTiming(JSC::ExecState*, const String& label, Ref<ScriptArguments>&&);
     std::unique_ptr<ConsoleMessage> stopTiming(JSC::ExecState*, const String& label);
     
     void takeHeapSnapshot(const String& title);

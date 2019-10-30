@@ -1881,10 +1881,13 @@ static JSValue normalize(ExecState* exec, JSString* string, NormalizationForm fo
     auto characters = view.upconvertedCharacters();
 
     UErrorCode status = U_ZERO_ERROR;
+
+#if !PLATFORM(IOS) || USE(APPLE_INTERNAL_SDK)
     UBool isNormalized = unorm2_isNormalized(normalizer, characters, view.length(), &status);
     ASSERT(U_SUCCESS(status));
     if (isNormalized)
         RELEASE_AND_RETURN(scope, string);
+#endif // !PLATFORM(IOS) || USE(APPLE_INTERNAL_SDK))
 
     int32_t normalizedStringLength = unorm2_normalize(normalizer, characters, view.length(), nullptr, 0, &status);
     ASSERT(status == U_BUFFER_OVERFLOW_ERROR);
