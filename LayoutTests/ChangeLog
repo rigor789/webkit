@@ -1,3 +1,2262 @@
+2019-10-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r250887. rdar://problem/56105002
+
+    Partially undo r250811
+    https://bugs.webkit.org/show_bug.cgi?id=202715
+    <rdar://problem/56084287>
+    
+    Reviewed by Chris Dumez.
+    
+    Source/WebCore:
+    
+    This patch changes the SerializedScriptValue to always wrap CryptoKey objects again.
+    CryptoKey objects could belong to an array or another object. In those cases, IDBObjectStore
+    cannot set the flag for the embedded Cryptokey objects. Neither can postMessage to unset
+    the flag. Therefore, there is no way to separate the serialization process into two and
+    this patch restores the old behaviour. However, the hardening part of r250811 is kept
+    and therefore the crash should still be prevented.
+    
+    No new test, updated existing test
+    
+    * Modules/indexeddb/IDBObjectStore.cpp:
+    (WebCore::IDBObjectStore::putOrAdd):
+    (WebCore::JSC::setIsWrappingRequiredForCryptoKey): Deleted.
+    * bindings/js/SerializedScriptValue.cpp:
+    (WebCore::CloneSerializer::dumpIfTerminal):
+    (WebCore::CloneDeserializer::readTerminal):
+    * crypto/CryptoKey.h:
+    (WebCore::CryptoKey::allows const):
+    (WebCore::CryptoKey::isWrappingRequired const): Deleted.
+    (WebCore::CryptoKey::setIsWrappingRequired): Deleted.
+    (): Deleted.
+    * dom/ScriptExecutionContext.h:
+    
+    Tools:
+    
+    * TestWebKitAPI/Tests/WebKit/navigation-client-default-crypto.html:
+    Modified to crash if SerializedScriptValue doesn't wrap CryptoKey objects.
+    
+    LayoutTests:
+    
+    Some rebaselines.
+    
+    * crypto/workers/subtle/ec-postMessage-worker-expected.txt:
+    * crypto/workers/subtle/hrsa-postMessage-worker-expected.txt:
+    * crypto/workers/subtle/rsa-postMessage-worker-expected.txt:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250887 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-10-08  Jiewen Tan  <jiewen_tan@apple.com>
+
+            Partially undo r250811
+            https://bugs.webkit.org/show_bug.cgi?id=202715
+            <rdar://problem/56084287>
+
+            Reviewed by Chris Dumez.
+
+            Some rebaselines.
+
+            * crypto/workers/subtle/ec-postMessage-worker-expected.txt:
+            * crypto/workers/subtle/hrsa-postMessage-worker-expected.txt:
+            * crypto/workers/subtle/rsa-postMessage-worker-expected.txt:
+
+2019-10-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r250844. rdar://problem/56061124
+
+    Unreviewed, test gardening
+    
+    * TestExpectations:
+    * platform/ios-simulator/TestExpectations:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250844 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-10-08  Jiewen Tan  <jiewen_tan@apple.com>
+
+            Unreviewed, test gardening
+
+            * TestExpectations:
+            * platform/ios-simulator/TestExpectations:
+
+2019-10-09  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r250811. rdar://problem/56061124
+
+    Only wrapping CryptoKeys for IDB during serialization
+    https://bugs.webkit.org/show_bug.cgi?id=202500
+    <rdar://problem/52445927>
+    
+    Reviewed by Chris Dumez.
+    
+    Source/WebCore:
+    
+    Wrapping CryptoKeys during IDB serialization is a legacy request from Netflix when WebKit was an
+    early adopter. It is not necessary for other kinds of serialization. However, given existing keys
+    stored in users' idb are wrapped, the wrapping/unwrapping mechanism cannot be easily discarded.
+    Therefore, this patch restricts the wrapping/unwrapping mechanism to idb only.
+    
+    To do so, a isWrappingRequired flag is added to CryptoKey such that whenever idb sees a CryptoKey,
+    it can set it. SerializedScriptValue will then only wrap a CryptoKey when this flag is set. Otherwise,
+    a new tag UnwrappedCryptoKeyTag is used to store unwrapped CryptoKeys in order to keep the old CryptoKeyTag
+    binaries intact. For deserialization, each type will be deserialized differently.
+    
+    Besides the above, this patch also hardens WorkerGlobalScope::wrapCryptoKey/unwrapCryptoKey for
+    any potential racy issues. CryptoBooleanContainer is introduced to capture boolean in the lambda.
+    workerGlobalScope is replaced with workerMessagingProxy. Now, every variables captured in the lambdas
+    should be either a copy or a thread safe ref of the original object.
+    
+    Test: crypto/workers/subtle/aes-indexeddb.html
+    
+    * Modules/indexeddb/IDBObjectStore.cpp:
+    (WebCore::JSC::setIsWrappingRequiredForCryptoKey):
+    (WebCore::IDBObjectStore::putOrAdd):
+    * bindings/js/SerializedScriptValue.cpp:
+    (WebCore::CloneSerializer::dumpIfTerminal):
+    (WebCore::CloneDeserializer::readTerminal):
+    * crypto/CryptoKey.h:
+    (WebCore::CryptoKey::isWrappingRequired const):
+    (WebCore::CryptoKey::setIsWrappingRequired):
+    * dom/ScriptExecutionContext.h:
+    * workers/WorkerGlobalScope.cpp:
+    (WebCore::CryptoBooleanContainer::create):
+    (WebCore::CryptoBooleanContainer::boolean const):
+    (WebCore::CryptoBooleanContainer::setBoolean):
+    (WebCore::WorkerGlobalScope::wrapCryptoKey):
+    (WebCore::WorkerGlobalScope::unwrapCryptoKey):
+    * workers/WorkerGlobalScope.h:
+    * workers/WorkerLoaderProxy.h:
+    (WebCore::WorkerLoaderProxy::isWorkerMessagingProxy const):
+    * workers/WorkerMessagingProxy.h:
+    (isType):
+    
+    Tools:
+    
+    Modifies IndexedDB.StructuredCloneBackwardCompatibility test to include CryptoKeys.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/IndexedDBStructuredCloneBackwardCompatibility.mm:
+    (-[StructuredCloneBackwardCompatibilityNavigationDelegate _webCryptoMasterKeyForWebView:]):
+    (TEST):
+    * TestWebKitAPI/Tests/WebKitCocoa/IndexedDBStructuredCloneBackwardCompatibility.sqlite3:
+    * TestWebKitAPI/Tests/WebKitCocoa/IndexedDBStructuredCloneBackwardCompatibility.sqlite3-shm:
+    * TestWebKitAPI/Tests/WebKitCocoa/IndexedDBStructuredCloneBackwardCompatibility.sqlite3-wal:
+    * TestWebKitAPI/Tests/WebKitCocoa/IndexedDBStructuredCloneBackwardCompatibilityRead.html:
+    * TestWebKitAPI/Tests/WebKitCocoa/IndexedDBStructuredCloneBackwardCompatibilityWrite.html:
+    
+    LayoutTests:
+    
+    Adds a new test aes-indexeddb.html to do idb in workers and makes
+    other tests more deterministic.
+    
+    * crypto/workers/subtle/aes-indexeddb-expected.txt: Added.
+    * crypto/workers/subtle/aes-indexeddb.html: Added.
+    * crypto/workers/subtle/ec-postMessage-worker-expected.txt:
+    * crypto/workers/subtle/ec-postMessage-worker.html:
+    * crypto/workers/subtle/hrsa-postMessage-worker-expected.txt:
+    * crypto/workers/subtle/hrsa-postMessage-worker.html:
+    * crypto/workers/subtle/resources/aes-indexeddb.js: Added.
+    * crypto/workers/subtle/rsa-postMessage-worker-expected.txt:
+    * crypto/workers/subtle/rsa-postMessage-worker.html:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250811 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-10-07  Jiewen Tan  <jiewen_tan@apple.com>
+
+            Only wrapping CryptoKeys for IDB during serialization
+            https://bugs.webkit.org/show_bug.cgi?id=202500
+            <rdar://problem/52445927>
+
+            Reviewed by Chris Dumez.
+
+            Adds a new test aes-indexeddb.html to do idb in workers and makes
+            other tests more deterministic.
+
+            * crypto/workers/subtle/aes-indexeddb-expected.txt: Added.
+            * crypto/workers/subtle/aes-indexeddb.html: Added.
+            * crypto/workers/subtle/ec-postMessage-worker-expected.txt:
+            * crypto/workers/subtle/ec-postMessage-worker.html:
+            * crypto/workers/subtle/hrsa-postMessage-worker-expected.txt:
+            * crypto/workers/subtle/hrsa-postMessage-worker.html:
+            * crypto/workers/subtle/resources/aes-indexeddb.js: Added.
+            * crypto/workers/subtle/rsa-postMessage-worker-expected.txt:
+            * crypto/workers/subtle/rsa-postMessage-worker.html:
+
+2019-09-30  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r250488. rdar://problem/55826334
+
+    Crash when removing the target element while animating its attributes
+    https://bugs.webkit.org/show_bug.cgi?id=202247
+    
+    Reviewed by Darin Adler.
+    
+    Source/WebCore:
+    
+    If SMIL is animating a CSS attribute, there is a chance the animation is
+    ended while it is being started or progressed. For that reason, the member
+    SVGAnimateElementBase::m_animator has to be made RefPtr and it has to be
+    be protected in resetAnimatedType() and calculateAnimatedValue().
+    
+    While SMILTimeContainer::updateAnimations() is calling progress() for the
+    scheduled animation elements, SMILTimeContainer::unschedule() might get
+    called if processing an animation causes events to be dispatched. For that
+    reason we need to copy the scheduled animations Vector before processing
+    them so we avoid changing the Vector while looping through its items.
+    
+    Remove the guard SMILTimeContainer::m_preventScheduledAnimationsChanges
+    which was added in r129670 for debugging purposes. In some situations,
+    the scheduled animations map could be modified out from under some of the
+    functions of SMILTimeContainer.
+    
+    Test: svg/animations/animate-and-remove-target-element.html
+    
+    * svg/SVGAnimateElementBase.cpp:
+    (WebCore::SVGAnimateElementBase::resetAnimatedType):
+    (WebCore::SVGAnimateElementBase::calculateAnimatedValue):
+    * svg/SVGAnimateElementBase.h:
+    * svg/SVGElement.cpp:
+    (WebCore::SVGElement::createAnimator):
+    * svg/SVGElement.h:
+    * svg/animation/SMILTimeContainer.cpp:
+    (WebCore::SMILTimeContainer::schedule):
+    (WebCore::SMILTimeContainer::unschedule):
+    (WebCore::SMILTimeContainer::setElapsed):
+    (WebCore::SMILTimeContainer::sortByPriority):
+    (WebCore::SMILTimeContainer::processAnimations):
+    (WebCore::SMILTimeContainer::processScheduledAnimations):
+    (WebCore::SMILTimeContainer::updateAnimations):
+    (WebCore::SMILTimeContainer::~SMILTimeContainer): Deleted.
+    * svg/animation/SMILTimeContainer.h:
+    * svg/animation/SVGSMILElement.cpp:
+    (WebCore::SVGSMILElement::calculateNextProgressTime const):
+    * svg/properties/SVGAnimatedPropertyAccessorImpl.h:
+    * svg/properties/SVGAnimatedPropertyAnimatorImpl.h:
+    * svg/properties/SVGAnimatedPropertyPairAccessorImpl.h:
+    * svg/properties/SVGAnimatedPropertyPairAnimator.h:
+    * svg/properties/SVGAnimatedPropertyPairAnimatorImpl.h:
+    * svg/properties/SVGAttributeAnimator.h:
+    * svg/properties/SVGMemberAccessor.h:
+    (WebCore::SVGMemberAccessor::createAnimator const):
+    * svg/properties/SVGPrimitivePropertyAnimator.h:
+    (WebCore::SVGPrimitivePropertyAnimator::create):
+    * svg/properties/SVGPropertyAnimatorFactory.h:
+    (WebCore::SVGPropertyAnimatorFactory::createAnimator):
+    * svg/properties/SVGPropertyOwnerRegistry.h:
+    * svg/properties/SVGPropertyRegistry.h:
+    * svg/properties/SVGValuePropertyAnimatorImpl.h:
+    * svg/properties/SVGValuePropertyListAnimatorImpl.h:
+    
+    LayoutTests:
+    
+    * svg/animations/animate-and-remove-target-element-expected.txt: Added.
+    * svg/animations/animate-and-remove-target-element.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250488 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-28  Said Abou-Hallawa  <sabouhallawa@apple.com>
+
+            Crash when removing the target element while animating its attributes
+            https://bugs.webkit.org/show_bug.cgi?id=202247
+
+            Reviewed by Darin Adler.
+
+            * svg/animations/animate-and-remove-target-element-expected.txt: Added.
+            * svg/animations/animate-and-remove-target-element.html: Added.
+
+2019-09-30  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r248591. rdar://problem/55826878
+
+    FrameLoader::open can execute scritps via style recalc in Frame::setDocument
+    https://bugs.webkit.org/show_bug.cgi?id=200377
+    
+    Reviewed by Antti Koivisto.
+    
+    Source/WebCore:
+    
+    Fixed the bug that FrameLoader::open can execute arbitrary author scripts via post style update callbacks
+    by adding PostResolutionCallbackDisabler, WidgetHierarchyUpdatesSuspensionScope, and NavigationDisabler
+    to CachedFrameBase::restore and FrameLoader::open.
+    
+    This ensures all frames are restored from the page cache before any of them would start running scripts.
+    
+    Test: fast/frames/restoring-page-cache-should-not-run-scripts-via-style-update.html
+    
+    * history/CachedFrame.cpp:
+    (WebCore::CachedFrameBase::restore):
+    * loader/FrameLoader.cpp:
+    (WebCore::FrameLoader::open):
+    * page/FrameViewLayoutContext.cpp:
+    (WebCore::FrameViewLayoutContext::layout): Fixed the debug assertion. The layout of a document may be
+    updated while we're preparing to put a page into the page cache.
+    * rendering/RenderLayerCompositor.cpp:
+    (WebCore::RenderLayerCompositor::updateCompositingLayers): Ditto.
+    
+    LayoutTests:
+    
+    Added a regression test.
+    
+    * fast/frames/restoring-page-cache-should-not-run-scripts-via-style-update-expected.txt: Added.
+    * fast/frames/restoring-page-cache-should-not-run-scripts-via-style-update.html: Added.
+    * platform/win/TestExpectations: Skip the newly added test.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248591 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-12  Ryosuke Niwa  <rniwa@webkit.org>
+
+            FrameLoader::open can execute scritps via style recalc in Frame::setDocument
+            https://bugs.webkit.org/show_bug.cgi?id=200377
+
+            Reviewed by Antti Koivisto.
+
+            Added a regression test.
+
+            * fast/frames/restoring-page-cache-should-not-run-scripts-via-style-update-expected.txt: Added.
+            * fast/frames/restoring-page-cache-should-not-run-scripts-via-style-update.html: Added.
+            * platform/win/TestExpectations: Skip the newly added test.
+
+2019-09-30  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r248172. rdar://problem/55826873
+
+    Document::resume should delay resetting of form control elements.
+    https://bugs.webkit.org/show_bug.cgi?id=200376
+    
+    Reviewed by Geoffrey Garen.
+    
+    Source/WebCore:
+    
+    Delay the execution of form control element resets until the next task
+    to avoid synchronously mutating DOM during page cache restoration.
+    
+    Test: fast/frames/restoring-page-cache-should-not-run-scripts.html
+    
+    * html/HTMLFormElement.cpp:
+    (WebCore::HTMLFormElement::resumeFromDocumentSuspension):
+    * html/HTMLInputElement.cpp:
+    (WebCore::HTMLInputElement::resumeFromDocumentSuspension):
+    
+    LayoutTests:
+    
+    Added a regression test.
+    
+    * fast/frames/restoring-page-cache-should-not-run-scripts-expected.txt: Added.
+    * fast/frames/restoring-page-cache-should-not-run-scripts.html: Added.
+    * platform/win/TestExpectations: Skip this test on Windows since navigating to blob fails on Windows.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248172 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-02  Ryosuke Niwa  <rniwa@webkit.org>
+
+            Document::resume should delay resetting of form control elements.
+            https://bugs.webkit.org/show_bug.cgi?id=200376
+
+            Reviewed by Geoffrey Garen.
+
+            Added a regression test.
+
+            * fast/frames/restoring-page-cache-should-not-run-scripts-expected.txt: Added.
+            * fast/frames/restoring-page-cache-should-not-run-scripts.html: Added.
+            * platform/win/TestExpectations: Skip this test on Windows since navigating to blob fails on Windows.
+
+2019-09-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r249893. rdar://problem/55825342
+
+    Expose misspelling ranges for editable content to accessibility clients.
+    https://bugs.webkit.org/show_bug.cgi?id=201752
+    <rdar://problem/49556828>
+    
+    Patch by Andres Gonzalez <andresg_22@apple.com> on 2019-09-16
+    Reviewed by Chris Fleizach.
+    
+    Source/WebCore:
+    
+    Test: accessibility/misspelling-range.html
+    
+    Added [WebAccessibilityObjectWrapper misspellingTextMarkerRange] and
+    underlying AccessibilityObject implementation to expose misspellings to
+    accessibility clients that provide an alternative user interface to
+    spell checking.
+    * accessibility/AccessibilityObject.cpp:
+    (WebCore::AccessibilityObject::getMisspellingRange const):
+    * accessibility/AccessibilityObject.h:
+    * accessibility/ios/WebAccessibilityObjectWrapperIOS.mm:
+    (-[WebAccessibilityObjectWrapper misspellingTextMarkerRange:direction:]):
+    * accessibility/mac/WebAccessibilityObjectWrapperMac.mm:
+    (accessibilityMisspellingSearchCriteriaForParameterizedAttribute):
+    (-[WebAccessibilityObjectWrapper accessibilityAttributeValue:forParameter:]):
+    
+    Tools:
+    
+    Test code needed for LayoutTests/accessibility/misspelling-range.html.
+    * WebKitTestRunner/InjectedBundle/AccessibilityUIElement.h:
+    * WebKitTestRunner/InjectedBundle/Bindings/AccessibilityUIElement.idl:
+    * WebKitTestRunner/InjectedBundle/ios/AccessibilityUIElementIOS.mm:
+    (WTR::AccessibilityUIElement::misspellingTextMarkerRange):
+    (WTR::AccessibilityUIElement::indexForTextMarker):
+    * WebKitTestRunner/InjectedBundle/mac/AccessibilityUIElementMac.mm:
+    (WTR::misspellingSearchParameterizedAttributeForCriteria):
+    (WTR::AccessibilityUIElement::misspellingTextMarkerRange):
+    
+    LayoutTests:
+    
+    * accessibility/misspelling-range-expected.txt: Added.
+    * accessibility/misspelling-range.html: Added.
+    * platform/ios-simulator/TestExpectations:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249893 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-16  Andres Gonzalez  <andresg_22@apple.com>
+
+            Expose misspelling ranges for editable content to accessibility clients.
+            https://bugs.webkit.org/show_bug.cgi?id=201752
+            <rdar://problem/49556828>
+
+            Reviewed by Chris Fleizach.
+
+            * accessibility/misspelling-range-expected.txt: Added.
+            * accessibility/misspelling-range.html: Added.
+            * platform/ios-simulator/TestExpectations:
+
+2019-09-29  Babak Shafiei  <bshafiei@apple.com>
+
+        Apply patch. rdar://problem/55801087
+
+    2019-09-29  John Wilander  <wilander@apple.com>
+
+            Cherry-pick r250413.
+
+            Patch by Kate Cheney <katherine_cheney@apple.com> on 2019-09-26.
+
+            Resource Load Statistics: Downgrade all third-party referrer headers
+            https://bugs.webkit.org/show_bug.cgi?id=201353
+            <rdar://problem/54895650>
+
+            Majority of this patch was written by John Wilander <wilander@apple.com>
+
+            Reviewed by Brent Fulgham.
+
+            The changes in the two http/tests/resourceLoadStatistics/strip-referrer-to-origin*
+            tests and the http/tests/navigation/ping-attribute/* tests are for the functional
+            change. The other changes are to make use of the new
+            testRunner.setStatisticsShouldDowngradeReferrer() to maintain earlier functionality.
+
+            TestRunner::setStatisticsShouldDowngradeReferrer() function is not
+            supported for mac-wk1, win or wincairo.
+
+            * http/tests/blink/sendbeacon/beacon-cross-origin-expected.txt:
+            * http/tests/navigation/ping-attribute/anchor-cross-origin.html:
+            * http/tests/navigation/ping-attribute/area-cross-origin.html:
+            * http/tests/referrer-policy/no-referrer-when-downgrade/cross-origin-http-http.html:
+            * http/tests/referrer-policy/no-referrer-when-downgrade/cross-origin-http.https.html:
+            * http/tests/referrer-policy/no-referrer-when-downgrade/same-origin.html:
+            * http/tests/referrer-policy/unsafe-url/cross-origin-http-http.html:
+            * http/tests/referrer-policy/unsafe-url/cross-origin-http.https.html:
+            * http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-prevalent-subresource-redirects-expected.txt:
+            * http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-prevalent-subresource-redirects.html:
+            * http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-prevalent-subresource-requests-expected.txt:
+            * http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-prevalent-subresource-requests.html:
+            * http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-third-party-redirects-expected.txt: Copied from LayoutTests/http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-prevalent-subresource-redirects-expected.txt.
+            * http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-third-party-redirects.html: Copied from LayoutTests/http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-prevalent-subresource-redirects.html.
+            * http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-third-party-requests-expected.txt: Copied from LayoutTests/http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-prevalent-subresource-requests-expected.txt.
+            * http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-third-party-requests.html: Copied from LayoutTests/http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-prevalent-subresource-redirects.html.
+            * http/tests/security/contentSecurityPolicy/report-cross-origin-no-cookies-when-private-browsing-enabled.php:
+            * http/tests/security/contentSecurityPolicy/report-cross-origin-no-cookies.php:
+            * http/tests/security/referrer-policy-header.html:
+            * platform/ios-wk2/TestExpectations:
+            * platform/ios/TestExpectations:
+            * platform/mac-wk1/TestExpectations:
+            * platform/mac-wk2/TestExpectations:
+            * platform/win/TestExpectations:
+            * platform/wincairo/TestExpectations:
+            * platform/wk2/TestExpectations:
+            * resources/js-test.js:
+            (downgradeReferrerCallback):
+            * resources/testharnessreport.js:
+
+2019-09-27  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r250432. rdar://problem/55801091
+
+    [iOS]: When inserting a photo and then inserting auto-corrected text, the photo is removed
+    https://bugs.webkit.org/show_bug.cgi?id=202294
+    
+    Patch by Said Abou-Hallawa <sabouhallawa@apple.com> on 2019-09-27
+    Reviewed by Wenson Hsieh.
+    
+    Source/WebKit:
+    
+    WebPage::applyAutocorrectionInternal() calls wordRangeFromPosition() to
+    calculate the range of the word to be replaced with the auto-corrected
+    word. But if the text of the range does not match the original text,
+    applyAutocorrectionInternal() tries to correct the range by moving it
+    forward such that the length of the text range matches the length of the
+    original text.
+    
+    Another case, which should correct the range also, is: the range does not
+    have a text but it is not collapsed. In this case, we should set the range
+    back to the selection range so non-text nodes is removed.
+    
+    * WebProcess/WebPage/ios/WebPageIOS.mm:
+    (WebKit::WebPage::applyAutocorrectionInternal):
+    
+    LayoutTests:
+    
+    * fast/events/ios/autocorrect-after-image-expected.txt: Added.
+    * fast/events/ios/autocorrect-after-image.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250432 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-27  Said Abou-Hallawa  <sabouhallawa@apple.com>
+
+            [iOS]: When inserting a photo and then inserting auto-corrected text, the photo is removed
+            https://bugs.webkit.org/show_bug.cgi?id=202294
+
+            Reviewed by Wenson Hsieh.
+
+            * fast/events/ios/autocorrect-after-image-expected.txt: Added.
+            * fast/events/ios/autocorrect-after-image.html: Added.
+
+2019-09-27  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r250392. rdar://problem/55770703
+
+    [iOS 13] Tapping on a non-editable text selection should toggle callout bar visibility instead of clearing selection
+    https://bugs.webkit.org/show_bug.cgi?id=202254
+    <rdar://problem/54410263>
+    
+    Reviewed by Megan Gardner.
+    
+    Source/WebKit:
+    
+    In iOS 13, tapping a text selection should toggle callout bar visibility (i.e. "selection commands" in UIKit).
+    This currently does not work for non-editable text, since the synthetic click gesture simultaneously fires
+    alongside the text interaction assistant's non-editable tap gesture, which dispatches a click to the page which
+    then clears the selection.
+    
+    To remedy this and match platform behavior, we avoid recognizing clicks that occur over the text selection, but
+    only in the case where the bounding rect of the text selection doesn't cover a large portion of the visible
+    content rect of the web view. This ensures that the user doesn't get stuck in a state where it's impossible to
+    dismiss a very large text selection (e.g. after selecting all the content on the page).
+    
+    Tests:  editing/selection/ios/clear-selection-after-tap-in-large-selected-non-editable-text.html
+            editing/selection/ios/toggle-callout-bar-after-tap-in-selected-non-editable-text.html
+    
+    * UIProcess/ios/WKContentViewInteraction.mm:
+    (-[WKContentView _shouldToggleSelectionCommandsAfterTapAt:]):
+    
+    Check the last known selection rects (on _lastSelectionDrawingInfo) to see if the tapped point lies within at
+    least one of the selection rects.
+    
+    (-[WKContentView gestureRecognizerShouldBegin:]):
+    
+    LayoutTests:
+    
+    * editing/selection/ios/clear-selection-after-tap-in-large-selected-non-editable-text-expected.txt: Added.
+    * editing/selection/ios/clear-selection-after-tap-in-large-selected-non-editable-text.html: Added.
+    
+    Add a new layout test to verify that when tapping in a text selection that encompasses the entire page, we allow
+    the tap to dismiss the selection instead of toggling callout bar visibility.
+    
+    * editing/selection/ios/toggle-callout-bar-after-tap-in-selected-non-editable-text-expected.txt: Added.
+    * editing/selection/ios/toggle-callout-bar-after-tap-in-selected-non-editable-text.html: Added.
+    
+    Add another layout test to verify that when tapping inside a text selection, the callout bar is toggled, and
+    when tapping outside the selected text, the selection is dismissed.
+    
+    * resources/ui-helper.js:
+    (window.UIHelper.async.waitForSelectionToAppear):
+    (window.UIHelper.async.waitForSelectionToDisappear):
+    
+    New helper methods to wait for selection rects to appear or disappear.
+    
+    (window.UIHelper):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250392 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-26  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [iOS 13] Tapping on a non-editable text selection should toggle callout bar visibility instead of clearing selection
+            https://bugs.webkit.org/show_bug.cgi?id=202254
+            <rdar://problem/54410263>
+
+            Reviewed by Megan Gardner.
+
+            * editing/selection/ios/clear-selection-after-tap-in-large-selected-non-editable-text-expected.txt: Added.
+            * editing/selection/ios/clear-selection-after-tap-in-large-selected-non-editable-text.html: Added.
+
+            Add a new layout test to verify that when tapping in a text selection that encompasses the entire page, we allow
+            the tap to dismiss the selection instead of toggling callout bar visibility.
+
+            * editing/selection/ios/toggle-callout-bar-after-tap-in-selected-non-editable-text-expected.txt: Added.
+            * editing/selection/ios/toggle-callout-bar-after-tap-in-selected-non-editable-text.html: Added.
+
+            Add another layout test to verify that when tapping inside a text selection, the callout bar is toggled, and
+            when tapping outside the selected text, the selection is dismissed.
+
+            * resources/ui-helper.js:
+            (window.UIHelper.async.waitForSelectionToAppear):
+            (window.UIHelper.async.waitForSelectionToDisappear):
+
+            New helper methods to wait for selection rects to appear or disappear.
+
+            (window.UIHelper):
+
+2019-09-27  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r250365. rdar://problem/55770710
+
+    Update selections after scrolling for iframes and hide selections while iframes and overflow scrolls are scrolling.
+    https://bugs.webkit.org/show_bug.cgi?id=202125
+    
+    Reviewed by Tim Horton.
+    
+    Source/WebCore:
+    
+    Test: editing/selection/ios/update-selection-after-iframe-scroll.html
+    
+    When we end scrolling, make sure that iframes get a final update to ensure that the
+    selection is in the correct position. Pipe that to WebKit/UIProcess via
+    frame specific plath.
+    
+    * loader/EmptyClients.cpp:
+    * page/EditorClient.h:
+    * page/scrolling/AsyncScrollingCoordinator.cpp:
+    (WebCore::AsyncScrollingCoordinator::updateScrollPositionAfterAsyncScroll):
+    
+    Source/WebKit:
+    
+    Add additional calls into UIKit differentiate between main frame scrolling and overflow/iframe scrolling.
+    Add piping for iframe specific scrolling.
+    
+    * Platform/spi/ios/UIKitSPI.h:
+    * UIProcess/ios/WKContentViewInteraction.mm:
+    (-[WKContentView _willStartScrollingOrZooming]):
+    (-[WKContentView _didEndScrollingOrZooming]):
+    * WebProcess/WebCoreSupport/WebEditorClient.cpp:
+    (WebKit::WebEditorClient::subFrameScrollPositionChanged):
+    * WebProcess/WebCoreSupport/WebEditorClient.h:
+    * WebProcess/WebCoreSupport/ios/WebEditorClientIOS.mm:
+    (WebKit::WebEditorClient::subFrameScrollPositionChanged):
+    
+    Source/WebKitLegacy/mac:
+    
+    Filling out unused functions needed for new fix.
+    
+    * WebCoreSupport/WebEditorClient.h:
+    
+    LayoutTests:
+    
+    Test that an iframe selection is updated after a scroll is completed.
+    
+    * editing/selection/ios/update-selection-after-iframe-scroll-expected.txt: Added.
+    * editing/selection/ios/update-selection-after-iframe-scroll.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250365 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-25  Megan Gardner  <megan_gardner@apple.com>
+
+            Update selections after scrolling for iframes and hide selections while iframes and overflow scrolls are scrolling.
+            https://bugs.webkit.org/show_bug.cgi?id=202125
+
+            Reviewed by Tim Horton.
+
+            Test that an iframe selection is updated after a scroll is completed.
+
+            * editing/selection/ios/update-selection-after-iframe-scroll-expected.txt: Added.
+            * editing/selection/ios/update-selection-after-iframe-scroll.html: Added.
+
+2019-09-27  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r250361. rdar://problem/55770728
+
+    Page temporarily jumps to an excessively small viewport scale while loading usatoday.com
+    https://bugs.webkit.org/show_bug.cgi?id=202224
+    <rdar://problem/52906640>
+    
+    Reviewed by Tim Horton.
+    
+    Source/WebCore:
+    
+    On some pages (e.g. usatoday.com), the content width of the page temporarily becomes very large during page
+    load. This causes a couple of viewport scaling behaviors (notably, the existing shrink-to-fit heuristic in
+    ViewportConfiguration::initialScaleFromSize, as well as the new iPad-specific content-aware shrink-to-fit
+    heuristic in WebPage::immediatelyShrinkToFitContent) to cause the page to shrink down excessively in an attempt
+    to fit all the content to the viewport. This causes a very ugly flash as the page appears zoomed out initially
+    during page load, before zooming back in.
+    
+    To fix this, we add some sanity checks to these viewport scaling heuristics. In ViewportConfiguration's
+    initialScaleFromSize method, in the codepath where an initial scale is not specified, we always scale to fit the
+    contents of the page; instead, detect the case where the content width is enormous (with a threshold arbitrarily
+    chosen to be 1920) and fall back to the scaling to fit the viewport's width, if such a width has been explicitly
+    set. This ensures that we avoid excessive shrinking in the case where content is extremely wide, but also that
+    we do scale the viewport down to fit all the content in the case where the content isn't extremely wide (e.g. on
+    daringfireball.com).
+    
+    See WebKit ChangeLog for more detail.
+    
+    Test: fast/viewport/ios/shrink-to-fit-large-content-width.html
+    
+    * page/ViewportConfiguration.cpp:
+    (WebCore::ViewportConfiguration::initialScaleFromSize const):
+    
+    Source/WebKit:
+    
+    Tweaks the content-aware shrink-to-fit algorithm to bail in the case where the content width is extremely large,
+    such that it bails instead of attempting to fit the entire content of the page. See WebCore ChangeLog for more
+    details.
+    
+    * WebProcess/WebPage/ios/WebPageIOS.mm:
+    (WebKit::WebPage::immediatelyShrinkToFitContent):
+    
+    LayoutTests:
+    
+    Adds a new layout test to verify that when the content width of the page is excessively large and an explicit
+    viewport width is specified, we don't attempt to zoom out to fit the larger content width, and instead zoom to
+    fit the explicit viewport width.
+    
+    * fast/viewport/ios/shrink-to-fit-large-content-width-expected.txt: Added.
+    * fast/viewport/ios/shrink-to-fit-large-content-width.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250361 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-25  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            Page temporarily jumps to an excessively small viewport scale while loading usatoday.com
+            https://bugs.webkit.org/show_bug.cgi?id=202224
+            <rdar://problem/52906640>
+
+            Reviewed by Tim Horton.
+
+            Adds a new layout test to verify that when the content width of the page is excessively large and an explicit
+            viewport width is specified, we don't attempt to zoom out to fit the larger content width, and instead zoom to
+            fit the explicit viewport width.
+
+            * fast/viewport/ios/shrink-to-fit-large-content-width-expected.txt: Added.
+            * fast/viewport/ios/shrink-to-fit-large-content-width.html: Added.
+
+2019-09-27  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r250315. rdar://problem/55770706
+
+    [iPadOs] The second click event is missing on double tap when dblclick handler is not present
+    https://bugs.webkit.org/show_bug.cgi?id=202006
+    <rdar://problem/51706828>
+    
+    Reviewed by Wenson Hsieh.
+    
+    Source/WebKit:
+    
+    While double tapping,
+    1. the first tap triggers a click event through the normal _singleTapIdentified/_singleTapRecognized codepath.
+    2. and the second tap should trigger either
+      a second single click event or
+      a second single click followed by a dblclick event when dblclick handler is present.
+    However the second click is dropped on the floor when the node under the cursor does not have a dblclick handler (see handleDoubleTapForDoubleClickAtPoint()) -so we end up sending one click event.
+    
+    This patch fixes this case by sending the second tap through the normal single tap flow when the dblclick handler is not present.
+    
+    * Shared/ios/InteractionInformationAtPosition.h:
+    * Shared/ios/InteractionInformationAtPosition.mm:
+    (WebKit::InteractionInformationAtPosition::encode const):
+    (WebKit::InteractionInformationAtPosition::decode):
+    * UIProcess/ios/WKContentViewInteraction.h:
+    * UIProcess/ios/WKContentViewInteraction.mm:
+    (-[WKContentView setupInteraction]):
+    (-[WKContentView gestureRecognizerShouldBegin:]):
+    (WebKit::WebPage::positionInformation):
+    (WebKit::WebPage::requestPositionInformation):
+    
+    LayoutTests:
+    
+    * fast/events/touch/ios/double-tap-for-two-clicks1-expected.txt: Added.
+    * fast/events/touch/ios/double-tap-for-two-clicks1.html: Added.
+    * fast/events/touch/ios/double-tap-for-two-clicks2-expected.txt: Added.
+    * fast/events/touch/ios/double-tap-for-two-clicks2.html: Added.
+    * fast/events/touch/ios/double-tap-for-two-clicks3-expected.txt: Added.
+    * fast/events/touch/ios/double-tap-for-two-clicks3.html: Added.
+    * fast/events/touch/ios/double-tap-for-two-clicks4-expected.txt: Added.
+    * fast/events/touch/ios/double-tap-for-two-clicks4.html: Added.
+    * fast/events/touch/ios/doubleclick.html: Added.
+    * fast/events/touch/resources/doubleClickContent.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250315 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-24  Zalan Bujtas  <zalan@apple.com>
+
+            [iPadOs] The second click event is missing on double tap when dblclick handler is not present
+            https://bugs.webkit.org/show_bug.cgi?id=202006
+            <rdar://problem/51706828>
+
+            Reviewed by Wenson Hsieh.
+
+            * fast/events/touch/ios/double-tap-for-two-clicks1-expected.txt: Added.
+            * fast/events/touch/ios/double-tap-for-two-clicks1.html: Added.
+            * fast/events/touch/ios/double-tap-for-two-clicks2-expected.txt: Added.
+            * fast/events/touch/ios/double-tap-for-two-clicks2.html: Added.
+            * fast/events/touch/ios/double-tap-for-two-clicks3-expected.txt: Added.
+            * fast/events/touch/ios/double-tap-for-two-clicks3.html: Added.
+            * fast/events/touch/ios/double-tap-for-two-clicks4-expected.txt: Added.
+            * fast/events/touch/ios/double-tap-for-two-clicks4.html: Added.
+            * fast/events/touch/ios/doubleclick.html: Added.
+            * fast/events/touch/resources/doubleClickContent.html: Added.
+
+2019-09-27  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r250300. rdar://problem/55770718
+
+    Mixed content blocking is bypassed for WebSockets in Workers (159726)
+    https://bugs.webkit.org/show_bug.cgi?id=159726
+    <rdar://problem/27326438>
+    
+    Patch by Kate Cheney <katherine_cheney@apple.com> on 2019-09-24
+    Reviewed by Brady Eidson.
+    
+    Source/WebCore:
+    
+    Tests: http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-http-with-embedded-https-with-embedded-http.html
+           http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-http-with-embedded-https.html
+           http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-https-with-embedded-http-with-embedded-https.https.html
+           http/tests/websocket/tests/hybi/non-document-mixed-content-blocked.https.html
+    
+    * Modules/websockets/WebSocket.cpp:
+    (WebCore::WebSocket::connect):
+    * Modules/websockets/WorkerThreadableWebSocketChannel.cpp:
+    (WebCore::WorkerThreadableWebSocketChannel::Bridge::connect):
+    * loader/MixedContentChecker.cpp:
+    (WebCore::MixedContentChecker::checkForMixedContentInFrameTree):
+    * loader/MixedContentChecker.h:
+    Patch to block insecure WebSocket URL connection attempts by Workers
+    on secure pages. If the URL is ws, and any embedding iframe has protocol
+    https, and the context is a Worker, the connection should be blocked.
+    
+    I was unable to write a test case to hit the case where a document
+    does not have a frame and tries to communicate via a worker to
+    connect to a WebSocket because after removing the subframe from its
+    parent, the subframe is unable to perform a postMessage to a worker
+    even in the same script execution to tell the worker to connect
+    to a WebSocket.
+    
+    LayoutTests:
+    
+    Added 4 test cases and 2 html resources utilized by the tests.
+    The cases test the following:
+    1. an https page with a worker trying to connect via ws: url -->
+    fails.
+    2. an https page embedded in an http page trying to connect via ws
+    :url (through a worker) --> fails.
+    3. an http page embedded in an https page with an http top frame
+    trying to connect via an insecure ws url fails.
+    4. an https page embedded in an http page embedded in an https page
+    trying to connect to a ws :url via a worker --> fails.
+    
+    * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-http-with-embedded-https-expected.txt: Added.
+    * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-http-with-embedded-https-with-embedded-http-expected.txt: Added.
+    * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-http-with-embedded-https-with-embedded-http.html: Added.
+    * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-http-with-embedded-https.html: Added.
+    * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-https-with-embedded-http-with-embedded-https.https-expected.txt: Added.
+    * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-https-with-embedded-http-with-embedded-https.https.html: Added.
+    * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked.https-expected.txt: Added.
+    * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked.https.html: Added.
+    * http/tests/websocket/tests/hybi/resources/non-document-mixed-content-blocked-embedded-http.https.html: Added.
+    * http/tests/websocket/tests/hybi/resources/non-document-mixed-content-blocked-embedding-https.js: Added.
+    (handleConnect.self.postMessage):
+    (handleConnect):
+    (runTests.ws.onopen):
+    (runTests.ws.onerror):
+    (runTests):
+    * http/tests/websocket/tests/hybi/resources/non-document-mixed-content-blocked.html: Added.
+    * http/tests/websocket/tests/hybi/resources/non-document-mixed-content-blocked.js: Added.
+    (handleConnect.self.postMessage):
+    (handleConnect):
+    (runTests.ws.onopen):
+    (runTests.ws.onerror):
+    (runTests):
+    * http/tests/workers/service/resources/serviceworker-websocket-worker.js:
+    (async.doTest):
+    Updated previous test which was hitting the fix to use a wss url
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250300 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-24  Kate Cheney  <katherine_cheney@apple.com>
+
+            Mixed content blocking is bypassed for WebSockets in Workers (159726)
+            https://bugs.webkit.org/show_bug.cgi?id=159726
+            <rdar://problem/27326438>
+
+            Reviewed by Brady Eidson.
+
+            Added 4 test cases and 2 html resources utilized by the tests.
+            The cases test the following:
+            1. an https page with a worker trying to connect via ws: url -->
+            fails.
+            2. an https page embedded in an http page trying to connect via ws
+            :url (through a worker) --> fails.
+            3. an http page embedded in an https page with an http top frame
+            trying to connect via an insecure ws url fails.
+            4. an https page embedded in an http page embedded in an https page
+            trying to connect to a ws :url via a worker --> fails.
+
+            * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-http-with-embedded-https-expected.txt: Added.
+            * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-http-with-embedded-https-with-embedded-http-expected.txt: Added.
+            * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-http-with-embedded-https-with-embedded-http.html: Added.
+            * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-http-with-embedded-https.html: Added.
+            * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-https-with-embedded-http-with-embedded-https.https-expected.txt: Added.
+            * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked-https-with-embedded-http-with-embedded-https.https.html: Added.
+            * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked.https-expected.txt: Added.
+            * http/tests/websocket/tests/hybi/non-document-mixed-content-blocked.https.html: Added.
+            * http/tests/websocket/tests/hybi/resources/non-document-mixed-content-blocked-embedded-http.https.html: Added.
+            * http/tests/websocket/tests/hybi/resources/non-document-mixed-content-blocked-embedding-https.js: Added.
+            (handleConnect.self.postMessage):
+            (handleConnect):
+            (runTests.ws.onopen):
+            (runTests.ws.onerror):
+            (runTests):
+            * http/tests/websocket/tests/hybi/resources/non-document-mixed-content-blocked.html: Added.
+            * http/tests/websocket/tests/hybi/resources/non-document-mixed-content-blocked.js: Added.
+            (handleConnect.self.postMessage):
+            (handleConnect):
+            (runTests.ws.onopen):
+            (runTests.ws.onerror):
+            (runTests):
+            * http/tests/workers/service/resources/serviceworker-websocket-worker.js:
+            (async.doTest):
+            Updated previous test which was hitting the fix to use a wss url
+
+2019-09-23  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r250255. rdar://problem/55644665
+
+    Improve CSP inheritance semantics
+    https://bugs.webkit.org/show_bug.cgi?id=201884
+    <rdar://problem/50172407>
+    
+    Reviewed by Brent Fulgham.
+    
+    LayoutTests/imported/w3c:
+    
+    Update expected results now that we pass more sub-tests.
+    
+    * web-platform-tests/content-security-policy/inheritance/iframe-all-local-schemes-inherit-self.sub-expected.txt:
+    * web-platform-tests/content-security-policy/inheritance/window-expected.txt:
+    
+    Source/WebCore:
+    
+    Update the CSP inheritance semantics to more closely match the logic in section Initialize a Document's CSP list
+    of the CSP3 spec., <https://w3c.github.io/webappsec-csp/#initialize-document-csp>.
+    
+    Towards this, move more of the inheritance logic out of Document::initContentSecurityPolicy() and into
+    DocumentWriter::begin() where details about the document being replaced live. This lets us remove the
+    need to track the previous content security policy to pass it to Document::initContentSecurityPolicy().
+    Moreover, DocumentWriter::begin() knows the owner document that will be replaced with the result of
+    executing a JavaScript URL. This is needed in order to fix up inheritance of CSP for such documents.
+    
+    Tests: http/tests/security/contentSecurityPolicy/iframe-allowed-when-loaded-via-javascript-url.html
+           http/tests/security/contentSecurityPolicy/iframe-blocked-when-loaded-via-javascript-url.html
+           http/tests/security/contentSecurityPolicy/iframe-blocked-when-loaded-via-javascript-url2.html
+    
+    * dom/Document.cpp:
+    (WebCore::Document::initSecurityContext): If we are inheriting the security origin from the owner
+    document then inherit its CSP policy. We copy over both the CSP state from the owner as well as
+    update 'self' to match the owner's origin so that CSP source expressions that include 'self' work
+    correctly even from about:blank documents.
+    (WebCore::Document::initContentSecurityPolicy): Move most of the logic from here into DocumentWriter::begin()
+    to take advantage of the fact that DocumentWriter::begin() knows about the outgoing document (if there
+    is one) as well as whether the outgoing document is being replaced with a new document that is the result
+    of evaluating a JavaScript URL. We need do know both these things in order to inherit the correct CSP
+    policy. This function only exists to copy some upgrade-insecure-requests state and to fix up plugin documents
+    as we currently do.
+    (WebCore::Document::shouldInheritContentSecurityPolicy const): Deleted.
+    * dom/Document.h:
+    * dom/SecurityContext.cpp:
+    (WebCore::SecurityContext::setContentSecurityPolicy): Modified to take its param by rvalue-reference
+    to make it less error prone to use.
+    * dom/SecurityContext.h: Expose setContentSecurityPolicy() so that we can invoke it from DocumentWriter::begin().
+    * loader/DocumentWriter.cpp:
+    (WebCore::DocumentWriter::begin): For documents being replaced with the result of a JavaScript URL (i.e. ownerDocument
+    is non-null) inherit the CSP from the owner document. Similarly, if we have an existing document in the frame
+    and the protocol of the new document's URL is data: or blob: then inherit the CSP from the existing page. The latter
+    is what we currently do just moved from Document::initContentSecurityPolicy() and re-written in terms of the
+    existingDocument instead of previousContentSecurityPolicy. Also call setInsecureNavigationRequestsToUpgrade()
+    both when we have a non-null ownerDocument as well as when we have a non-null existingDocument. The former fixes
+    the block-all-mixed-content feature for documents loaded via JavaScript URLs and the latter is what we do now.
+    * loader/FrameLoader.cpp:
+    (WebCore::FrameLoader::didBeginDocument): Remove parameter previousContentSecurityPolicy as the logic that
+    made use of it moved to DocumentWriter::begin().
+    * loader/FrameLoader.h:
+    * page/csp/ContentSecurityPolicy.h:
+    
+    LayoutTests:
+    
+    Add some more tests and update expected results of existing tests now that we pass more sub-tests.
+    
+    * http/tests/security/contentSecurityPolicy/iframe-allowed-when-loaded-via-javascript-url-expected.txt: Added.
+    * http/tests/security/contentSecurityPolicy/iframe-allowed-when-loaded-via-javascript-url.html: Added.
+    * http/tests/security/contentSecurityPolicy/iframe-blocked-when-loaded-via-javascript-url-expected.txt: Added.
+    * http/tests/security/contentSecurityPolicy/iframe-blocked-when-loaded-via-javascript-url.html: Added.
+    * http/tests/security/contentSecurityPolicy/iframe-blocked-when-loaded-via-javascript-url2-expected.txt: Added.
+    * http/tests/security/contentSecurityPolicy/iframe-blocked-when-loaded-via-javascript-url2.html: Added.
+    * http/tests/security/contentSecurityPolicy/user-style-sheet-font-crasher-expected.txt: I don't understand
+    why there is another duplicte console log message emitted, but there are already two such messages, which is
+    already one too many. The duplicate messages are more cosmetic than functional though there may be implications
+    with respect to CSP reporting. Filed <https://bugs.webkit.org/show_bug.cgi?id=202004> to track this issue.
+    * platform/mac-wk1/http/tests/security/contentSecurityPolicy/user-style-sheet-font-crasher-expected.txt:
+    * platform/win/http/tests/security/contentSecurityPolicy/user-style-sheet-font-crasher-expected.txt:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250255 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-23  Daniel Bates  <dabates@apple.com>
+
+            Improve CSP inheritance semantics
+            https://bugs.webkit.org/show_bug.cgi?id=201884
+            <rdar://problem/50172407>
+
+            Reviewed by Brent Fulgham.
+
+            Add some more tests and update expected results of existing tests now that we pass more sub-tests.
+
+            * http/tests/security/contentSecurityPolicy/iframe-allowed-when-loaded-via-javascript-url-expected.txt: Added.
+            * http/tests/security/contentSecurityPolicy/iframe-allowed-when-loaded-via-javascript-url.html: Added.
+            * http/tests/security/contentSecurityPolicy/iframe-blocked-when-loaded-via-javascript-url-expected.txt: Added.
+            * http/tests/security/contentSecurityPolicy/iframe-blocked-when-loaded-via-javascript-url.html: Added.
+            * http/tests/security/contentSecurityPolicy/iframe-blocked-when-loaded-via-javascript-url2-expected.txt: Added.
+            * http/tests/security/contentSecurityPolicy/iframe-blocked-when-loaded-via-javascript-url2.html: Added.
+            * http/tests/security/contentSecurityPolicy/user-style-sheet-font-crasher-expected.txt: I don't understand
+            why there is another duplicte console log message emitted, but there are already two such messages, which is
+            already one too many. The duplicate messages are more cosmetic than functional though there may be implications
+            with respect to CSP reporting. Filed <https://bugs.webkit.org/show_bug.cgi?id=202004> to track this issue.
+            * platform/mac-wk1/http/tests/security/contentSecurityPolicy/user-style-sheet-font-crasher-expected.txt:
+            * platform/win/http/tests/security/contentSecurityPolicy/user-style-sheet-font-crasher-expected.txt:
+
+2019-09-23  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r250183. rdar://problem/55608006
+
+    [Pointer Events] touch-action set to pan-x or pan-y alone should disable scrolling altogether if the intial gesture is in the disallowed direction
+    https://bugs.webkit.org/show_bug.cgi?id=202053
+    <rdar://problem/54542190>
+    
+    Reviewed by Tim Horton.
+    
+    Source/WebKit:
+    
+    Although the Pointer Events specification does not specify this clearly (see https://github.com/w3c/pointerevents/issues/303), setting "touch-action" to a value
+    that only allows scrolling a specific direction ("pan-x" or "pan-y") should disable scrolling in the specified direction if the panning gesture initially is directed
+    in the opposite direction. In practice, this means that setting "touch-action: pan-y" on an element should disable scrolling if the user initially pans horizontally,
+    even if later on in the gesture the user pans vertically. This allows for sites that want to offer a programmatic horizontal scroller to disable vertical scrolling
+    if the user pans horizontally.
+    
+    In order to support this, we add four UISwipeGestureRecognizers, one for each direction, and we selectively allows touches to be recognizer for them based on the
+    "touch-action" value specified at the initial touch location for a given gesture. In the case of "touch-action: pan-y" we only allow the left and right swipe recognizers
+    to be enabled, and in the case of "touch-action: pan-x" we only allow the up and down swipe recognizers to be enabled. If any of those gesture recognizers is recognized,
+    scrolling will be disabled for the duration of this gesture. If a UIScrollView panning gesture recognizer is recognized prior to a swipe, they won't have a chance to be
+    recognized.
+    
+    * UIProcess/ios/WKContentViewInteraction.h:
+    * UIProcess/ios/WKContentViewInteraction.mm:
+    (-[WKContentView setupInteraction]):
+    (-[WKContentView cleanupInteraction]):
+    (-[WKContentView _removeDefaultGestureRecognizers]):
+    (-[WKContentView _addDefaultGestureRecognizers]):
+    (-[WKContentView gestureRecognizer:shouldReceiveTouch:]):
+    
+    LayoutTests:
+    
+    Add new tests checking that setting "touch-action: pan-y" on an element and initiating a horizontal panning gesture will disallow scrolling vertically
+    if a vertical scrolling gesture follows. We test both the case where scrolling would apply to the whole page and the case where scrolling would apply
+    to an "overflow: scroll" element.
+    
+    * pointerevents/ios/touch-action-pan-y-horizontal-gesture-prevents-vertical-scrolling-expected.txt: Added.
+    * pointerevents/ios/touch-action-pan-y-horizontal-gesture-prevents-vertical-scrolling.html: Added.
+    * pointerevents/ios/touch-action-pan-y-in-overflow-scroll-horizontal-gesture-prevents-vertical-scrolling-expected.txt: Added.
+    * pointerevents/ios/touch-action-pan-y-in-overflow-scroll-horizontal-gesture-prevents-vertical-scrolling.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250183 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-21  Antoine Quint  <graouts@apple.com>
+
+            [Pointer Events] touch-action set to pan-x or pan-y alone should disable scrolling altogether if the intial gesture is in the disallowed direction
+            https://bugs.webkit.org/show_bug.cgi?id=202053
+            <rdar://problem/54542190>
+
+            Reviewed by Tim Horton.
+
+            Add new tests checking that setting "touch-action: pan-y" on an element and initiating a horizontal panning gesture will disallow scrolling vertically
+            if a vertical scrolling gesture follows. We test both the case where scrolling would apply to the whole page and the case where scrolling would apply
+            to an "overflow: scroll" element.
+
+            * pointerevents/ios/touch-action-pan-y-horizontal-gesture-prevents-vertical-scrolling-expected.txt: Added.
+            * pointerevents/ios/touch-action-pan-y-horizontal-gesture-prevents-vertical-scrolling.html: Added.
+            * pointerevents/ios/touch-action-pan-y-in-overflow-scroll-horizontal-gesture-prevents-vertical-scrolling-expected.txt: Added.
+            * pointerevents/ios/touch-action-pan-y-in-overflow-scroll-horizontal-gesture-prevents-vertical-scrolling.html: Added.
+
+2019-09-23  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r250182. rdar://problem/55608034
+
+    releasePointerCapture() not working for implicit capture; can't opt-in to pointerenter/leave for touches
+    https://bugs.webkit.org/show_bug.cgi?id=199803
+    <rdar://problem/53127223>
+    
+    Reviewed by Dean Jackson.
+    
+    Source/WebCore:
+    
+    In order to dispatch boundary events (pointerover/out/enter/leave) when the implicit pointer capture is released on iOS,
+    we need to track the target of the pointer events that was dispatched last for a given pointer id. Then we compare that
+    target with the current target when dispatching a new pointer event and determine whether we should dispatch boundary
+    events using the exact same approach used to dispatch mouse boundary events in EventHandler::updateMouseEventTargetNode().
+    
+    Tests: pointerevents/ios/boundary-events-through-hierarchy-without-pointer-capture.html
+           pointerevents/ios/boundary-events-without-pointer-capture.html
+    
+    * page/PointerCaptureController.cpp:
+    (WebCore::hierarchyHasCapturingEventListeners):
+    (WebCore::PointerCaptureController::dispatchEventForTouchAtIndex):
+    (WebCore::PointerCaptureController::pointerEventWillBeDispatched):
+    (WebCore::PointerCaptureController::ensureCapturingDataForPointerEvent):
+    (WebCore::PointerCaptureController::cancelPointer):
+    * page/PointerCaptureController.h:
+    
+    LayoutTests:
+    
+    Add new tests that check we correctly dispatch boundary events on iOS when pointer capture is disabled.
+    
+    * pointerevents/ios/boundary-events-through-hierarchy-without-pointer-capture-expected.txt: Added.
+    * pointerevents/ios/boundary-events-through-hierarchy-without-pointer-capture.html: Added.
+    * pointerevents/ios/boundary-events-without-pointer-capture-expected.txt: Added.
+    * pointerevents/ios/boundary-events-without-pointer-capture.html: Added.
+    * pointerevents/utils.js:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250182 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-20  Antoine Quint  <graouts@apple.com>
+
+            releasePointerCapture() not working for implicit capture; can't opt-in to pointerenter/leave for touches
+            https://bugs.webkit.org/show_bug.cgi?id=199803
+            <rdar://problem/53127223>
+
+            Reviewed by Dean Jackson.
+
+            Add new tests that check we correctly dispatch boundary events on iOS when pointer capture is disabled.
+
+            * pointerevents/ios/boundary-events-through-hierarchy-without-pointer-capture-expected.txt: Added.
+            * pointerevents/ios/boundary-events-through-hierarchy-without-pointer-capture.html: Added.
+            * pointerevents/ios/boundary-events-without-pointer-capture-expected.txt: Added.
+            * pointerevents/ios/boundary-events-without-pointer-capture.html: Added.
+            * pointerevents/utils.js:
+
+2019-09-23  Alan Coon  <alancoon@apple.com>
+
+        Apply patch. rdar://problem/55608028
+
+    Tell websites why a session was cancelled https://bugs.webkit.org/show_bug.cgi?id=201912 Source/WebCore:
+    
+    Reviewed by Brady Eidson.
+    
+    Added ApplePayCancelEvent as the interface for ApplePaySession's cancel event. This event
+    object includes a `sessionError` attribute that exposes a Web-safe version of the PassKit
+    domain error we received from PKPaymentAuthorization(View)Controller. Currently, we report
+    all errors with code "unknown", but more codes will be added in future patches.
+    
+    Test: http/tests/ssl/applepay/ApplePayCancelEvent.https.html
+    
+    * DerivedSources-input.xcfilelist:
+    * DerivedSources-output.xcfilelist:
+    * DerivedSources.make:
+    * Modules/applepay/ApplePayCancelEvent.cpp: Copied from Source/WebCore/Modules/applepay/PaymentHeaders.h.
+    (WebCore::ApplePayCancelEvent::ApplePayCancelEvent):
+    (WebCore::ApplePayCancelEvent::sessionError const):
+    (WebCore::ApplePayCancelEvent::eventInterface const):
+    * Modules/applepay/ApplePayCancelEvent.h: Copied from Source/WebCore/Modules/applepay/PaymentHeaders.h.
+    (WebCore::ApplePayCancelEvent::create):
+    * Modules/applepay/ApplePayCancelEvent.idl: Copied from Source/WebCore/Modules/applepay/PaymentHeaders.h.
+    * Modules/applepay/ApplePaySession.cpp:
+    (WebCore::ApplePaySession::didCancelPaymentSession):
+    * Modules/applepay/ApplePaySession.h:
+    * Modules/applepay/ApplePaySessionError.h: Copied from Source/WebCore/Modules/applepay/PaymentHeaders.h.
+    * Modules/applepay/ApplePaySessionError.idl: Copied from Source/WebCore/Modules/applepay/PaymentHeaders.h.
+    * Modules/applepay/PaymentCoordinator.cpp:
+    (WebCore::PaymentCoordinator::didCancelPaymentSession):
+    * Modules/applepay/PaymentCoordinator.h:
+    * Modules/applepay/PaymentHeaders.h:
+    * Modules/applepay/PaymentSession.cpp:
+    * Modules/applepay/PaymentSession.h:
+    * Modules/applepay/PaymentSessionError.h: Copied from Source/WebCore/Modules/applepay/PaymentHeaders.h.
+    * Modules/applepay/cocoa/PaymentSessionErrorCocoa.mm: Copied from Source/WebCore/Modules/applepay/PaymentSession.h.
+    (WebCore::additionalError):
+    (WebCore::PaymentSessionError::PaymentSessionError):
+    (WebCore::PaymentSessionError::sessionError const):
+    (WebCore::PaymentSessionError::platformError const):
+    (WebCore::PaymentSessionError::unknownError const):
+    * Modules/applepay/paymentrequest/ApplePayPaymentHandler.cpp:
+    (WebCore::ApplePayPaymentHandler::didCancelPaymentSession):
+    * Modules/applepay/paymentrequest/ApplePayPaymentHandler.h:
+    * Modules/webgpu/WHLSL/WHLSLCheckTextureReferences.cpp:
+    * Modules/webgpu/WHLSL/WHLSLPropertyResolver.cpp:
+    * SourcesCocoa.txt:
+    * WebCore.xcodeproj/project.pbxproj:
+    * dom/EventNames.in:
+    * testing/MockPaymentCoordinator.cpp:
+    (WebCore::MockPaymentCoordinator::cancelPayment):
+    
+    Source/WebCore/PAL:
+    
+    <rdar://problem/55469706>
+    
+    Reviewed by Brady Eidson.
+    
+    Soft-linked PKPassKitErrorDomain and included PassKit headers more judiciously.
+    
+    * pal/cocoa/PassKitSoftLink.h:
+    * pal/cocoa/PassKitSoftLink.mm:
+    * pal/spi/cocoa/PassKitSPI.h:
+    
+    Source/WebKit:
+    
+    <rdar://problem/55469706>
+    
+    Reviewed by Brady Eidson.
+    
+    Remembered the error passed to -[WKPaymentAuthorizationDelegate _willFinishWithError:] and
+    sent it to the WebContent process in Messages::WebPaymentCoordinator::DidCancelPaymentSession.
+    
+    * Platform/cocoa/PaymentAuthorizationPresenter.h:
+    * Platform/cocoa/WKPaymentAuthorizationDelegate.mm:
+    (-[WKPaymentAuthorizationDelegate _didFinish]):
+    (-[WKPaymentAuthorizationDelegate _willFinishWithError:]):
+    * Shared/ApplePay/WebPaymentCoordinatorProxy.cpp:
+    (WebKit::WebPaymentCoordinatorProxy::didCancelPaymentSession):
+    (WebKit::WebPaymentCoordinatorProxy::presenterDidFinish):
+    * Shared/ApplePay/WebPaymentCoordinatorProxy.h:
+    (WebKit::WebPaymentCoordinatorProxy::didCancelPaymentSession):
+    * Shared/ApplePay/ios/WebPaymentCoordinatorProxyIOS.mm:
+    * Shared/Cocoa/WebCoreArgumentCodersCocoa.mm:
+    (IPC::ArgumentCoder<WebCore::PaymentSessionError>::encode):
+    (IPC::ArgumentCoder<WebCore::PaymentSessionError>::decode):
+    * Shared/WebCoreArgumentCoders.h:
+    * WebProcess/ApplePay/WebPaymentCoordinator.cpp:
+    (WebKit::WebPaymentCoordinator::networkProcessConnectionClosed):
+    (WebKit::WebPaymentCoordinator::didCancelPaymentSession):
+    * WebProcess/ApplePay/WebPaymentCoordinator.h:
+    * WebProcess/ApplePay/WebPaymentCoordinator.messages.in:
+    
+    LayoutTests:
+    
+    Reviewed by Brady Eidson.
+    
+    * http/tests/ssl/applepay/ApplePayCancelEvent.https-expected.txt: Added.
+    * http/tests/ssl/applepay/ApplePayCancelEvent.https.html: Added.
+
+    2019-09-18  Andy Estes  <aestes@apple.com>
+
+            [Apple Pay] Tell websites why a session was cancelled
+            https://bugs.webkit.org/show_bug.cgi?id=201912
+
+            Reviewed by Brady Eidson.
+
+            * http/tests/ssl/applepay/ApplePayCancelEvent.https-expected.txt: Added.
+            * http/tests/ssl/applepay/ApplePayCancelEvent.https.html: Added.
+
+2019-09-17  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r249954. rdar://problem/55461404
+
+    [First-letter] Use WeakPtr for the first-letter insertion point.
+    https://bugs.webkit.org/show_bug.cgi?id=201842
+    <rdar://problem/51373788>
+    
+    Reviewed by Antti Koivisto.
+    
+    Source/WebCore:
+    
+    The about-to-be-removed first letter renderer's sibling could potentially be destroyed too as the result of the anonymous subtree collapsing logic (when the next sibling is a generated anonymous block and it is not needed anymore.)
+    
+    Test: fast/text/first-letter-with-columns-crash.html
+    
+    * rendering/updating/RenderTreeBuilderFirstLetter.cpp:
+    (WebCore::RenderTreeBuilder::FirstLetter::updateStyle):
+    
+    LayoutTests:
+    
+    * fast/text/first-letter-with-columns-crash-expected.txt: Added.
+    * fast/text/first-letter-with-columns-crash.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249954 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-17  Zalan Bujtas  <zalan@apple.com>
+
+            [First-letter] Use WeakPtr for the first-letter insertion point.
+            https://bugs.webkit.org/show_bug.cgi?id=201842
+            <rdar://problem/51373788>
+
+            Reviewed by Antti Koivisto.
+
+            * fast/text/first-letter-with-columns-crash-expected.txt: Added.
+            * fast/text/first-letter-with-columns-crash.html: Added.
+
+2019-09-17  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247573. rdar://problem/55461395
+
+    [Pointer Events] The button and buttons properties are incorrect on iOS
+    https://bugs.webkit.org/show_bug.cgi?id=199910
+    <rdar://problem/52778374>
+    
+    Reviewed by Dean Jackson.
+    
+    Source/WebCore:
+    
+    The button and buttons properties were always set to 0 on iOS. We now use the correct values such that
+    button is always 0 except for "pointermove" where it's -1, and "buttons" is 1 as long as the pointer is
+    in contact with the touch surface.
+    
+    Tests: pointerevents/ios/pointer-event-button-and-buttons-pointer-cancel.html
+           pointerevents/ios/pointer-event-button-and-buttons.html
+    
+    * dom/ios/PointerEventIOS.cpp:
+    (WebCore::buttonForType):
+    (WebCore::buttonsForType):
+    (WebCore::PointerEvent::PointerEvent):
+    
+    LayoutTests:
+    
+    * pointerevents/ios/pointer-event-button-and-buttons-expected.txt: Added.
+    * pointerevents/ios/pointer-event-button-and-buttons-pointer-cancel-expected.txt: Added.
+    * pointerevents/ios/pointer-event-button-and-buttons-pointer-cancel.html: Added.
+    * pointerevents/ios/pointer-event-button-and-buttons.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247573 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-18  Antoine Quint  <graouts@apple.com>
+
+            [Pointer Events] The button and buttons properties are incorrect on iOS
+            https://bugs.webkit.org/show_bug.cgi?id=199910
+            <rdar://problem/52778374>
+
+            Reviewed by Dean Jackson.
+
+            * pointerevents/ios/pointer-event-button-and-buttons-expected.txt: Added.
+            * pointerevents/ios/pointer-event-button-and-buttons-pointer-cancel-expected.txt: Added.
+            * pointerevents/ios/pointer-event-button-and-buttons-pointer-cancel.html: Added.
+            * pointerevents/ios/pointer-event-button-and-buttons.html: Added.
+
+2019-09-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249813. rdar://problem/55427490
+
+    [Cocoa] Text indicator for an image link on the front page of apple.com looks wrong
+    https://bugs.webkit.org/show_bug.cgi?id=201724
+    <rdar://problem/54622894>
+    
+    Reviewed by Tim Horton.
+    
+    Source/WebCore:
+    
+    When computing the bounds of the range (<a>, 0) to (<a>, 1) for a text indicator snapshot where <a> is a link
+    with a single non-breaking whitespace character, we currently use the text rect of the single space. This leads
+    to a confusing text indicator, as the resulting snapshot is a tiny blank square in the top left corner of the
+    link. This problem manifests when starting a drag or showing the system context menu on iOS, or force clicking
+    or three-finger tapping to show a preview on macOS.
+    
+    To address this scenario, tweak the heuristic in the case where the text indicator option
+    TextIndicatorOptionUseBoundingRectAndPaintAllContentForComplexRanges is specified, such that we consider a range
+    containing only text with whitespaces to be "complex"; additionally, instead of falling back to the range's
+    bounding rect (which in this case is still tiny), fall back to the common ancestor container's bounding rect,
+    which encompasses not only the text inside the range but also the element containing the range (in this case,
+    the anchor element).
+    
+    Test: fast/text-indicator/text-indicator-empty-link.html
+    
+    * page/TextIndicator.cpp:
+    (WebCore::containsOnlyWhiteSpaceText):
+    
+    Add a helper to determine whether a Range is comprised only of rendered text that only contains whitespace
+    characters.
+    
+    (WebCore::initializeIndicator):
+    
+    See ChangeLog entry above for more detail.
+    
+    LayoutTests:
+    
+    Add a new layout test to exercise this scenario.
+    
+    * fast/text-indicator/text-indicator-empty-link-expected.txt: Added.
+    * fast/text-indicator/text-indicator-empty-link.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249813 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-12  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [Cocoa] Text indicator for an image link on the front page of apple.com looks wrong
+            https://bugs.webkit.org/show_bug.cgi?id=201724
+            <rdar://problem/54622894>
+
+            Reviewed by Tim Horton.
+
+            Add a new layout test to exercise this scenario.
+
+            * fast/text-indicator/text-indicator-empty-link-expected.txt: Added.
+            * fast/text-indicator/text-indicator-empty-link.html: Added.
+
+2019-09-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249734. rdar://problem/55291693
+
+    Attempt to make this test not flakey.
+    https://bugs.webkit.org/show_bug.cgi?id=201482
+    
+    * legacy-animation-engine/compositing/transitions/add-remove-transition.html:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249734 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+            Cherry-pick r249511. rdar://problem/55291693
+
+        Cancelled transitions on Google image search leave content with opacity 0 sometimes
+        https://bugs.webkit.org/show_bug.cgi?id=201482
+        rdar://problem/54921036
+
+        Reviewed by Tim Horton.
+        Source/WebCore:
+
+        If, in a single rendering update, we started an accelerated opacity transition, and then removed
+        it, we'd still push the transition onto the CALayer with fillForwards and never remove it, so its
+        effects would last forever.
+
+        Fix by making GraphicsLayerCA::removeAnimation() remove animations from the uncomittedAnimations
+        list as well.
+
+        Also fix layer names in debug; if a layer's primaryLayerID changed, we'd fail to rename the
+        CALayer, causing confusion when logging at layer dumps. Fix by adding the layer ID just
+        before pushing the name to the platform layer.
+
+        Some drive-by logging cleanup.
+
+        Test: legacy-animation-engine/compositing/transitions/add-remove-transition.html
+
+        * platform/graphics/GraphicsLayer.cpp:
+        (WebCore::GraphicsLayer::debugName const):
+        * platform/graphics/GraphicsLayer.h:
+        * platform/graphics/ca/GraphicsLayerCA.cpp:
+        (WebCore::GraphicsLayerCA::setName):
+        (WebCore::GraphicsLayerCA::debugName const):
+        (WebCore::GraphicsLayerCA::addAnimation):
+        (WebCore::GraphicsLayerCA::pauseAnimation):
+        (WebCore::GraphicsLayerCA::seekAnimation):
+        (WebCore::GraphicsLayerCA::removeAnimation):
+        (WebCore::GraphicsLayerCA::platformCALayerAnimationStarted):
+        (WebCore::GraphicsLayerCA::platformCALayerAnimationEnded):
+        (WebCore::GraphicsLayerCA::updateNames):
+        (WebCore::GraphicsLayerCA::createTransformAnimationsFromKeyframes):
+        * platform/graphics/ca/GraphicsLayerCA.h:
+        * rendering/RenderLayerCompositor.cpp:
+        (WebCore::RenderLayerCompositor::logLayerInfo):
+
+        LayoutTests:
+
+        * legacy-animation-engine/compositing/transitions/add-remove-transition-expected.html: Added.
+        * legacy-animation-engine/compositing/transitions/add-remove-transition.html: Added.
+
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249511 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+        2019-09-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+                Cherry-pick r249507. rdar://problem/55427491
+
+            Line artifacts in note body after viewing note with <attachment>s
+            https://bugs.webkit.org/show_bug.cgi?id=201474
+            <rdar://problem/51306108>
+
+            Reviewed by Simon Fraser.
+
+            Source/WebCore:
+
+            Test: fast/attachment/attachment-border-should-stay-inside-attachment.html
+
+            * rendering/RenderThemeIOS.mm:
+            (WebCore::attachmentBorderPath):
+            (WebCore::paintAttachmentBorder):
+            Inset the border rect by half the width, so that <attachment> doesn't
+            paint out-of-bounds.
+
+            LayoutTests:
+
+            * fast/attachment/attachment-border-should-stay-inside-attachment-expected.html: Added.
+            * fast/attachment/attachment-border-should-stay-inside-attachment.html: Added.
+            Add a test that ensures that <attachment> stays inside its bounds.
+
+
+            git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249507 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+            2019-09-04  Tim Horton  <timothy_horton@apple.com>
+
+                    Line artifacts in note body after viewing note with <attachment>s
+                    https://bugs.webkit.org/show_bug.cgi?id=201474
+                    <rdar://problem/51306108>
+
+                    Reviewed by Simon Fraser.
+
+                    * fast/attachment/attachment-border-should-stay-inside-attachment-expected.html: Added.
+                    * fast/attachment/attachment-border-should-stay-inside-attachment.html: Added.
+                    Add a test that ensures that <attachment> stays inside its bounds.
+
+2019-09-09  Ryosuke Niwa  <rniwa@webkit.org>
+
+        REGRESSION (iOS 13): Bulleted list copied from Notes to Mail results in Times New Roman
+        https://bugs.webkit.org/show_bug.cgi?id=201490
+
+        Reviewed by Daniel Bates.
+
+        Added a test to make sure -webkit-standard font family name isn't stripped away when sanitization is not in effect.
+
+        * editing/pasteboard/paste-cocoa-writer-markup-with-webkit-standard-font-family-expected.txt: Added.
+        * editing/pasteboard/paste-cocoa-writer-markup-with-webkit-standard-font-family.html: Added.
+
+2019-09-09  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249605. rdar://problem/55182896
+
+    Incorrect selection rect revealed after pasting images in a contenteditable element
+    https://bugs.webkit.org/show_bug.cgi?id=201549
+    <rdar://problem/50956429>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    Editor::replaceSelectionWithFragment currently scrolls to reveal the selection after inserting the given
+    DocumentFragment. However, this scrolling occurs before any inserted images have loaded yet, which causes the
+    wrong caret rect to be revealed, since all image elements inserted during paste will be empty.
+    
+    To fix this, we defer revealing the selection after inserting the fragment until after all images that have
+    been inserted are done loading. While waiting for images to load, if any layers which may be scrolled as a
+    result of revealing the selection are scrolled, we additionally cancel the deferred selection reveal. See
+    comments below for more detail.
+    
+    Tests: editing/pasteboard/do-not-reveal-selection-after-programmatic-scroll.html
+           editing/pasteboard/reveal-selection-after-pasting-images.html
+           PasteImage.RevealSelectionAfterPastingImage
+    
+    * editing/Editing.cpp:
+    (WebCore::visibleImageElementsInRangeWithNonLoadedImages):
+    
+    Add a new helper to iterate through a range and collect all image elements in that range, that contain cached
+    images that have not finished loading yet.
+    
+    * editing/Editing.h:
+    * editing/Editor.cpp:
+    (WebCore::Editor::replaceSelectionWithFragment):
+    
+    Instead of always immediately revealing the selection after applying the ReplaceSelectionCommand, collect the
+    image elements that were just inserted, and avoid immediately revealing the selection if any of these images
+    have non-null cached images, but are not loaded yet. Instead, hold on to these images in a set, remove them once
+    they finish loading using the new method below, and once all images are removed, reveal the selection.
+    
+    (WebCore::Editor::revealSelectionIfNeededAfterLoadingImageForElement):
+    (WebCore::Editor::renderLayerDidScroll):
+    
+    Called whenever a scrollable RenderLayer is scrolled (or in the case of FrameView, the root layer). In the case
+    where Editor is waiting to reveal the selection, we check to see if the scrolled layer is an ancestor of the
+    layer enclosing the start of the selection.
+    
+    (WebCore::Editor::respondToChangedSelection):
+    
+    If the selection changes between pasting and waiting for pasted images to load, just cancel waiting to reveal
+    the selection after pasting.
+    
+    * editing/Editor.h:
+    * editing/ReplaceSelectionCommand.cpp:
+    (WebCore::ReplaceSelectionCommand::insertedContentRange const):
+    
+    Add a helper method to grab the Range of content inserted after applying the command.
+    
+    * editing/ReplaceSelectionCommand.h:
+    * page/FrameView.cpp:
+    (WebCore::FrameView::scrollPositionChanged):
+    * page/FrameView.h:
+    * page/Page.cpp:
+    (WebCore::Page::didFinishLoadingImageForElement):
+    
+    Notify Editor after an image finishes loading.
+    
+    * rendering/RenderLayer.cpp:
+    (WebCore::RenderLayer::scrollTo):
+    
+    Source/WebKit:
+    
+    Tweak some existing logic to use the new visibleImageElementsInRangeWithNonLoadedImages helper function. See
+    WebCore for more details.
+    
+    * WebProcess/WebPage/ios/WebPageIOS.mm:
+    (WebKit::WebPage::didConcludeEditDrag):
+    
+    Tools:
+    
+    Add an API test to exercise the scenario where we scroll to reveal the selection after pasting an image that was
+    directly written to the pasteboard.
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/PasteImage.mm:
+    
+    LayoutTests:
+    
+    Add a couple of new layout tests.
+    
+    * editing/pasteboard/do-not-reveal-selection-after-programmatic-scroll-expected.txt: Added.
+    * editing/pasteboard/do-not-reveal-selection-after-programmatic-scroll.html: Added.
+    
+    This test verifies that we don't try to scroll to reveal the caret after pasting, if the scroll position was
+    changed before the images finished loading.
+    
+    * editing/pasteboard/reveal-selection-after-pasting-images-expected.txt: Added.
+    * editing/pasteboard/reveal-selection-after-pasting-images.html: Added.
+    * platform/ios/editing/pasteboard/reveal-selection-after-pasting-images-expected.txt: Added.
+    
+    This test verifies that we reveal the caret after loading multiple pasted images in a selection, and dispatch a
+    scroll event in the process.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249605 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-06  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            Incorrect selection rect revealed after pasting images in a contenteditable element
+            https://bugs.webkit.org/show_bug.cgi?id=201549
+            <rdar://problem/50956429>
+
+            Reviewed by Simon Fraser.
+
+2019-09-04  Simon Fraser  <simon.fraser@apple.com>
+
+        Cancelled transitions on Google image search leave content with opacity 0 sometimes
+        https://bugs.webkit.org/show_bug.cgi?id=201482
+        rdar://problem/54921036
+
+        Reviewed by Tim Horton.
+
+        * legacy-animation-engine/compositing/transitions/add-remove-transition-expected.html: Added.
+        * legacy-animation-engine/compositing/transitions/add-remove-transition.html: Added.
+
+            Add a couple of new layout tests.
+
+            * editing/pasteboard/do-not-reveal-selection-after-programmatic-scroll-expected.txt: Added.
+            * editing/pasteboard/do-not-reveal-selection-after-programmatic-scroll.html: Added.
+
+            This test verifies that we don't try to scroll to reveal the caret after pasting, if the scroll position was
+            changed before the images finished loading.
+
+            * editing/pasteboard/reveal-selection-after-pasting-images-expected.txt: Added.
+            * editing/pasteboard/reveal-selection-after-pasting-images.html: Added.
+            * platform/ios/editing/pasteboard/reveal-selection-after-pasting-images-expected.txt: Added.
+
+            This test verifies that we reveal the caret after loading multiple pasted images in a selection, and dispatch a
+            scroll event in the process.
+
+2019-09-09  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249581. rdar://problem/55202922
+
+    REGRESSION (iOS 13): If an overflow:hidden with a non-zero scroll position is toggled to overflow:scroll, some other scroll causes its scroll position to get reset
+    https://bugs.webkit.org/show_bug.cgi?id=201528
+2019-09-10  Simon Fraser  <simon.fraser@apple.com>
+
+        Attempt to make this test not flakey.
+        https://bugs.webkit.org/show_bug.cgi?id=201482
+
+        * legacy-animation-engine/compositing/transitions/add-remove-transition.html:
+
+    rdar://problem/55044885
+    
+    Reviewed by Frédéric Wang.
+    Source/WebCore:
+    
+    If, when an overflow scrolling node is created, the scroller has non-zero scroll
+    position (for example, via toggling to overflow:hidden, setting scrollTop, then toggling
+    to overflow:scroll), then on the next update its scroll position will reset back to zero.
+    
+    The bug was that newly created ScrollingTreeScrollingNodes didn't set m_currentScrollPosition
+    to the scroll position coming from the state node, so a subsequent update could cause
+    the 0,0 currentScrollPosition to get applied. If we're making a new node, and there's no
+    requestedScrollPosition, then initialize m_currentScrollPosition.
+    
+    Test: scrollingcoordinator/ios/scroller-initial-scroll-position.html
+    
+    * page/scrolling/ScrollingTreeScrollingNode.cpp:
+    (WebCore::ScrollingTreeScrollingNode::commitStateBeforeChildren):
+    (WebCore::ScrollingTreeScrollingNode::commitStateAfterChildren):
+    * page/scrolling/ScrollingTreeScrollingNode.h:
+    
+    LayoutTests:
+    
+    * scrollingcoordinator/ios/scroller-initial-scroll-position-expected.html: Added.
+    * scrollingcoordinator/ios/scroller-initial-scroll-position.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249581 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-09  Kocsen Chung  <kocsen_chung@apple.com>
+
+            Cherry-pick r249565. rdar://problem/55113261
+
+        AccessibilityRenderObject::setSelectedTextRange fails to set the selection passed an empty line.
+        https://bugs.webkit.org/show_bug.cgi?id=201518
+        <rdar://problem/54835122>
+
+        Patch by Andres Gonzalez <andresg_22@apple.com> on 2019-09-06
+        Reviewed by Ryosuke Niwa.
+
+        Source/WebCore:
+
+        Test: accessibility/set-selected-text-range-after-newline.html
+
+        In the case of an empty line, the CharacterIterator range start and end
+        were not equal, thus we were not advancing the iterator and returning
+        the iterator range end, which is not correct. With this change we are
+        always advancing the iterator if its text is just '\n'. This covers all
+        the cases we fixed before plus empty lines.
+
+        * editing/Editing.cpp:
+        (WebCore::visiblePositionForIndexUsingCharacterIterator):
+
+        LayoutTests:
+
+        Extended this test to set the selection range passed an empty line.
+        * accessibility/set-selected-text-range-after-newline-expected.txt:
+        * accessibility/set-selected-text-range-after-newline.html:
+
+        git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249565 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+        2019-09-06  Andres Gonzalez  <andresg_22@apple.com>
+
+                AccessibilityRenderObject::setSelectedTextRange fails to set the selection passed an empty line.
+                https://bugs.webkit.org/show_bug.cgi?id=201518
+                <rdar://problem/54835122>
+
+                Reviewed by Ryosuke Niwa.
+
+                Extended this test to set the selection range passed an empty line.
+                * accessibility/set-selected-text-range-after-newline-expected.txt:
+                * accessibility/set-selected-text-range-after-newline.html:
+
+2019-09-09  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249534. rdar://problem/55183098
+
+    AX: children cache are not re-computed if tab index is removed
+    https://bugs.webkit.org/show_bug.cgi?id=201502
+    
+    Reviewed by Zalan Bujtas.
+    
+    Source/WebCore:
+    
+    Test: accessibility/tabindex-removed.html
+    
+    If the tabindex changes, it can potentially affect whether an element is accessible. If we don't update the children cache
+    information can be stale and lead to incorrect navigation with VoiceOver.
+    
+    * accessibility/AXObjectCache.cpp:
+    (WebCore::AXObjectCache::handleAttributeChange):
+    
+    LayoutTests:
+    
+    * accessibility/tabindex-removed-expected.txt: Added.
+    * accessibility/tabindex-removed.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249534 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-05  Chris Fleizach  <cfleizach@apple.com>
+
+            AX: children cache are not re-computed if tab index is removed
+            https://bugs.webkit.org/show_bug.cgi?id=201502
+
+            Reviewed by Zalan Bujtas.
+
+            * accessibility/tabindex-removed-expected.txt: Added.
+            * accessibility/tabindex-removed.html: Added.
+
+2019-09-05  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Apply patch. rdar://problem/55001140
+
+    Treat a two-finger single tap as if the user tapped with the Cmd key pressed https://bugs.webkit.org/show_bug.cgi?id=201420 <rdar://problem/53207786>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebKit:
+    
+    Set the metaKey modifier to true when generating a click event based on a two-finger single tap. This is important so that sites like Google and DuckDuckGo
+    correctly open links in their search results page in a new tab in Safari on iOS. This currently doesn't work because those sites will call preventDefault()
+    if the metaKey flag isn't set on a "click" event, and if it is set, they let the browser handle the navigation themselves.
+    
+    * UIProcess/ios/WKContentViewInteraction.mm:
+    (-[WKContentView _twoFingerSingleTapGestureRecognized:]):
+    
+    Tools:
+    
+    Add a new twoFingerSingleTapAtPoint() method to UIScriptController, which just calls into the existing (but unused)
+    -[HIDEventGenerator twoFingerTap:completionBlock:].
+    
+    * TestRunnerShared/UIScriptContext/Bindings/UIScriptController.idl:
+    * TestRunnerShared/UIScriptContext/UIScriptController.h:
+    (WTR::UIScriptController::twoFingerSingleTapAtPoint):
+    * WebKitTestRunner/ios/UIScriptControllerIOS.h:
+    * WebKitTestRunner/ios/UIScriptControllerIOS.mm:
+    (WTR::UIScriptControllerIOS::twoFingerSingleTapAtPoint):
+    
+    LayoutTests:
+    
+    Add a new event that checks that a two-finger single tap on a clickable element yields a "click" event with the metaKey flag set to true.
+    
+    * fast/events/ios/click-event-two-finger-single-tap-meta-key-expected.txt: Added.
+    * fast/events/ios/click-event-two-finger-single-tap-meta-key.html: Added.
+
+    2019-09-03  Antoine Quint  <graouts@apple.com>
+
+            [iOS] Treat a two-finger single tap as if the user tapped with the Cmd key pressed
+            https://bugs.webkit.org/show_bug.cgi?id=201420
+            <rdar://problem/53207786>
+
+            Reviewed by Simon Fraser.
+
+            Add a new event that checks that a two-finger single tap on a clickable element yields a "click" event with the metaKey flag set to true.
+
+            * fast/events/ios/click-event-two-finger-single-tap-meta-key-expected.txt: Added.
+            * fast/events/ios/click-event-two-finger-single-tap-meta-key.html: Added.
+
+2019-09-04  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249368. rdar://problem/55001166
+
+    Long presses that interrupt accelerated scrolling dispatch clicks on apps linked against iOS 12 or earlier
+    https://bugs.webkit.org/show_bug.cgi?id=201346
+    <rdar://problem/54885784>
+    
+    Reviewed by Dean Jackson.
+    
+    Source/WebKit:
+    
+    For apps that are linked on or after iOS 13, we add a context menu interaction to the content view, which
+    requires us to disable (or avoid adding) the highlight long press gesture recognizer. However, for apps that are
+    linked on the iOS 12 SDK or prior, this gesture is still present, and fires when long pressing for (roughly) up
+    to 0.75 seconds if a tap gesture was not recognized instead. Firing this gesture sends a click event to the
+    page; this brings back some form of <rdar://problem/53889373>, but only when holding for slightly longer than a
+    normal tap, and also only in apps linked on iOS 12 or earlier. To fix this, we apply a similar solution as in
+    r248433 and detect whether a long press gesture interrupted scroll view deceleration in
+    -gestureRecognizerShouldBegin:. If so, we return NO to avoid clicking. See per-method comments below for more
+    details.
+    
+    Testing this bug as-is was tricky, since there's no way in layout tests to simulate being linked on or before a
+    given SDK version. Luckily, recall that:
+    1. This bug occurs when the highlight gesture recognizer is enabled and added to the content view.
+    2. The highlight gesture recognizer only needs to be disabled or removed when context menu interaction is added.
+    As such, we should be able to restore the highlight gesture recognizer by suppressing the context menu
+    interaction in an app linked-on-or-after iOS 13, by setting allowsLinkPreview to NO. Unfortunately, this doesn't
+    quite work, since we currently always avoid adding the highlight gesture recognizer if the app is linked on
+    iOS 13 or later.
+    
+    However, this means that the highlight gesture recognizer is absent from the content view in apps linked against
+    iOS 13 that disable link previews, even though its absence is not required. This means that long pressing a
+    clickable element in a web view that disables link previews does not show a tap highlight on iOS 13, whereas it
+    would on iOS 12; this is a regression, albeit a very subtle one. To fix this subtle issue and make it possible
+    to write a test for this bug, we refactor some logic for creating and configuring the highlight long press
+    gesture, such that we now unconditionally add the highlight gesture, but only enable it in apps linked on or
+    after iOS 13 if link previews (i.e. context menu interaction) are not allowed.
+    
+    Test: fast/scrolling/ios/click-events-after-long-press-during-momentum-scroll-in-overflow.html
+    
+    * SourcesCocoa.txt:
+    * UIProcess/API/Cocoa/WKWebView.mm:
+    (-[WKWebView setAllowsLinkPreview:]):
+    * UIProcess/ios/WKContentViewInteraction.h:
+    * UIProcess/ios/WKContentViewInteraction.mm:
+    (-[WKContentView setupInteraction]):
+    
+    Refactor our gesture setup logic to always create and add the long press and highlight long press gestures, but
+    conditionally disable them based on whether or not (1) the context menu is available, and (2) WKWebView's
+    allowsLinkPreview property.
+    
+    (-[WKContentView _didChangeLinkPreviewAvailability]):
+    (-[WKContentView _updateLongPressAndHighlightLongPressGestures]):
+    
+    Add a new helper to update the enabled state of the long press and highlight long press gestures, by consulting
+    -_shouldUseContextMenu and -allowsLinkPreview. This is called when setting up the gestures, as well as whenever
+    -allowsLinkPreview changes.
+    
+    (-[WKContentView gestureRecognizerShouldBegin:]):
+    
+    Factor out logic to ascend the view hierarchy in search of a UIScrollView that was interrupted while
+    decelerating into a local lambda function; use this for both the highlight gesture and the single tap gesture,
+    to determine whether they should begin.
+    
+    * UIProcess/ios/WKHighlightLongPressGestureRecognizer.h: Added.
+    * UIProcess/ios/WKHighlightLongPressGestureRecognizer.mm: Added.
+    
+    In order to remember the UIScrollView (if any) tracked by the highlight long press gesture, we subclass
+    _UIWebHighlightLongPressGestureRecognizer. While UILongPressGestureRecognizer does have SPI to ask for a list of
+    UITouches, by the time the gesture has been recognized and the gesture delegates are invoked, these UITouches
+    no longer correspond to UIViews. As such, the only time we have access to the list of UITouches with their
+    UIViews is during the touches* subclass hooks.
+    
+    (-[WKHighlightLongPressGestureRecognizer reset]):
+    
+    Clear out the tracked UIScrollView here, when the gesture is reset (i.e. after ending, or being canceled).
+    
+    (-[WKHighlightLongPressGestureRecognizer touchesBegan:withEvent:]):
+    
+    Remember the last touched UIScrollView here.
+    
+    (-[WKHighlightLongPressGestureRecognizer lastTouchedScrollView]):
+    * WebKit.xcodeproj/project.pbxproj:
+    
+    Tools:
+    
+    Add a new test option to allow tests to disable link previews.
+    
+    * WebKitTestRunner/TestController.cpp:
+    (WTR::updateTestOptionsFromTestHeader):
+    * WebKitTestRunner/TestOptions.h:
+    
+    Drive-by fix: also check enableLazyImageLoading when determining whether two TestOptions are the same.
+    
+    (WTR::TestOptions::hasSameInitializationOptions const):
+    * WebKitTestRunner/cocoa/TestControllerCocoa.mm:
+    (WTR::TestController::platformCreateWebView):
+    
+    LayoutTests:
+    
+    Add a couple of new layout tests to verify that using a long press gesture to interrupt momentum scrolling in a
+    web view that uses API to disable link previews does not result in a click.
+    
+    * fast/scrolling/ios/click-events-after-long-press-during-momentum-scroll-in-main-frame-expected.txt: Added.
+    * fast/scrolling/ios/click-events-after-long-press-during-momentum-scroll-in-main-frame.html: Added.
+    * fast/scrolling/ios/click-events-after-long-press-during-momentum-scroll-in-overflow-expected.txt: Added.
+    * fast/scrolling/ios/click-events-after-long-press-during-momentum-scroll-in-overflow.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249368 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-01  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            Long presses that interrupt accelerated scrolling dispatch clicks on apps linked against iOS 12 or earlier
+            https://bugs.webkit.org/show_bug.cgi?id=201346
+            <rdar://problem/54885784>
+
+            Reviewed by Dean Jackson.
+
+            Add a couple of new layout tests to verify that using a long press gesture to interrupt momentum scrolling in a
+            web view that uses API to disable link previews does not result in a click.
+
+            * fast/scrolling/ios/click-events-after-long-press-during-momentum-scroll-in-main-frame-expected.txt: Added.
+            * fast/scrolling/ios/click-events-after-long-press-during-momentum-scroll-in-main-frame.html: Added.
+            * fast/scrolling/ios/click-events-after-long-press-during-momentum-scroll-in-overflow-expected.txt: Added.
+            * fast/scrolling/ios/click-events-after-long-press-during-momentum-scroll-in-overflow.html: Added.
+
+2019-09-04  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249147. rdar://problem/55001178
+
+    Removing fullscreen element in rAF() callback after requestFullscreen() can leave fullscreen in inconsistent state.
+    https://bugs.webkit.org/show_bug.cgi?id=201101
+    <rdar://problem/54164587>
+    
+    Reviewed by Eric Carlson.
+    
+    Source/WebCore:
+    
+    Test: fullscreen/full-screen-request-removed-with-raf.html
+    
+    Add a new state variable, m_pendingFullscreenElement, to track which element is about to
+    become the fullscreen element, so that when elements are removed or cancelFullscreen() is
+    called, the state machine inside the fullscreen algorithm can cancel effectively.
+    
+    * dom/FullscreenManager.cpp:
+    (WebCore::FullscreenManager::requestFullscreenForElement):
+    (WebCore::FullscreenManager::cancelFullscreen):
+    (WebCore::FullscreenManager::exitFullscreen):
+    (WebCore::FullscreenManager::willEnterFullscreen):
+    (WebCore::FullscreenManager::willExitFullscreen):
+    (WebCore::FullscreenManager::didExitFullscreen):
+    (WebCore::FullscreenManager::adjustFullscreenElementOnNodeRemoval):
+    (WebCore::FullscreenManager::clear):
+    (WebCore::FullscreenManager::fullscreenElementRemoved): Deleted.
+    * dom/FullscreenManager.h:
+    
+    Source/WebKit:
+    
+    Add more state to track in which direction the animation is flowing to allow in-process
+    animations to be cancelled more gracefully.
+    
+    * UIProcess/ios/fullscreen/WKFullScreenWindowControllerIOS.mm:
+    (-[WKFullScreenWindowController enterFullScreen]):
+    (-[WKFullScreenWindowController beganEnterFullScreenWithInitialFrame:finalFrame:]):
+    (-[WKFullScreenWindowController requestExitFullScreen]):
+    (-[WKFullScreenWindowController exitFullScreen]):
+    * WebProcess/cocoa/VideoFullscreenManager.h:
+    (WebKit::VideoFullscreenInterfaceContext::animationState const):
+    (WebKit::VideoFullscreenInterfaceContext::setAnimationState):
+    (WebKit::VideoFullscreenInterfaceContext::isAnimating const): Deleted.
+    (WebKit::VideoFullscreenInterfaceContext::setIsAnimating): Deleted.
+    * WebProcess/cocoa/VideoFullscreenManager.mm:
+    (WebKit::VideoFullscreenManager::enterVideoFullscreenForVideoElement):
+    (WebKit::VideoFullscreenManager::exitVideoFullscreenForVideoElement):
+    (WebKit::VideoFullscreenManager::didEnterFullscreen):
+    (WebKit::VideoFullscreenManager::didCleanupFullscreen):
+    
+    LayoutTests:
+    
+    * fullscreen/full-screen-request-removed-with-raf-expected.txt: Added.
+    * fullscreen/full-screen-request-removed-with-raf.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249147 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-26  Jer Noble  <jer.noble@apple.com>
+
+            Removing fullscreen element in rAF() callback after requestFullscreen() can leave fullscreen in inconsistent state.
+            https://bugs.webkit.org/show_bug.cgi?id=201101
+            <rdar://problem/54164587>
+
+            Reviewed by Eric Carlson.
+
+            * fullscreen/full-screen-request-removed-with-raf-expected.txt: Added.
+            * fullscreen/full-screen-request-removed-with-raf.html: Added.
+
+2019-09-03  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249339. rdar://problem/55001170
+
+    Caret does not appear in text field inside a transformed, overflow: hidden container
+    https://bugs.webkit.org/show_bug.cgi?id=201317
+    <rdar://problem/54859264>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    This patch refactors the heuristic for determining whether to suppress selection gestures and UI in a way that
+    fixes the corner case encountered in this bug. To understand why this test case fails with our existing
+    heuristic, consider the below test case.
+    
+    Let's say we have an input field inside an "overflow: hidden;" container, which is positioned in such a way that
+    it is completely clipped by its enclosing container which is also "overflow: hidden". Our existing logic would
+    appropriately identify this as a hidden editable element.
+    
+    However, let's now apply a transform to the input field's closest "overflow: hidden" ancestor, such that the
+    field is now visible. Since RenderLayer::offsetFromAncestor doesn't take transforms into account when we try to
+    find the offset of the "overflow: hidden" layer relative to the root view, we end up passing an offsetFromRoot
+    of (0, 100vw) to RenderLayer::calculateClipRects, which computes a background clip rect of (0, 0, 100vw, 100vh).
+    
+    This means that at the end of RenderLayer::calculateClipRects, we end up intersecting the background clip rect
+    (0, 0, 100vw, 100vh) against (100vw, 0, 100vw, 100vh), which results in the empty rect, and subsequently makes
+    us believe we're editing a hidden editable element.
+    
+    Instead of tacking on more logic to isTransparentOrFullyClippedRespectingParentFrames, we can fix this by using
+    RenderObject::computeVisibleRectInContainer instead, performing a similar walk up the render tree to compute the
+    visible rect of each focused element or subframe relative to its root. This is capable of taking transforms into
+    account. See comments below for more details.
+    
+    Test: editing/selection/ios/show-selection-in-transformed-container-2.html
+    
+    * rendering/RenderLayer.cpp:
+    (WebCore::RenderLayer::isTransparentRespectingParentFrames const):
+    
+    Split out isTransparentOrFullyClippedRespectingParentFrames into two methods: RenderLayer's
+    isTransparentRespectingParentFrames, and RenderObject's hasNonEmptyVisibleRectRespectingParentFrames. The
+    transparency check starts at the enclosing layer and walks up the layer tree, while the non-empty visible rect
+    check looks for renderers that are completely empty relative to their root views.
+    
+    * rendering/RenderLayer.h:
+    * rendering/RenderObject.cpp:
+    (WebCore::RenderObject::hasNonEmptyVisibleRectRespectingParentFrames const):
+    
+    Rewrite logic for detecting completely clipped editable areas (that formerly lived in
+    isTransparentOrFullyClippedRespectingParentFrames) to use computeVisibleRectInContainer instead.
+    
+    * rendering/RenderObject.h:
+    
+    Source/WebKit:
+    
+    Adjust isTransparentOrFullyClipped to use the new methods in RenderLayer and RenderObject. See WebCore ChangeLog
+    for more details.
+    
+    * WebProcess/WebPage/ios/WebPageIOS.mm:
+    (WebKit::WebPage::isTransparentOrFullyClipped const):
+    
+    LayoutTests:
+    
+    Add a new layout test that covers this scenario. See WebCore ChangeLog for additional detail.
+    
+    * editing/selection/ios/show-selection-in-transformed-container-2-expected.txt: Added.
+    * editing/selection/ios/show-selection-in-transformed-container-2.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249339 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-30  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            Caret does not appear in text field inside a transformed, overflow: hidden container
+            https://bugs.webkit.org/show_bug.cgi?id=201317
+            <rdar://problem/54859264>
+
+            Reviewed by Simon Fraser.
+
+            Add a new layout test that covers this scenario. See WebCore ChangeLog for additional detail.
+
+            * editing/selection/ios/show-selection-in-transformed-container-2-expected.txt: Added.
+            * editing/selection/ios/show-selection-in-transformed-container-2.html: Added.
+
+2019-09-03  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249296. rdar://problem/55001174
+
+    [iOS 13] Caret does not appear in text field if the body element is translated completely out of the viewport
+    https://bugs.webkit.org/show_bug.cgi?id=201287
+    <rdar://problem/54780864>
+    
+    Reviewed by Tim Horton.
+    
+    Source/WebKit:
+    
+    During EditorState computation, we use the hidden editable element heuristic to determine whether we should
+    begin suppressing selection gestures and UI. Currently, we use the editable root of the selection range to
+    determine where in the layer tree we should start our ascent, in search of a completely transparent or
+    completely clipped container.
+    
+    However, in the case where the selection is inside a focused text field, this causes us to walk up the layer
+    tree starting at the RenderLayer corresponding to the text field's inner contenteditable div, which is different
+    than the text field's enclosing RenderLayer in the case where the containing block is transformed, such that no
+    part of it is within the visible viewport. This scenario is exercised by the below test case, in which the caret
+    after transforming the body horizontally by -100vw is hidden due to a false positive in the hidden editable area
+    heuristic.
+    
+    Fix this by starting the layer tree ascent from the enclosing layer of the text form control if applicable,
+    instead of the inner editable area under the shadow root of the form control.
+    
+    Test: editing/selection/ios/show-selection-in-transformed-container.html
+    
+    * WebProcess/WebPage/ios/WebPageIOS.mm:
+    (WebKit::WebPage::platformEditorState const):
+    
+    LayoutTests:
+    
+    Add a new layout test that covers this scenario. See WebKit ChangeLog for additional detail.
+    
+    * editing/selection/ios/show-selection-in-transformed-container-expected.txt: Added.
+    * editing/selection/ios/show-selection-in-transformed-container.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249296 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-29  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [iOS 13] Caret does not appear in text field if the body element is translated completely out of the viewport
+            https://bugs.webkit.org/show_bug.cgi?id=201287
+            <rdar://problem/54780864>
+
+            Reviewed by Tim Horton.
+
+            Add a new layout test that covers this scenario. See WebKit ChangeLog for additional detail.
+
+            * editing/selection/ios/show-selection-in-transformed-container-expected.txt: Added.
+            * editing/selection/ios/show-selection-in-transformed-container.html: Added.
+
+2019-09-03  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249026. rdar://problem/55001375
+
+    Crash may happen when an SVG <feImage> element references the root <svg> element
+    https://bugs.webkit.org/show_bug.cgi?id=201014
+    
+    Reviewed by Ryosuke Niwa.
+    
+    Source/WebCore:
+    
+    When an <feImage> references an <svg> element as its target image but
+    this <svg> element is also one of the ancestors of the <feImage>, the
+    parent <filter> should not be applied.
+    
+    Test: svg/filters/filter-image-ref-root.html
+    
+    * svg/SVGFEImageElement.cpp:
+    (WebCore::SVGFEImageElement::build const):
+    
+    LayoutTests:
+    
+    Ensure the cyclic reference between the <feImage> renderer and its
+    ancestor <svg> root renderer is broken.
+    
+    * svg/filters/filter-image-ref-root-expected.txt: Added.
+    * svg/filters/filter-image-ref-root.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249026 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-22  Said Abou-Hallawa  <sabouhallawa@apple.com>
+
+            Crash may happen when an SVG <feImage> element references the root <svg> element
+            https://bugs.webkit.org/show_bug.cgi?id=201014
+
+            Reviewed by Ryosuke Niwa.
+
+            Ensure the cyclic reference between the <feImage> renderer and its
+            ancestor <svg> root renderer is broken.
+
+            * svg/filters/filter-image-ref-root-expected.txt: Added.
+            * svg/filters/filter-image-ref-root.html: Added.
+
+2019-08-28  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249156. rdar://problem/54775048
+
+    Crash under WebCore::jsNotificationConstructorPermission
+    https://bugs.webkit.org/show_bug.cgi?id=201186
+    <rdar://problem/53962833>
+    
+    Reviewed by Youenn Fablet.
+    
+    Source/WebCore:
+    
+    Update the Notification API implementation to null-check the page before using. The page becomes null
+    when using the API in a frame that gets detached from its parent while in the middle of running
+    script.
+    
+    Test: http/tests/notifications/request-in-detached-frame.html
+    
+    * Modules/notifications/Notification.cpp:
+    (WebCore::Notification::permission):
+    (WebCore::Notification::requestPermission):
+    
+    LayoutTests:
+    
+    Add layout test coverage.
+    
+    * http/tests/notifications/request-in-detached-frame-expected.txt: Added.
+    * http/tests/notifications/request-in-detached-frame.html: Added.
+    * http/tests/notifications/resources/request-in-detached-frame-subframe.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249156 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-27  Chris Dumez  <cdumez@apple.com>
+
+            Crash under WebCore::jsNotificationConstructorPermission
+            https://bugs.webkit.org/show_bug.cgi?id=201186
+            <rdar://problem/53962833>
+
+            Reviewed by Youenn Fablet.
+
+            Add layout test coverage.
+
+            * http/tests/notifications/request-in-detached-frame-expected.txt: Added.
+            * http/tests/notifications/request-in-detached-frame.html: Added.
+            * http/tests/notifications/resources/request-in-detached-frame-subframe.html: Added.
+
 2019-08-27  Ryan Haddad  <ryanhaddad@apple.com>
 
         Revert r249166. rdar://problem/53829560
@@ -75,6 +2334,17 @@
     (WebCore::FullscreenManager::clear):
     (WebCore::FullscreenManager::fullscreenElementRemoved): Deleted.
     * dom/FullscreenManager.h:
+2019-09-06  Simon Fraser  <simon.fraser@apple.com>
+
+        REGRESSION (iOS 13): If an overflow:hidden with a non-zero scroll position is toggled to overflow:scroll, some other scroll causes its scroll position to get reset
+        https://bugs.webkit.org/show_bug.cgi?id=201528
+        rdar://problem/55044885
+
+        Reviewed by Frédéric Wang.
+
+        * scrollingcoordinator/ios/scroller-initial-scroll-position-expected.html: Added.
+        * scrollingcoordinator/ios/scroller-initial-scroll-position.html: Added.
+
     
     Source/WebKit:
     

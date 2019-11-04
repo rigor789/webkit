@@ -1049,14 +1049,28 @@ void WebPageProxy::maybeInitializeSandboxExtensionHandle(WebProcessProxy& proces
     if (!url.isLocalFile())
         return;
 
+#if HAVE(SANDBOX_ISSUE_READ_EXTENSION_TO_PROCESS_BY_PID)
+    // If the process is still launching then it does not have a PID yet. We will take care of creating the sandbox extension
+    // once the process has finished launching.
+    if (process.isLaunching())
+        return;
+#endif
+
     if (!resourceDirectoryURL.isEmpty()) {
         if (process.hasAssumedReadAccessToURL(resourceDirectoryURL))
             return;
 
-        if (SandboxExtension::createHandle(resourceDirectoryURL.fileSystemPath(), SandboxExtension::Type::ReadOnly, sandboxExtensionHandle)) {
-            m_process->assumeReadAccessToBaseURL(*this, resourceDirectoryURL);
+#if HAVE(SANDBOX_ISSUE_READ_EXTENSION_TO_PROCESS_BY_PID)
+        if (SandboxExtension::createHandleForReadByPid(resourceDirectoryURL.fileSystemPath(), process.processIdentifier(), sandboxExtensionHandle)) {
+            process.assumeReadAccessToBaseURL(*this, resourceDirectoryURL);
             return;
         }
+#else
+        if (SandboxExtension::createHandle(resourceDirectoryURL.fileSystemPath(), SandboxExtension::Type::ReadOnly, sandboxExtensionHandle)) {
+            process.assumeReadAccessToBaseURL(*this, resourceDirectoryURL);
+            return;
+        }
+#endif
     }
 
     if (process.hasAssumedReadAccessToURL(url))
@@ -1070,11 +1084,12 @@ void WebPageProxy::maybeInitializeSandboxExtensionHandle(WebProcessProxy& proces
         willAcquireUniversalFileReadSandboxExtension(process);
         return;
     }
-#endif
+#else
     if (SandboxExtension::createHandle("/", SandboxExtension::Type::ReadOnly, sandboxExtensionHandle)) {
         willAcquireUniversalFileReadSandboxExtension(process);
         return;
     }
+#endif
 
 #if PLATFORM(COCOA)
     if (!linkedOnOrAfter(SDKVersion::FirstWithoutUnconditionalUniversalSandboxExtension))
@@ -1084,8 +1099,15 @@ void WebPageProxy::maybeInitializeSandboxExtensionHandle(WebProcessProxy& proces
     // We failed to issue an universal file read access sandbox, fall back to issuing one for the base URL instead.
     auto baseURL = URL(URL(), url.baseAsString());
     auto basePath = baseURL.fileSystemPath();
-    if (!basePath.isNull() && SandboxExtension::createHandle(basePath, SandboxExtension::Type::ReadOnly, sandboxExtensionHandle))
-        m_process->assumeReadAccessToBaseURL(*this, baseURL);
+    if (basePath.isNull())
+        return;
+#if HAVE(SANDBOX_ISSUE_READ_EXTENSION_TO_PROCESS_BY_PID)
+    if (SandboxExtension::createHandleForReadByPid(basePath, process.processIdentifier(), sandboxExtensionHandle))
+        process.assumeReadAccessToBaseURL(*this, baseURL);
+#else
+    if (SandboxExtension::createHandle(basePath, SandboxExtension::Type::ReadOnly, sandboxExtensionHandle))
+        process.assumeReadAccessToBaseURL(*this, baseURL);
+#endif
 }
 
 #if !PLATFORM(COCOA)
@@ -1143,7 +1165,14 @@ void WebPageProxy::loadRequestWithNavigationShared(Ref<WebProcessProxy>&& proces
 
     addPlatformLoadParameters(loadParameters);
 
+#if HAVE(SANDBOX_ISSUE_READ_EXTENSION_TO_PROCESS_BY_PID)
+    if (!process->isLaunching() || !url.isLocalFile())
+        process->send(Messages::WebPage::LoadRequest(loadParameters), m_pageID);
+    else
+        process->send(Messages::WebPage::LoadRequestWaitingForPID(loadParameters, m_pageLoadState.resourceDirectoryURL(), m_pageID), m_pageID);
+#else
     process->send(Messages::WebPage::LoadRequest(loadParameters), m_pageID);
+#endif
     process->responsivenessTimer().start();
 }
 
@@ -1182,21 +1211,22 @@ RefPtr<API::Navigation> WebPageProxy::loadFile(const String& fileURLString, cons
 
     m_pageLoadState.setPendingAPIRequest(transaction, { navigation->navigationID(), fileURLString }, resourceDirectoryURL);
 
-    String resourceDirectoryPath = resourceDirectoryURL.fileSystemPath();
-
     LoadParameters loadParameters;
     loadParameters.navigationID = navigation->navigationID();
     loadParameters.request = fileURL;
     loadParameters.shouldOpenExternalURLsPolicy = ShouldOpenExternalURLsPolicy::ShouldNotAllow;
     loadParameters.userData = UserData(process().transformObjectsToHandles(userData).get());
-#if HAVE(SANDBOX_ISSUE_READ_EXTENSION_TO_PROCESS_BY_PID)
-    if (!SandboxExtension::createHandleForReadByPid(resourceDirectoryPath, processIdentifier(), loadParameters.sandboxExtensionHandle))
-#endif
-    SandboxExtension::createHandle(resourceDirectoryPath, SandboxExtension::Type::ReadOnly, loadParameters.sandboxExtensionHandle);
+    maybeInitializeSandboxExtensionHandle(m_process, fileURL, resourceDirectoryURL, loadParameters.sandboxExtensionHandle);
     addPlatformLoadParameters(loadParameters);
 
-    m_process->assumeReadAccessToBaseURL(*this, resourceDirectoryURL);
+#if HAVE(SANDBOX_ISSUE_READ_EXTENSION_TO_PROCESS_BY_PID)
+    if (m_process->isLaunching())
+        m_process->send(Messages::WebPage::LoadRequestWaitingForPID(loadParameters, resourceDirectoryURL, m_pageID), m_pageID);
+    else
+        m_process->send(Messages::WebPage::LoadRequest(loadParameters), m_pageID);
+#else
     m_process->send(Messages::WebPage::LoadRequest(loadParameters), m_pageID);
+#endif
     m_process->responsivenessTimer().start();
 
     return navigation;
@@ -1678,13 +1708,19 @@ void WebPageProxy::setSuppressVisibilityUpdates(bool flag)
 
 void WebPageProxy::updateActivityState(OptionSet<ActivityState::Flag> flagsToUpdate)
 {
+    bool wasVisible = isViewVisible();
     m_activityState.remove(flagsToUpdate);
     if (flagsToUpdate & ActivityState::IsFocused && pageClient().isViewFocused())
         m_activityState.add(ActivityState::IsFocused);
     if (flagsToUpdate & ActivityState::WindowIsActive && pageClient().isViewWindowActive())
         m_activityState.add(ActivityState::WindowIsActive);
-    if (flagsToUpdate & ActivityState::IsVisible && pageClient().isViewVisible())
-        m_activityState.add(ActivityState::IsVisible);
+    if (flagsToUpdate & ActivityState::IsVisible) {
+        bool isNowVisible = pageClient().isViewVisible();
+        if (isNowVisible)
+            m_activityState.add(ActivityState::IsVisible);
+        if (wasVisible != isNowVisible)
+            RELEASE_LOG_IF_ALLOWED(ViewState, "updateActivityState: view visibility state changed %d -> %d", wasVisible, isNowVisible);
+    }
     if (flagsToUpdate & ActivityState::IsVisibleOrOccluded && pageClient().isViewVisibleOrOccluded())
         m_activityState.add(ActivityState::IsVisibleOrOccluded);
     if (flagsToUpdate & ActivityState::IsInWindow && pageClient().isViewInWindow())
@@ -7639,7 +7675,7 @@ void WebPageProxy::updateWebsitePolicies(WebsitePoliciesData&& websitePolicies)
 
 void WebPageProxy::didFinishLoadingDataForCustomContentProvider(const String& suggestedFilename, const IPC::DataReference& dataReference)
 {
-    pageClient().didFinishLoadingDataForCustomContentProvider(suggestedFilename, dataReference);
+    pageClient().didFinishLoadingDataForCustomContentProvider(ResourceResponseBase::sanitizeSuggestedFilename(suggestedFilename), dataReference);
 }
 
 void WebPageProxy::backForwardRemovedItem(const BackForwardItemIdentifier& itemID)
@@ -7754,15 +7790,16 @@ void WebPageProxy::updateBackingStoreDiscardableState()
 
 void WebPageProxy::saveDataToFileInDownloadsFolder(String&& suggestedFilename, String&& mimeType, URL&& originatingURLString, API::Data& data)
 {
-    m_uiClient->saveDataToFileInDownloadsFolder(this, suggestedFilename, mimeType, originatingURLString, data);
+    m_uiClient->saveDataToFileInDownloadsFolder(this, ResourceResponseBase::sanitizeSuggestedFilename(suggestedFilename), mimeType, originatingURLString, data);
 }
 
 void WebPageProxy::savePDFToFileInDownloadsFolder(String&& suggestedFilename, URL&& originatingURL, const IPC::DataReference& dataReference)
 {
-    if (!suggestedFilename.endsWithIgnoringASCIICase(".pdf"))
+    String sanitizedFilename = ResourceResponseBase::sanitizeSuggestedFilename(suggestedFilename);
+    if (!sanitizedFilename.endsWithIgnoringASCIICase(".pdf"))
         return;
 
-    saveDataToFileInDownloadsFolder(WTFMove(suggestedFilename), "application/pdf"_s, WTFMove(originatingURL),
+    saveDataToFileInDownloadsFolder(WTFMove(sanitizedFilename), "application/pdf"_s, WTFMove(originatingURL),
         API::Data::create(dataReference.data(), dataReference.size()).get());
 }
 
@@ -8238,7 +8275,9 @@ void WebPageProxy::updatePlayingMediaDidChange(MediaProducer::MediaStateFlags ne
 #if ENABLE(MEDIA_STREAM)
     if (oldMediaCaptureState != newMediaCaptureState) {
         m_uiClient->mediaCaptureStateDidChange(m_mediaState);
-        m_userMediaPermissionRequestManager->captureStateChanged(oldMediaCaptureState, newMediaCaptureState);
+        ASSERT(m_userMediaPermissionRequestManager);
+        if (m_userMediaPermissionRequestManager)
+            m_userMediaPermissionRequestManager->captureStateChanged(oldMediaCaptureState, newMediaCaptureState);
     }
 #endif
 

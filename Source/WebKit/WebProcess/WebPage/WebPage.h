@@ -1281,6 +1281,7 @@ private:
 #if PLATFORM(IOS_FAMILY) && ENABLE(DATA_INTERACTION)
     void requestDragStart(const WebCore::IntPoint& clientPosition, const WebCore::IntPoint& globalPosition, uint64_t allowedActions);
     void requestAdditionalItemsForDragSession(const WebCore::IntPoint& clientPosition, const WebCore::IntPoint& globalPosition, uint64_t allowedActions);
+    void insertDroppedImagePlaceholders(const Vector<WebCore::IntSize>&, CompletionHandler<void(const Vector<WebCore::IntRect>&, Optional<WebCore::TextIndicatorData>)>&& reply);
     void computeAndSendEditDragSnapshot();
 #endif
 
@@ -1309,6 +1310,7 @@ private:
     void tryClose();
     void platformDidReceiveLoadParameters(const LoadParameters&);
     void loadRequest(LoadParameters&&);
+    NO_RETURN void loadRequestWaitingForPID(LoadParameters&&, URL&&, WebCore::PageIdentifier);
     void loadData(LoadParameters&&);
     void loadAlternateHTML(LoadParameters&&);
     void navigateToPDFLinkWithSimulatedClick(const String& url, WebCore::IntPoint documentPoint, WebCore::IntPoint screenPoint);
