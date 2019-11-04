@@ -1553,6 +1553,12 @@ void WebPage::loadRequest(LoadParameters&& loadParameters)
     ASSERT(!m_pendingWebsitePolicies);
 }
 
+// LoadRequestWaitingForPID should never be sent to the WebProcess. It must always be converted to a LoadRequest message.
+NO_RETURN void WebPage::loadRequestWaitingForPID(LoadParameters&&, URL&&, PageIdentifier)
+{
+    RELEASE_ASSERT_NOT_REACHED();
+}
+
 void WebPage::loadDataImpl(uint64_t navigationID, bool shouldTreatAsContinuingLoad, Optional<WebsitePoliciesData>&& websitePolicies, Ref<SharedBuffer>&& sharedBuffer, const String& MIMEType, const String& encodingName, const URL& baseURL, const URL& unreachableURL, const UserData& userData, ShouldOpenExternalURLsPolicy shouldOpenExternalURLsPolicy)
 {
     SendStopResponsivenessTimer stopper;
@@ -2521,17 +2527,17 @@ const WebEvent* WebPage::currentEvent()
 
 void WebPage::freezeLayerTree(LayerTreeFreezeReason reason)
 {
-    RELEASE_LOG(ProcessSuspension, "%p - WebPage (PageID=%llu) - Adding a reason %d to freeze layer tree; current reasons are %d",
-        this, m_pageID.toUInt64(), static_cast<unsigned>(reason), m_layerTreeFreezeReasons.toRaw());
+    auto oldReasons = m_layerTreeFreezeReasons.toRaw();
     m_layerTreeFreezeReasons.add(reason);
+    RELEASE_LOG(ProcessSuspension, "%p - WebPage (PageID=%llu) - Adding a reason %d to freeze layer tree (now %d); old reasons were %d", this, pageID().toUInt64(), static_cast<unsigned>(reason), m_layerTreeFreezeReasons.toRaw(), oldReasons);
     updateDrawingAreaLayerTreeFreezeState();
 }
 
 void WebPage::unfreezeLayerTree(LayerTreeFreezeReason reason)
 {
-    RELEASE_LOG(ProcessSuspension, "%p - WebPage (PageID=%llu) - Removing a reason %d to freeze layer tree; current reasons are %d",
-        this, m_pageID.toUInt64(), static_cast<unsigned>(reason), m_layerTreeFreezeReasons.toRaw());
+    auto oldReasons = m_layerTreeFreezeReasons.toRaw();
     m_layerTreeFreezeReasons.remove(reason);
+    RELEASE_LOG(ProcessSuspension, "%p - WebPage (PageID=%llu) - Removing a reason %d to freeze layer tree (now %d); old reasons were %d", this, pageID().toUInt64(), static_cast<unsigned>(reason), m_layerTreeFreezeReasons.toRaw(), oldReasons);
     updateDrawingAreaLayerTreeFreezeState();
 }
 
@@ -4699,6 +4705,14 @@ void WebPage::beginPrinting(uint64_t frameID, const PrintInfo& printInfo)
     auto computedPageSize = m_printContext->computedPageSize(FloatSize(printInfo.availablePaperWidth, printInfo.availablePaperHeight), printInfo.margin);
     m_printContext->begin(computedPageSize.width(), computedPageSize.height());
 
+    // PrintContext::begin() performed a synchronous layout which might have executed a
+    // script that closed the WebPage, clearing m_printContext.
+    // See <rdar://problem/49731211> for cases of this happening.
+    if (!m_printContext) {
+        unfreezeLayerTree(LayerTreeFreezeReason::Printing);
+        return;
+    }
+
     float fullPageHeight;
     m_printContext->computePageRects(FloatRect(0, 0, computedPageSize.width(), computedPageSize.height()), 0, 0, printInfo.pageSetupScaleFactor, fullPageHeight, true);
 
@@ -5731,7 +5745,8 @@ void WebPage::didReplaceMultipartContent(const WebFrame& frame)
 void WebPage::didCommitLoad(WebFrame* frame)
 {
 #if PLATFORM(IOS_FAMILY)
-    frame->setFirstLayerTreeTransactionIDAfterDidCommitLoad(downcast<RemoteLayerTreeDrawingArea>(*m_drawingArea).nextTransactionID());
+    auto firstTransactionIDAfterDidCommitLoad = downcast<RemoteLayerTreeDrawingArea>(*m_drawingArea).nextTransactionID();
+    frame->setFirstLayerTreeTransactionIDAfterDidCommitLoad(firstTransactionIDAfterDidCommitLoad);
     cancelPotentialTapInFrame(*frame);
 #endif
     resetFocusedElementForFrame(frame);
@@ -5765,6 +5780,7 @@ void WebPage::didCommitLoad(WebFrame* frame)
 #if PLATFORM(IOS_FAMILY)
     m_hasReceivedVisibleContentRectsAfterDidCommitLoad = false;
     m_hasRestoredExposedContentRectAfterDidCommitLoad = false;
+    m_lastTransactionIDWithScaleChange = firstTransactionIDAfterDidCommitLoad;
     m_scaleWasSetByUIProcess = false;
     m_userHasChangedPageScaleFactor = false;
     m_estimatedLatency = Seconds(1.0 / 60);
@@ -6539,7 +6555,17 @@ void WebPage::hasStorageAccess(RegistrableDomain&& subFrameDomain, RegistrableDo
 
 void WebPage::requestStorageAccess(RegistrableDomain&& subFrameDomain, RegistrableDomain&& topFrameDomain, uint64_t frameID, CompletionHandler<void(WebCore::StorageAccessWasGranted, WebCore::StorageAccessPromptWasShown)>&& completionHandler)
 {
-    WebProcess::singleton().ensureNetworkProcessConnection().connection().sendWithAsyncReply(Messages::NetworkConnectionToWebProcess::RequestStorageAccess(sessionID(), WTFMove(subFrameDomain), WTFMove(topFrameDomain), frameID, m_pageID), WTFMove(completionHandler));
+    auto* frame = frameID ? WebProcess::singleton().webFrame(frameID) : nullptr;
+    if (!frame)
+        return completionHandler(WebCore::StorageAccessWasGranted::No, WebCore::StorageAccessPromptWasShown::No);
+    
+    WebProcess::singleton().ensureNetworkProcessConnection().connection().sendWithAsyncReply(Messages::NetworkConnectionToWebProcess::RequestStorageAccess(sessionID(), WTFMove(subFrameDomain), WTFMove(topFrameDomain), frameID, m_pageID), [completionHandler = WTFMove(completionHandler), frame = makeRef(*frame), sessionID = sessionID(), pageID = m_pageID](StorageAccessWasGranted wasGranted, WebCore::StorageAccessPromptWasShown promptWasShown) mutable {
+        if (wasGranted == StorageAccessWasGranted::Yes) {
+            if (auto* frameLoaderClient = frame->frameLoaderClient())
+                frameLoaderClient->setHasFrameSpecificStorageAccess({ sessionID, frame->frameID(), pageID });
+        }
+        completionHandler(wasGranted, promptWasShown);
+    });
 }
 
 void WebPage::wasLoadedWithDataTransferFromPrevalentResource()

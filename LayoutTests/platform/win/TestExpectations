@@ -142,6 +142,15 @@ http/tests/misc/willCacheResponse-delegate-callback.html [ Skip ]
 # testRunner.setAlwaysAcceptCookies() is not implemented on Windows.
 http/tests/xmlhttprequest/cross-origin-cookie-storage.html [ Skip ]
 
+# testRunner.setStatisticsShouldDowngradeReferrer() is not supported on Windows
+http/tests/security/contentSecurityPolicy/report-cross-origin-no-cookies.php [ Skip ] 
+http/tests/security/contentSecurityPolicy/report-cross-origin-no-cookies-when-private-browsing-enabled.php [ Skip ] 
+http/tests/navigation/ping-attribute/area-cross-origin.html [ Skip ] 
+http/tests/navigation/ping-attribute/anchor-cross-origin.html [ Skip ] 
+http/tests/referrer-policy/no-referrer-when-downgrade/ [ Skip ] 
+http/tests/referrer-policy/unsafe-url/cross-origin-http-http.html [ Skip ] 
+http/tests/referrer-policy/unsafe-url/cross-origin-http.https.html [ Skip ] 
+
 # Dark mode not supported on Windows
 css-dark-mode [ Skip ]
 
@@ -1701,6 +1710,7 @@ webkit.org/b/184676 accessibility/ARIA-reflection.html [ Skip ]
 # Not implemented on Win
 accessibility/insert-newline.html [ Skip ]
 accessibility/media-with-aria-label.html [ Skip ]
+accessibility/misspelling-range.html [ Skip ]
 
 ################################################################################
 #######################   End Accessibility Issues   ###########################
@@ -2285,8 +2295,10 @@ http/tests/security/cross-frame-access-protocol-explicit-domain.html [ Skip ] # 
 http/tests/history/back-during-onload-triggered-by-back.html [ Skip ] # Timeout
 
 # FIXME: Navigating to blob URLs timeout
+fast/frames/restoring-page-cache-should-not-run-scripts.html [ Skip ]
 http/tests/security/mixedContent/blob-url-in-iframe.html [ Skip ]
 http/tests/security/contentSecurityPolicy/navigate-self-to-blob.html [ Skip ]
+fast/frames/restoring-page-cache-should-not-run-scripts-via-style-update.html [ Skip ]
 
 # Clear Key not implemented
 http/tests/media/clearkey/clear-key-hls-aes128.html [ Skip ] # Timeout
