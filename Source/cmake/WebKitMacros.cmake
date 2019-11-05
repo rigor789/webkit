@@ -326,11 +326,12 @@ function(WEBKIT_MAKE_FORWARDING_HEADERS framework)
             file(MAKE_DIRECTORY ${opt_DESTINATION}/${header_dir})
             set(fwd_header ${opt_DESTINATION}/${header})
         endif ()
-        add_custom_command(OUTPUT ${fwd_header}
-            COMMAND ${CMAKE_COMMAND} -E copy ${src_header} ${fwd_header}
-            MAIN_DEPENDENCY ${header}
-            VERBATIM
-        )
+        # Do not copy files, in {N} we've reverted to the old way of generating them (copying them breaks #pragma once and causes duplicate definitions)
+        # add_custom_command(OUTPUT ${fwd_header}
+        #     COMMAND ${CMAKE_COMMAND} -E copy ${src_header} ${fwd_header}
+        #     MAIN_DEPENDENCY ${header}
+        #     VERBATIM
+        # )
         list(APPEND fwd_headers ${fwd_header})
     endforeach ()
     if (opt_TARGET_NAME)
