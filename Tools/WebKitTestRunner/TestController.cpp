@@ -1398,6 +1398,8 @@ static void updateTestOptionsFromTestHeader(TestOptions& testOptions, const std:
             testOptions.enableAppNap = parseBooleanTestHeaderValue(value);
         else if (key == "enablePageCache")
             testOptions.enablePageCache = parseBooleanTestHeaderValue(value);
+        else if (key == "allowsLinkPreview")
+            testOptions.allowsLinkPreview = parseBooleanTestHeaderValue(value);
         pairStart = pairEnd + 1;
     }
 }
@@ -3509,6 +3511,15 @@ void TestController::setStatisticsCacheMaxAgeCap(double seconds)
     ResourceStatisticsCallbackContext context(*this);
     WKWebsiteDataStoreSetStatisticsCacheMaxAgeCap(dataStore, seconds, &context, resourceStatisticsVoidResultCallback);
     runUntil(context.done, noTimeout);
+}
+
+void TestController::setStatisticsShouldDowngradeReferrer(bool value)
+{
+    auto* dataStore = WKContextGetWebsiteDataStore(platformContext());
+    ResourceStatisticsCallbackContext context(*this);
+    WKWebsiteDataStoreSetResourceLoadStatisticsShouldDowngradeReferrerForTesting(dataStore, value, &context, resourceStatisticsVoidResultCallback);
+    runUntil(context.done, noTimeout);
+    m_currentInvocation->didSetShouldDowngradeReferrer();
 }
 
 void TestController::statisticsResetToConsistentState()
