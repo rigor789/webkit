@@ -58,8 +58,11 @@ void JSGlobalObjectScriptDebugServer::runEventLoopWhilePaused()
     JSC::JSLock::DropAllLocks dropAllLocks(&m_globalObject.vm());
 
     EventLoop loop;
-    while (!m_doneProcessingDebuggerEvents && !loop.ended())
+    while (!m_doneProcessingDebuggerEvents && !loop.ended()) {
         loop.cycle();
+        // Sleep for 1ms to not take up 100% CPU while we are paused
+        usleep(1 * 1000);
+    }
 }
 
 } // namespace Inspector
