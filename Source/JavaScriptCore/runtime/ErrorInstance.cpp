@@ -113,7 +113,7 @@ static void appendSourceToError(CallFrame* callFrame, ErrorInstance* exception, 
 JSFunction* ErrorInstance::getPrepareStackTraceFunction(ExecState* exec, VM& vm)
 {
     JSGlobalObject* globalObject = exec->lexicalGlobalObject();
-    auto error = globalObject->getDirect(vm, vm.propertyNames->Error).toObject(exec);
+    auto error = globalObject->errorConstructor();
     JSValue functionValue = error->getDirect(vm, JSC::Identifier::fromString(&vm, "prepareStackTrace"));
     if (functionValue.isEmpty() || !functionValue.isFunction(vm)) {
         return nullptr;
