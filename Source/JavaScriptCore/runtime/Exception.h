@@ -31,9 +31,9 @@
 
 namespace JSC {
     
-class Exception final : public JSCell {
+class Exception final : public JSDestructibleObject {
 public:
-    using Base = JSCell;
+    using Base = JSDestructibleObject;
     static const unsigned StructureFlags = Base::StructureFlags | StructureIsImmortal;
     static const bool needsDestruction = true;
 
