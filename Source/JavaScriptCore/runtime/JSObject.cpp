@@ -528,7 +528,7 @@ String JSObject::calculatedClassName(JSObject* object)
 {
     String constructorFunctionName;
     auto* structure = object->structure();
-    auto* globalObject = structure->globalObject();
+    auto* globalObject = object->globalObject();
     VM& vm = globalObject->vm();
     auto scope = DECLARE_CATCH_SCOPE(vm);
     auto* exec = globalObject->globalExec();
@@ -3973,19 +3973,19 @@ JSGlobalObject* JSObject::globalObjectWithFallback(VM& vm, Structure *structure)
 {
     auto *global = structure->globalObject();
     
-//    if (!global) {
-//        // Because of the $__nsException property, the debugger will
-//        // attempt to retrieve an Exception object's className when
-//        // inspecting any JS Error object. Exception's structure however
-//        // has a nullptr GlobalObject. In order to avoid returning null
-//        // we fallback to getting the global object of the wrapper
-//        // JS Error object. This should be the only valid case when we reach here.
-//        auto *exception = jsDynamicCast<const Exception*>(vm, this);
-//        ASSERT(exception);
-//        if (exception && exception->value().structureOrNull()) {
-//            global = exception->value().structureOrNull()->globalObject();
-//        }
-//    }
+    if (!global) {
+        // Because of the $__nsException property, the debugger will
+        // attempt to retrieve an Exception object's className when
+        // inspecting any JS Error object. Exception's structure however
+        // has a nullptr GlobalObject. In order to avoid returning null
+        // we fallback to getting the global object of the wrapper
+        // JS Error object. This should be the only valid case when we reach here.
+        auto *exception = jsDynamicCast<const Exception*>(vm, this);
+        ASSERT(exception);
+        if (exception && exception->value().structureOrNull()) {
+            global = exception->value().structureOrNull()->globalObject();
+        }
+    }
     ASSERT(global);
     ASSERT(!isGlobalObject() || ((JSObject*)global) == this);
     return global;
