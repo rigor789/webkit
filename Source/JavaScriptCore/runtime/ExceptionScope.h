@@ -58,7 +58,7 @@ public:
     ALWAYS_INLINE void assertNoException() { RELEASE_ASSERT_WITH_MESSAGE(!exception(), "%s", unexpectedExceptionMessage().data()); }
     ALWAYS_INLINE void releaseAssertNoException() { RELEASE_ASSERT_WITH_MESSAGE(!exception(), "%s", unexpectedExceptionMessage().data()); }
 
-#if ASAN_ENABLED || ENABLE(C_LOOP)
+#if !defined NDEBUG && (ASAN_ENABLED || ENABLE(C_LOOP))
     const void* stackPosition() const {  return m_location.stackPosition; }
 #else
     const void* stackPosition() const {  return this; }
