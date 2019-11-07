@@ -191,6 +191,80 @@
                 { "name": "hasExecuted", "type": "boolean", "description": "Indicates if the basic block has executed before." },
                 { "name": "executionCount", "type": "integer", "description": "Indicates how many times the basic block has executed." }
             ]
+        },
+        {
+            "id": "ScriptId",
+            "type": "string",
+            "description": "Unique script identifier."
+        },
+        {
+            "id": "ExceptionDetails",
+            "type": "object",
+            "experimental": true,
+            "description": "Detailed information about exception (or error) that was thrown during script compilation or execution.",
+            "properties": [
+                { "name": "exceptionId", "type": "integer", "description": "Exception id." },
+                { "name": "text", "type": "string", "description": "Exception text, which should be used together with exception object when available." },
+                { "name": "lineNumber", "type": "integer", "description": "Line number of the exception location (0-based)." },
+                { "name": "columnNumber", "type": "integer", "description": "Column number of the exception location (0-based)." },
+                { "name": "scriptId", "$ref": "ScriptId", "optional": true, "description": "Script ID of the exception location." },
+                { "name": "url", "type": "string", "optional": true, "description": "URL of the exception location, to be used when the script was not reported." },
+                { "name": "stackTrace", "$ref": "StackTrace", "optional": true, "description": "JavaScript stack trace if available." },
+                { "name": "exception", "$ref": "RemoteObject", "optional": true, "description": "Exception object if available." },
+                { "name": "executionContextId", "$ref": "ExecutionContextId", "optional": true, "description": "Identifier of the context where exception happened." }
+            ]
+        },
+        {
+            "id": "StackTrace",
+            "type": "object",
+            "description": "Call frames for assertions or error messages.",
+            "exported": true,
+            "properties": [
+                { "name": "description", "type": "string", "optional": true, "description": "String label of this stack trace. For async traces this may be a name of the function that initiated the async call." },
+                { "name": "callFrames", "type": "array", "items": { "$ref": "CallFrame" }, "description": "JavaScript function name." },
+                { "name": "parent", "$ref": "StackTrace", "optional": true, "experimental": true, "description": "Asynchronous JavaScript stack trace that preceded this stack, if available." }
+            ]
+        },
+        {
+            "id": "CallFrame",
+            "type": "object",
+            "properties": [
+                { "name": "callFrameId", "$ref": "CallFrameId", "description": "Call frame identifier. This identifier is only valid while the virtual machine is paused." },
+                { "name": "functionName", "type": "string", "description": "Name of the JavaScript function called on this call frame." },
+                { "name": "functionLocation", "$ref": "Location", "optional": true, "experimental": true, "description": "Location in the source code." },
+                { "name": "location", "$ref": "Location", "description": "Location in the source code." },
+                { "name": "scopeChain", "type": "array", "items": { "$ref": "Scope" }, "description": "Scope chain for this call frame." },
+                { "name": "this", "$ref": "Runtime.RemoteObject", "description": "<code>this</code> object for this call frame." },
+                { "name": "returnValue", "$ref": "Runtime.RemoteObject", "optional": true, "experimental": true, "description": "The value being returned, if the function is at return point." }
+            ],
+            "description": "JavaScript call frame. Array of call frames form the call stack."
+        },
+        {
+            "id": "CallFrameId",
+            "type": "string",
+            "description": "Call frame identifier."
+        },
+        {
+            "id": "Location",
+            "type": "object",
+            "properties": [
+                { "name": "scriptId", "$ref": "Runtime.ScriptId", "description": "Script identifier as reported in the <code>Debugger.scriptParsed</code>." },
+                { "name": "lineNumber", "type": "integer", "description": "Line number in the script (0-based)." },
+                { "name": "columnNumber", "type": "integer", "optional": true, "description": "Column number in the script (0-based)." }
+            ],
+            "description": "Location in the source code."
+        },
+        {
+            "id": "Scope",
+            "type": "object",
+            "properties": [
+                { "name": "type", "type": "string", "enum": ["global", "local", "with", "closure", "catch", "block", "script"], "description": "Scope type." },
+                { "name": "object", "$ref": "Runtime.RemoteObject", "description": "Object representing the scope. For <code>global</code> and <code>with</code> scopes it represents the actual object; for the rest of the scopes, it is artificial transient object enumerating scope variables as its properties." },
+                { "name": "name", "type": "string", "optional": true, "experimental": true },
+                { "name": "startLocation", "$ref": "Location", "optional": true, "experimental": true, "description": "Location in the source code where scope starts" },
+                { "name": "endLocation", "$ref": "Location", "optional": true, "experimental": true, "description": "Location in the source code where scope ends" }
+            ],
+            "description": "Scope description."
         }
     ],
     "commands": [
@@ -373,6 +447,21 @@
             "returns": [
                 { "name": "basicBlocks", "type": "array", "items": { "$ref": "BasicBlock", "description": "Array of basic blocks." } }
             ]
+        },
+        {
+            "name": "compileScript",
+            "experimental": true,
+            "parameters": [
+                { "name": "expression", "type": "string", "description": "Expression to compile." },
+                { "name": "sourceURL", "type": "string", "description": "Source url to be set for the script." },
+                { "name": "persistScript", "type": "boolean", "description": "Specifies whether the compiled script should be persisted." },
+                { "name": "executionContextId", "$ref": "ExecutionContextId", "optional": true, "description": "Specifies in which execution context to perform script run. If the parameter is omitted the evaluation will be performed in the context of the inspected page." }
+            ],
+            "returns": [
+                { "name": "scriptId", "$ref": "ScriptId", "optional": true, "description": "Id of the script." },
+                { "name": "exceptionDetails", "$ref": "ExceptionDetails", "optional": true, "description": "Exception details."}
+            ],
+            "description": "Compiles expression."
         }
     ],
     "events": [
