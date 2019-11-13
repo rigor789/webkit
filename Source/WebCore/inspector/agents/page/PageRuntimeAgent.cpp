@@ -167,6 +167,7 @@ void PageRuntimeAgent::notifyContextCreated(const String& frameId, JSC::ExecStat
         .setIsPageContext(isPageContext)
         .setName(name)
         .setFrameId(frameId)
+        .setOrigin(name)
         .release());
 }
 
