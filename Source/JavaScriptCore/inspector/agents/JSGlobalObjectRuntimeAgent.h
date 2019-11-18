@@ -46,6 +46,10 @@ public:
     // are sent to the console outside of the API boundary or console object.
     void muteConsole() override { }
     void unmuteConsole() override { }
+    
+    RuntimeFrontendDispatcher* frontendDispatcher() const {
+        return m_frontendDispatcher.get();
+    }
 
 private:
     std::unique_ptr<RuntimeFrontendDispatcher> m_frontendDispatcher;
