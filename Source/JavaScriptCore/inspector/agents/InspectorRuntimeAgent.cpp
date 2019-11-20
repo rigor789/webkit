@@ -410,4 +410,8 @@ void InspectorRuntimeAgent::getBasicBlocks(ErrorString& errorString, const Strin
     }
 }
 
+void InspectorRuntimeAgent::compileScript(ErrorString&, const String& /*in_expression*/, const String& /*in_sourceURL*/, bool /*in_persistScript*/, const int* /*opt_in_executionContextId*/, Optional<String>& /*opt_out_scriptId*/, RefPtr<Inspector::Protocol::Runtime::ExceptionDetails>& /*opt_out_exceptionDetails*/) {
+    
+}
+
 } // namespace Inspector
