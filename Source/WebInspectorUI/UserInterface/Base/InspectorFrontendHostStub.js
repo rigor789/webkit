@@ -193,6 +193,19 @@ if (!window.InspectorFrontendHost) {
             return 1;
         },
 
+        reset: function()
+        {
+        },
+
+        setSheetRect: function()
+        {
+        },
+
+        isRemote: function()
+        {
+            return true;
+        },
+
         // Private
 
         _sendPendingMessagesToBackendIfNeeded: function()
