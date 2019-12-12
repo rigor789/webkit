@@ -78,6 +78,16 @@ void WKContextConfigurationSetIndexedDBDatabaseDirectory(WKContextConfigurationR
     toImpl(configuration)->setIndexedDBDatabaseDirectory(toImpl(indexedDBDatabaseDirectory)->string());
 }
 
+WKArrayRef WKContextConfigurationCopyCustomClassesForParameterCoder(WKContextConfigurationRef configuration)
+{
+    return toAPI(&API::Array::createStringArray(toImpl(configuration)->customClassesForParameterCoder()).leakRef());
+}
+
+void WKContextConfigurationSetCustomClassesForParameterCoder(WKContextConfigurationRef configuration, WKArrayRef classesForCoder)
+{
+    toImpl(configuration)->setCustomClassesForParameterCoder(toImpl(classesForCoder)->toStringVector());
+}
+
 WKStringRef WKContextConfigurationCopyInjectedBundlePath(WKContextConfigurationRef configuration)
 {
     return toCopiedAPI(toImpl(configuration)->injectedBundlePath());
@@ -136,6 +146,16 @@ bool WKContextConfigurationFullySynchronousModeIsAllowedForTesting(WKContextConf
 void WKContextConfigurationSetFullySynchronousModeIsAllowedForTesting(WKContextConfigurationRef configuration, bool allowed)
 {
     toImpl(configuration)->setFullySynchronousModeIsAllowedForTesting(allowed);
+}
+
+bool WKContextConfigurationIgnoreSynchronousMessagingTimeoutsForTesting(WKContextConfigurationRef configuration)
+{
+    return toImpl(configuration)->ignoreSynchronousMessagingTimeoutsForTesting();
+}
+
+void WKContextConfigurationSetIgnoreSynchronousMessagingTimeoutsForTesting(WKContextConfigurationRef configuration, bool ignore)
+{
+    toImpl(configuration)->setIgnoreSynchronousMessagingTimeoutsForTesting(ignore);
 }
 
 WKArrayRef WKContextConfigurationCopyOverrideLanguages(WKContextConfigurationRef configuration)

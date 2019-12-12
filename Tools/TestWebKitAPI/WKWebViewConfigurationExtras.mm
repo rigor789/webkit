@@ -26,8 +26,6 @@
 #import "config.h"
 #import "WKWebViewConfigurationExtras.h"
 
-#if WK_API_ENABLED
-
 #import "PlatformUtilities.h"
 #import <WebKit/WKProcessPoolPrivate.h>
 #import <WebKit/_WKProcessPoolConfiguration.h>
@@ -37,9 +35,16 @@
 
 + (instancetype)_test_configurationWithTestPlugInClassName:(NSString *)className
 {
+    return [WKWebViewConfiguration _test_configurationWithTestPlugInClassName:className configureJSCForTesting:NO andCustomParameterClasses:nil];
+}
+
++ (instancetype)_test_configurationWithTestPlugInClassName:(NSString *)className configureJSCForTesting:(BOOL)value andCustomParameterClasses:(NSSet<Class> *)parameterClasses
+{
     auto processPoolConfiguration = adoptNS([[_WKProcessPoolConfiguration alloc] init]);
     [processPoolConfiguration setInjectedBundleURL:[[NSBundle mainBundle] URLForResource:@"TestWebKitAPI" withExtension:@"wkbundle"]];
-
+    [processPoolConfiguration setConfigureJSCForTesting:value];
+    [processPoolConfiguration setCustomClassesForParameterCoder: parameterClasses];
+    
     auto processPool = adoptNS([[WKProcessPool alloc] _initWithConfiguration:processPoolConfiguration.get()]);
     [processPool _setObject:className forBundleParameter:TestWebKitAPI::Util::TestPlugInClassNameParameter];
 
@@ -49,6 +54,5 @@
     return webViewConfiguration.autorelease();
 }
 
-@end
 
-#endif // WK_API_ENABLED
+@end

@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2009, 2010, 2012 Google Inc. All rights reserved.
 # Copyright (C) 2009 Torch Mobile Inc.
-# Copyright (C) 2009, 2013 Apple Inc. All rights reserved.
+# Copyright (C) 2009-2019 Apple Inc. All rights reserved.
 # Copyright (C) 2010 Chris Jerdonek (cjerdonek@webkit.org)
 #
 # Redistribution and use in source and binary forms, with or without
@@ -1128,7 +1128,7 @@ def check_os_version_checks(filename, clean_lines, line_number, error):
         return
 
     if _RE_PATTERN_XCODE_VERSION_MACRO.match(line):
-        error(line_number, 'build/version_check', 5, 'Misplaced OS version check. Please use a named macro in wtf/Platform.h or wtf/FeatureDefines.h.')
+        error(line_number, 'build/version_check', 5, 'Misplaced OS version check. Please use a named macro in wtf/Platform.h, wtf/FeatureDefines.h, or an appropriate internal file.')
 
 class _ClassInfo(object):
     """Stores information about a class."""
@@ -2104,7 +2104,7 @@ def check_member_initialization_list(clean_lines, line_number, error):
     begin_line = line
     # match the start of initialization list
     if search(r'^(?P<indentation>\s*)((explicit\s+)?[^(\s|\?)]+\([^\?]*\)\s?\:|^(\s|\?)*\:)([^\:]|\Z)[^;]*$', line):
-        if search(r'[^:]\:[^\:\s]+', line):
+        if search(r'[^:]\:[^\:\s]+', line) and not search(r'^\s*:\s\S+', line):
             error(line_number, 'whitespace/init', 4,
                 'Missing spaces around :')
         if (not line.lstrip().startswith(':')) and search(r'[^\s]\(.*\)\s?\:.*[^;]*$', line):
@@ -2513,13 +2513,17 @@ def check_braces(clean_lines, line_number, file_state, error):
         # ')', or ') const' and doesn't begin with 'if|for|while|switch|else'.
         # We also allow '#' for #endif and '=' for array initialization,
         # and '- (' and '+ (' for Objective-C methods.
+        # Also we don't complain if the last non-whitespace character
+        # on the previous non-blank line is '{' because it's likely to
+        # indicate the begining of a nested code block.
         previous_line = get_previous_non_blank_line(clean_lines, line_number)[0]
         if ((not search(r'[;:}{)=]\s*$|\)\s*((const|override|const override|final|const final)\s*)?(->\s*\S+)?\s*$', previous_line)
              or search(r'\b(if|for|while|switch|else|CF_OPTIONS|NS_ENUM|NS_ERROR_ENUM|NS_OPTIONS)\b', previous_line)
              or regex_for_lambdas_and_blocks(previous_line, line_number, file_state, error))
             and previous_line.find('#') < 0
             and previous_line.find('- (') != 0
-            and previous_line.find('+ (') != 0):
+            and previous_line.find('+ (') != 0
+            and not search(r'{\s*$', previous_line)):
             error(line_number, 'whitespace/braces', 4,
                   'This { should be at the end of the previous line')
     elif (search(r'\)\s*(((const|override|final)\s*)*\s*)?{\s*$', line)
@@ -2862,15 +2866,32 @@ def check_min_versions_of_wk_api_available(clean_lines, line_number, error):
 
     line = clean_lines.elided[line_number]  # Get rid of comments and strings.
 
-    wk_api_available = search(r'WK_API_AVAILABLE\(macosx\(([^\)]+)\), ios\(([^\)]+)\)\)', line)
+    wk_api_available = search(r'WK_API_AVAILABLE\(macosx\(', line)
     if wk_api_available:
-        macosxMinVersion = wk_api_available.group(1)
-        if not match(r'^([\d\.]+|WK_MAC_TBA)$', macosxMinVersion):
-            error(line_number, 'build/wk_api_available', 5, '%s is neither a version number nor WK_MAC_TBA' % macosxMinVersion)
+        error(line_number, 'build/wk_api_available', 5, 'macosx() is deprecated; use macos() instead')
+
+    # FIXME: This should support any order.
+    wk_api_available = search(r'WK_API_AVAILABLE\(macos\(([^\)]+)\), ios\(([^\)]+)\)\)', line)
+    if wk_api_available:
+        macosMinVersion = wk_api_available.group(1)
+        if not match(r'^([\d\.]+|WK_MAC_TBA)$', macosMinVersion):
+            error(line_number, 'build/wk_api_available', 5, 'macos(%s) is invalid; expected WK_MAC_TBA or a number' % macosMinVersion)
 
         iosMinVersion = wk_api_available.group(2)
         if not match(r'^([\d\.]+|WK_IOS_TBA)$', iosMinVersion):
-            error(line_number, 'build/wk_api_available', 5, '%s is neither a version number nor WK_IOS_TBA' % iosMinVersion)
+            error(line_number, 'build/wk_api_available', 5, 'ios(%s) is invalid; expected WK_IOS_TBA or a number' % iosMinVersion)
+
+    wk_api_available = search(r'WK_API_AVAILABLE\(macos\(([^\)]+)\)\)', line)
+    if wk_api_available:
+        macosMinVersion = wk_api_available.group(1)
+        if not match(r'^([\d\.]+|WK_MAC_TBA)$', macosMinVersion):
+            error(line_number, 'build/wk_api_available', 5, 'macos(%s) is invalid; expected WK_MAC_TBA or a number' % macosMinVersion)
+
+    wk_api_available = search(r'WK_API_AVAILABLE\(ios\(([^\)]+)\)\)', line)
+    if wk_api_available:
+        iosMinVersion = wk_api_available.group(1)
+        if not match(r'^([\d\.]+|WK_IOS_TBA)$', iosMinVersion):
+            error(line_number, 'build/wk_api_available', 5, 'ios(%s) is invalid; expected WK_IOS_TBA or a number' % iosMinVersion)
 
 def check_style(clean_lines, line_number, file_extension, class_state, file_state, enum_state, error):
     """Checks rules from the 'C++ style rules' section of cppguide.html.
@@ -3010,7 +3031,7 @@ def _classify_include(filename, include, is_system, include_state):
     """
 
     # If it is a system header we know it is classified as _OTHER_HEADER.
-    if is_system and not include.startswith('public/'):
+    if is_system and not include.startswith('public/') and not include.startswith('wtf/'):
         return _OTHER_HEADER
 
     # If the include is named config.h then this is WebCore/config.h.
@@ -3313,6 +3334,37 @@ def check_language(filename, clean_lines, line_number, file_extension, include_s
         error(line_number, 'runtime/dispatch_set_target_queue', 5,
               'Never use dispatch_set_target_queue.  Use dispatch_queue_create_with_target instead.')
 
+    matched = search(r'\b(RetainPtr<.*)', line)
+    if matched:
+        match_line = matched.group(1)
+        nested_angle_bracket_count = 1
+        previous_closing_angle_bracket_index = -1
+        closing_angle_bracket_index = 9 # Used if only one pair of angle brackets.
+        for i in xrange(10, len(match_line) - 1):
+            if match_line[i] == '<':
+                nested_angle_bracket_count += 1
+            if match_line[i] == '>':
+                nested_angle_bracket_count -= 1
+                previous_closing_angle_bracket_index = closing_angle_bracket_index
+                closing_angle_bracket_index = i
+            if nested_angle_bracket_count == 0:
+                if "*" in match_line[previous_closing_angle_bracket_index:closing_angle_bracket_index]:
+                    error(line_number, 'runtime/retainptr', 5,
+                          'RetainPtr<> should never contain a type with \'*\'. Correct: RetainPtr<NSString>, RetainPtr<CFStringRef>.')
+                break
+
+    matched = re.compile('^\s*SOFT_LINK_(PRIVATE_)?FRAMEWORK.*\((\S+)\)').search(line)
+    if matched:
+        framework_name = matched.group(2)
+        if file_extension == 'h' and not search(r'^\s*SOFT_LINK_(PRIVATE_)?FRAMEWORK_FOR_HEADER.*\(', line):
+            error(line_number, 'softlink/header', 5,
+                  'Never soft-link frameworks in headers. Put the soft-link macros in a source file, or create {framework}SoftLink.{{cpp,mm}} instead.'.format(framework=framework_name))
+
+        frameworks_with_soft_links = ['CoreMedia', 'CoreVideo', 'DataDetectorsCore', 'LocalAuthentication', 'MediaAccessibility', 'MediaRemote', 'PassKit', 'QuickLook', 'UIKit', 'VideoToolbox']
+        if framework_name in frameworks_with_soft_links and not re.compile('^\s*SOFT_LINK_(PRIVATE_)?FRAMEWORK_FOR_(HEADER|SOURCE)(_WITH_EXPORT)?\({}\)'.format(framework_name)).search(line):
+            error(line_number, 'softlink/framework', 5,
+                  'Use {framework}SoftLink.{{cpp,h,mm}} to soft-link to {framework}.framework.'.format(framework=framework_name))
+
     # Check for suspicious usage of "if" like
     # } if (a == b) {
     if search(r'\}\s*if\s*\(', line):
@@ -3537,7 +3589,7 @@ def check_identifier_name_in_declaration(filename, line_number, line, file_state
         if not file_state.is_objective_c_or_objective_cpp() and modified_identifier.find('_') >= 0:
             # Various exceptions to the rule: JavaScript op codes functions, const_iterator.
             if (not (filename.find('JavaScriptCore') >= 0 and (modified_identifier.find('op_') >= 0 or modified_identifier.find('intrinsic_') >= 0))
-                and not (('gtk' in filename or 'glib' in filename or 'wpe' in filename) and modified_identifier.startswith('webkit_') >= 0)
+                and not (('gtk' in filename or 'glib' in filename or 'wpe' in filename or 'atk' in filename) and modified_identifier.startswith('webkit_'))
                 and not modified_identifier.startswith('tst_')
                 and not modified_identifier.startswith('webkit_dom_object_')
                 and not modified_identifier.startswith('webkit_soup')
@@ -4052,6 +4104,7 @@ class CppChecker(object):
         'runtime/printf',
         'runtime/printf_format',
         'runtime/references',
+        'runtime/retainptr',
         'runtime/rtti',
         'runtime/sizeof',
         'runtime/soft-linked-alloc',
@@ -4064,6 +4117,8 @@ class CppChecker(object):
         'security/assertion',
         'security/printf',
         'security/temp_file',
+        'softlink/framework',
+        'softlink/header',
         'whitespace/blank_line',
         'whitespace/braces',
         'whitespace/brackets',

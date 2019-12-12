@@ -160,7 +160,7 @@ JIT::compileSetupFrame(const Op& bytecode, CallLinkInfo*)
         emitLoad(registerOffset + CallFrame::argumentOffsetIncludingThis(0), regT0, regT1);
         Jump done = branchIfNotCell(regT0);
         load32(Address(regT1, JSCell::structureIDOffset()), regT1);
-        store32(regT1, metadata.m_arrayProfile.addressOfLastSeenStructureID());
+        store32(regT1, metadata.m_callLinkInfo.m_arrayProfile.addressOfLastSeenStructureID());
         done.link(this);
     }
 
@@ -202,9 +202,9 @@ JIT::compileSetupFrame(const Op& bytecode, CallLinkInfo* info)
 
     // Profile the argument count.
     load32(Address(regT1, CallFrameSlot::argumentCount * static_cast<int>(sizeof(Register)) + PayloadOffset), regT2);
-    load32(info->addressOfMaxNumArguments(), regT0);
+    load32(info->addressOfMaxArgumentCountIncludingThis(), regT0);
     Jump notBiggest = branch32(Above, regT0, regT2);
-    store32(regT2, info->addressOfMaxNumArguments());
+    store32(regT2, info->addressOfMaxArgumentCountIncludingThis());
     notBiggest.link(this);
     
     // Initialize 'this'.

@@ -31,6 +31,7 @@
 #include "InteractionInformationRequest.h"
 #include "ShareableBitmap.h"
 #include <WebCore/IntPoint.h>
+#include <WebCore/ScrollTypes.h>
 #include <WebCore/SelectionRect.h>
 #include <WebCore/TextIndicator.h>
 #include <wtf/URL.h>
@@ -39,9 +40,18 @@
 namespace WebKit {
 
 struct InteractionInformationAtPosition {
+    static InteractionInformationAtPosition invalidInformation()
+    {
+        InteractionInformationAtPosition response;
+        response.canBeValid = false;
+        return response;
+    }
+
     InteractionInformationRequest request;
 
+    bool canBeValid { true };
     bool nodeAtPositionIsFocusedElement { false };
+    bool nodeAtPositionHasDoubleClickHandler { false };
 #if ENABLE(DATA_INTERACTION)
     bool hasSelectionAtPosition { false };
 #endif
@@ -53,6 +63,7 @@ struct InteractionInformationAtPosition {
     bool isAttachment { false };
     bool isAnimatedImage { false };
     bool isElement { false };
+    WebCore::ScrollingNodeID containerScrollingNodeID { 0 };
 #if ENABLE(DATA_DETECTION)
     bool isDataDetectorLink { false };
 #endif
@@ -65,7 +76,7 @@ struct InteractionInformationAtPosition {
     String title;
     String idAttribute;
     WebCore::IntRect bounds;
-#if PLATFORM(IOSMAC)
+#if PLATFORM(MACCATALYST)
     WebCore::IntRect caretRect;
 #endif
     RefPtr<ShareableBitmap> image;

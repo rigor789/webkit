@@ -44,7 +44,12 @@ struct TestOptions {
     bool enableColorFilter { false };
     bool enableSelectionAcrossShadowBoundaries { true };
     bool enableWebGPU { false };
+    bool enableCSSLogical { false };
+    bool adClickAttributionEnabled { false };
+    bool enableResizeObserver { false };
+    bool enableCoreMathML { false };
     std::string jscOptions;
+    std::string additionalSupportedImageTypes;
 
     TestOptions(const std::string& pathOrURL, const std::string& absolutePath);
     bool webViewIsCompatibleWithOptions(const TestOptions&) const;

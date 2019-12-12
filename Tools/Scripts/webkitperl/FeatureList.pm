@@ -62,6 +62,7 @@ my (
     $cachePartitioningSupport,
     $channelMessagingSupport,
     $cloopSupport,
+    $contentExtensionsSupport,
     $contentFilteringSupport,
     $contextMenusSupport,
     $css3TextSupport,
@@ -75,10 +76,10 @@ my (
     $cssScrollSnapSupport,
     $cssSelectorsLevel4Support,
     $cssTrailingWordSupport,
+    $cssTypedOMSupport,
     $cursorVisibilitySupport,
     $customSchemeHandlerSupport,
     $darkModeCSSSupport,
-    $dashboardSupportSupport,
     $dataInteractionSupport,
     $datacueValueSupport,
     $datalistElementSupport,
@@ -141,6 +142,7 @@ my (
     $quotaSupport,
     $registerProtocolHandlerSupport,
     $remoteInspectorSupport,
+    $resizeObserverSupport,
     $resolutionMediaQuerySupport,
     $resourceLoadStatisticsSupport,
     $resourceUsageSupport,
@@ -176,7 +178,6 @@ my (
     $webgl2Support,
     $webglSupport,
     $webgpuSupport,
-    $webmetalSupport,
     $wirelessPlaybackTargetSupport,
     $xsltSupport,
 );
@@ -191,7 +192,7 @@ my @features = (
       define => "ENABLE_ACCELERATED_2D_CANVAS", value => \$accelerated2DCanvasSupport },
 
     { option => "accelerated-overflow-scrolling", desc => "Toggle accelerated scrolling support",
-      define => "ENABLE_ACCELERATED_OVERFLOW_SCROLLING", value => \$acceleratedOverflowScrollingSupport },
+      define => "ENABLE_OVERFLOW_SCROLLING_TOUCH", value => \$acceleratedOverflowScrollingSupport },
 
     { option => "apple-pay", desc => "Toggle Apply Pay support",
       define => "ENABLE_APPLE_PAY", value => \$applePaySupport },
@@ -225,6 +226,9 @@ my @features = (
 
     { option => "channel-messaging", desc => "Toggle Channel Messaging support",
       define => "ENABLE_CHANNEL_MESSAGING", value => \$channelMessagingSupport },
+
+    { option => "content-extensions", desc => "Toggle Content Extensions support",
+      define => "ENABLE_CONTENT_EXTENSIONS", value => \$contentExtensionsSupport },
 
     { option => "content-filtering", desc => "Toggle content filtering support",
       define => "ENABLE_CONTENT_FILTERING", value => \$contentFilteringSupport },
@@ -262,6 +266,9 @@ my @features = (
     { option => "css-selectors-level4", desc => "Toggle CSS Selectors Level 4 support",
       define => "ENABLE_CSS_SELECTORS_LEVEL4", value => \$cssSelectorsLevel4Support },
 
+    { option => "css-typed-om", desc => "Toggle CSS Typed OM support",
+      define => "ENABLE_CSS_TYPED_OM", value => \$cssTypedOMSupport },
+
     { option => "cursor-visibility", desc => "Toggle cursor visibility support",
       define => "ENABLE_CURSOR_VISIBILITY", value => \$cursorVisibilitySupport },
 
@@ -270,9 +277,6 @@ my @features = (
 
     { option => "dark-mode-css", desc => "Toggle Dark Mode CSS support",
       define => "ENABLE_DARK_MODE_CSS", value => \$darkModeCSSSupport },
-
-    { option => "dashboard-support", desc => "Toggle dashboard support",
-      define => "ENABLE_DASHBOARD_SUPPORT", value => \$dashboardSupportSupport },
 
     { option => "datacue-value", desc => "Toggle datacue value support",
       define => "ENABLE_DATACUE_VALUE", value => \$datacueValueSupport },
@@ -321,9 +325,6 @@ my @features = (
 
     { option => "geolocation", desc => "Toggle Geolocation support",
       define => "ENABLE_GEOLOCATION", value => \$geolocationSupport },
-
-    { option => "icon-database", desc => "Toggle Icondatabase support",
-      define => "ENABLE_ICONDATABASE", value => \$icondatabaseSupport },
 
     { option => "indexed-database", desc => "Toggle Indexed Database support",
       define => "ENABLE_INDEXED_DATABASE", value => \$indexedDatabaseSupport },
@@ -457,6 +458,9 @@ my @features = (
     { option => "remote-inspector", desc => "Toggle remote inspector support",
       define => "ENABLE_REMOTE_INSPECTOR", value => \$remoteInspectorSupport },
 
+    { option => "resize-observer", desc => "Enable Resize Observer support",
+      define => "ENABLE_RESIZE_OBSERVER", value => \$resizeObserverSupport },
+
     { option => "resolution-media-query", desc => "Toggle resolution media query support",
       define => "ENABLE_RESOLUTION_MEDIA_QUERY", value => \$resolutionMediaQuerySupport },
 
@@ -543,9 +547,6 @@ my @features = (
 
     { option => "webgpu", desc => "Toggle WebGPU support",
       define => "ENABLE_WEBGPU", value => \$webgpuSupport },
-
-    { option => "webmetal", desc => "Toggle WebMetal support",
-      define => "ENABLE_WEBMETAL", value => \$webmetalSupport },
 
     { option => "web-audio", desc => "Toggle Web Audio support",
       define => "ENABLE_WEB_AUDIO", value => \$webAudioSupport },

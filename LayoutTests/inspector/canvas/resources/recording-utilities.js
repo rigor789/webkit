@@ -3,13 +3,17 @@ TestPage.registerInitializer(() => {
         for (let [name, value] of object) {
             if (typeof value === "string")
                 value = sanitizeURL(value);
-            else if (Array.isArray(value) && value[0] instanceof DOMMatrix)
-                value[0] = [value[0].a, value[0].b, value[0].c, value[0].d, value[0].e, value[0].f];
+            else if (Array.isArray(value)) {
+                if (value[0] instanceof DOMMatrix)
+                    value[0] = [value[0].a, value[0].b, value[0].c, value[0].d, value[0].e, value[0].f];
+                else if (value[0] instanceof Path2D)
+                    value[0] = value[0].__data;
+            }
             InspectorTest.log(indent + name + ": " + JSON.stringify(value));
         }
     }
 
-    async function logRecording(recording) {
+    async function logRecording(recording, options = {}) {
         InspectorTest.log("initialState:");
 
         InspectorTest.log("  attributes:");
@@ -25,7 +29,9 @@ TestPage.registerInitializer(() => {
         InspectorTest.log("  parameters:");
         log(Object.entries(recording.initialState.parameters), "    ");
 
-        InspectorTest.log("  content: " + JSON.stringify(recording.initialState.content));
+        let currentContent = recording.initialState.content;
+        if (currentContent)
+            InspectorTest.log("  content: <filtered>");
 
         InspectorTest.log("frames:");
         for (let i = 0; i < recording.frames.length; ++i) {
@@ -68,8 +74,13 @@ TestPage.registerInitializer(() => {
                     }
                 }
 
-                if (action.snapshot)
-                    InspectorTest.log("      snapshot: " + JSON.stringify(action.snapshot));
+                if (action.snapshot) {
+                    if (options.checkForContentChange)
+                        InspectorTest.log(`      snapshot: <${currentContent === action.snapshot ? "FAIL" : "PASS"}: content changed>`);
+                    else
+                        InspectorTest.log("      snapshot: <filtered>");
+                    currentContent = action.snapshot;
+                }
             }
         }
     }
@@ -82,14 +93,13 @@ TestPage.registerInitializer(() => {
         return canvases[0];
     };
 
-    window.startRecording = function(type, resolve, reject, {frameCount, memoryLimit} = {}) {
+    window.startRecording = function(type, resolve, reject, {frameCount, memoryLimit, checkForContentChange, callback} = {}) {
         let canvas = getCanvas(type);
         if (!canvas) {
             reject(`Missing canvas with type "${type}".`);
             return;
         }
 
-        let stopped = false;
         let swizzled = false;
         let lastFrame = false;
 
@@ -97,9 +107,10 @@ TestPage.registerInitializer(() => {
         .then((event) => {
             lastFrame = true;
 
-            if (!stopped)
-                CanvasAgent.stopRecording(canvas.identifier).catch(reject);
-            else {
+            if (canvas.recordingActive) {
+                if (!frameCount)
+                    CanvasAgent.stopRecording(canvas.identifier).catch(reject);
+            } else {
                 InspectorTest.evaluateInPage(`cancelActions()`)
                 .then(() => {
                     if (swizzled)
@@ -120,8 +131,6 @@ TestPage.registerInitializer(() => {
         canvas.addEventListener(WI.Canvas.Event.RecordingProgress, handleRecordingProgress);
 
         canvas.awaitEvent(WI.Canvas.Event.RecordingStopped).then((event) => {
-            stopped = true;
-
             canvas.removeEventListener(WI.Canvas.Event.RecordingProgress, handleRecordingProgress);
 
             let recording = event.data.recording;
@@ -136,7 +145,7 @@ TestPage.registerInitializer(() => {
             Promise.all(recording.actions.map((action) => action.swizzle(recording))).then(() => {
                 swizzled = true;
 
-                logRecording(recording, type)
+                (callback ? callback(recording) : logRecording(recording, {checkForContentChange}))
                 .then(() => {
                     if (lastFrame) {
                         InspectorTest.evaluateInPage(`cancelActions()`)

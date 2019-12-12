@@ -51,6 +51,7 @@
 #include "PaymentCoordinator.h"
 #include "PaymentMerchantSession.h"
 #include "PaymentMethod.h"
+#include "PaymentMethodUpdate.h"
 #include "PaymentRequestValidator.h"
 #include "PaymentResponse.h"
 #include "PaymentValidationErrors.h"
@@ -185,9 +186,9 @@ static void mergePaymentOptions(const PaymentOptions& options, ApplePaySessionPa
         request.setShippingType(convert(options.shippingType));
 }
 
-ExceptionOr<void> ApplePayPaymentHandler::show()
+ExceptionOr<void> ApplePayPaymentHandler::show(Document& document)
 {
-    auto validatedRequest = convertAndValidate(m_applePayRequest->version, *m_applePayRequest, paymentCoordinator());
+    auto validatedRequest = convertAndValidate(document, m_applePayRequest->version, *m_applePayRequest, paymentCoordinator());
     if (validatedRequest.hasException())
         return validatedRequest.releaseException();
 
@@ -217,11 +218,9 @@ ExceptionOr<void> ApplePayPaymentHandler::show()
     if (exception.hasException())
         return exception.releaseException();
 
-    Vector<URL> linkIconURLs;
-    for (auto& icon : LinkIconCollector { document() }.iconsOfTypes({ LinkIconType::TouchIcon, LinkIconType::TouchPrecomposedIcon }))
-        linkIconURLs.append(icon.url);
+    if (!paymentCoordinator().beginPaymentSession(document, *this, request))
+        return Exception { AbortError };
 
-    paymentCoordinator().beginPaymentSession(*this, document().url(), linkIconURLs, request);
     return { };
 }
 
@@ -230,9 +229,9 @@ void ApplePayPaymentHandler::hide()
     paymentCoordinator().abortPaymentSession();
 }
 
-void ApplePayPaymentHandler::canMakePayment(Function<void(bool)>&& completionHandler)
+void ApplePayPaymentHandler::canMakePayment(Document& document, Function<void(bool)>&& completionHandler)
 {
-    completionHandler(paymentCoordinator().canMakePayments());
+    completionHandler(paymentCoordinator().canMakePayments(document));
 }
 
 ExceptionOr<Vector<ApplePaySessionPaymentRequest::ShippingMethod>> ApplePayPaymentHandler::computeShippingMethods()
@@ -475,14 +474,11 @@ ExceptionOr<void> ApplePayPaymentHandler::paymentMethodUpdated()
     ASSERT(m_isUpdating);
     m_isUpdating = false;
 
-    PaymentMethodUpdate update;
-
     auto newTotalAndLineItems = computeTotalAndLineItems();
     if (newTotalAndLineItems.hasException())
         return newTotalAndLineItems.releaseException();
-    update.newTotalAndLineItems = newTotalAndLineItems.releaseReturnValue();
 
-    paymentCoordinator().completePaymentMethodSelection(WTFMove(update));
+    paymentCoordinator().completePaymentMethodSelection(PaymentMethodUpdate { newTotalAndLineItems.releaseReturnValue() });
     return { };
 }
 
@@ -532,12 +528,7 @@ ExceptionOr<void> ApplePayPaymentHandler::retry(PaymentValidationErrors&& valida
 
 unsigned ApplePayPaymentHandler::version() const
 {
-    if (!m_applePayRequest)
-        return 0;
-    
-    auto version = m_applePayRequest->version;
-    ASSERT(paymentCoordinator().supportsVersion(version));
-    return version;
+    return m_applePayRequest ? m_applePayRequest->version : 0;
 }
 
 void ApplePayPaymentHandler::validateMerchant(URL&& validationURL)
@@ -599,7 +590,7 @@ void ApplePayPaymentHandler::didSelectPaymentMethod(const PaymentMethod& payment
     });
 }
 
-void ApplePayPaymentHandler::didCancelPaymentSession()
+void ApplePayPaymentHandler::didCancelPaymentSession(PaymentSessionError&&)
 {
     m_paymentRequest->cancel();
 }

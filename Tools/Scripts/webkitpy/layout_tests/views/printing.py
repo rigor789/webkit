@@ -81,10 +81,6 @@ class Printer(object):
         if self._options.new_baseline:
             self._print_default("Placing new baselines in %s" % self._port.baseline_path())
 
-        fs = self._port.host.filesystem
-        fallback_path = [fs.relpath(x, self._port.layout_tests_dir()).replace("../", "") for x in self._port.baseline_search_path()]
-        self._print_default("Baseline search path: %s -> generic" % " -> ".join(fallback_path))
-
         self._print_default("Using %s build" % self._options.configuration)
         if self._options.pixel_tests:
             self._print_default("Pixel tests enabled")

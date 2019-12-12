@@ -81,14 +81,14 @@ void Frame::initWithSimpleHTMLDocument(const String& style, const URL& url)
 {
     m_loader->initForSynthesizedDocument(url);
 
-    auto document = HTMLDocument::createSynthesizedDocument(this, url);
+    auto document = HTMLDocument::createSynthesizedDocument(*this, url);
     document->setCompatibilityMode(DocumentCompatibilityMode::LimitedQuirksMode);
     document->createDOMWindow();
     setDocument(document.copyRef());
 
-    auto rootElement = HTMLHtmlElement::create(document.get());
+    auto rootElement = HTMLHtmlElement::create(document);
 
-    auto body = HTMLBodyElement::create(document.get());
+    auto body = HTMLBodyElement::create(document);
     if (!style.isEmpty())
         body->setAttribute(HTMLNames::styleAttr, style);
 
@@ -182,7 +182,7 @@ CGRect Frame::renderRectForPoint(CGPoint point, bool* isReplaced, float* fontSiz
     if (!layer)
         return CGRectZero;
 
-    HitTestResult result = eventHandler().hitTestResultAtPoint(IntPoint(roundf(point.x), roundf(point.y)));
+    HitTestResult result = eventHandler().hitTestResultAtPoint(IntPoint(roundf(point.x), roundf(point.y)), HitTestRequest::ReadOnly | HitTestRequest::Active | HitTestRequest::DisallowUserAgentShadowContent | HitTestRequest::AllowChildFrameContent);
 
     Node* node = result.innerNode();
     if (!node)
@@ -226,7 +226,7 @@ CGRect Frame::renderRectForPoint(CGPoint point, bool* isReplaced, float* fontSiz
 void Frame::betterApproximateNode(const IntPoint& testPoint, const NodeQualifier& nodeQualifierFunction, Node*& best, Node* failedNode, IntPoint& bestPoint, IntRect& bestRect, const IntRect& testRect)
 {
     IntRect candidateRect;
-    Node* candidate = nodeQualifierFunction(eventHandler().hitTestResultAtPoint(testPoint), failedNode, &candidateRect);
+    Node* candidate = nodeQualifierFunction(eventHandler().hitTestResultAtPoint(testPoint, HitTestRequest::ReadOnly | HitTestRequest::Active | HitTestRequest::DisallowUserAgentShadowContent | HitTestRequest::AllowVisibleChildFrameContentOnly), failedNode, &candidateRect);
 
     // Bail if we have no candidate, or the candidate is already equal to our current best node,
     // or our candidate is the avoidedNode and there is a current best node.
@@ -261,12 +261,17 @@ bool Frame::hitTestResultAtViewportLocation(const FloatPoint& viewportLocation, 
         return false;
 
     center = view->windowToContents(roundedIntPoint(viewportLocation));
-    hitTestResult = eventHandler().hitTestResultAtPoint(center);
+    HitTestRequest::HitTestRequestType hitType = HitTestRequest::ReadOnly | HitTestRequest::Active | HitTestRequest::DisallowUserAgentShadowContent | HitTestRequest::AllowVisibleChildFrameContentOnly;
+    hitTestResult = eventHandler().hitTestResultAtPoint(center, hitType);
     return true;
 }
 
-Node* Frame::qualifyingNodeAtViewportLocation(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, const NodeQualifier& nodeQualifierFunction, bool shouldApproximate)
+Node* Frame::qualifyingNodeAtViewportLocation(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, const NodeQualifier& nodeQualifierFunction, ShouldApproximate shouldApproximate, ShouldFindRootEditableElement shouldFindRootEditableElement)
 {
+#if !USE(UIKIT_EDITING)
+    UNUSED_PARAM(shouldFindRootEditableElement);
+#endif
+
     adjustedViewportLocation = viewportLocation;
 
     IntPoint testCenter;
@@ -281,12 +286,12 @@ Node* Frame::qualifyingNodeAtViewportLocation(const FloatPoint& viewportLocation
     Node* approximateNode = nodeQualifierFunction(candidateInfo, 0, 0);
 
 #if USE(UIKIT_EDITING)
-    if (approximateNode && approximateNode->isContentEditable()) {
+    if (shouldFindRootEditableElement == ShouldFindRootEditableElement::Yes && approximateNode && approximateNode->isContentEditable()) {
         // If we are in editable content, we look for the root editable element.
         approximateNode = approximateNode->rootEditableElement();
         // If we have a focusable node, there is no need to approximate.
         if (approximateNode)
-            shouldApproximate = false;
+            shouldApproximate = ShouldApproximate::No;
     }
 #endif
 
@@ -297,7 +302,7 @@ Node* Frame::qualifyingNodeAtViewportLocation(const FloatPoint& viewportLocation
     static const float unscaledSearchRadius = 15;
     int searchRadius = static_cast<int>(unscaledSearchRadius * ppiFactor / scale);
 
-    if (approximateNode && shouldApproximate) {
+    if (approximateNode && shouldApproximate == ShouldApproximate::Yes) {
         const float testOffsets[] = {
             -.3f, -.3f,
             -.6f, -.6f,
@@ -310,7 +315,7 @@ Node* Frame::qualifyingNodeAtViewportLocation(const FloatPoint& viewportLocation
             IntSize testOffset(testOffsets[n] * searchRadius, testOffsets[n + 1] * searchRadius);
             IntPoint testPoint = testCenter + testOffset;
 
-            HitTestResult candidateInfo = eventHandler().hitTestResultAtPoint(testPoint);
+            HitTestResult candidateInfo = eventHandler().hitTestResultAtPoint(testPoint, HitTestRequest::ReadOnly | HitTestRequest::Active | HitTestRequest::DisallowUserAgentShadowContent | HitTestRequest::AllowChildFrameContent);
             Node* candidateNode = nodeQualifierFunction(candidateInfo, 0, 0);
             if (candidateNode && candidateNode->isDescendantOf(originalApproximateNode)) {
                 approximateNode = candidateNode;
@@ -318,7 +323,7 @@ Node* Frame::qualifyingNodeAtViewportLocation(const FloatPoint& viewportLocation
                 break;
             }
         }
-    } else if (!approximateNode && shouldApproximate) {
+    } else if (!approximateNode && shouldApproximate == ShouldApproximate::Yes) {
         // Grab the closest parent element of our failed candidate node.
         Node* candidate = candidateInfo.innerNode();
         Node* failedNode = candidate;
@@ -366,7 +371,7 @@ Node* Frame::qualifyingNodeAtViewportLocation(const FloatPoint& viewportLocation
         IntPoint p = m_view->contentsToWindow(bestPoint);
         adjustedViewportLocation = p;
 #if USE(UIKIT_EDITING)
-        if (approximateNode->isContentEditable()) {
+        if (shouldFindRootEditableElement == ShouldFindRootEditableElement::Yes && approximateNode->isContentEditable()) {
             // When in editable content, look for the root editable node again,
             // since this could be the node found with the approximation.
             approximateNode = approximateNode->rootEditableElement();
@@ -387,9 +392,10 @@ Node* Frame::deepestNodeAtLocation(const FloatPoint& viewportLocation)
     return hitTestResult.innerNode();
 }
 
-Node* Frame::nodeRespondingToClickEvents(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, SecurityOrigin* securityOrigin)
+Node* Frame::approximateNodeAtViewportLocationLegacy(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation)
 {
-    auto&& ancestorRespondingToClickEvents = [securityOrigin](const HitTestResult& hitTestResult, Node* terminationNode, IntRect* nodeBounds) -> Node* {
+    // This function is only used for UIWebView.
+    auto&& ancestorRespondingToClickEvents = [](const HitTestResult& hitTestResult, Node* terminationNode, IntRect* nodeBounds) -> Node* {
         bool bodyHasBeenReached = false;
         bool pointerCursorStillValid = true;
 
@@ -397,7 +403,7 @@ Node* Frame::nodeRespondingToClickEvents(const FloatPoint& viewportLocation, Flo
             *nodeBounds = IntRect();
 
         auto node = hitTestResult.innerNode();
-        if (!node || (securityOrigin && !securityOrigin->isSameOriginAs(node->document().securityOrigin())))
+        if (!node)
             return nullptr;
 
         Node* pointerCursorNode = nullptr;
@@ -417,12 +423,13 @@ Node* Frame::nodeRespondingToClickEvents(const FloatPoint& viewportLocation, Flo
             if (pointerCursorNode && (node->hasTagName(HTMLNames::tableTag) || node->hasTagName(HTMLNames::tbodyTag)))
                 pointerCursorStillValid = false;
 
-            // If we haven't reached the body, and we are still paying attention to pointer cursors, and the node has a pointer cursor...
+            // If we haven't reached the body, and we are still paying attention to pointer cursors, and the node has a pointer cursor.
             if (pointerCursorStillValid && node->renderStyle() && node->renderStyle()->cursor() == CursorType::Pointer)
                 pointerCursorNode = node;
-            // We want the lowest unbroken chain of pointer cursors.
-            else if (pointerCursorNode)
+            else if (pointerCursorNode) {
+                // We want the lowest unbroken chain of pointer cursors.
                 pointerCursorStillValid = false;
+            }
 
             if (node->willRespondToMouseClickEvents() || node->willRespondToMouseMoveEvents() || (is<Element>(*node) && downcast<Element>(*node).isMouseFocusable())) {
                 // If we're at the body or higher, use the pointer cursor node (which may be null).
@@ -445,7 +452,73 @@ Node* Frame::nodeRespondingToClickEvents(const FloatPoint& viewportLocation, Flo
         return nullptr;
     };
 
-    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTFMove(ancestorRespondingToClickEvents), true);
+    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTFMove(ancestorRespondingToClickEvents), ShouldApproximate::Yes);
+}
+
+static inline NodeQualifier ancestorRespondingToClickEventsNodeQualifier(SecurityOrigin* securityOrigin = nullptr)
+{
+    return [securityOrigin](const HitTestResult& hitTestResult, Node* terminationNode, IntRect* nodeBounds) -> Node* {
+        if (nodeBounds)
+            *nodeBounds = IntRect();
+
+        auto node = hitTestResult.innerNode();
+        if (!node || (securityOrigin && !securityOrigin->isSameOriginAs(node->document().securityOrigin())))
+            return nullptr;
+
+        for (; node && node != terminationNode; node = node->parentInComposedTree()) {
+            if (node->willRespondToMouseClickEvents() || node->willRespondToMouseMoveEvents() || (is<Element>(*node) && downcast<Element>(*node).isMouseFocusable())) {
+                // If we are interested about the frame, use it.
+                if (nodeBounds) {
+                    // This is a check to see whether this node is an area element. The only way this can happen is if this is the first check.
+                    if (node == hitTestResult.innerNode() && node != hitTestResult.innerNonSharedNode() && is<HTMLAreaElement>(*node))
+                        *nodeBounds = snappedIntRect(downcast<HTMLAreaElement>(*node).computeRect(hitTestResult.innerNonSharedNode()->renderer()));
+                    else if (node && node->renderer())
+                        *nodeBounds = node->renderer()->absoluteBoundingBoxRect(true);
+                }
+
+                return node;
+            }
+        }
+
+        return nullptr;
+    };
+}
+
+Node* Frame::nodeRespondingToClickEvents(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, SecurityOrigin* securityOrigin)
+{
+    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, ancestorRespondingToClickEventsNodeQualifier(securityOrigin), ShouldApproximate::Yes);
+}
+
+Node* Frame::nodeRespondingToDoubleClickEvent(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation)
+{
+    auto&& ancestorRespondingToDoubleClickEvent = [](const HitTestResult& hitTestResult, Node* terminationNode, IntRect* nodeBounds) -> Node* {
+        if (nodeBounds)
+            *nodeBounds = IntRect();
+
+        auto* node = hitTestResult.innerNode();
+        if (!node)
+            return nullptr;
+
+        for (; node && node != terminationNode; node = node->parentInComposedTree()) {
+            if (!node->hasEventListeners(eventNames().dblclickEvent))
+                continue;
+#if ENABLE(TOUCH_EVENTS)
+            if (!node->allowsDoubleTapGesture())
+                continue;
+#endif
+            if (nodeBounds && node->renderer())
+                *nodeBounds = node->renderer()->absoluteBoundingBoxRect(true);
+            return node;
+        }
+        return nullptr;
+    };
+
+    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTFMove(ancestorRespondingToDoubleClickEvent), ShouldApproximate::Yes);
+}
+
+Node* Frame::nodeRespondingToInteraction(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation)
+{
+    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, ancestorRespondingToClickEventsNodeQualifier(), ShouldApproximate::Yes, ShouldFindRootEditableElement::No);
 }
 
 Node* Frame::nodeRespondingToScrollWheelEvents(const FloatPoint& viewportLocation)
@@ -478,7 +551,7 @@ Node* Frame::nodeRespondingToScrollWheelEvents(const FloatPoint& viewportLocatio
     };
 
     FloatPoint adjustedViewportLocation;
-    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTFMove(ancestorRespondingToScrollWheelEvents), false);
+    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTFMove(ancestorRespondingToScrollWheelEvents), ShouldApproximate::No);
 }
 
 int Frame::preferredHeight() const
@@ -735,9 +808,11 @@ void Frame::overflowScrollPositionChangedForNode(const IntPoint& position, Node*
 
     RenderLayer& layer = *downcast<RenderBoxModelObject>(*renderer).layer();
 
-    layer.setIsUserScroll(isUserScroll);
+    auto oldScrollType = layer.currentScrollType();
+    layer.setCurrentScrollType(isUserScroll ? ScrollType::User : ScrollType::Programmatic);
     layer.scrollToOffsetWithoutAnimation(position);
-    layer.setIsUserScroll(false);
+    layer.setCurrentScrollType(oldScrollType);
+
     layer.didEndScroll(); // FIXME: Should we always call this?
 }
 

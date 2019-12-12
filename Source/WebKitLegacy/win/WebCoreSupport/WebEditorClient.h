@@ -26,6 +26,7 @@
 #pragma once
 
 #include "WebKit.h"
+#include <WebCore/DOMPasteAccess.h>
 #include <WebCore/EditorClient.h>
 #include <WebCore/TextCheckerClient.h>
 
@@ -54,7 +55,6 @@ private:
     void willWriteSelectionToPasteboard(WebCore::Range*) final;
     void didWriteSelectionToPasteboard() final;
     void getClientPasteboardDataForRange(WebCore::Range*, Vector<String>& pasteboardTypes, Vector<RefPtr<WebCore::SharedBuffer>>& pasteboardData) final;
-    String replacementURLForResource(Ref<WebCore::SharedBuffer>&&, const String&) final;
 
     void didEndUserTriggeredSelectionChanges() final { }
     void respondToChangedContents() final;
@@ -94,9 +94,10 @@ private:
     void textWillBeDeletedInTextField(WebCore::Element* input) final;
     void textDidChangeInTextArea(WebCore::Element*) final;
     void overflowScrollPositionChanged() final { }
+    void subFrameScrollPositionChanged() final { }
 
-    void handleKeyboardEvent(WebCore::KeyboardEvent*) final;
-    void handleInputMethodKeydown(WebCore::KeyboardEvent*) final;
+    void handleKeyboardEvent(WebCore::KeyboardEvent&) final;
+    void handleInputMethodKeydown(WebCore::KeyboardEvent&) final;
 
     bool shouldEraseMarkersAfterChangeSelection(WebCore::TextCheckingType) const final;
     void ignoreWordInSpellDocument(const WTF::String&) final;
@@ -115,7 +116,11 @@ private:
     void requestCheckingOfString(WebCore::TextCheckingRequest&, const WebCore::VisibleSelection&) final { }
     bool performTwoStepDrop(WebCore::DocumentFragment&, WebCore::Range&, bool) final { return false; }
 
+    WebCore::DOMPasteAccessResponse requestDOMPasteAccess(const String&) final { return WebCore::DOMPasteAccessResponse::DeniedForGesture; }
+
     WebCore::TextCheckerClient* textChecker() final { return this; }
+
+    bool canShowFontPanel() const final { return false; }
 
     WebView* m_webView;
     WebEditorUndoTarget* m_undoTarget;

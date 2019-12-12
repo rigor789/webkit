@@ -15,11 +15,11 @@
               (bounds 300.00 300.00)
               (children 1
                 (GraphicsLayer
+                  (anchor 0.00 0.00)
                   (bounds 300.00 677.00)
                   (drawsContent 1)
                   (children 1
                     (GraphicsLayer
-                      (offsetFromRenderer width=-114 height=-300)
                       (bounds 300.00 672.00)
                       (children 1
                         (GraphicsLayer

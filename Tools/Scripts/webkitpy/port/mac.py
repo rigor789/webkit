@@ -45,7 +45,7 @@ _log = logging.getLogger(__name__)
 class MacPort(DarwinPort):
     port_name = "mac"
 
-    CURRENT_VERSION = Version(10, 14)
+    CURRENT_VERSION = Version(10, 15)
 
     SDK = 'macosx'
 
@@ -266,8 +266,21 @@ class MacPort(DarwinPort):
             self._helper = None
 
     def logging_patterns_to_strip(self):
-        # FIXME: Remove this after <rdar://problem/15605007> is fixed
-        return [(re.compile('(AVF|GVA) info:.*\n'), '')]
+        logging_patterns = []
+
+        # FIXME: Remove this after <rdar://problem/15605007> is fixed.
+        logging_patterns.append((re.compile('(AVF|GVA) info:.*\n'), ''))
+
+        # FIXME: Remove this after <rdar://problem/35954459> is fixed.
+        logging_patterns.append(('AVDCreateGPUAccelerator: Error loading GPU renderer\n', ''))
+
+        # FIXME: Remove this after <rdar://problem/51191120> is fixed.
+        logging_patterns.append((re.compile('GVA warning: getFreeDRMInstanceCount, maxDRMInstanceCount: .*\n'), ''))
+
+        # FIXME: Remove this after <rdar://problem/52897406> is fixed.
+        logging_patterns.append((re.compile('VPA info:.*\n'), ''))
+
+        return logging_patterns
 
     def stderr_patterns_to_strip(self):
         worthless_patterns = []

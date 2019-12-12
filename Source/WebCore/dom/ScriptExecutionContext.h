@@ -225,6 +225,9 @@ public:
     void setDatabaseContext(DatabaseContext*);
 
 #if ENABLE(WEB_CRYPTO)
+    // These two methods are used when CryptoKeys are serialized into IndexedDB. As a side effect, it is also
+    // used for things that utilize the same structure clone algorithm, for example, message passing between
+    // worker and document.
     virtual bool wrapCryptoKey(const Vector<uint8_t>& key, Vector<uint8_t>& wrappedKey) = 0;
     virtual bool unwrapCryptoKey(const Vector<uint8_t>& wrappedKey, Vector<uint8_t>& key) = 0;
 #endif
@@ -244,7 +247,8 @@ public:
     WEBCORE_EXPORT String domainForCachePartition() const;
     void setDomainForCachePartition(String&& domain) { m_domainForCachePartition = WTFMove(domain); }
 
-    bool hasServiceWorkerScheme();
+    bool allowsMediaDevices() const;
+    bool hasServiceWorkerScheme() const;
 #if ENABLE(SERVICE_WORKER)
     ServiceWorker* activeServiceWorker() const;
     void setActiveServiceWorker(RefPtr<ServiceWorker>&&);

@@ -25,10 +25,7 @@
 
 #import <WebKit/WKWebViewConfiguration.h>
 
-#if WK_API_ENABLED
-
 @interface WKWebViewConfiguration (TestWebKitAPIExtras)
 + (instancetype)_test_configurationWithTestPlugInClassName:(NSString *)className;
++ (instancetype)_test_configurationWithTestPlugInClassName:(NSString *)className configureJSCForTesting:(BOOL)value andCustomParameterClasses:(NSSet<Class> *)parameterClasses;
 @end
-
-#endif // WK_API_ENABLED

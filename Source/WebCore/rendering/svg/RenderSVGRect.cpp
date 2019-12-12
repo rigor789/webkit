@@ -55,9 +55,10 @@ void RenderSVGRect::updateShapeFromElement()
     m_innerStrokeRect = FloatRect();
     m_outerStrokeRect = FloatRect();
     clearPath();
+    m_usePathFallback = false;
 
     SVGLengthContext lengthContext(&rectElement());
-    FloatSize boundingBoxSize(lengthContext.valueForLength(style().width(), LengthModeWidth), lengthContext.valueForLength(style().height(), LengthModeHeight));
+    FloatSize boundingBoxSize(lengthContext.valueForLength(style().width(), SVGLengthMode::Width), lengthContext.valueForLength(style().height(), SVGLengthMode::Height));
 
     // Element is invalid if either dimension is negative.
     if (boundingBoxSize.width() < 0 || boundingBoxSize.height() < 0)
@@ -71,11 +72,10 @@ void RenderSVGRect::updateShapeFromElement()
             m_usePathFallback = true;
             return;
         }
-        m_usePathFallback = false;
     }
 
-    m_fillBoundingBox = FloatRect(FloatPoint(lengthContext.valueForLength(style().svgStyle().x(), LengthModeWidth),
-        lengthContext.valueForLength(style().svgStyle().y(), LengthModeHeight)),
+    m_fillBoundingBox = FloatRect(FloatPoint(lengthContext.valueForLength(style().svgStyle().x(), SVGLengthMode::Width),
+        lengthContext.valueForLength(style().svgStyle().y(), SVGLengthMode::Height)),
         boundingBoxSize);
 
     // To decide if the stroke contains a point we create two rects which represent the inner and

@@ -80,7 +80,6 @@ TEST(UserAgentTest, Quirks)
 
     assertUserAgentForURLHasChromeBrowserQuirk("http://typekit.com/");
     assertUserAgentForURLHasChromeBrowserQuirk("http://typekit.net/");
-    assertUserAgentForURLHasChromeBrowserQuirk("http://www.washingtonpost.com/");
 
     assertUserAgentForURLHasLinuxPlatformQuirk("http://www.google.com/");
     assertUserAgentForURLHasLinuxPlatformQuirk("http://www.google.es/");
@@ -94,7 +93,12 @@ TEST(UserAgentTest, Quirks)
     assertUserAgentForURLHasMacPlatformQuirk("http://web.whatsapp.com/");
     assertUserAgentForURLHasMacPlatformQuirk("http://www.chase.com/");
     assertUserAgentForURLHasMacPlatformQuirk("http://docs.google.com/");
+    assertUserAgentForURLHasMacPlatformQuirk("http://drive.google.com/");
     assertUserAgentForURLHasMacPlatformQuirk("http://paypal.com/");
+    assertUserAgentForURLHasMacPlatformQuirk("http://outlook.live.com/");
+    assertUserAgentForURLHasMacPlatformQuirk("http://mail.ntu.edu.tw/");
+    assertUserAgentForURLHasMacPlatformQuirk("http://exchange.tu-berlin.de/");
+    assertUserAgentForURLHasMacPlatformQuirk("http://bankofamerica.com/");
 }
 
 } // namespace TestWebKitAPI

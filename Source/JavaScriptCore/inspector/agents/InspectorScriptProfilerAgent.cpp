@@ -206,6 +206,8 @@ static Ref<Protocol::ScriptProfiler::Samples> buildSamples(VM& vm, Vector<Sampli
 
 void InspectorScriptProfilerAgent::trackingComplete()
 {
+    auto timestamp = m_environment.executionStopwatch()->elapsedTime().seconds();
+
 #if ENABLE(SAMPLING_PROFILER)
     if (m_enabledSamplingProfiler) {
         VM& vm = m_environment.scriptDebugServer().vm();
@@ -223,11 +225,11 @@ void InspectorScriptProfilerAgent::trackingComplete()
 
         m_enabledSamplingProfiler = false;
 
-        m_frontendDispatcher->trackingComplete(WTFMove(samples));
+        m_frontendDispatcher->trackingComplete(timestamp, WTFMove(samples));
     } else
-        m_frontendDispatcher->trackingComplete(nullptr);
+        m_frontendDispatcher->trackingComplete(timestamp, nullptr);
 #else
-    m_frontendDispatcher->trackingComplete(nullptr);
+    m_frontendDispatcher->trackingComplete(timestamp, nullptr);
 #endif // ENABLE(SAMPLING_PROFILER)
 }
 
@@ -247,16 +249,6 @@ void InspectorScriptProfilerAgent::stopSamplingWhenDisconnecting()
 
     m_enabledSamplingProfiler = false;
 #endif
-}
-
-void InspectorScriptProfilerAgent::programmaticCaptureStarted()
-{
-    m_frontendDispatcher->programmaticCaptureStarted();
-}
-
-void InspectorScriptProfilerAgent::programmaticCaptureStopped()
-{
-    m_frontendDispatcher->programmaticCaptureStopped();
 }
 
 } // namespace Inspector

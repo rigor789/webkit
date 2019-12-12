@@ -33,21 +33,15 @@ from datetime import timedelta
 all_queue_names = [
     "commit-queue",
     "style-queue",
-    "gtk-wk2-ews",
-    "ios-ews",
     "ios-sim-ews",
-    "bindings-ews",
     "jsc-ews",
     "jsc-mips-ews",
     "jsc-armv7-ews",
+    "jsc-i386-ews",
     "mac-ews",
     "mac-wk2-ews",
     "mac-debug-ews",
-    "mac-32bit-ews",
-    "webkitpy-ews",
     "win-ews",
-    "wincairo-ews",
-    "wpe-ews",
 ]
 
 # If the patch is still active after this much time, then a bot must have frozen or rebooted,

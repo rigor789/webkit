@@ -32,14 +32,6 @@
 
 #if PLATFORM(COCOA)
 
-#define ENABLE_SANDBOX_EXTENSIONS 1
-
-#define ENABLE_WEB_PROCESS_SANDBOX 1
-
-#define ENABLE_MEMORY_SAMPLER 1
-
-#define ENABLE_SHAREABLE_RESOURCE 1
-
 #define _WKImmediateActionType _WKImmediateActionType
 
 #include <CoreFoundation/CoreFoundation.h>
@@ -60,10 +52,6 @@
 
 #endif
 
-#if PLATFORM(GTK) || PLATFORM(WPE)
-#define ENABLE_SHAREABLE_RESOURCE 1
-#endif
-
 /* When C++ exceptions are disabled, the C++ library defines |try| and |catch|
 * to allow C++ code that expects exceptions to build. These definitions
 * interfere with Objective-C++ uses of Objective-C exception handlers, which
@@ -82,4 +70,3 @@
 #define new ("if you use new/delete make sure to include config.h at the top of the file"()) 
 #define delete ("if you use new/delete make sure to include config.h at the top of the file"()) 
 #endif
-

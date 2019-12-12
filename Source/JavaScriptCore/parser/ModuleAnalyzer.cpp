@@ -168,7 +168,7 @@ void ModuleAnalyzer::ensureDefaultExportIfNothingExported() {
         if (error.isValid()) {
             auto consoleMsgArgs = Inspector::ScriptArguments::create(*m_exec,
                                                                      {
-                                                                         Strong<JSC::Unknown>(*m_vm, jsString(m_exec, String::format("Error parsing default export for key: %s. Source: '%s'", m_moduleRecord->moduleKey().utf8().data(), defaultExportSrc))),
+                                                                         Strong<JSC::Unknown>(*m_vm, jsString(m_exec, makeString("Error parsing default export for key: ", m_moduleRecord->moduleKey().utf8().data(), ". Source: '", defaultExportSrc,"'"))),
                                                                          Strong<JSC::Unknown>(*m_vm, jsString(m_exec, error.message())),
                                                                      });
             ConsoleClient::printConsoleMessageWithArguments(MessageSource::JS,

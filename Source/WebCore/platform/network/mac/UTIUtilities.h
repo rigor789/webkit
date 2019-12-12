@@ -30,9 +30,9 @@
 #import <wtf/RetainPtr.h>
 
 namespace WebCore {
-String MIMETypeFromUTI(const String&);
+WEBCORE_EXPORT String MIMETypeFromUTI(const String&);
 String MIMETypeFromUTITree(const String&);
-String UTIFromMIMEType(const String&);
+WEBCORE_EXPORT String UTIFromMIMEType(const String&);
 bool isDeclaredUTI(const String&);
 }
 

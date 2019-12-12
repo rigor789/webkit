@@ -205,6 +205,13 @@ class Manager(object):
             tests_to_run_by_device[device_type] = [test for test in tests_to_run if test not in aggregate_tests]
             aggregate_tests.update(tests_to_run)
 
+        # If a test is marked skipped, but was explicitly requested, run it anyways
+        if self._options.skipped != 'always':
+            for arg in args:
+                if arg in total_tests and arg not in aggregate_tests:
+                    tests_to_run_by_device[device_type_list[0]].append(arg)
+                    aggregate_tests.add(arg)
+
         tests_to_skip = total_tests - aggregate_tests
         self._printer.print_found(len(aggregate_test_names), len(aggregate_tests), self._options.repeat_each, self._options.iterations)
         start_time = time.time()
@@ -261,7 +268,8 @@ class Manager(object):
                 return test_run_results.RunDetails(exit_code=-1)
 
             configuration = self._port.configuration_for_upload(self._port.target_host(0))
-            configuration['flavor'] = 'wk2' if self._options.webkit_test_runner else 'wk1'
+            if not configuration.get('flavor', None):  # The --result-report-flavor argument should override wk1/wk2
+                configuration['flavor'] = 'wk2' if self._options.webkit_test_runner else 'wk1'
             temp_initial_results, temp_retry_results, temp_enabled_pixel_tests_in_retry = self._run_test_subset(tests_to_run_by_device[device_type], tests_to_skip, device_type=device_type)
 
             if self._options.report_urls:
@@ -289,6 +297,10 @@ class Manager(object):
             initial_results = initial_results.merge(temp_initial_results) if initial_results else temp_initial_results
             retry_results = retry_results.merge(temp_retry_results) if retry_results else temp_retry_results
             enabled_pixel_tests_in_retry |= temp_enabled_pixel_tests_in_retry
+
+            if (initial_results and (initial_results.interrupted or initial_results.keyboard_interrupted)) or \
+                    (retry_results and (retry_results.interrupted or retry_results.keyboard_interrupted)):
+                break
 
         # Used for final logging, max_child_processes_for_run is most relevant here.
         self._options.child_processes = max_child_processes_for_run
@@ -348,6 +360,7 @@ class Manager(object):
         exit_code = -1
         if not self._options.dry_run:
             self._port.print_leaks_summary()
+            self._output_perf_metrics(end_time - start_time, initial_results)
             self._upload_json_files(summarized_results, initial_results, results_including_passes, start_time, end_time)
 
             results_path = self._filesystem.join(self._results_directory, "results.html")

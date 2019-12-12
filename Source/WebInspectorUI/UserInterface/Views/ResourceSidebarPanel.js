@@ -23,11 +23,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-  /*
- * Copyright (C) 2016 Telerik AD. All rights reserved. (as modified)
- */
-
-
 WI.ResourceSidebarPanel = class ResourceSidebarPanel extends WI.NavigationSidebarPanel
 {
     constructor()
@@ -72,14 +67,6 @@ WI.ResourceSidebarPanel = class ResourceSidebarPanel extends WI.NavigationSideba
 
         this.contentTreeOutline.addEventListener(WI.TreeOutline.Event.SelectionDidChange, this._treeSelectionDidChange, this);
         this.contentTreeOutline.includeSourceMapResourceChildren = true;
-
-        WI.SourceCode.addEventListener(WI.SourceCode.Event.SourceMapAdded, (e) => {
-            for (let sourceMap of e.target.sourceMaps) {
-                for (let sourceURL of sourceMap.sources()) {
-                    this._mainFrameTreeElement.removeFile(sourceURL);
-                }
-            }
-        }, this);
 
         if (ResourceSidebarPanel.shouldPlaceResourcesAtTopLevel()) {
             this.contentTreeOutline.disclosureButtons = false;
@@ -211,7 +198,7 @@ WI.ResourceSidebarPanel = class ResourceSidebarPanel extends WI.NavigationSideba
         super.initialLayout();
 
         if (WI.networkManager.mainFrame)
-            this._mainFrameMainResourceDidChange(WI.networkManager.mainFrame);
+            this._createMainFrameTreeElement(WI.networkManager.mainFrame);
 
         for (let script of WI.debuggerManager.knownNonResourceScripts) {
             this._addScript(script);
@@ -291,16 +278,9 @@ WI.ResourceSidebarPanel = class ResourceSidebarPanel extends WI.NavigationSideba
     {
         this.contentBrowser.contentViewContainer.closeAllContentViews();
 
-        if (this._mainFrameTreeElement) {
-            this.contentTreeOutline.removeChild(this._mainFrameTreeElement);
-            this._mainFrameTreeElement = null;
-        }
-
+        this._createMainFrameTreeElement(mainFrame);
         if (!mainFrame)
             return;
-
-        this._mainFrameTreeElement = new WI.FileSystemRepresentationTreeElement(mainFrame);
-        this.contentTreeOutline.insertChild(this._mainFrameTreeElement, 0);
 
         function delayedWork()
         {
@@ -316,6 +296,20 @@ WI.ResourceSidebarPanel = class ResourceSidebarPanel extends WI.NavigationSideba
         // Cookie restoration will attempt to re-select the resource we were showing.
         // Give it time to do that before selecting the main frame resource.
         setTimeout(delayedWork.bind(this));
+    }
+
+    _createMainFrameTreeElement(mainFrame)
+    {
+        if (this._mainFrameTreeElement) {
+            this.contentTreeOutline.removeChild(this._mainFrameTreeElement);
+            this._mainFrameTreeElement = null;
+        }
+
+        if (!mainFrame)
+            return;
+
+        this._mainFrameTreeElement = new WI.FileSystemRepresentationTreeElement(mainFrame);
+        this.contentTreeOutline.insertChild(this._mainFrameTreeElement, 0);
     }
 
     _scriptWasAdded(event)

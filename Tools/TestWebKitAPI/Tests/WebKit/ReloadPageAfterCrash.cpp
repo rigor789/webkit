@@ -68,7 +68,7 @@ static void didCrash(WKPageRef page, const void*)
 
 TEST(WebKit, ReloadPageAfterCrash)
 {
-    WKRetainPtr<WKContextRef> context(AdoptWK, WKContextCreateWithConfiguration(nullptr));
+    WKRetainPtr<WKContextRef> context = adoptWK(WKContextCreateWithConfiguration(nullptr));
     PlatformWebView webView(context.get());
 
     WKPageNavigationClientV0 loaderClient;
@@ -111,7 +111,7 @@ static void didCrashCheckFrames(WKPageRef page, const void*)
 
 TEST(WebKit, FocusedFrameAfterCrash)
 {
-    WKRetainPtr<WKContextRef> context(AdoptWK, WKContextCreateWithConfiguration(nullptr));
+    WKRetainPtr<WKContextRef> context = adoptWK(WKContextCreateWithConfiguration(nullptr));
     PlatformWebView webView(context.get());
 
     WKPageNavigationClientV0 loaderClient;
@@ -123,13 +123,13 @@ TEST(WebKit, FocusedFrameAfterCrash)
 
     WKPageSetPageNavigationClient(webView.page(), &loaderClient.base);
 
-    WKRetainPtr<WKURLRef> url = adoptWK(Util::createURLForResource("many-iframes", "html"));
+    WKRetainPtr<WKURLRef> url = adoptWK(Util::createURLForResource("many-same-origin-iframes", "html"));
     WKPageLoadURL(webView.page(), url.get());
     Util::run(&loadBeforeCrash);
 
     EXPECT_FALSE(!WKPageGetMainFrame(webView.page()));
 
-    WKRetainPtr<WKStringRef> javaScriptString(AdoptWK, WKStringCreateWithUTF8CString("frames[2].focus()"));
+    WKRetainPtr<WKStringRef> javaScriptString = adoptWK(WKStringCreateWithUTF8CString("frames[2].focus()"));
     WKPageRunJavaScriptInMainFrame(webView.page(), javaScriptString.get(), 0, nullJavaScriptCallback);
 
     while (!WKPageGetFocusedFrame(webView.page()))
@@ -142,7 +142,7 @@ TEST(WebKit, FocusedFrameAfterCrash)
 
 TEST(WebKit, FrameSetLargestFrameAfterCrash)
 {
-    WKRetainPtr<WKContextRef> context(AdoptWK, WKContextCreateWithConfiguration(nullptr));
+    WKRetainPtr<WKContextRef> context = adoptWK(WKContextCreateWithConfiguration(nullptr));
     PlatformWebView webView(context.get());
 
     WKPageNavigationClientV0 loaderClient;

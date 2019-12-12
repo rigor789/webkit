@@ -389,12 +389,12 @@ class IntermediateCommitSet {
         return Promise.all(fetchingPromises);
     }
 
-    commitsWithTestabilityWarnings() { return this.commits().filter((commit) => !!commit.testabilityWarning()); }
+    commitsWithTestability() { return this.commits().filter((commit) => !!commit.testability()); }
     commits() { return  Array.from(this._commitByRepository.values()); }
 
     _fetchCommitLogAndOwnedCommits(repository, revision)
     {
-        return CommitLog.fetchForSingleRevision(repository, revision).then((commits) => {
+        return CommitLog.fetchForSingleRevision(repository, revision, true).then((commits) => {
             console.assert(commits.length === 1);
             const commit = commits[0];
             if (!commit.ownsCommits())

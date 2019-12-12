@@ -11,7 +11,11 @@ displaylists [ Pass ]
 http/tests/quicklook [ Pass ]
 media/ios [ Pass ]
 quicklook [ Pass ]
+swipe [ Pass ]
 
+fast/media/ios [ Pass ]
+
+fast/forms/textarea/ios [ Pass ]
 fast/text-autosizing/ios [ Pass ]
 fast/zooming/ios [ Pass ]
 http/tests/preload/viewport [ Pass ]
@@ -33,12 +37,12 @@ perf/accessibility-title-ui-element.html
 fullscreen
 http/tests/fullscreen
 compositing/no-compositing-when-fulll-screen-is-present.html
+webkit.org/b/200308 fast/events/touch/ios/content-observation/non-visible-content-change-in-fullscreen-mode.html [ Skip ]
 
-# WebMetal and WebGPU are not enabled on iOS Simulator.
-fast/canvas/webmetal
-inspector/canvas/create-context-webmetal.html [ Skip ]
-inspector/canvas/resolveCanvasContext-webmetal.html [ Skip ]
+# WebGPU is not enabled on iOS Simulator.
 webgpu [ Skip ]
+inspector/canvas/create-context-webgpu.html [ Skip ]
+inspector/canvas/resolveCanvasContext-webgpu.html [ Skip ]
 
 # Encrypted Media Extensions are not enabled
 media/encrypted-media/
@@ -125,6 +129,7 @@ compositing/plugins
 http/tests/plugins
 fast/frames/sandboxed-iframe-plugins.html
 fast/loader/reload-zero-byte-plugin.html
+http/tests/download/convert-cached-load-to-download.html
 http/tests/security/contentSecurityPolicy/1.1/plugintypes-affects-child.html
 http/tests/security/contentSecurityPolicy/1.1/plugintypes-invalid.html
 http/tests/security/contentSecurityPolicy/1.1/plugintypes-mismatched-data.html
@@ -220,6 +225,7 @@ fast/history/page-cache-media-source-closed-2.html [ Skip ]
 fast/history/page-cache-media-source-closed.html [ Skip ]
 fast/history/page-cache-media-source-opened.html [ Skip ]
 fast/history/page-cache-removed-source-buffer.html [ Skip ]
+imported/w3c/web-platform-tests/fetch/api/basic/mediasource.window.html [ Skip ]
 
 # Quota API is not supported on iOS
 storage/domstorage/quota.html
@@ -263,6 +269,12 @@ fast/images/animated-webp-expected.html
 editing/pasteboard/datatransfer-items-drop-plaintext-file.html [ Skip ]
 editing/pasteboard/drag-link-with-data-transfer-adds-trusted-link-to-pasteboard.html [ Skip ]
 editing/selection/drag-to-contenteditable-iframe.html [ Skip ]
+editing/selection/selection-across-shadow-boundaries-mixed-editability-1.html [ Skip ]
+editing/selection/selection-across-shadow-boundaries-mixed-editability-2.html [ Skip ]
+editing/selection/selection-across-shadow-boundaries-mixed-editability-3.html [ Skip ]
+editing/selection/selection-across-shadow-boundaries-mixed-editability-4.html [ Skip ]
+editing/selection/selection-across-shadow-boundaries-mixed-editability-5.html [ Skip ]
+editing/selection/selection-across-shadow-boundaries-user-select-all-1.html [ Skip ]
 fast/events/bogus-dropEffect-effectAllowed.html [ Skip ]
 fast/events/clear-drag-state.html [ Skip ]
 fast/events/clear-edit-drag-state.html [ Skip ]
@@ -896,6 +908,7 @@ fast/events/tab-focus-link-in-canvas.html [ Skip ]
 fast/events/tab-imagemap.html [ Skip ]
 fast/events/tab-test-not-visible-imagemap.html [ Skip ]
 fast/events/tabindex-focus-chain.html [ Skip ]
+fast/forms/access-key-shadow-and-ordering.html [ Skip ]
 fast/forms/access-key-case-insensitive.html [ Skip ]
 fast/forms/access-key-for-all-elements.html [ Skip ]
 fast/forms/access-key-mutated.html [ Skip ]
@@ -1125,9 +1138,6 @@ fast/viewport/ios/viewport-fit-cover.html [ Pass ]
 fast/viewport/ios/viewport-fit-auto.html [ Pass ]
 fast/css/variables/env/ios [ Pass ]
 
-# Dark mode not supported on iOS
-css-dark-mode [ Skip ]
-
 ###
 # Known failures
 ##
@@ -1337,7 +1347,6 @@ webkit.org/b/178963 fast/css/sticky/sticky-writing-mode-vertical-rl.html [ Image
 # editing/deleting tests to triage
 editing/deleting/delete-all-text-in-text-field-assertion.html [ Failure ]
 editing/deleting/delete-cell-contents.html [ Failure ]
-editing/deleting/smart-delete-002.html [ Failure ]
 editing/deleting/smart-delete-across-editable-boundaries.html [ Failure ]
 editing/deleting/smart-editing-disabled-mac.html [ Failure ]
 
@@ -1380,11 +1389,6 @@ scrollbars/scrolling-by-page-on-keyboard-spacebar.html [ Failure ]
 
 # JavaScript tests that fail:
 js/dom/dom-static-property-for-in-iteration.html [ Failure ]
-
-# Page overlay tests that fail:
-pageoverlay/overlay-large-document-scrolled.html [ Failure ]
-pageoverlay/overlay-large-document.html [ Failure ]
-webkit.org/b/153337 pageoverlay/overlay-installation.html [ Pass Failure ]
 
 # These tests require an OpenType MATH font on the Apple bots.
 webkit.org/b/160161 mathml/opentype/vertical.html [ Skip ]
@@ -1529,10 +1533,6 @@ svg/zoom/text/zoom-svg-float-border-padding.xml [ Failure ]
 transforms/3d/point-mapping/3d-point-mapping-3.html [ Failure ]
 transforms/3d/point-mapping/3d-point-mapping-overlapping.html [ Failure ]
 
-# Scrolling coordinator tests that fail:
-scrollingcoordinator/non-fast-scrollable-region-scaled-iframe.html [ Failure ]
-scrollingcoordinator/non-fast-scrollable-region-transformed-iframe.html [ Failure ]
-
 # Userscript tests that fail:
 userscripts/user-script-plugin-document.html [ Failure ]
 
@@ -1552,7 +1552,6 @@ http/tests/webarchive/test-css-url-encoding.html
 
 # XMLHttpRequest tests that fail:
 http/tests/xmlhttprequest/basic-auth-nopassword.html [ Failure ]
-http/tests/xmlhttprequest/default-content-type-dashboard.html [ Failure ]
 
 # DeviceMotion tests that time out:
 fast/dom/DeviceMotion/no-page-cache.html
@@ -1602,7 +1601,6 @@ fast/dom/HTMLHeadElement/textInHead5.html [ Failure ]
 fast/dom/HTMLImageElement/sizes/image-sizes-1x.html [ Failure ]
 fast/dom/HTMLInputElement/input-slider-update-styled.html [ Failure ]
 fast/dom/HTMLInputElement/input-slider-update.html [ Failure ]
-fast/dom/NavigatorContentUtils/is-protocol-handler-registered.html [ Failure ]
 fast/dom/Range/getBoundingClientRect.html [ Failure ]
 fast/dom/Range/getClientRects.html [ Failure ]
 fast/dom/Range/range-expand.html [ Failure ]
@@ -1684,9 +1682,7 @@ fast/forms/hidpi-textfield-background-bleeding.html [ ImageOnlyFailure ]
 fast/forms/input-baseline.html [ Failure ]
 fast/forms/input-live-pseudo-selectors.html [ Failure ]
 fast/forms/input-no-renderer.html [ Failure ]
-fast/forms/input-select-webkit-user-select-none.html [ Failure ]
 fast/forms/input-set-composition-scroll.html [ Failure ]
-fast/forms/input-textarea-padding-match.html [ ImageOnlyFailure ]
 fast/forms/listbox-clip.html [ Failure ]
 fast/forms/listbox-selection-2.html [ Failure ]
 fast/forms/listbox-selection-3.html [ Failure ]
@@ -1709,12 +1705,9 @@ fast/forms/select-live-pseudo-selectors.html [ Failure ]
 fast/forms/select-overflow-scroll-inherited.html [ Failure ]
 fast/forms/select-overflow-scroll.html [ Failure ]
 fast/forms/select/option-selecting.html [ Failure ]
-fast/forms/shadow-tree-exposure.html [ Failure ]
 fast/forms/textarea-input-event.html [ Failure ]
 fast/forms/textarea-live-pseudo-selectors.html [ Failure ]
 fast/forms/textarea-metrics.html [ Failure ]
-fast/forms/textarea-placeholder-wrapping.html [ ImageOnlyFailure ]
-fast/forms/textarea-set-defaultvalue-after-value.html [ Failure ]
 fast/forms/textfield-overflow-by-value-update.html [ Failure ]
 fast/frames/calculate-fixed.html [ Failure ]
 fast/frames/calculate-order.html [ Failure ]
@@ -1971,8 +1964,6 @@ fast/parser/residual-style-hang.html
 # <rdar://problem/19226623> ASSERT(isIdentifierStart<CharacterType>()) fails in CSSParser::parseIdentifier()
 fast/css/css-selector-text.html
 
-webkit.org/b/190620 fast/forms/datalist/datalist-child-validation.html [ Skip ]
-
 # <rdar://problem/19227549> ASSERT(!m_webFrame->_private->provisionalURL) fails in WebFrameLoaderClient::dispatchDidStartProvisionalLoad()
 fast/forms/validation-message-user-modify.html
 
@@ -2001,17 +1992,6 @@ editing/undo/undo-combined-delete-boundary.html [ Failure Pass ]
 editing/undo/undo-combined-delete.html [ Pass Failure ]
 editing/undo/undo-forward-delete-boundary.html [ Pass Failure ]
 editing/undo/undo-forward-delete.html [ Pass Failure ]
-
-# Sputnik tests that are flaky:
-sputnik/Conformance/07_Lexical_Conventions/7.8_Literals/7.8.5_Regular_Expression_Literals/S7.8.5_A1.4_T2.html
-sputnik/Conformance/07_Lexical_Conventions/7.8_Literals/7.8.5_Regular_Expression_Literals/S7.8.5_A2.1_T2.html
-sputnik/Conformance/07_Lexical_Conventions/7.8_Literals/7.8.5_Regular_Expression_Literals/S7.8.5_A2.4_T2.html
-
-# Sputnik tests that fail:
-sputnik/Unicode/Unicode_510/S7.6_A3.1.html [ Failure ]
-sputnik/Unicode/Unicode_510/S7.6_A3.2.html [ Failure ]
-sputnik/Unicode/Unicode_510/S7.6_A5.3_T1.html [ Failure ]
-sputnik/Unicode/Unicode_510/S7.6_A5.3_T2.html [ Failure ]
 
 # storage tests that fail:
 storage/websql/sql-error-codes.html [ Failure ]
@@ -2122,6 +2102,9 @@ editing/pasteboard/paste-noscript.html [ Failure ]
 editing/pasteboard/paste-visible-script.html [ Failure ]
 editing/pasteboard/paste-wrapped-blockquote-into-nonblockquote.html [ Failure ]
 
+# Not able to select select element on iOS
+editing/pasteboard/4944770-2.html [ Failure ]
+
 # Failing pasteboard to triage
 editing/pasteboard/4242293-1.html [ Failure ]
 editing/pasteboard/5780697-2.html [ Failure ]
@@ -2130,7 +2113,6 @@ editing/pasteboard/copy-backslash-with-euc.html [ Failure ]
 editing/pasteboard/copy-in-password-field.html [ Failure ]
 editing/pasteboard/copy-inside-h1-preserves-h1.html [ Failure ]
 editing/pasteboard/copy-text-with-backgroundcolor.html [ Failure ]
-editing/pasteboard/copy-two-pasteboard-types-both-work.html [ Failure ]
 webkit.org/b/177961 editing/pasteboard/data-transfer-items.html [ Skip ]
 editing/pasteboard/dataTransfer-setData-getData.html [ Failure ]
 editing/pasteboard/display-block-on-spans.html [ Failure ]
@@ -2150,18 +2132,11 @@ editing/pasteboard/paste-before-tab-span.html [ Failure ]
 editing/pasteboard/paste-blockquote-3.html [ Failure ]
 editing/pasteboard/paste-global-selection.html [ Failure ]
 editing/pasteboard/paste-list-004.html [ Failure ]
-editing/pasteboard/paste-placeholder-input.html [ Failure ]
 editing/pasteboard/paste-plaintext-user-select-none.html [ Failure ]
 editing/pasteboard/paste-sanitize-crash-1.html [ Failure ]
 editing/pasteboard/paste-sanitize-crash-2.html [ Failure ]
 editing/pasteboard/paste-text-events.html [ Failure ]
-editing/pasteboard/smart-paste-001.html [ Failure ]
-editing/pasteboard/smart-paste-002.html [ Failure ]
-editing/pasteboard/smart-paste-003.html [ Failure ]
-editing/pasteboard/smart-paste-004.html [ Failure ]
-editing/pasteboard/smart-paste-005.html [ Failure ]
-editing/pasteboard/smart-paste-007.html [ Failure ]
-editing/pasteboard/smart-paste-008.html [ Failure ]
+
 
 # Local pasteboard is not implemented on iOS, so pasteboard tests used to be all disabled.
 
@@ -2242,6 +2217,9 @@ webkit.org/b/148806 imported/w3c/web-platform-tests/css/css-multicol/multicol-sh
 webkit.org/b/148806 imported/w3c/web-platform-tests/css/css-multicol/multicol-span-all-block-sibling-003.xht [ ImageOnlyFailure ]
 webkit.org/b/148806 imported/w3c/web-platform-tests/css/css-multicol/multicol-span-all-margin-nested-firstchild-001.xht [ ImageOnlyFailure ]
 
+# Enable "phone number linkifying" test for iOS
+fast/dom/linkify-phone-numbers.html [ Pass ]
+
 # Enable "aria-current" test for iOS
 webkit.org/b/149297 accessibility/aria-current.html [ Pass ]
 
@@ -2264,8 +2242,6 @@ imported/blink/animations/background-shorthand-crash.html [ Pass Timeout ]
 legacy-animation-engine/imported/blink/animations/background-shorthand-crash.html [ Pass Timeout ]
 imported/blink/animations/base-render-style-font-selector-version-assert.html [ Pass Timeout ]
 legacy-animation-engine/imported/blink/animations/base-render-style-font-selector-version-assert.html [ Pass Timeout ]
-imported/blink/animations/display-inline-style-adjust.html [ ImageOnlyFailure Pass ]
-legacy-animation-engine/imported/blink/animations/display-inline-style-adjust.html [ ImageOnlyFailure Pass ]
 imported/blink/compositing/draws-content/canvas-simple-background.html [ ImageOnlyFailure Pass ]
 imported/blink/compositing/draws-content/webgl-simple-background.html [ ImageOnlyFailure Pass ]
 imported/blink/compositing/layer-creation/iframe-clip-removed.html [ Pass Timeout ]
@@ -2493,7 +2469,6 @@ media/media-fullscreen-inline.html
 
 webkit.org/b/136708 media/media-fullscreen-not-in-document.html
 
-media/document-level-media-user-gesture-quirk.html
 media/media-controls-accessibility.html [ Timeout ]
 media/media-fullscreen-return-to-inline.html
 media/no-autoplay-with-user-gesture-requirement.html
@@ -2690,10 +2665,6 @@ webkit.org/b/168215 imported/w3c/web-platform-tests/html/semantics/embedded-cont
 # <rdar://problem/30610988>
 imported/w3c/web-platform-tests/fetch/api/redirect/redirect-count-cross-origin-worker.html [ Failure ]
 imported/w3c/web-platform-tests/fetch/api/redirect/redirect-count-cross-origin.html [ Failure ]
-imported/w3c/web-platform-tests/fetch/api/redirect/redirect-count-worker.html [ Failure ]
-imported/w3c/web-platform-tests/fetch/api/redirect/redirect-count.html [ Failure ]
-imported/w3c/web-platform-tests/fetch/api/redirect/redirect-location-worker.html [ Failure ]
-imported/w3c/web-platform-tests/fetch/api/redirect/redirect-location.html [ Failure ]
 
 # rdar://problem/23643423
 [ Debug ] fast/frames/exponential-frames.html [ Skip ]
@@ -2727,6 +2698,7 @@ webkit.org/b/158420 http/tests/navigation/redirect-to-fragment2.html [ Failure ]
 
 # These tests are not supported on ios-simulator
 workers/wasm-hashset-many-2.html [ Skip ]
+workers/wasm-references.html [ Skip ]
 workers/wasm-hashset-many.html [ Skip ]
 workers/wasm-hashset.html [ Skip ]
 workers/wasm-long-compile-many.html [ Skip ]
@@ -2799,6 +2771,9 @@ fast/canvas/webgl/texImage2D-mse-flipY-true.html [ Skip ]
 fast/canvas/webgl/texImage2D-video-flipY-false.html [ Skip ]
 fast/canvas/webgl/texImage2D-video-flipY-true.html [ Skip ]
 
+# rendering to floating point FBOs not supported on iOS
+fast/canvas/webgl/readPixels-float.html [ Skip ]
+
 # Skipped on iOS since UIHelper.activateAt() doesn't produce a user gesture that ITP captures on iOS
 webkit.org/b/174120 http/tests/resourceLoadStatistics/user-interaction-in-cross-origin-sub-frame.html [ Skip ]
 http/tests/resourceLoadStatistics/user-interaction-only-reported-once-within-short-period-of-time.html [ Skip ]
@@ -2814,6 +2789,8 @@ http/tests/resourceLoadStatistics/clear-in-memory-and-persistent-store.html [ Pa
 http/tests/resourceLoadStatistics/clear-in-memory-and-persistent-store-one-hour.html [ Pass ]
 http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-prevalent-subresource-redirects.html [ Pass ]
 http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-prevalent-subresource-requests.html [ Pass ]
+http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-third-party-redirects.html [ Pass ]
+http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-third-party-requests.html [ Pass ]
 http/tests/storageAccess/deny-storage-access-under-opener.html [ Pass ]
 http/tests/storageAccess/deny-storage-access-under-opener-if-auto-dismiss.html [ Pass ]
 http/tests/resourceLoadStatistics/cap-cache-max-age-for-prevalent-resource.html [ Pass ]
@@ -3029,6 +3006,7 @@ media/modern-media-controls/media-controller/media-controller-click-on-video-bac
 media/modern-media-controls/media-controller/media-controller-space-bar-toggle-playback.html [ Skip ]
 media/modern-media-controls/media-documents/media-document-audio-mac-sizing.html [ Skip ]
 media/modern-media-controls/media-documents/media-document-video-mac-sizing.html [ Skip ]
+media/modern-media-controls/media-documents/media-document-video-ipad-sizing.html [ Skip ]
 media/modern-media-controls/pip-support [ Skip ]
 media/modern-media-controls/playback-support/playback-support-button-click.html [ Skip ]
 media/modern-media-controls/scrubber-support/scrubber-support-click.html [ Skip ]
@@ -3063,9 +3041,9 @@ webkit.org/b/182592 webgl/webgl-texture-image-buffer-reuse.html [ Skip ]
 
 webkit.org/b/181612 [ Debug ] webanimations/animation-opacity-animation-crash.html [ Pass Failure ]
 
-webkit.org/b/182850 [ Release ] editing/pasteboard/data-transfer-set-data-sanitizes-html-when-copying-in-null-origin.html [ Skip ]
+webkit.org/b/182850 editing/pasteboard/data-transfer-set-data-sanitizes-html-when-copying-in-null-origin.html [ Skip ]
 
-webkit.org/b/183219 [ Release ] editing/pasteboard/data-transfer-get-data-on-pasting-html-uses-blob-url.html [ Skip ]
+webkit.org/b/183219 editing/pasteboard/data-transfer-get-data-on-pasting-html-uses-blob-url.html [ Skip ]
 
 webkit.org/b/173928 storage/websql/database-lock-after-reload.html [ Pass Failure ]
 
@@ -3089,6 +3067,11 @@ webkit.org/b/183258 imported/w3c/web-platform-tests/css/css-text/i18n/css3-text-
 webkit.org/b/183258 imported/w3c/web-platform-tests/css/css-text/i18n/css3-text-line-break-opclns-115.html [ ImageOnlyFailure ]
 webkit.org/b/183258 imported/w3c/web-platform-tests/css/css-text/i18n/css3-text-line-break-opclns-116.html [ ImageOnlyFailure ]
 webkit.org/b/183258 imported/w3c/web-platform-tests/css/css-text/word-break/word-break-break-all-006.html [ ImageOnlyFailure ]
+webkit.org/b/196169 imported/w3c/web-platform-tests/css/css-text/overflow-wrap/overflow-wrap-break-word-003.html [ ImageOnlyFailure ]
+
+imported/w3c/web-platform-tests/css/css-text/white-space/textarea-break-spaces-001.html [ ImageOnlyFailure ]
+webkit.org/b/197970 imported/w3c/web-platform-tests/css/css-text/white-space/break-spaces-010.html [ ImageOnlyFailure ]
+webkit.org/b/198543 imported/w3c/web-platform-tests/css/css-text/line-break/line-break-anywhere-001.html [ ImageOnlyFailure ]
 
 # unsupported
 fast/dynamic/mail-autosize-viewport-unit.html [ Failure ]
@@ -3198,18 +3181,8 @@ fast/gradients/conic-two-hints.html [ Pass ]
 # <rdar://problem/36455339> LayoutTest compositing/ios/overflow-scroll-touch-tiles.html is a flaky failure
 compositing/ios/overflow-scroll-touch-tiles.html [ Pass Failure ]
 
-# <rdar://problem/36639117> REGRESSION: LayoutTest svg/custom/subpaths-moveto-only-rendering.svg is failing
-svg/custom/subpaths-moveto-only-rendering.svg [ Failure ]
-
 # <rdar://problem/37406043> LayoutTest fast/events/focusing-element-with-tabindex-by-tap-or-click.html is a flaky failure
 fast/events/focusing-element-with-tabindex-by-tap-or-click.html [ Pass Failure ]
-
-# <rdar://problem/40952038> quicklook/keynote.html and quicklook/pages.html are failing with a 0.09% image diff
-quicklook/keynote.html [ ImageOnlyFailure ]
-quicklook/pages.html [ ImageOnlyFailure ]
-
-# <rdar://problem/41546587> REGRESSION: LayoutTest compositing/contents-scale/non-decomposable-matrix.html is failing
-compositing/contents-scale/non-decomposable-matrix.html [ ImageOnlyFailure ]
 
 # <rdar://problem/41546970> REGRESSION: LayoutTest media/media-fullscreen-loop-inline.html is a flaky timeout
 media/media-fullscreen-loop-inline.html [ Pass Timeout ]
@@ -3234,3 +3207,161 @@ webkit.org/b/192250 imported/w3c/web-platform-tests/service-workers/service-work
 webkit.org/b/192398 imported/w3c/web-platform-tests/service-workers/service-worker/update-registration-with-type.https.html [ Pass Failure ]
 
 webkit.org/b/191704 imported/w3c/web-platform-tests/service-workers/service-worker/windowclient-navigate.https.html [ Pass Failure ]
+
+webkit.org/b/193955 compositing/iframes/remove-reinsert-webview-with-iframe.html [ Skip ]
+
+webkit.org/b/153337 pageoverlay/overlay-installation.html [ Pass Failure ]
+webkit.org/b/153337 pageoverlay/overlay-large-document-scrolled.html [ Pass Failure ]
+webkit.org/b/153337 pageoverlay/overlay-large-document.html [ Pass Failure ]
+
+# FIXME: Unskip the following test once we have the fix for <rdar://problem/45970040>.
+fast/events/touch/ios/touch-events-with-modifiers.html [ Skip ]
+fast/events/touch/ios/mouse-events-with-modifiers.html [ Skip ]
+fast/events/touch/ios/pointer-events-with-modifiers.html [ Skip ]
+
+webkit.org/b/191707 imported/w3c/web-platform-tests/webrtc/simplecall-no-ssrcs.https.html [ Skip ]
+webkit.org/b/191707 imported/w3c/web-platform-tests/webrtc/simplecall.https.html [ Skip ]
+
+webkit.org/b/197473 imported/w3c/web-platform-tests/resource-timing/resource-timing-level1.sub.html [ Pass Failure ]
+
+webkit.org/b/175678 media/W3C/video/events/event_progress.html [ Pass Failure ]
+
+# These tests depend on the implementation of "modern compatibility mode" in WebKitAdditions.
+platform/ipad/fast/css/webkit-overflow-scrolling-parsing-modern-compatibility-mode.html [ Skip ]
+fast/scrolling/ipad/overflow-scrolling-touch-enabled-stacking-modern-compatibility-mode.html [ Skip ]
+
+webkit.org/b/197778 [ Debug ] webgl/2.0.0/conformance2/attribs/gl-vertexattribipointer.html [ Slow ]
+
+# Was unskipped, but now has missing results in iOS . Skipping on iOS only.
+media/controls-after-reload.html [ Skip ]
+
+# FIXME: Unskip the following test once we have the fix for <rdar://problem/48322899>.
+editing/selection/ios/select-non-editable-text-using-keyboard.html [ Skip ]
+editing/selection/ios/select-all-non-editable-text-using-keyboard.html [ Skip ]
+
+webkit.org/b/199472 fast/events/ios/keydown-keyup-keypress-keys-in-non-editable-using-chinese-keyboard.html [ Skip ]
+
+# Dark Mode is iOS 13 and later.
+css-dark-mode [ Pass ]
+css-dark-mode/older-systems [ Skip ]
+
+fast/forms/auto-fill-button/caps-lock-indicator-should-be-visible-after-hiding-auto-fill-strong-password-button.html [ Pass ]
+fast/forms/auto-fill-button/caps-lock-indicator-should-not-be-visible-when-auto-fill-strong-password-button-is-visible.html [ Pass ]
+fast/forms/password-scrolled-after-caps-lock-toggled.html [ Pass ]
+
+# <rdar://problem/48781098> HEIF and HEICS images are supported only on iOS 13
+fast/images/animated-heics-draw.html [ Pass ]
+fast/images/animated-heics-verify.html [ Pass ]
+
+# <rdar://problem/40172428> REGRESSION: LayoutTests fast/text/font-collection.html and fast/text/woff2.html are failing
+fast/text/font-collection.html [ ImageOnlyFailure ]
+
+# <rdar://problem/41546587> REGRESSION: LayoutTest compositing/contents-scale/non-decomposable-matrix.html is failing
+compositing/contents-scale/non-decomposable-matrix.html [ ImageOnlyFailure ]
+
+# <rdar://problem/36639117> REGRESSION: LayoutTest svg/custom/subpaths-moveto-only-rendering.svg is failing
+svg/custom/subpaths-moveto-only-rendering.svg [ Failure ]
+
+# <rdar://problem/45056204> REGRESSION (iOS 13): Three cookie layout tests failing
+http/tests/cookies/third-party-cookie-relaxing.html [ Failure ]
+http/tests/xmlhttprequest/cross-origin-cookie-storage.html [ Failure ]
+http/wpt/beacon/cors/cors-preflight-cookie.html [ Failure ]
+
+# <rdar://problem/45468497> REGRESSION (iOS 13): fast/images/pdf-as-image-with-annotations.html is failing the image only test
+fast/images/pdf-as-image-with-annotations.html [ ImageOnlyFailure ]
+
+# <rdar://problem/46082677> REGRESSION (iOS 13): Layout test fast/attachment/attachment-title-with-rtl.html is failing
+fast/attachment/attachment-title-with-rtl.html [ ImageOnlyFailure ]
+
+fast/forms/textfield-no-linebreak.html [ ImageOnlyFailure ]
+
+# <rdar://problem/47855174> REGRESSION (iOS 13?): Layout tests http/wpt/mediarecorder/MediaRecorder-dataavailable.html and http/wpt/mediarecorder/MediaRecorder-mock-dataavailable.html are failing
+http/wpt/mediarecorder/MediaRecorder-dataavailable.html [ Failure ]
+http/wpt/mediarecorder/MediaRecorder-mock-dataavailable.html [ Failure ]
+
+# <rdar://problem/47897726> REGRESSION (iOS 13): Multiple media tests failing
+media/audio-controls-timeline-in-media-document.html [ Failure ]
+media/controls-strict.html [ Failure ]
+media/video-controls-rendering.html [ Failure ]
+media/video-currentTime.html [ Failure ]
+media/video-ended-event-negative-playback.html [ Failure ]
+media/video-played-collapse.html [ Failure ]
+media/video-played-ranges-1.html [ Failure ]
+media/video-played-reset.html [ Failure ]
+
+# <rdar://problem/51055223> (iOS 13): jsc-layout-tests.yaml/js/script-tests/intl-numberformat.js.layout is failing
+js/intl-numberformat.html [ Failure ]
+
+# <rdar://problem/50892567> REGRESSION (iOS 13): CrashTracer: com.apple.WebKit.WebContent.Development at com.apple.WebKit: _ZN6WebKit19fallbackIconForFileEP5NSURL
+fast/forms/file/file-reset-in-change-using-open-panel-with-icon.html [ Skip ]
+
+# <rdar://problem/47907453>
+webgl/2.0.0/conformance/context/context-hidden-alpha.html [ Failure ]
+
+# <rdar://problem/51751386> REGRESSION (iOS 13?): fast/inline/hidpi-outline-auto-* layout tests failing with 0.01% diffs
+fast/inline/hidpi-outline-auto-negative-offset-with-border-radius.html [ ImageOnlyFailure ]
+fast/inline/hidpi-outline-auto-with-border-radius-horizontal-ltr.html [ ImageOnlyFailure ]
+fast/inline/hidpi-outline-auto-with-border-radius-horizontal-rtl.html [ ImageOnlyFailure ]
+fast/inline/hidpi-outline-auto-with-border-radius-vertical-ltr.html [ ImageOnlyFailure ]
+fast/inline/hidpi-outline-auto-with-border-radius-vertical-rtl.html [ ImageOnlyFailure ]
+fast/inline/hidpi-outline-auto-with-fractional-radius.html [ ImageOnlyFailure ]
+fast/inline/hidpi-outline-auto-with-one-focusring-rect.html [ ImageOnlyFailure ]
+
+# <rdar://problem/50383285> REGRESSION: Layout test imported/w3c/web-platform-tests/css/css-text/writing-system/writing-system-line-break-001.html is failing
+imported/w3c/web-platform-tests/css/css-text/writing-system/writing-system-line-break-001.html [ ImageOnlyFailure ]
+
+# <rdar://problem/51762717> 7 http/wpt/resource-timing/rt* tests are flaky failures on iOS 13 and Catalina bots
+http/wpt/resource-timing/rt-cors.html [ Pass Failure ]
+http/wpt/resource-timing/rt-cors.worker.html [ Pass Failure ]
+http/wpt/resource-timing/rt-initiatorType-css.html [ Pass Failure ]
+http/wpt/resource-timing/rt-initiatorType.worker.html [ Pass Failure ]
+http/wpt/resource-timing/rt-initiatorType-script-module.html [ Pass Failure ]
+http/wpt/resource-timing/rt-initiatorType-element.html [ Pass Failure ]
+http/wpt/resource-timing/rt-initiatorType-xmlhttprequest.html [ Pass Failure ]
+
+# <rdar://problem/51766135> imported/w3c/web-platform-tests/preload/ tests landed failing after import
+imported/w3c/web-platform-tests/preload/dynamic-adding-preload-imagesrcset.html [ Failure ]
+imported/w3c/web-platform-tests/preload/link-header-preload-imagesrcset.html [ Failure ]
+
+# <rdar://problem/51826131> REGRESSION (r241747) 2 Layout tests are failing on Internal iOS 13 iOS / iPad Simulator testers fast/repaint/placeholder-after-caps-lock-hidden.html imported/blink/svg/custom/focus-ring-2.svg
+imported/blink/svg/custom/focus-ring-2.svg [ ImageOnlyFailure ]
+fast/repaint/placeholder-after-caps-lock-hidden.html [ Failure ]
+
+# <rdar://problem/51827049> REGRESSION (iOS 13?) Layout test fast/viewport/ios/use-minimum-device-width-for-page-without-viewport-meta.html is a highly flaky timeout on iOS 13 iOS Simulator
+fast/viewport/ios/use-minimum-device-width-for-page-without-viewport-meta.html [ Pass Timeout Failure ]
+
+# <rdar://problem/51828203> 2 platform/ipad/fast/viewport/viewport* Layout tests are timing out on iOS 13
+platform/ipad/fast/viewport/viewport-overriden-by-minimum-effective-width-if-ignore-meta-viewport.html [ Timeout ]
+platform/ipad/fast/viewport/viewport-unchanged-by-minimum-effective-width-if-not-ignore-meta-viewport.html [ Timeout ]
+
+# <rdar://problem/52699129> fast/forms/datalist/datalist-show-hide.html and fast/forms/datalist/datalist-textinput-suggestions-order.html are timing out on iOS 13
+fast/forms/datalist/datalist-show-hide.html [ Timeout ]
+fast/forms/datalist/datalist-textinput-suggestions-order.html [ Timeout ]
+
+# <rdar://problem/52594556> REGRESSION: Layout test fast/text/international/system-language/han-quotes.html is failing
+fast/text/international/system-language/han-quotes.html [ ImageOnlyFailure ]
+
+# <rdar://problem/52689856> storage/websql/test-authorizer.html is failing
+storage/websql/test-authorizer.html [ Failure ]
+
+# rdar://53551736 (Layout Test editing/pasteboard/paste-and-sanitize.html is a Flaky Failure on iOS 13)
+editing/pasteboard/paste-and-sanitize.html [ Pass Failure ]
+
+# rdar://53866783 (REGRESSION: Layout Test fast/shadow-dom/click-text-inside-linked-slot.html is Failing)
+fast/shadow-dom/click-text-inside-linked-slot.html [ Pass Failure ]
+
+# rdar://53946482 (REGRESSION: Multiple Layout Tests (*-using-open-panel.html) are Timing Out)
+fast/files/apply-blob-url-to-xhr-using-open-panel.html [ Pass Timeout ]
+fast/files/file-reader-abort-using-open-panel.html [ Pass Timeout ]
+http/tests/local/formdata/send-form-data-with-empty-file-filename-using-open-panel.html [ Pass Timeout ]
+http/tests/local/fileapi/file-last-modified-using-open-panel.html [ Pass Timeout ]
+
+# rdar://53957264 (REGRESSION: Layout Tests http/tests/misc/iframe-beforeunload-dialog-not-matching-ancestor-securityorigin.html and http/tests/misc/iframe-beforeunload-dialog-block-modals.html Timing Out)
+http/tests/misc/iframe-beforeunload-dialog-not-matching-ancestor-securityorigin.html [ Pass Timeout ]
+http/tests/misc/iframe-beforeunload-dialog-block-modals.html [ Pass Timeout ]
+
+# rdar://52961406 (scrollingcoordinator/ios/scroll-position-after-reattach.html is a flaky image failure on iOS)
+scrollingcoordinator/ios/scroll-position-after-reattach.html [ Pass ImageOnlyFailure ]
+
+# rdar://54561673 (REGRESSION: Layout test http/tests/security/frameNavigation/sandbox-ALLOWED-top-navigation-with-user-gesture-2.html is a flaky timeout)
+http/tests/security/frameNavigation/sandbox-ALLOWED-top-navigation-with-user-gesture-2.html [ Pass Timeout ]

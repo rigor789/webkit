@@ -43,7 +43,9 @@ void InteractionInformationAtPosition::encode(IPC::Encoder& encoder) const
 {
     encoder << request;
 
+    encoder << canBeValid;
     encoder << nodeAtPositionIsFocusedElement;
+    encoder << nodeAtPositionHasDoubleClickHandler;
 #if ENABLE(DATA_INTERACTION)
     encoder << hasSelectionAtPosition;
 #endif
@@ -55,13 +57,14 @@ void InteractionInformationAtPosition::encode(IPC::Encoder& encoder) const
     encoder << isAttachment;
     encoder << isAnimatedImage;
     encoder << isElement;
+    encoder << containerScrollingNodeID;
     encoder << adjustedPointForNodeRespondingToClickEvents;
     encoder << url;
     encoder << imageURL;
     encoder << title;
     encoder << idAttribute;
     encoder << bounds;
-#if PLATFORM(IOSMAC)
+#if PLATFORM(MACCATALYST)
     encoder << caretRect;
 #endif
     encoder << textBefore;
@@ -89,7 +92,13 @@ bool InteractionInformationAtPosition::decode(IPC::Decoder& decoder, Interaction
     if (!decoder.decode(result.request))
         return false;
 
+    if (!decoder.decode(result.canBeValid))
+        return false;
+
     if (!decoder.decode(result.nodeAtPositionIsFocusedElement))
+        return false;
+
+    if (!decoder.decode(result.nodeAtPositionHasDoubleClickHandler))
         return false;
 
 #if ENABLE(DATA_INTERACTION)
@@ -121,6 +130,9 @@ bool InteractionInformationAtPosition::decode(IPC::Decoder& decoder, Interaction
     if (!decoder.decode(result.isElement))
         return false;
 
+    if (!decoder.decode(result.containerScrollingNodeID))
+        return false;
+
     if (!decoder.decode(result.adjustedPointForNodeRespondingToClickEvents))
         return false;
 
@@ -139,7 +151,7 @@ bool InteractionInformationAtPosition::decode(IPC::Decoder& decoder, Interaction
     if (!decoder.decode(result.bounds))
         return false;
     
-#if PLATFORM(IOSMAC)
+#if PLATFORM(MACCATALYST)
     if (!decoder.decode(result.caretRect))
         return false;
 #endif

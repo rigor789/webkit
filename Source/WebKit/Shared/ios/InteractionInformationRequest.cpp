@@ -38,6 +38,7 @@ void InteractionInformationRequest::encode(IPC::Encoder& encoder) const
     encoder << point;
     encoder << includeSnapshot;
     encoder << includeLinkIndicator;
+    encoder << linkIndicatorShouldHaveLegacyMargins;
 }
 
 bool InteractionInformationRequest::decode(IPC::Decoder& decoder, InteractionInformationRequest& result)
@@ -51,32 +52,29 @@ bool InteractionInformationRequest::decode(IPC::Decoder& decoder, InteractionInf
     if (!decoder.decode(result.includeLinkIndicator))
         return false;
 
+    if (!decoder.decode(result.linkIndicatorShouldHaveLegacyMargins))
+        return false;
+
     return true;
 }
 
-bool InteractionInformationRequest::isValidForRequest(const InteractionInformationRequest& other)
+bool InteractionInformationRequest::isValidForRequest(const InteractionInformationRequest& other, int radius)
 {
-    if (other.point != point)
-        return false;
-
     if (other.includeSnapshot && !includeSnapshot)
         return false;
 
     if (other.includeLinkIndicator && !includeLinkIndicator)
         return false;
 
-    return true;
+    if (other.linkIndicatorShouldHaveLegacyMargins != linkIndicatorShouldHaveLegacyMargins)
+        return false;
+
+    return (other.point - point).diagonalLengthSquared() <= radius * radius;
 }
     
-bool InteractionInformationRequest::isApproximatelyValidForRequest(const InteractionInformationRequest& other)
+bool InteractionInformationRequest::isApproximatelyValidForRequest(const InteractionInformationRequest& other, int radius)
 {
-    if (other.includeSnapshot && !includeSnapshot)
-        return false;
-    
-    if (other.includeLinkIndicator && !includeLinkIndicator)
-        return false;
-    
-    return (other.point - point).diagonalLengthSquared() <= 4;
+    return isValidForRequest(other, radius);
 }
 
 #endif // PLATFORM(IOS_FAMILY)

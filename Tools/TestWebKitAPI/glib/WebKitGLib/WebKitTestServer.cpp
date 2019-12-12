@@ -53,10 +53,8 @@ WebKitTestServer::WebKitTestServer(ServerOptions options)
 WebKitTestServer::~WebKitTestServer()
 {
     soup_uri_free(m_baseURI);
-#if SOUP_CHECK_VERSION(2, 50, 0)
     if (m_baseWebSocketURI)
         soup_uri_free(m_baseWebSocketURI);
-#endif
 }
 
 void WebKitTestServer::run(SoupServerCallback serverCallback)
@@ -72,7 +70,6 @@ void WebKitTestServer::run(SoupServerCallback serverCallback)
     }
 }
 
-#if SOUP_CHECK_VERSION(2, 50, 0)
 void WebKitTestServer::addWebSocketHandler(SoupServerWebsocketCallback callback, gpointer userData)
 {
     m_baseWebSocketURI = soup_uri_new_with_base(m_baseURI, "/websocket/");
@@ -101,14 +98,13 @@ void WebKitTestServer::removeWebSocketHandler()
 
 CString WebKitTestServer::getWebSocketURIForPath(const char* path) const
 {
-    g_assert(m_baseWebSocketURI);
-    g_assert(path && *path == '/');
+    g_assert_nonnull(m_baseWebSocketURI);
+    g_assert_true(path && *path == '/');
     SoupURI* uri = soup_uri_new_with_base(m_baseWebSocketURI, path + 1); // Ignore the leading slash.
     GUniquePtr<gchar> uriString(soup_uri_to_string(uri, FALSE));
     soup_uri_free(uri);
     return uriString.get();
 }
-#endif // SOUP_CHECK_VERSION(2, 50, 0)
 
 CString WebKitTestServer::getURIForPath(const char* path) const
 {

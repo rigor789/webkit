@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2018 Apple Inc. All rights reserved.
+ * Copyright (C) 2005-2019 Apple Inc. All rights reserved.
  *           (C) 2007 Graham Dennis (graham.dennis@gmail.com)
  *
  * Redistribution and use in source and binary forms, with or without
@@ -729,6 +729,8 @@ WebView *createWebViewAndOffscreenWindow()
     [WebView registerURLSchemeAsLocal:@"feeds"];
     [WebView registerURLSchemeAsLocal:@"feedsearch"];
 
+    [[webView preferences] _setMediaRecorderEnabled:YES];
+
 #if PLATFORM(MAC)
     [webView setWindowOcclusionDetectionEnabled:NO];
     [WebView _setFontWhitelist:fontWhitelist()];
@@ -860,7 +862,6 @@ static void enableExperimentalFeatures(WebPreferences* preferences)
     [preferences setFetchAPIKeepAliveEnabled:YES];
     [preferences setWebAnimationsEnabled:YES];
     [preferences setWebGL2Enabled:YES];
-    [preferences setWebMetalEnabled:YES];
     // FIXME: AsyncFrameScrollingEnabled
     [preferences setCacheAPIEnabled:NO];
     [preferences setReadableByteStreamAPIEnabled:YES];
@@ -875,6 +876,9 @@ static void enableExperimentalFeatures(WebPreferences* preferences)
     preferences.sourceBufferChangeTypeEnabled = YES;
     [preferences setCSSOMViewScrollingAPIEnabled:YES];
     [preferences setMediaRecorderEnabled:YES];
+    [preferences setReferrerPolicyAttributeEnabled:YES];
+    [preferences setReferrerPolicyAttributeEnabled:YES];
+    [preferences setLinkPreloadResponsiveImagesEnabled:YES];
 }
 
 // Called before each test.
@@ -937,6 +941,7 @@ static void resetWebPreferencesToConsistentValues()
         [preferences setUserStyleSheetEnabled:NO];
 
     [preferences setMediaPlaybackAllowsInline:YES];
+    [preferences setMediaPlaybackRequiresUserGesture:NO];
     [preferences setVideoPlaybackRequiresUserGesture:NO];
     [preferences setAudioPlaybackRequiresUserGesture:NO];
     [preferences setMediaDataLoadsAutomatically:YES];
@@ -976,7 +981,6 @@ static void resetWebPreferencesToConsistentValues()
     [preferences setCustomPasteboardDataEnabled:YES];
 
     [preferences setWebGL2Enabled:YES];
-    [preferences setWebMetalEnabled:YES];
 
     [preferences setDownloadAttributeEnabled:YES];
     [preferences setDirectoryUploadEnabled:YES];
@@ -1016,6 +1020,10 @@ static void setWebPreferencesForTestOptions(const TestOptions& options)
     preferences.colorFilterEnabled = options.enableColorFilter;
     preferences.selectionAcrossShadowBoundariesEnabled = options.enableSelectionAcrossShadowBoundaries;
     preferences.webGPUEnabled = options.enableWebGPU;
+    preferences.CSSLogicalEnabled = options.enableCSSLogical;
+    preferences.adClickAttributionEnabled = options.adClickAttributionEnabled;
+    preferences.resizeObserverEnabled = options.enableResizeObserver;
+    preferences.coreMathMLEnabled = options.enableCoreMathML;
 }
 
 // Called once on DumpRenderTree startup.
@@ -1164,12 +1172,13 @@ static bool useLongRunningServerMode(int argc, const char *argv[])
 
 static bool handleControlCommand(const char* command)
 {
-    if (!strcmp("#CHECK FOR WORLD LEAKS", command)) {
-        // DumpRenderTree does not support checking for world leaks.
+    if (!strncmp("#CHECK FOR WORLD LEAKS", command, 22) || !strncmp("#LIST CHILD PROCESSES", command, 21)) {
+        // DumpRenderTree does not support checking for world leaks or listing child processes.
         WTF::String result("\n");
+        unsigned resultLength = result.length();
         printf("Content-Type: text/plain\n");
-        printf("Content-Length: %u\n", result.length());
-        fwrite(result.utf8().data(), 1, result.length(), stdout);
+        printf("Content-Length: %u\n", resultLength);
+        fwrite(result.utf8().data(), 1, resultLength, stdout);
         printf("#EOF\n");
         fprintf(stderr, "#EOF\n");
         fflush(stdout);
@@ -1522,7 +1531,7 @@ static NSString *dumpFramesAsText(WebFrame *frame)
     // conversion methods cannot. After the conversion to a buffer, we turn that buffer into
     // a CFString via fromUTF8WithLatin1Fallback().createCFString() which can be appended to
     // the result without any conversion.
-    WKRetainPtr<WKStringRef> stringRef(AdoptWK, WKStringCreateWithCFString((__bridge CFStringRef)innerText));
+    WKRetainPtr<WKStringRef> stringRef = adoptWK(WKStringCreateWithCFString((__bridge CFStringRef)innerText));
     size_t bufferSize = WKStringGetMaximumUTF8CStringSize(stringRef.get());
     auto buffer = std::make_unique<char[]>(bufferSize);
     size_t stringLength = WKStringGetUTF8CStringNonStrict(stringRef.get(), buffer.get(), bufferSize);
@@ -1623,7 +1632,11 @@ static void changeWindowScaleIfNeeded(const char* testPathOrUR)
         return;
     // When the new scale factor is set on the window first, WebView doesn't see it as a new scale and stops propagating the behavior change to WebCore::Page.
     gTestRunner->setBackingScaleFactor(requiredScaleFactor);
-    [[[mainFrame webView] window] _setWindowResolution:requiredScaleFactor displayIfChanged:YES];
+    NSWindow *window = [[mainFrame webView] window];
+    if ([window respondsToSelector:@selector(_setWindowResolution:)])
+        [window _setWindowResolution:requiredScaleFactor];
+    else
+        [window _setWindowResolution:requiredScaleFactor displayIfChanged:YES];
 }
 #endif
 
@@ -1739,8 +1752,10 @@ void dump()
             WebArchive *webArchive = [[mainFrame dataSource] webArchive];
             resultString = CFBridgingRelease(WebCoreTestSupport::createXMLStringFromWebArchiveData((__bridge CFDataRef)[webArchive data]));
             resultMimeType = @"application/x-webarchive";
-        } else
-            resultString = [mainFrame renderTreeAsExternalRepresentationForPrinting:gTestRunner->isPrinting()];
+        } else if (gTestRunner->isPrinting())
+            resultString = [mainFrame renderTreeAsExternalRepresentationForPrinting];
+        else
+            resultString = [mainFrame renderTreeAsExternalRepresentationWithOptions:gTestRunner->renderTreeDumpOptions()];
 
         if (resultString && !resultData)
             resultData = [resultString dataUsingEncoding:NSUTF8StringEncoding];
@@ -1828,6 +1843,8 @@ static void setJSCOptions(const TestOptions& options)
 
 static void resetWebViewToConsistentStateBeforeTesting(const TestOptions& options)
 {
+    setJSCOptions(options);
+
     WebView *webView = [mainFrame webView];
 
 #if PLATFORM(IOS_FAMILY)
@@ -1848,9 +1865,6 @@ static void resetWebViewToConsistentStateBeforeTesting(const TestOptions& option
     [policyDelegate setControllerToNotifyDone:0];
     [uiDelegate resetToConsistentStateBeforeTesting:options];
     [frameLoadDelegate resetToConsistentState];
-#if !PLATFORM(IOS_FAMILY)
-    [webView _setDashboardBehavior:WebDashboardBehaviorUseBackwardCompatibilityMode to:NO];
-#endif
     [webView _clearMainFrameName];
     [[webView undoManager] removeAllActions];
     [WebView _removeAllUserContentFromGroup:[webView groupName]];
@@ -1872,12 +1886,12 @@ static void resetWebViewToConsistentStateBeforeTesting(const TestOptions& option
 
     setlocale(LC_ALL, "");
 
-    if (gTestRunner) {
-        gTestRunner->resetPageVisibility();
-        WebCoreTestSupport::resetInternalsObject([mainFrame globalContext]);
-        // in the case that a test using the chrome input field failed, be sure to clean up for the next test
-        gTestRunner->removeChromeInputField();
-    }
+    ASSERT(gTestRunner);
+    gTestRunner->resetPageVisibility();
+    // In the case that a test using the chrome input field failed, be sure to clean up for the next test.
+    gTestRunner->removeChromeInputField();
+
+    WebCoreTestSupport::resetInternalsObject([mainFrame globalContext]);
 
 #if !PLATFORM(IOS_FAMILY)
     if (WebCore::Frame* frame = [webView _mainCoreFrame])
@@ -1905,7 +1919,7 @@ static void resetWebViewToConsistentStateBeforeTesting(const TestOptions& option
     [[NSPasteboard generalPasteboard] declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
 #endif
 
-    setJSCOptions(options);
+    WebCoreTestSupport::setAdditionalSupportedImageTypesForTesting(options.additionalSupportedImageTypes.c_str());
 
     [mainFrame _clearOpener];
 
@@ -1995,18 +2009,18 @@ static void runTest(const string& inputLine)
     }
     mainFrameTestOptions = options;
 
-    resetWebViewToConsistentStateBeforeTesting(options);
-
     const char* testURL([[url absoluteString] UTF8String]);
+    gTestRunner = TestRunner::create(testURL, command.expectedPixelHash);
+    gTestRunner->setAllowedHosts(allowedHosts);
+    gTestRunner->setCustomTimeout(command.timeout);
+    gTestRunner->setDumpJSConsoleLogInStdErr(command.dumpJSConsoleLogInStdErr || options.dumpJSConsoleLogInStdErr);
+
+    resetWebViewToConsistentStateBeforeTesting(options);
 
 #if !PLATFORM(IOS_FAMILY)
     changeWindowScaleIfNeeded(testURL);
 #endif
 
-    gTestRunner = TestRunner::create(testURL, command.expectedPixelHash);
-    gTestRunner->setAllowedHosts(allowedHosts);
-    gTestRunner->setCustomTimeout(command.timeout);
-    gTestRunner->setDumpJSConsoleLogInStdErr(command.dumpJSConsoleLogInStdErr || options.dumpJSConsoleLogInStdErr);
     topLoadingFrame = nil;
 #if !PLATFORM(IOS_FAMILY)
     ASSERT(!draggingInfo); // the previous test should have called eventSender.mouseUp to drop!
@@ -2017,6 +2031,9 @@ static void runTest(const string& inputLine)
     sizeWebViewForCurrentTest();
     gTestRunner->setIconDatabaseEnabled(false);
     gTestRunner->clearAllApplicationCaches();
+
+    gTestRunner->clearAllDatabases();
+    gTestRunner->setIDBPerOriginQuota(50 * MB);
 
     if (disallowedURLs)
         CFSetRemoveAllValues(disallowedURLs);

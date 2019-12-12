@@ -25,8 +25,6 @@
 
 #import "config.h"
 
-#if WK_API_ENABLED
-
 #import "PlatformUtilities.h"
 #import <WebKit/WKProcessPoolPrivate.h>
 #import <WebKit/WKWebViewPrivate.h>
@@ -53,8 +51,6 @@ TEST(WebKit, JITEnabled)
     auto configuration = adoptNS([WKWebViewConfiguration new]);
     [configuration setProcessPool:[[[WKProcessPool alloc] _initWithConfiguration:processPoolConfiguration.get()] autorelease]];
     auto webViewNoJIT = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
-    checkJITEnabled(webViewNoJIT, NO);
+    checkJITEnabled(WTFMove(webViewNoJIT), NO);
     checkJITEnabled(adoptNS([WKWebView new]), YES);
 }
-
-#endif

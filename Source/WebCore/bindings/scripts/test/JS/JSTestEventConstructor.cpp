@@ -99,6 +99,7 @@ template<> TestEventConstructor::Init convertDictionary<TestEventConstructor::In
         RETURN_IF_EXCEPTION(throwScope, { });
     } else
         result.attr2 = emptyString();
+#if ENABLE(SPECIAL_EVENT)
     JSValue attr3Value;
     if (isNullOrUndefined)
         attr3Value = jsUndefined();
@@ -111,6 +112,7 @@ template<> TestEventConstructor::Init convertDictionary<TestEventConstructor::In
         RETURN_IF_EXCEPTION(throwScope, { });
     } else
         result.attr3 = emptyString();
+#endif
     return result;
 }
 
@@ -311,7 +313,7 @@ void JSTestEventConstructor::heapSnapshot(JSCell* cell, HeapSnapshotBuilder& bui
     auto* thisObject = jsCast<JSTestEventConstructor*>(cell);
     builder.setWrappedObjectForCell(cell, &thisObject->wrapped());
     if (thisObject->scriptExecutionContext())
-        builder.setLabelForCell(cell, String::format("url %s", thisObject->scriptExecutionContext()->url().string().utf8().data()));
+        builder.setLabelForCell(cell, "url " + thisObject->scriptExecutionContext()->url().string());
     Base::heapSnapshot(cell, builder);
 }
 

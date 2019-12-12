@@ -13,10 +13,10 @@ TestPage.registerInitializer(function() {
         return loadFormattingTestAndExpectedResults(testURL).then(function(results) {
             let {testText, expectedText} = results;
             return new Promise(function(resolve, reject) {
-                const indentString = "    ";
                 let workerProxy = WI.FormatterWorkerProxy.singleton();
-                let isModule = /^module/.test(testName);
-                workerProxy.formatJavaScript(testText, isModule, indentString, ({formattedText, sourceMapData}) => {
+                const indentString = "    ";
+
+                function callback({formattedText, sourceMapData}) {
                     let pass = formattedText === expectedText;
                     InspectorTest.log(pass ? "PASS" : "FAIL");
 
@@ -36,14 +36,26 @@ TestPage.registerInitializer(function() {
                     }
 
                     resolve(pass);
-                });
+                }
+
+                switch (mode) {
+                case "text/javascript": {
+                    let isModule = /^module/.test(testName);
+                    workerProxy.formatJavaScript(testText, isModule, indentString, callback);
+                    break;
+                }
+
+                case "text/css":
+                    workerProxy.formatCSS(testText, indentString, callback);
+                    break;
+                }
             });
         });
     }
 
     window.addFormattingTests = function(suite, mode, tests) {
         let testPageURL = WI.networkManager.mainFrame.mainResource.url;
-        let testPageResourcesURL = testPageURL.substring(0, testPageURL.lastIndexOf("/"));            
+        let testPageResourcesURL = testPageURL.substring(0, testPageURL.lastIndexOf("/"));
 
         for (let test of tests) {
             let testName = test.substring(test.lastIndexOf("/") + 1);
@@ -52,7 +64,8 @@ TestPage.registerInitializer(function() {
                 name: suite.name + "." + testName,
                 test(resolve, reject) {
                     runFormattingTest(mode, testName, testURL).then(resolve).catch(reject);
-                }
+                },
+                timeout: -1,
             });
         }
     };

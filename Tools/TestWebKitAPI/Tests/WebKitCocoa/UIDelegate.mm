@@ -25,8 +25,6 @@
 
 #import "config.h"
 
-#if WK_API_ENABLED
-
 #import "PlatformUtilities.h"
 #import "TestWKWebView.h"
 #import "Utilities.h"
@@ -194,6 +192,7 @@ TEST(WebKit, InjectedBundleNodeHandleIsSelectElement)
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration]);
     auto delegate = adoptNS([[InjectedBundleNodeHandleIsSelectElementDelegate alloc] init]);
     [webView setUIDelegate:delegate.get()];
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"about:blank"]]];
     TestWebKitAPI::Util::run(&done);
 }
 
@@ -428,6 +427,21 @@ TEST(WebKit, PrintFrame)
     TestWebKitAPI::Util::run(&drawFooterCalled);
 }
 
+TEST(WebKit, PrintPreview)
+{
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)]);
+    auto delegate = adoptNS([[PrintDelegate alloc] init]);
+    [webView setUIDelegate:delegate.get()];
+    [webView loadHTMLString:@"<head><title>test_title</title></head><body onload='print()'>hello world!</body>" baseURL:[NSURL URLWithString:@"http://example.com/"]];
+    TestWebKitAPI::Util::run(&done);
+
+    NSPrintOperation *operation = [webView _printOperationWithPrintInfo:[NSPrintInfo sharedPrintInfo]];
+    NSPrintOperation.currentOperation = operation;
+    auto previewView = [operation view];
+    [webView _close];
+    [previewView drawRect:CGRectMake(0, 0, 10, 10)];
+}
+
 @interface NotificationDelegate : NSObject <WKUIDelegatePrivate> {
     bool _allowNotifications;
 }
@@ -596,6 +610,7 @@ TEST(WebKit, ClickAutoFillButton)
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration]);
     auto delegate = adoptNS([[AutoFillDelegate alloc] init]);
     [webView setUIDelegate:delegate.get()];
+    [webView evaluateJavaScript:@"" completionHandler: nil]; // Ensure the WebProcess and injected bundle are running.
     TestWebKitAPI::Util::run(&readyForClick);
     NSPoint buttonLocation = NSMakePoint(130, 575);
     [webView mouseDownAtPoint:buttonLocation simulatePressure:NO];
@@ -635,6 +650,7 @@ static void testDidResignInputElementStrongPasswordAppearanceAfterEvaluatingJava
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration]);
     auto delegate = adoptNS([[DidResignInputElementStrongPasswordAppearanceDelegate alloc] init]);
     [webView setUIDelegate:delegate.get()];
+    [webView evaluateJavaScript:@"" completionHandler:nil]; // Make sure WebProcess and injected bundle are running.
     TestWebKitAPI::Util::run(&readytoResign);
     [webView evaluateJavaScript:script completionHandler:nil];
     TestWebKitAPI::Util::run(&done);
@@ -676,6 +692,7 @@ TEST(WebKit, AutoFillAvailable)
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration]);
     auto delegate = adoptNS([[AutoFillAvailableDelegate alloc] init]);
     [webView setUIDelegate:delegate.get()];
+    [webView evaluateJavaScript:@"" completionHandler: nil]; // Ensure the WebProcess and injected bundle are running.
     TestWebKitAPI::Util::run(&done);
 }
 
@@ -700,6 +717,7 @@ TEST(WebKit, InjectedBundleNodeHandleIsTextField)
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration]);
     auto delegate = adoptNS([[InjectedBundleNodeHandleIsTextFieldDelegate alloc] init]);
     [webView setUIDelegate:delegate.get()];
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"about:blank"]]];
     TestWebKitAPI::Util::run(&done);
 }
 
@@ -883,5 +901,3 @@ TEST(WebKit, DidNotHandleWheelEvent)
 #endif // RELIABLE_DID_NOT_HANDLE_WHEEL_EVENT
 
 #endif // PLATFORM(MAC)
-
-#endif // WK_API_ENABLED

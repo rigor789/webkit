@@ -109,6 +109,7 @@ use constant {
     tvOS        => "tvOS",
     watchOS     => "watchOS",
     Mac         => "Mac",
+    MacCatalyst => "MacCatalyst",
     JSCOnly     => "JSCOnly",
     PlayStation => "PlayStation",
     WinCairo    => "WinCairo",
@@ -159,13 +160,11 @@ my $unknownPortProhibited = 0;
 
 # Variables for Win32 support
 my $programFilesPath;
-my $vcBuildPath;
+my $msBuildPath;
 my $vsInstallDir;
-my $msBuildInstallDir;
 my $vsVersion;
 my $windowsSourceDir;
 my $winVersion;
-my $vsWhereFoundInstallation;
 
 # Defined in VCSUtils.
 sub exitStatus($);
@@ -469,7 +468,11 @@ sub jscPath($)
     my ($productDir) = @_;
     my $jscName = "jsc";
     $jscName .= "_debug"  if configuration() eq "Debug_All";
-    $jscName .= ".exe" if (isAnyWindows());
+    if (isPlayStation()) {
+        $jscName .= ".elf";
+    } elsif (isAnyWindows()) {
+        $jscName .= ".exe";
+    }
     return "$productDir/$jscName" if -e "$productDir/$jscName";
     return "$productDir/JavaScriptCore.framework/Resources/$jscName";
 }
@@ -487,6 +490,7 @@ sub argumentsForConfiguration()
     push(@args, '--release') if ($configuration =~ "^Release");
     push(@args, '--ios-device') if (defined $xcodeSDK && $xcodeSDK =~ /^iphoneos/);
     push(@args, '--ios-simulator') if (defined $xcodeSDK && $xcodeSDK =~ /^iphonesimulator/);
+    push(@args, '--maccatalyst') if (defined $xcodeSDK && $xcodeSDK =~ /^maccatalyst/);
     push(@args, '--32-bit') if ($architecture eq "x86" and !isWin64());
     push(@args, '--64-bit') if (isWin64());
     push(@args, '--gtk') if isGtk();
@@ -572,6 +576,9 @@ sub determineXcodeSDK
     if (checkForArgumentAndRemoveFromARGV("--watchos-simulator")) {
         $xcodeSDK ||= "watchsimulator";
     }
+    if (checkForArgumentAndRemoveFromARGV("--maccatalyst")) {
+        $xcodeSDK ||= "maccatalyst";
+    }
     return if !defined $xcodeSDK;
     
     # Prefer the internal version of an sdk, if it exists.
@@ -607,6 +614,7 @@ sub xcodeSDKPlatformName()
     return "macosx" if $xcodeSDK =~ /macosx/i;
     return "watchos" if $xcodeSDK =~ /watchos/i;
     return "watchsimulator" if $xcodeSDK =~ /watchsimulator/i;
+    return "maccatalyst" if $xcodeSDK =~ /maccatalyst/i;
     die "Couldn't determine platform name from Xcode SDK";
 }
 
@@ -646,47 +654,14 @@ sub programFilesPathX86
     return $programFilesPathX86;
 }
 
-sub requireModulesForVSWhere
+sub visualStudioInstallDirVSWhere
 {
-    require Encode;
-    require Encode::Locale;
-    require JSON::PP;
-}
-
-sub pickCurrentVisualStudioInstallation
-{
-    return $vsWhereFoundInstallation if defined $vsWhereFoundInstallation;
-
-    requireModulesForVSWhere();
-    determineSourceDir();
-
-    # Prefer Enterprise, then Professional, then Community, then
-    # anything else that provides MSBuild.
-    foreach my $productType ((
-        'Microsoft.VisualStudio.Product.Enterprise',
-        'Microsoft.VisualStudio.Product.Professional',
-        'Microsoft.VisualStudio.Product.Community',
-        undef
-    )) {
-        my $command = "$sourceDir/WebKitLibraries/win/tools/vswhere -nologo -latest -format json -requires Microsoft.Component.MSBuild";
-        if (defined $productType) {
-            $command .= " -products $productType";
-        }
-        my $vsWhereOut = `$command`;
-        my $installations = [];
-        eval {
-            $installations = JSON::PP::decode_json(Encode::encode('UTF-8' => Encode::decode(console_in => $vsWhereOut)));
-        };
-        print "Error getting Visual Studio Location: $@\n" if $@;
-        undef $@;
-
-        if (scalar @$installations) {
-            my $installation = $installations->[0];
-            $vsWhereFoundInstallation = $installation;
-            return $installation;
-        }
-    }
-    return undef;
+    my $vswhere = File::Spec->catdir(programFilesPathX86(), "Microsoft Visual Studio", "Installer", "vswhere.exe");
+    return unless -e $vswhere;
+    open(my $handle, "-|", $vswhere, qw(-nologo -latest -requires Microsoft.Component.MSBuild -property installationPath)) || return;
+    my $vsWhereOut = <$handle>;
+    $vsWhereOut =~ s/\r?\n//;
+    return $vsWhereOut;
 }
 
 sub visualStudioInstallDir
@@ -698,9 +673,7 @@ sub visualStudioInstallDir
         $vsInstallDir =~ s|[\\/]$||;
     } else {
         $vsInstallDir = visualStudioInstallDirVSWhere();
-        if (not -e $vsInstallDir) {
-            $vsInstallDir = visualStudioInstallDirFallback();
-        }
+        return unless defined $vsInstallDir;
     }
     chomp($vsInstallDir = `cygpath "$vsInstallDir"`) if isCygwin();
 
@@ -708,45 +681,20 @@ sub visualStudioInstallDir
     return $vsInstallDir;
 }
 
-sub visualStudioInstallDirVSWhere
+sub msBuildPath
 {
-    pickCurrentVisualStudioInstallation();
-    if (defined($vsWhereFoundInstallation)) {
-        return $vsWhereFoundInstallation->{installationPath};
-    }
-    return undef;
-}
-
-sub visualStudioInstallDirFallback
-{
-    foreach my $productType ((
-        'Enterprise',
-        'Professional',
-        'Community',
-    )) {
-        my $installdir = File::Spec->catdir(programFilesPathX86(),
-            "Microsoft Visual Studio", "2017", $productType);
-        my $msbuilddir = File::Spec->catdir($installdir,
-            "MSBuild", "15.0", "bin");
-        if (-e $installdir && -e $msbuilddir) {
-            return $installdir;
-        }
-    }
-    return undef;
-}
-
-sub msBuildInstallDir
-{
-    return $msBuildInstallDir if defined $msBuildInstallDir;
-
     my $installDir = visualStudioInstallDir();
-    $msBuildInstallDir = File::Spec->catdir($installDir,
-        "MSBuild", "15.0", "bin");
 
-    chomp($msBuildInstallDir = `cygpath "$msBuildInstallDir"`) if isCygwin();
+    # FIXME: vswhere.exe should be used to find msbuild.exe after AppleWin will get vswhere with -find switch.
+    # <https://github.com/Microsoft/vswhere/wiki/Find-MSBuild>
+    # <https://github.com/Microsoft/vswhere/releases/tag/2.6.6%2Bd9dbe79db3>
+    my $path = File::Spec->catdir($installDir, "MSBuild", "Current", "bin", "MSBuild.exe");
+    $path = File::Spec->catdir($installDir, "MSBuild", "15.0", "bin", "MSBuild.exe") unless -e $path;
 
-    print "Using MSBuild: $msBuildInstallDir\n";
-    return $msBuildInstallDir;
+    chomp($path = `cygpath "$path"`) if isCygwin();
+
+    print "Using MSBuild: $path\n";
+    return $path;
 }
 
 sub determineConfigurationForVisualStudio
@@ -778,7 +726,7 @@ sub determineConfigurationProductDir
             $configurationProductDir = "$baseProductDir";
         } else {
             $configurationProductDir = "$baseProductDir/$configuration";
-            $configurationProductDir .= "-" . xcodeSDKPlatformName() if isEmbeddedWebKit();
+            $configurationProductDir .= "-" . xcodeSDKPlatformName() if isEmbeddedWebKit() || isMacCatalystWebKit();
         }
     }
 }
@@ -828,9 +776,9 @@ sub executableProductDir
     my $productDirectory = productDir();
 
     my $binaryDirectory;
-    if (isAnyWindows()) {
+    if (isAnyWindows() && !isPlayStation()) {
         $binaryDirectory = isWin64() ? "bin64" : "bin32";
-    } elsif (isGtk() || isJSCOnly() || isWPE()) {
+    } elsif (isGtk() || isJSCOnly() || isWPE() || isPlayStation()) {
         $binaryDirectory = "bin";
     } else {
         return $productDirectory;
@@ -908,8 +856,8 @@ sub XcodeOptions
     determineXcodeSDK();
 
     my @options;
-    push @options, "-UseNewBuildSystem=NO";
     push @options, "-UseSanitizedBuildSystemEnvironment=YES";
+    push @options, "-ShowBuildOperationDuration=YES";
     push @options, ("-configuration", $configuration);
     push @options, ("-xcconfig", sourceDir() . "/Tools/asan/asan.xcconfig", "ASAN_IGNORE=" . sourceDir() . "/Tools/asan/webkit-asan-ignore.txt") if $asanIsEnabled;
     push @options, "WK_LTO_MODE=$ltoMode" if $ltoMode;
@@ -951,6 +899,11 @@ sub XcodeCoverageSupportOptions()
 sub XcodeStaticAnalyzerOption()
 {
     return "RUN_CLANG_STATIC_ANALYZER=YES";
+}
+
+sub canUseXCBuild()
+{
+    return 0;
 }
 
 my $passedConfiguration;
@@ -1096,7 +1049,7 @@ sub builtDylibPathForName
         }
     }
     if (isWPE()) {
-        return "$configurationProductDir/lib/libWPEWebKit-0.1.so";
+        return "$configurationProductDir/lib/libWPEWebKit-1.0.so";
     }
 
     die "Unsupported platform, can't determine built library locations.\nTry `build-webkit --help` for more information.\n";
@@ -1240,6 +1193,8 @@ sub determinePortName()
             $portName = tvOS;
         } elsif (willUseWatchDeviceSDK() || willUseWatchSimulatorSDK()) {
             $portName = watchOS;
+        } elsif (willUseMacCatalystSDK()) {
+            $portName = MacCatalyst;
         } else {
             $portName = Mac;
         }
@@ -1469,9 +1424,14 @@ sub isAppleMacWebKit()
     return portName() eq Mac;
 }
 
+sub isMacCatalystWebKit()
+{
+    return portName() eq MacCatalyst;
+}
+
 sub isAppleCocoaWebKit()
 {
-    return isAppleMacWebKit() || isEmbeddedWebKit();
+    return isAppleMacWebKit() || isEmbeddedWebKit() || isMacCatalystWebKit();
 }
 
 sub isAppleWinWebKit()
@@ -1555,6 +1515,11 @@ sub willUseWatchDeviceSDK()
 sub willUseWatchSimulatorSDK()
 {
     return xcodeSDKPlatformName() eq "watchsimulator";
+}
+
+sub willUseMacCatalystSDK()
+{
+    return xcodeSDKPlatformName() eq "maccatalyst";
 }
 
 sub determineNmPath()
@@ -1890,10 +1855,9 @@ sub setupAppleWinEnv()
 sub setupCygwinEnv()
 {
     return if !isAnyWindows();
-    return if $vcBuildPath;
+    return if $msBuildPath;
 
     my $programFilesPath = programFilesPath();
-    my $visualStudioPath = File::Spec->catfile(visualStudioInstallDir(), qw(Common7 IDE devenv.com));
 
     print "Building results into: ", baseProductDir(), "\n";
     print "WEBKIT_OUTPUTDIR is set to: ", $ENV{"WEBKIT_OUTPUTDIR"}, "\n";
@@ -1903,10 +1867,10 @@ sub setupCygwinEnv()
 
     # We will actually use MSBuild to build WebKit, but we need to find the Visual Studio install (above) to make
     # sure we use the right options.
-    $vcBuildPath = File::Spec->catfile(msBuildInstallDir(), qw(MSBuild.exe));
-    if (! -e $vcBuildPath) {
+    $msBuildPath = msBuildPath();
+    if (! -e $msBuildPath) {
         print "*************************************************************\n";
-        print "Cannot find '$vcBuildPath'\n";
+        print "Cannot find '$msBuildPath'\n";
         print "Please make sure execute that the Microsoft .NET Framework SDK\n";
         print "is installed on this machine.\n";
         print "*************************************************************\n";
@@ -1927,15 +1891,33 @@ sub buildXCodeProject($$@)
     return system "xcodebuild", "-project", "$project.xcodeproj", @extraOptions;
 }
 
-sub getMSBuildPlatformArgument()
+sub getVisualStudioToolset()
 {
     if (isPlayStation()) {
         return "";
     } elsif (isWin64()) {
-        return "/p:Platform=x64";
+        return "x64";
     } else {
-        return "/p:Platform=Win32";
+        return "Win32";
     }
+}
+
+sub getMSBuildPlatformArgument()
+{
+    my $toolset = getVisualStudioToolset();
+    if (defined($toolset) && length($toolset)) {
+        return "/p:Platform=$toolset";
+    }
+    return "";
+}
+
+sub getCMakeWindowsToolsetArgument()
+{
+    my $toolset = getVisualStudioToolset();
+    if (defined($toolset) && length($toolset)) {
+        return "-A $toolset";
+    }
+    return "";
 }
 
 sub buildVisualStudioProject
@@ -1966,7 +1948,7 @@ sub buildVisualStudioProject
 
     my $maxCPUCount = '/maxcpucount:' . numberOfCPUs();
 
-    my @command = ($vcBuildPath, "/verbosity:minimal", $project, $action, $config, $platform, "/fl", $errorLogging, "/fl1", $warningLogging, $maxCPUCount);
+    my @command = ($msBuildPath, "/verbosity:minimal", $project, $action, $config, $platform, "/fl", $errorLogging, "/fl1", $warningLogging, $maxCPUCount);
     print join(" ", @command), "\n";
     return system @command;
 }
@@ -2156,6 +2138,15 @@ sub shouldRemoveCMakeCache(@)
         }
     }
 
+    # If a change on the JHBuild moduleset has been done, we need to clean the cache as well.
+    if (isGtk() || isWPE()) {
+        my $jhbuildRootDirectory = File::Spec->catdir(getJhbuildPath(), "Root");
+        # The script update-webkit-libs-jhbuild shall re-generate $jhbuildRootDirectory if the moduleset changed.
+        if (-d $jhbuildRootDirectory && $cacheFileModifiedTime < stat($jhbuildRootDirectory)->mtime) {
+            return 1;
+        }
+    }
+
     return 0;
 }
 
@@ -2236,7 +2227,9 @@ sub generateBuildSystemFromCMakeProject
         push @args, "-DCMAKE_BUILD_TYPE=Debug";
     }
 
-    push @args, "-DENABLE_ADDRESS_SANITIZER=ON" if asanIsEnabled();
+    push @args, "-DENABLE_SANITIZERS=address" if asanIsEnabled();
+
+    push @args, "-DLTO_MODE=$ltoMode" if ltoMode();
 
     push @args, '-DCMAKE_TOOLCHAIN_FILE=Platform/PlayStation' if isPlayStation();
 
@@ -2248,11 +2241,14 @@ sub generateBuildSystemFromCMakeProject
             push @args, "Ninja";
         }
         push @args, "-DUSE_THIN_ARCHIVES=OFF" if isPlayStation();
-    } elsif (isAnyWindows() && isWin64()) {
-        push @args, '-G "Visual Studio 15 2017 Win64"';
-        push @args, '-DCMAKE_GENERATOR_TOOLSET="host=x64"';
-    } elsif (isPlayStation()) {
-        push @args, '-G "Visual Studio 15"';
+    } else {
+        if (isAnyWindows()) {
+            push @args, getCMakeWindowsToolsetArgument();
+        }
+        if ((isAnyWindows() || isPlayStation()) && defined $ENV{VisualStudioVersion}) {
+            my $var = int($ENV{VisualStudioVersion});
+            push @args, qq(-G "Visual Studio $var");
+        }
     }
 
     # Do not show progress of generating bindings in interactive Ninja build not to leave noisy lines on tty
@@ -2261,17 +2257,19 @@ sub generateBuildSystemFromCMakeProject
     # Some ports have production mode, but build-webkit should always use developer mode.
     push @args, "-DDEVELOPER_MODE=ON" if isGtk() || isJSCOnly() || isWPE() || isWinCairo();
 
+    if (architecture() eq "x86_64" && shouldBuild32Bit()) {
+        # CMAKE_LIBRARY_ARCHITECTURE is needed to get the right .pc
+        # files in Debian-based systems, for the others
+        # CMAKE_PREFIX_PATH will get us /usr/lib, which should be the
+        # right path for 32bit. See FindPkgConfig.cmake.
+        push @cmakeArgs, '-DFORCE_32BIT=ON -DCMAKE_PREFIX_PATH="/usr" -DCMAKE_LIBRARY_ARCHITECTURE=x86';
+        $ENV{"CFLAGS"} =  "-m32" . ($ENV{"CFLAGS"} || "");
+        $ENV{"CXXFLAGS"} = "-m32" . ($ENV{"CXXFLAGS"} || "");
+    }
     push @args, @cmakeArgs if @cmakeArgs;
 
     my $cmakeSourceDir = isCygwin() ? windowsSourceDir() : sourceDir();
     push @args, '"' . $cmakeSourceDir . '"';
-
-    # Compiler options to keep floating point values consistent
-    # between 32-bit and 64-bit architectures.
-    determineArchitecture();
-    if ($architecture eq "i686" && !isCrossCompilation() && !isAnyWindows()) {
-        $ENV{'CXXFLAGS'} = "-march=pentium4 -msse2 -mfpmath=sse " . ($ENV{'CXXFLAGS'} || "");
-    }
 
     # We call system("cmake @args") instead of system("cmake", @args) so that @args is
     # parsed for shell metacharacters.
@@ -2504,8 +2502,13 @@ sub setupIOSWebKitEnvironment($)
 
 sub iosSimulatorApplicationsPath()
 {
-    my $iphoneOSPlatformPath = sdkPlatformDirectory("iphoneos");
-    return File::Spec->catdir($iphoneOSPlatformPath, "Developer", "Library", "CoreSimulator", "Profiles", "Runtimes", "iOS.simruntime", "Contents", "Resources", "RuntimeRoot", "Applications");
+    # FIXME: We should ask simctl for this information, instead of guessing from available runtimes.
+    my $runtimePath = File::Spec->catdir(sdkPlatformDirectory("iphoneos"), "Developer", "Library", "CoreSimulator", "Profiles", "Runtimes");
+    opendir(RUNTIMES, $runtimePath);
+    my @runtimes = grep {/.*\.simruntime/} readdir(RUNTIMES);
+    close(RUNTIMES);
+    my $sult = File::Spec->catdir($runtimePath, @runtimes ? $runtimes[0] : "iOS.simruntime", "Contents", "Resources", "RuntimeRoot", "Applications");
+    return $sult;
 }
 
 sub installedMobileSafariBundle()

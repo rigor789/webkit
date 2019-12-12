@@ -77,7 +77,7 @@ class SimulatedDeviceManager(object):
     def _create_runtimes(runtimes):
         result = []
         for runtime in runtimes:
-            if runtime.get('availability') != '(available)' and runtime.get('isAvailable') != 'YES':
+            if runtime.get('availability') != '(available)' and runtime.get('isAvailable') != 'YES' and runtime.get('isAvailable') != True:
                 continue
             try:
                 result.append(SimulatedDeviceManager.Runtime(runtime))
@@ -87,7 +87,7 @@ class SimulatedDeviceManager(object):
 
     @staticmethod
     def _create_device_with_runtime(host, runtime, device_info):
-        if device_info.get('availability') != '(available)' and device_info.get('isAvailable') != 'YES':
+        if device_info.get('availability') != '(available)' and device_info.get('isAvailable') != 'YES' and device_info.get('isAvailable') != True:
             return None
 
         # Check existing devices.
@@ -534,7 +534,7 @@ class SimulatedDevice(object):
             _log.debug('{} has no service to check if the device is usable'.format(self.device_type.software_variant))
             return True
 
-        for line in self.executive.run_command([SimulatedDeviceManager.xcrun, 'simctl', 'spawn', self.udid, 'launchctl', 'print', 'system']).splitlines():
+        for line in self.executive.run_command([SimulatedDeviceManager.xcrun, 'simctl', 'spawn', self.udid, 'launchctl', 'print', 'system'], decode_output=False).splitlines():
             if home_screen_service in line:
                 return True
         return False
@@ -544,7 +544,7 @@ class SimulatedDevice(object):
 
         # Either shutdown is successful, or the device was already shutdown when we attempted to shut it down.
         exit_code = self.executive.run_command([SimulatedDeviceManager.xcrun, 'simctl', 'shutdown', self.udid], return_exit_code=True)
-        if exit_code != 0 and exit_code != 164:
+        if exit_code != 0 and self.state() != SimulatedDevice.DeviceState.SHUT_DOWN:
             raise RuntimeError('Failed to shutdown {} with exit code {}'.format(self.udid, exit_code))
 
         while self.state(force_update=True) != SimulatedDevice.DeviceState.SHUT_DOWN:

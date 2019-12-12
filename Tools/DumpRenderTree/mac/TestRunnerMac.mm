@@ -77,10 +77,6 @@
 #import <wtf/RetainPtr.h>
 #import <wtf/WallTime.h>
 
-#if !PLATFORM(IOS_FAMILY)
-#import <wtf/SoftLinking.h>
-#endif
-
 #if PLATFORM(IOS_FAMILY)
 #import "UIKitSPI.h"
 #import <WebKit/WebCoreThread.h>
@@ -89,7 +85,6 @@
 #endif
 
 #if !PLATFORM(IOS_FAMILY)
-SOFT_LINK_STAGED_FRAMEWORK(WebInspectorUI, PrivateFrameworks, A)
 
 @interface CommandValidationTarget : NSObject <NSValidatedUserInterfaceItem>
 {
@@ -298,16 +293,22 @@ size_t TestRunner::webHistoryItemCount()
 
 void TestRunner::notifyDone()
 {
-    if (m_waitToDump && !topLoadingFrame && !DRT::WorkQueue::singleton().count())
-        dump();
-    m_waitToDump = false;
+    if (m_waitToDump) {
+        m_waitToDump = false;
+        if (!topLoadingFrame && !DRT::WorkQueue::singleton().count())
+            dump();
+    } else
+        fprintf(stderr, "TestRunner::notifyDone() called unexpectedly.");
 }
 
 void TestRunner::forceImmediateCompletion()
 {
-    if (m_waitToDump && !DRT::WorkQueue::singleton().count())
-        dump();
-    m_waitToDump = false;
+    if (m_waitToDump) {
+        m_waitToDump = false;
+        if (!DRT::WorkQueue::singleton().count())
+            dump();
+    } else
+        fprintf(stderr, "TestRunner::forceImmediateCompletion() called unexpectedly.");
 }
 
 static inline std::string stringFromJSString(JSStringRef jsString)
@@ -590,13 +591,6 @@ void TestRunner::setPagePaused(bool paused)
 }
 #endif
 
-void TestRunner::setUseDashboardCompatibilityMode(bool flag)
-{
-#if !PLATFORM(IOS_FAMILY)
-    [[mainFrame webView] _setDashboardBehavior:WebDashboardBehaviorUseBackwardCompatibilityMode to:flag];
-#endif
-}
-
 void TestRunner::setUserStyleSheetEnabled(bool flag)
 {
     [[WebPreferences standardPreferences] setUserStyleSheetEnabled:flag];
@@ -834,9 +828,6 @@ JSRetainPtr<JSStringRef> TestRunner::inspectorTestStubURL()
 #if PLATFORM(IOS_FAMILY)
     return nullptr;
 #else
-    // Call the soft link framework function to dlopen it, then CFBundleGetBundleWithIdentifier will work.
-    WebInspectorUILibrary();
-
     CFBundleRef inspectorBundle = CFBundleGetBundleWithIdentifier(CFSTR("com.apple.WebInspectorUI"));
     if (!inspectorBundle)
         return nullptr;

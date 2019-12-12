@@ -32,7 +32,7 @@ _log = logging.getLogger(__name__)
 
 
 class FetchLoop():
-    def __init__(self, interval=60):
+    def __init__(self, interval=30):
         self.interval = interval
         thread = threading.Thread(target=self.run, args=())
         thread.daemon = True
@@ -40,13 +40,21 @@ class FetchLoop():
 
     def run(self):
         while True:
-            BugzillaPatchFetcher().fetch()
+            try:
+                BugzillaPatchFetcher().fetch()
+            except Exception as e:
+                _log.error('Exception in BugzillaPatchFetcher: {}'.format(e))
             time.sleep(self.interval)
 
 
 class BugzillaPatchFetcher():
-    def fetch(self):
-        patch_ids = Bugzilla.get_list_of_patches_needing_reviews()
+    def fetch(self, patch_ids=None):
+        if patch_ids and type(patch_ids) != list:
+            _log.error('Error: patch_ids should be a list, found: {}'.format(type(patch_ids)))
+            return -1
+
+        if not patch_ids:
+            patch_ids = Bugzilla.get_list_of_patches_needing_reviews()
         patch_ids = BugzillaPatchFetcher.filter_valid_patches(patch_ids)
         _log.debug('r? patches: {}'.format(patch_ids))
         Patch.save_patches(patch_ids)
@@ -62,7 +70,8 @@ class BugzillaPatchFetcher():
                 _log.warn('Patch is obsolete, skipping')
                 Patch.set_obsolete(patch_id)
                 continue
-            rc = Buildbot.send_patch_to_buildbot(bz_patch['path'], properties=['patch_id={}'.format(patch_id), 'bug_id={}'.format(bz_patch['bug_id'])])
+            rc = Buildbot.send_patch_to_buildbot(bz_patch['path'],
+                     properties=['patch_id={}'.format(patch_id), 'bug_id={}'.format(bz_patch['bug_id']), 'owner={}'.format(bz_patch.get('creator', ''))])
             if rc == 0:
                 Patch.set_bug_id(patch_id, bz_patch['bug_id'])
                 Patch.set_sent_to_buildbot(patch_id)

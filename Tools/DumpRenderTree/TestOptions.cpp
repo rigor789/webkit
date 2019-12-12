@@ -105,8 +105,18 @@ TestOptions::TestOptions(const std::string& pathOrURL, const std::string& absolu
             enableColorFilter = parseBooleanTestHeaderValue(value);
         else if (key == "jscOptions")
             jscOptions = value;
+        else if (key == "additionalSupportedImageTypes")
+            additionalSupportedImageTypes = value;
         else if (key == "experimental:WebGPUEnabled")
             enableWebGPU = parseBooleanTestHeaderValue(value);
+        else if (key == "internal:CSSLogicalEnabled")
+            enableCSSLogical = parseBooleanTestHeaderValue(value);
+        else if (key == "experimental:AdClickAttributionEnabled")
+            adClickAttributionEnabled = parseBooleanTestHeaderValue(value);
+        else if (key == "experimental:ResizeObserverEnabled")
+            enableResizeObserver = parseBooleanTestHeaderValue(value);
+        else if (key == "experimental:CoreMathMLEnabled")
+            enableCoreMathML = parseBooleanTestHeaderValue(value);
         pairStart = pairEnd + 1;
     }
 }

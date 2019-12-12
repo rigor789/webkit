@@ -26,8 +26,7 @@
 #import "config.h"
 #import "_WKProcessPoolConfigurationInternal.h"
 
-#if WK_API_ENABLED
-
+#import <objc/runtime.h>
 #import <wtf/RetainPtr.h>
 
 @implementation _WKProcessPoolConfiguration
@@ -62,14 +61,40 @@
     _processPoolConfiguration->setInjectedBundlePath(injectedBundleURL.path);
 }
 
+- (NSSet<Class> *)customClassesForParameterCoder
+{
+    auto classes = _processPoolConfiguration->customClassesForParameterCoder();
+    if (classes.isEmpty())
+        return [NSSet set];
+
+    NSMutableSet *result = [[NSMutableSet alloc] initWithCapacity:classes.size()];
+    for (const auto& value : classes)
+        [result addObject: objc_lookUpClass(value.utf8().data())];
+
+    return [result autorelease];
+}
+
+- (void)setCustomClassesForParameterCoder:(NSSet<Class> *)classesForCoder
+{
+    Vector<WTF::String> classes;
+    classes.reserveInitialCapacity(classesForCoder.count);
+    for (id classObj : classesForCoder) {
+        if (auto* string = NSStringFromClass(classObj))
+            classes.uncheckedAppend(string);
+    }
+
+    _processPoolConfiguration->setCustomClassesForParameterCoder(WTFMove(classes));
+}
+
 - (NSUInteger)maximumProcessCount
 {
-    return _processPoolConfiguration->maximumProcessCount();
+    // Deprecated.
+    return NSUIntegerMax;
 }
 
 - (void)setMaximumProcessCount:(NSUInteger)maximumProcessCount
 {
-    _processPoolConfiguration->setMaximumProcessCount(maximumProcessCount);
+    // Deprecated.
 }
 
 - (NSInteger)diskCacheSizeOverride
@@ -138,15 +163,14 @@
     _processPoolConfiguration->setAdditionalReadAccessAllowedPaths(WTFMove(paths));
 }
 
-#if ENABLE(PROXIMITY_NETWORKING)
+#if PLATFORM(IOS_FAMILY) && !PLATFORM(IOS_FAMILY_SIMULATOR)
 - (NSUInteger)wirelessContextIdentifier
 {
-    return _processPoolConfiguration->wirelessContextIdentifier();
+    return 0;
 }
 
 - (void)setWirelessContextIdentifier:(NSUInteger)identifier
 {
-    _processPoolConfiguration->setWirelessContextIdentifier(identifier);
 }
 #endif
 
@@ -300,6 +324,16 @@
         _processPoolConfiguration->setCacheModel(WebKit::CacheModel::PrimaryWebBrowser);
 }
 
+- (BOOL)usesSingleWebProcess
+{
+    return _processPoolConfiguration->usesSingleWebProcess();
+}
+
+- (void)setUsesSingleWebProcess:(BOOL)enabled
+{
+    _processPoolConfiguration->setUsesSingleWebProcess(enabled);
+}
+
 - (BOOL)suppressesConnectionTerminationOnSystemChange
 {
     return _processPoolConfiguration->suppressesConnectionTerminationOnSystemChange();
@@ -313,6 +347,30 @@
 - (void)setJITEnabled:(BOOL)enabled
 {
     _processPoolConfiguration->setJITEnabled(enabled);
+}
+
+- (NSUInteger)downloadMonitorSpeedMultiplierForTesting
+{
+    return _processPoolConfiguration->downloadMonitorSpeedMultiplier();
+}
+
+- (void)setHSTSStorageDirectory:(NSURL *)directory
+{
+    if (directory && ![directory isFileURL])
+        [NSException raise:NSInvalidArgumentException format:@"%@ is not a file URL", directory];
+
+    // FIXME: Move this to _WKWebsiteDataStoreConfiguration once rdar://problem/50109631 is fixed.
+    _processPoolConfiguration->setHSTSStorageDirectory(directory.path);
+}
+
+- (NSURL *)hstsStorageDirectory
+{
+    return [NSURL fileURLWithPath:_processPoolConfiguration->hstsStorageDirectory() isDirectory:YES];
+}
+
+- (void)setDownloadMonitorSpeedMultiplierForTesting:(NSUInteger)multiplier
+{
+    _processPoolConfiguration->setDownloadMonitorSpeedMultiplier(multiplier);
 }
 
 - (void)setSuppressesConnectionTerminationOnSystemChange:(BOOL)suppressesConnectionTerminationOnSystemChange
@@ -354,7 +412,7 @@
 
 - (NSString *)description
 {
-    NSString *description = [NSString stringWithFormat:@"<%@: %p; maximumProcessCount = %lu", NSStringFromClass(self.class), self, static_cast<unsigned long>([self maximumProcessCount])];
+    NSString *description = [NSString stringWithFormat:@"<%@: %p", NSStringFromClass(self.class), self];
 
     if (!_processPoolConfiguration->injectedBundlePath().isEmpty())
         return [description stringByAppendingFormat:@"; injectedBundleURL: \"%@\">", [self injectedBundleURL]];
@@ -385,5 +443,3 @@
 }
 
 @end
-
-#endif

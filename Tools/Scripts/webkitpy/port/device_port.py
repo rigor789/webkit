@@ -145,8 +145,16 @@ class DevicePort(DarwinPort):
                 continue
             if device.device_type in self.DEVICE_TYPE:
                 types.add(device.device_type)
-        if types:
-            return list(types)
+        if types and not self.get_option('dedicated_simulators', False):
+
+            def sorted_by_default_device_type(type):
+                try:
+                    return self.DEFAULT_DEVICE_TYPES.index(type)
+                except ValueError:
+                    return len(self.DEFAULT_DEVICE_TYPES)
+
+            return sorted(types, key=sorted_by_default_device_type)
+
         return self.DEFAULT_DEVICE_TYPES or [self.DEVICE_TYPE]
 
     def setup_test_run(self, device_type=None):
@@ -248,13 +256,20 @@ class DevicePort(DarwinPort):
             if version_name:
                 break
 
+        if self.get_option('guard_malloc'):
+            style = 'guard-malloc'
+        elif self._config.asan:
+            style = 'asan'
+        else:
+            style = configuration.build_type
+
         return Upload.create_configuration(
             platform=device_type.software_variant.lower(),
             is_simulator=self.DEVICE_MANAGER == SimulatedDeviceManager,
             version=str(version),
             version_name=version_name,
             architecture=configuration.architecture,
-            style='guard-malloc' if self.get_option('guard_malloc') else configuration.build_type,
+            style=style,
             model=model,
             sdk=host.build_version if host else None,
         )
