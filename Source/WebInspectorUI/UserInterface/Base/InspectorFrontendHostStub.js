@@ -226,9 +226,9 @@ if (!window.InspectorFrontendHost) {
     if (window.location.hash) {
         host = window.location.hash.substring(1, window.location.hash.length);
     } else if (window.location.protocol == "http:" || window.location.protocol == "https:") {
-        host = window.location.hostname + ":8080"
+        host = window.location.hostname + ":41000"
     } else {
-        host = "localhost:8080";
+        host = "localhost:41000";
     }
 
     InspectorFrontendHost.initializeWebSocket("ws://" + host + "/");
