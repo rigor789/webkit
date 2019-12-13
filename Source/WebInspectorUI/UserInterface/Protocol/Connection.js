@@ -154,8 +154,9 @@ InspectorBackend.Connection = class InspectorBackendConnection
     _dispatchResponseToPromise(command, messageObject, promise)
     {
         let {resolve, reject} = promise;
-        if (messageObject["error"])
-            reject(new Error(messageObject["error"].message));
+        if (messageObject["error"]) {
+            reject(Object.assign(new Error(messageObject["error"].message), {"rejectionSource": "InspectorBackendConnection._dispatchResponseToPromise"}));
+        }
         else
             resolve(messageObject["result"]);
     }

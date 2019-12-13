@@ -36,14 +36,14 @@ InspectorBackend.registerCommand("ApplicationCache.getFramesWithManifests", [], 
 InspectorBackend.registerCommand("ApplicationCache.enable", [], []);
 InspectorBackend.registerCommand("ApplicationCache.getManifestForFrame", [{"name": "frameId", "type": "string", "optional": false}], ["manifestURL"]);
 InspectorBackend.registerCommand("ApplicationCache.getApplicationCacheForFrame", [{"name": "frameId", "type": "string", "optional": false}], ["applicationCache"]);
-// InspectorBackend.activateDomain("ApplicationCache", ["web"]);
+InspectorBackend.activateDomain("ApplicationCache", ["web"]);
 
 // Audit.
 InspectorBackend.registerVersion("Audit", 3);
 InspectorBackend.registerCommand("Audit.setup", [{"name": "contextId", "type": "number", "optional": true}], []);
 InspectorBackend.registerCommand("Audit.run", [{"name": "test", "type": "string", "optional": false}, {"name": "contextId", "type": "number", "optional": true}], ["result", "wasThrown"]);
 InspectorBackend.registerCommand("Audit.teardown", [], []);
-// InspectorBackend.activateDomain("Audit");
+InspectorBackend.activateDomain("Audit");
 
 // CPUProfiler.
 InspectorBackend.registerCPUProfilerDispatcher = InspectorBackend.registerDomainDispatcher.bind(InspectorBackend, "CPUProfiler");
@@ -110,7 +110,7 @@ InspectorBackend.registerCommand("Canvas.requestShaderSource", [{"name": "progra
 InspectorBackend.registerCommand("Canvas.updateShader", [{"name": "programId", "type": "string", "optional": false}, {"name": "shaderType", "type": "string", "optional": false}, {"name": "source", "type": "string", "optional": false}], []);
 InspectorBackend.registerCommand("Canvas.setShaderProgramDisabled", [{"name": "programId", "type": "string", "optional": false}, {"name": "disabled", "type": "boolean", "optional": false}], []);
 InspectorBackend.registerCommand("Canvas.setShaderProgramHighlighted", [{"name": "programId", "type": "string", "optional": false}, {"name": "highlighted", "type": "boolean", "optional": false}], []);
-// InspectorBackend.activateDomain("Canvas", ["web"]);
+InspectorBackend.activateDomain("Canvas", ["web"]);
 
 // Console.
 InspectorBackend.registerConsoleDispatcher = InspectorBackend.registerDomainDispatcher.bind(InspectorBackend, "Console");
@@ -224,7 +224,7 @@ InspectorBackend.registerCommand("DOMStorage.disable", [], []);
 InspectorBackend.registerCommand("DOMStorage.getDOMStorageItems", [{"name": "storageId", "type": "object", "optional": false}], ["entries"]);
 InspectorBackend.registerCommand("DOMStorage.setDOMStorageItem", [{"name": "storageId", "type": "object", "optional": false}, {"name": "key", "type": "string", "optional": false}, {"name": "value", "type": "string", "optional": false}], []);
 InspectorBackend.registerCommand("DOMStorage.removeDOMStorageItem", [{"name": "storageId", "type": "object", "optional": false}, {"name": "key", "type": "string", "optional": false}], []);
-// InspectorBackend.activateDomain("DOMStorage", ["web"]);
+InspectorBackend.activateDomain("DOMStorage", ["web"]);
 
 // Database.
 InspectorBackend.registerDatabaseDispatcher = InspectorBackend.registerDomainDispatcher.bind(InspectorBackend, "Database");
@@ -233,7 +233,7 @@ InspectorBackend.registerCommand("Database.enable", [], []);
 InspectorBackend.registerCommand("Database.disable", [], []);
 InspectorBackend.registerCommand("Database.getDatabaseTableNames", [{"name": "databaseId", "type": "string", "optional": false}], ["tableNames"]);
 InspectorBackend.registerCommand("Database.executeSQL", [{"name": "databaseId", "type": "string", "optional": false}, {"name": "query", "type": "string", "optional": false}], ["columnNames", "values", "sqlError"]);
-// InspectorBackend.activateDomain("Database", ["web"]);
+InspectorBackend.activateDomain("Database", ["web"]);
 
 // Debugger.
 InspectorBackend.registerDebuggerDispatcher = InspectorBackend.registerDomainDispatcher.bind(InspectorBackend, "Debugger");
@@ -297,7 +297,7 @@ InspectorBackend.registerCommand("IndexedDB.requestDatabaseNames", [{"name": "se
 InspectorBackend.registerCommand("IndexedDB.requestDatabase", [{"name": "securityOrigin", "type": "string", "optional": false}, {"name": "databaseName", "type": "string", "optional": false}], ["databaseWithObjectStores"]);
 InspectorBackend.registerCommand("IndexedDB.requestData", [{"name": "securityOrigin", "type": "string", "optional": false}, {"name": "databaseName", "type": "string", "optional": false}, {"name": "objectStoreName", "type": "string", "optional": false}, {"name": "indexName", "type": "string", "optional": false}, {"name": "skipCount", "type": "number", "optional": false}, {"name": "pageSize", "type": "number", "optional": false}, {"name": "keyRange", "type": "object", "optional": true}], ["objectStoreDataEntries", "hasMore"]);
 InspectorBackend.registerCommand("IndexedDB.clearObjectStore", [{"name": "securityOrigin", "type": "string", "optional": false}, {"name": "databaseName", "type": "string", "optional": false}, {"name": "objectStoreName", "type": "string", "optional": false}], []);
-// InspectorBackend.activateDomain("IndexedDB", ["web"]);
+InspectorBackend.activateDomain("IndexedDB", ["web"]);
 
 // Inspector.
 InspectorBackend.registerInspectorDispatcher = InspectorBackend.registerDomainDispatcher.bind(InspectorBackend, "Inspector");
@@ -316,7 +316,7 @@ InspectorBackend.registerCommand("LayerTree.enable", [], []);
 InspectorBackend.registerCommand("LayerTree.disable", [], []);
 InspectorBackend.registerCommand("LayerTree.layersForNode", [{"name": "nodeId", "type": "number", "optional": false}], ["layers"]);
 InspectorBackend.registerCommand("LayerTree.reasonsForCompositingLayer", [{"name": "layerId", "type": "string", "optional": false}], ["compositingReasons"]);
-// InspectorBackend.activateDomain("LayerTree", ["web"]);
+InspectorBackend.activateDomain("LayerTree", ["web"]);
 
 // Memory.
 InspectorBackend.registerMemoryDispatcher = InspectorBackend.registerDomainDispatcher.bind(InspectorBackend, "Memory");
@@ -330,7 +330,7 @@ InspectorBackend.registerCommand("Memory.enable", [], []);
 InspectorBackend.registerCommand("Memory.disable", [], []);
 InspectorBackend.registerCommand("Memory.startTracking", [], []);
 InspectorBackend.registerCommand("Memory.stopTracking", [], []);
-// InspectorBackend.activateDomain("Memory", ["web"]);
+InspectorBackend.activateDomain("Memory", ["web"]);
 
 // Network.
 InspectorBackend.registerNetworkDispatcher = InspectorBackend.registerDomainDispatcher.bind(InspectorBackend, "Network");
@@ -483,4 +483,4 @@ InspectorBackend.registerCommand("Worker.enable", [], []);
 InspectorBackend.registerCommand("Worker.disable", [], []);
 InspectorBackend.registerCommand("Worker.initialized", [{"name": "workerId", "type": "string", "optional": false}], []);
 InspectorBackend.registerCommand("Worker.sendMessageToWorker", [{"name": "workerId", "type": "string", "optional": false}, {"name": "message", "type": "string", "optional": false}], []);
-// InspectorBackend.activateDomain("Worker", ["web"]);
+InspectorBackend.activateDomain("Worker", ["web"]);

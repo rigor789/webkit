@@ -83,6 +83,11 @@ function handleUncaughtException(event) {
 }
 
 function handleUnhandledPromiseRejection(event) {
+    if (event.reason.rejectionSource === "InspectorBackendConnection._dispatchResponseToPromise") {
+        console.assert(false, `Unhandled debugger communication error: ${event.reason}`);
+        return;
+    }
+
     handleUncaughtExceptionRecord({
         message: event.reason.message,
         url: urlLastPathComponent(event.reason.sourceURL),
